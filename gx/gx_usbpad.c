@@ -378,3 +378,11 @@ bool usbpad_avail(uint8_t pad_idx) {
 
 	return false;
 }
+
+uint8_t usbpad_nanalogs(uint8_t pad_idx) {
+	if (pad_idx < _usbslots && _pad_list[pad_idx]) {
+		return _pad_list[pad_idx]->config->num_analogs;
+	}
+
+	return 0;
+}

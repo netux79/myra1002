@@ -45,6 +45,7 @@ bool usbpad_avail(uint8_t index);
 const char *usbpad_padname(uint8_t pad_idx);
 const char *usbpad_label(uint8_t pad_idx, uint8_t b_idx);
 bool usbpad_buttonavail(uint8_t pad_idx, uint8_t b_idx);
+uint8_t usbpad_nanalogs(uint8_t pad_idx);
 int16_t usbpad_analog(uint8_t pad_idx, uint8_t a_idx);
 #define usbpad_js_lx(a) usbpad_analog(a, 0)
 #define usbpad_js_ly(a) usbpad_analog(a, 1)

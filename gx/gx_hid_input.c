@@ -327,12 +327,27 @@ static void gx_hid_input_poll(void *data)
 		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = usbpad_js_rx(port);
 		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = usbpad_js_ry(port);
 
+		 if (usbpad_nanalogs(port) > 4)
+		 {
+		    /*  when having a 3rd analog we assume it is the hat control */
+		    int16_t js3x = usbpad_analog(port, 4);
+		    int16_t js3y = usbpad_analog(port, 5);
+		    if (js3x > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_RIGHT);
+		    if (js3x < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_LEFT);
+		    if (js3y > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_UP);
+		    if (js3y < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_DOWN);
+		 }
+
 		 hotplug = (lt_active[port]) ? false : true;
 		 lt_active[port] = true;
       }
       else
       {
          *state = 0; /* reset the button state */
+         for (uint8_t j = 0; j < 2; j++)
+		    for (uint8_t i = 0; i < 2; i++)
+			   gx->analog_state[port][j][i] = 0; /*  clear also all the analogs */
+
 		 hotplug = (lt_active[port]) ? true : false;
          lt_active[port] = false;
 	  }
@@ -342,10 +357,10 @@ static void gx_hid_input_poll(void *data)
          /* show the pad change */
          char msg[128];
          if (lt_active[port])
-		    snprintf(msg, sizeof(msg), "(%s) connected in port %u.", usbpad_padname(port), port);
+		    snprintf(msg, sizeof(msg), "%s plugged -p %u", usbpad_padname(port), port);
 		 else
-			snprintf(msg, sizeof(msg), "(%s) disconnected from port %u.", g_settings.input.device_names[port], port);
-         msg_queue_push(g_extern.msg_queue, msg, 0, 60);
+			snprintf(msg, sizeof(msg), "%s unplugged -p %u", g_settings.input.device_names[port], port);
+         msg_queue_push(g_extern.msg_queue, msg, 0, 100);
 
 		 if (g_settings.input.autodetect_enable)
             gx_hid_input_set_keybinds(NULL, DEVICE_USBPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
@@ -380,8 +395,8 @@ static void gx_hid_input_poll(void *data)
    /* poll mouse data */
    gx_hid_input_poll_mouse(gx);
 
+   /* Check if we need to get into the menu */
    uint64_t *lifecycle_state = &g_extern.lifecycle_state;
-
    *lifecycle_state &= ~((1ULL << RARCH_MENU_TOGGLE));
 
    if (*state_p1 & ((1ULL << GX_HID_WIIMOTE_HOME) | (1ULL << GX_HID_USBPAD_HOME)))
