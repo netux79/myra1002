@@ -39,7 +39,7 @@ TARGET_NAME := retroarch
 
 INCLUDE :=
 LDFLAGS :=
-LIBDIRS := 
+LIBDIRS :=
 
 SHADER_DIR      := media/shaders
 OVERLAY_DIR     := media/overlays
@@ -98,7 +98,7 @@ else ifeq ($(platform), wii)
 ifeq ($(BIG_STACK), 1)
    LDFLAGS += -T gx/ld/rvl.ld
 endif
-  LIBS := -lfat $(WHOLE_START) -lretro_wii $(WHOLE_END) -logc -lwiiuse -lbte 
+  LIBS := -lfat $(WHOLE_START) -lretro_wii $(WHOLE_END) -logc -lwiiuse -lbte
   APP_BOOTER_DIR = wii/app_booter
   PLATOBJS := $(APP_BOOTER_DIR)/app_booter.binobj
   PLATCFLAGS := -DGEKKO
@@ -110,7 +110,7 @@ endif
   HAVE_ZLIB                := 1
   HAVE_RPNG                := 1
   HAVE_OVERLAY             := 1
-  HAVE_LIBSICKSAXIS			:= 1
+  HAVE_WIIUSBPAD		   := 1
 else ifeq ($(platform), psp1)
   CC = psp-gcc$(EXE_EXT)
   CXX = psp-g++$(EXE_EXT)
@@ -142,8 +142,8 @@ ifeq ($(HAVE_LIBRETRO_MANAGEMENT), 1)
 CFLAGS		+= -DHAVE_LIBRETRO_MANAGEMENT
 endif
 
-ifeq ($(HAVE_LIBSICKSAXIS), 1)
-CFLAGS		+= -DHAVE_LIBSICKSAXIS
+ifeq ($(HAVE_WIIUSBPAD), 1)
+CFLAGS		+= -DHAVE_WIIUSBPAD
 endif
 
 ifeq ($(HAVE_RPNG), 1)

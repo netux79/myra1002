@@ -301,9 +301,8 @@ enum input_devices
    DEVICE_WIIMOTE,
    DEVICE_NUNCHUK,
    DEVICE_CLASSIC,
+#ifdef HAVE_WIIUSBPAD
    DEVICE_USBPAD,
-#ifdef HAVE_LIBSICKSAXIS
-   DEVICE_SIXAXIS,
 #endif
 #endif
 #elif defined(_XBOX)
@@ -708,4 +707,3 @@ extern const input_osk_driver_t input_ps3_osk;
 #endif
 
 #endif
-

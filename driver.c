@@ -161,7 +161,9 @@ static const input_driver_t *input_drivers[] = {
 #endif
 #ifdef GEKKO
    &input_gx,
+#if defined (HW_RVL) && defined(HAVE_WIIUSBPAD)
    &input_gx_hid,
+#endif
 #endif
 #ifdef ANDROID
    &input_android,
@@ -1649,4 +1651,3 @@ void uninit_video_input(void)
 }
 
 driver_t driver;
-

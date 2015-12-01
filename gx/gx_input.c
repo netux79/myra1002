@@ -102,27 +102,6 @@ const struct platform_bind platform_keys[] = {
    { GX_NUNCHUK_UP, "Nunchuk Stick Up" },
    { GX_NUNCHUK_DOWN, "Nunchuk Stick Down" },
 #endif
-
-#ifdef HAVE_LIBSICKSAXIS
-	// PS3 CONTROLLER SIXAXIS DUALSHOCK 3
-   { GX_SIXAXIS_CIRCLE, "Sixaxis Circle button" },
-   { GX_SIXAXIS_CROSS, "Sixaxis Cross button" },
-   { GX_SIXAXIS_TRIANGLE, "Sixaxis Triangle button" },
-   { GX_SIXAXIS_SQUARE, "Sixaxis Square button" },
-   { GX_SIXAXIS_UP, "Sixaxis D-Pad Up" },
-   { GX_SIXAXIS_DOWN, "Sixaxis D-Pad Down" },
-   { GX_SIXAXIS_LEFT, "Sixaxis D-Pad Left" },
-   { GX_SIXAXIS_RIGHT, "Sixaxis D-Pad Right" },
-   { GX_SIXAXIS_L1, "Sixaxis L1 button" },
-   { GX_SIXAXIS_R1, "Sixaxis R1 button" },
-   { GX_SIXAXIS_L2, "Sixaxis L2 Trigger" },
-   { GX_SIXAXIS_R2, "Sixaxis R2 Trigger" },
-   { GX_SIXAXIS_L3, "Sixaxis L3 button" },
-   { GX_SIXAXIS_R3, "Sixaxis R3 button" },
-   { GX_SIXAXIS_START, "Sixaxis Start button" },
-   { GX_SIXAXIS_SELECT, "Sixaxis Select button" },
-   { GX_SIXAXIS_PS, "Sixaxis PS button" },
-#endif
 };
 
 
@@ -137,12 +116,6 @@ static void power_callback(void)
 {
    g_quit = true;
 }
-
-#ifdef HAVE_LIBSICKSAXIS
-# define USB_SLOTS 1
-struct ss_device sixaxis[USB_SLOTS];
-#endif
-
 #endif
 
 static void reset_cb(void)
@@ -159,17 +132,11 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_A) | (1ULL << GX_CLASSIC_A) | (1ULL << GX_WIIMOTE_2)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_CIRCLE)
-#endif
                );
       case CONSOLE_MENU_B:
          return state & ((1ULL << GX_GC_B)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_B) | (1ULL << GX_CLASSIC_B) | (1ULL << GX_WIIMOTE_1)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_CROSS)
 #endif
                );
       case CONSOLE_MENU_X:
@@ -177,17 +144,11 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
 #ifdef HW_RVL
                | (1ULL << GX_CLASSIC_X)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_TRIANGLE)
-#endif
                );
       case CONSOLE_MENU_Y:
          return state & ((1ULL << GX_GC_Y)
 #ifdef HW_RVL
                | (1ULL << GX_CLASSIC_Y)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_SQUARE)
 #endif
                );
       case CONSOLE_MENU_START:
@@ -195,17 +156,11 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_PLUS) | (1ULL << GX_CLASSIC_PLUS)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_START)
-#endif
                );
       case CONSOLE_MENU_SELECT:
          return state & ((1ULL << GX_GC_Z_TRIGGER)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_MINUS) | (1ULL << GX_CLASSIC_MINUS)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_SELECT)
 #endif
                );
       case CONSOLE_MENU_UP:
@@ -213,17 +168,11 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_UP) | (1ULL << GX_CLASSIC_UP) |  (1ULL << GX_NUNCHUK_UP)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_UP)
-#endif
                );
       case CONSOLE_MENU_DOWN:
          return state & ((1ULL << GX_GC_DOWN)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_DOWN) | (1ULL << GX_CLASSIC_DOWN) | (1ULL << GX_NUNCHUK_DOWN)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_DOWN)
 #endif
                );
       case CONSOLE_MENU_LEFT:
@@ -231,17 +180,11 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_LEFT) | (1ULL << GX_CLASSIC_LEFT) | (1ULL << GX_NUNCHUK_LEFT)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_LEFT)
-#endif
                );
       case CONSOLE_MENU_RIGHT:
          return state & ((1ULL << GX_GC_RIGHT)
 #ifdef HW_RVL
                | (1ULL << GX_WIIMOTE_RIGHT) | (1ULL << GX_CLASSIC_RIGHT) | (1ULL << GX_NUNCHUK_RIGHT)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_RIGHT)
 #endif
                );
       case CONSOLE_MENU_L:
@@ -249,26 +192,17 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
 #ifdef HW_RVL
                | (1ULL << GX_CLASSIC_L_TRIGGER)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_L1)
-#endif
                );
       case CONSOLE_MENU_R:
          return state & ((1ULL << GX_GC_R_TRIGGER)
 #ifdef HW_RVL
                | (1ULL << GX_CLASSIC_R_TRIGGER)
 #endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_R1)
-#endif
                );
       case CONSOLE_MENU_HOME:
          return state & ((1ULL << GX_GC_HOME) | (1ULL << GX_WIIMOTE_HOME)
 #ifdef HW_RVL
                | (1ULL << GX_CLASSIC_HOME)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-			   | (1ULL << GX_SIXAXIS_PS)
 #endif
                );
 #ifdef HW_RVL
@@ -358,12 +292,6 @@ static void gx_input_free_input(void *data)
    unsigned i;
    (void)data;
    (void)i;
-
-#ifdef HAVE_LIBSICKSAXIS
-   if (!driver.video_data) {
-	   ss_shutdown();
-   }
-#endif
 }
 
 
@@ -384,60 +312,6 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
       switch (device)
       {
 #ifdef HW_RVL
-#ifdef HAVE_LIBSICKSAXIS
-         case DEVICE_SIXAXIS:
-            g_settings.input.device[port] = device;
-            strlcpy(g_settings.input.device_names[port], "DualShock3/Sixaxis", sizeof(g_settings.input.device_names[port]));
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joykey       = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_CROSS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joykey       = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_SQUARE].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joykey  = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_SELECT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joykey   = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_START].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joykey      = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_UP].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joykey    = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_DOWN].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joykey    = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_LEFT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joykey   = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_RIGHT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joykey       = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_CIRCLE].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joykey       = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_TRIANGLE].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joykey       = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_L1].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joykey       = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_R1].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joykey      = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_L2].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joykey      = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_R2].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joykey      = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_L3].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joykey      = platform_keys[GX_DEVICE_SIXAXIS_ID_JOYPAD_R3].joykey;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joyaxis      = AXIS_POS(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joyaxis     = AXIS_NEG(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joyaxis      = AXIS_POS(1);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joyaxis     = AXIS_NEG(1);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joyaxis     = AXIS_POS(2);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NEG(2);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_POS(3);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NEG(3);
-            break;
-#endif
          case DEVICE_WIIMOTE:
             g_settings.input.device[port] = device;
             strlcpy(g_settings.input.device_names[port], "Wiimote", sizeof(g_settings.input.device_names[port]));
@@ -698,11 +572,6 @@ static void *gx_input_init(void)
 #endif
 
    (void)i;
-
-#ifdef HAVE_LIBSICKSAXIS
-   ss_init(sixaxis, USB_SLOTS);
-#endif
-
    return gx;
 }
 
@@ -780,48 +649,6 @@ static void gx_input_poll(void *data)
 			   gx_input_set_keybinds(NULL, DEVICE_GAMECUBE, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
 		 }
       }
-
-#ifdef HAVE_LIBSICKSAXIS
-	  /* Only have 2 ports for now */
-	  if (port < USB_SLOTS && ss_is_ready(&sixaxis[port]))
-      {
-         ss_read_pad(&sixaxis[port]);
-
-		 *state_cur |= (sixaxis[port].pad.buttons.PS)       ? (1ULL << GX_SIXAXIS_PS) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.cross)    ? (1ULL << GX_SIXAXIS_CROSS) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.square)   ? (1ULL << GX_SIXAXIS_SQUARE) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.select)   ? (1ULL << GX_SIXAXIS_SELECT) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.start)    ? (1ULL << GX_SIXAXIS_START) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.up)       ? (1ULL << GX_SIXAXIS_UP) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.down)     ? (1ULL << GX_SIXAXIS_DOWN) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.left)     ? (1ULL << GX_SIXAXIS_LEFT) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.right)    ? (1ULL << GX_SIXAXIS_RIGHT) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.circle)   ? (1ULL << GX_SIXAXIS_CIRCLE) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.triangle) ? (1ULL << GX_SIXAXIS_TRIANGLE) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.L1)       ? (1ULL << GX_SIXAXIS_L1) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.R1)       ? (1ULL << GX_SIXAXIS_R1) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.L2)       ? (1ULL << GX_SIXAXIS_L2) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.R2)       ? (1ULL << GX_SIXAXIS_R2) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.L3)       ? (1ULL << GX_SIXAXIS_L3) : 0;
-         *state_cur |= (sixaxis[port].pad.buttons.R3)       ? (1ULL << GX_SIXAXIS_R3) : 0;
-
-		 int16_t ls_x = (int16_t)(sixaxis[port].pad.left_analog.x - 128) << 8;
-		 int16_t ls_y = (int16_t)(sixaxis[port].pad.left_analog.y - 128) << 8;
-		 int16_t rs_x = (int16_t)(sixaxis[port].pad.right_analog.x - 128) << 8;
-		 int16_t rs_y = (int16_t)(sixaxis[port].pad.right_analog.y - 128) << 8;
-
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ls_x;
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ls_y;
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = rs_x;
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = rs_y;
-
-		 if (g_settings.input.autodetect_enable)
-		{
-		   if (strcmp(g_settings.input.device_names[port], "DualShock3/Sixaxis") != 0)
-			  gx_input_set_keybinds(NULL, DEVICE_SIXAXIS, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-		}
-	  }
-#endif
 
 #ifdef HW_RVL
       uint32_t ptype = 0;
@@ -980,9 +807,6 @@ static void gx_input_poll(void *data)
    if (*state_p1 & ((1ULL << GX_WIIMOTE_HOME) | (1ULL << GX_GC_HOME)
 #ifdef HW_RVL
             | (1ULL << GX_CLASSIC_HOME)
-#endif
-#ifdef HAVE_LIBSICKSAXIS
-            | (1ULL << GX_SIXAXIS_PS)
 #endif
             ))
       *lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
