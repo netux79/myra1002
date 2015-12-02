@@ -545,9 +545,8 @@ static void *gx_init(const video_info_t *video,
    if (!gx)
       return NULL;
 
-   /*void *gxinput = input_gx.init();
-   *input = gxinput ? &input_gx : NULL;
-   *input_data = gxinput;*/
+   /* Instead of setting up the input driver here we set it to null
+    * so retroarch can set it up separately allowing different drivers */
    *input = NULL;
    *input_data = NULL;
 
