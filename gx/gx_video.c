@@ -342,7 +342,17 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
    g_current_framebuf = 0;
 }
 
-const char *gx_get_video_mode(void)
+void gx_set_resolution(void *data, unsigned res_index)
+{
+	static unsigned actual_res_index = GX_RESOLUTIONS_640_480;
+	if (res_index != actual_res_index)
+	{
+		gx_set_video_mode(data, gx_resolutions[res_index][0], gx_resolutions[res_index][1]);
+		actual_res_index = res_index;
+	}
+}
+
+const char *gx_get_resolution(void)
 {
    static char format[16];
    snprintf(format, sizeof(format), "%.3ux%.3u%c", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? 'i' : 'p');
@@ -517,10 +527,6 @@ static void *gx_init(const video_info_t *video,
    if (driver.video_data)
    {
       gx_video_t *gx = (gx_video_t*)driver.video_data;
-
-      /*Activate saved resolution.*/
-	  gx_set_video_mode(gx, gx_resolutions[g_extern.console.screen.resolutions.current.id][0],
-							gx_resolutions[g_extern.console.screen.resolutions.current.id][1]);
 
 	  if (gx->scale != video->input_scale || gx->rgb32 != video->rgb32)
       {

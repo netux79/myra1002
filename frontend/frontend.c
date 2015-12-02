@@ -201,6 +201,10 @@ int main_entry_iterate(signature(), args_type() args)
    {
       // Menu should always run with vsync on.
       video_set_nonblock_state_func(false);
+#ifdef GEKKO
+      // Change video resolution to the standard 640 x 480
+      gx_set_resolution(driver.video_data, GX_RESOLUTIONS_640_480);
+#endif
       // Stop all rumbling when entering RGUI.
       for (i = 0; i < MAX_PLAYERS; i++)
       {
@@ -234,6 +238,10 @@ int main_entry_iterate(signature(), args_type() args)
       {
          g_extern.lifecycle_state &= ~(1ULL << MODE_MENU);
          driver_set_nonblock_state(driver.nonblock_state);
+#ifdef GEKKO
+         // restore the resolution for the current core
+		 gx_set_resolution(driver.video_data, g_extern.console.screen.resolutions.current.id);
+#endif
 
          if (driver.audio_data && !g_extern.audio_data.mute && !audio_start_func())
          {

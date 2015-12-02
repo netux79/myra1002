@@ -12,6 +12,7 @@ config.log
 *.sdf
 *.opensdf
 *.suo
+*.*~
 Debug
 Release
 ipch

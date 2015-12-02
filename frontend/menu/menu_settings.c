@@ -2,7 +2,7 @@
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
  *  Copyright (C) 2011-2014 - Daniel De Matteis
  *  Copyright (C) 2012-2014 - Michael Lelli
- * 
+ *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -40,46 +40,6 @@
 
 #ifdef GEKKO
 #define MAX_GAMMA_SETTING 2
-
-static unsigned rgui_gx_resolutions[GX_RESOLUTIONS_LAST][2] = {
-   { 512, 192 },
-   { 598, 200 },
-   { 640, 200 },
-   { 384, 224 },
-   { 448, 224 },
-   { 480, 224 },
-   { 512, 224 },
-   { 576, 224 },
-   { 608, 224 },
-   { 640, 224 },
-   { 340, 232 },
-   { 512, 232 },
-   { 512, 236 },
-   { 336, 240 },
-   { 384, 240 },
-   { 512, 240 },
-   { 530, 240 },
-   { 640, 240 },
-   { 512, 384 },
-   { 598, 400 },
-   { 640, 400 },
-   { 384, 448 },
-   { 448, 448 },
-   { 480, 448 },
-   { 512, 448 },
-   { 576, 448 },
-   { 608, 448 },
-   { 640, 448 },
-   { 340, 464 },
-   { 512, 464 },
-   { 512, 472 },
-   { 384, 480 },
-   { 512, 480 },
-   { 530, 480 },
-   { 640, 480 },
-};
-
-/*static unsigned rgui_current_gx_resolution = GX_RESOLUTIONS_640_480;*/
 #else
 #define MAX_GAMMA_SETTING 1
 #endif
@@ -89,7 +49,7 @@ unsigned menu_type_is(unsigned type)
    unsigned ret = 0;
    bool type_found;
 
-   type_found = 
+   type_found =
       type == RGUI_SETTINGS ||
       type == RGUI_SETTINGS_GENERAL_OPTIONS ||
       type == RGUI_SETTINGS_CORE_OPTIONS ||
@@ -271,7 +231,7 @@ static int shader_manager_toggle_setting(void *data, void *video_data, unsigned 
    else if ((dist_shader % 3) == 0 || setting == RGUI_SETTINGS_SHADER_PRESET)
    {
       dist_shader /= 3;
-      struct gfx_shader_pass *pass = setting == RGUI_SETTINGS_SHADER_PRESET ? 
+      struct gfx_shader_pass *pass = setting == RGUI_SETTINGS_SHADER_PRESET ?
          &rgui->shader.pass[dist_shader] : NULL;
       switch (action)
       {
@@ -556,7 +516,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             g_settings.block_sram_overwrite = false;
          break;
       case RGUI_SETTINGS_PER_CORE_CONFIG:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT 
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
                || action == RGUI_ACTION_LEFT)
             g_settings.core_specific_config = !g_settings.core_specific_config;
          else if (action == RGUI_ACTION_START)
@@ -1073,7 +1033,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             // FIXME: The array indices here look totally wrong ... Fixed it so it looks kind of sane for now.
             if (keybind_action != KEYBINDS_ACTION_NONE)
                driver.input->set_keybinds(driver.input_data, g_settings.input.device[port], port,
-                     setting - RGUI_SETTINGS_BIND_BEGIN, keybind_action); 
+                     setting - RGUI_SETTINGS_BIND_BEGIN, keybind_action);
          }
          else
          {
@@ -1308,7 +1268,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if(g_extern.console.screen.resolutions.current.id > 0)
             {
                g_extern.console.screen.resolutions.current.id--;
-               gx_set_video_mode(video_data, rgui_gx_resolutions[g_extern.console.screen.resolutions.current.id][0], rgui_gx_resolutions[g_extern.console.screen.resolutions.current.id][1]);
             }
          }
          else if (action == RGUI_ACTION_RIGHT)
@@ -1320,10 +1279,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                   if (CONF_GetVideo() != CONF_VIDEO_PAL)
                      return 0;
 #endif
-
                g_extern.console.screen.resolutions.current.id++;
-               gx_set_video_mode(video_data, rgui_gx_resolutions[g_extern.console.screen.resolutions.current.id][0],
-                     rgui_gx_resolutions[g_extern.console.screen.resolutions.current.id][1]);
             }
          }
          break;
@@ -1334,17 +1290,17 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_extern.console.screen.resolutions.current.idx)
             {
                g_extern.console.screen.resolutions.current.idx--;
-               g_extern.console.screen.resolutions.current.id = 
+               g_extern.console.screen.resolutions.current.id =
                   g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx];
             }
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
-            if (g_extern.console.screen.resolutions.current.idx + 1 < 
+            if (g_extern.console.screen.resolutions.current.idx + 1 <
                   g_extern.console.screen.resolutions.count)
             {
                g_extern.console.screen.resolutions.current.idx++;
-               g_extern.console.screen.resolutions.current.id = 
+               g_extern.console.screen.resolutions.current.id =
                   g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx];
             }
          }
@@ -1934,7 +1890,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
-         strlcpy(type_str, gx_get_video_mode(), type_str_size);
+         strlcpy(type_str, gx_get_resolution(), type_str_size);
          break;
 #elif defined(__CELLOS_LV2__)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
