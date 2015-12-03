@@ -149,15 +149,21 @@ static void gx_free_overlay(gx_video_t *gx)
 
 void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
 {
-   unsigned modetype, level, viHeightMultiplier, viWidth, tvmode,
+   unsigned modetype, viHeightMultiplier, viWidth, tvmode,
             max_width, max_height, i;
    bool progressive;
    gx_video_t *gx = (gx_video_t*)data;
-   (void)level;
 #ifdef GX_OPTS
    struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
 #endif
-   _CPU_ISR_Disable(level);
+   /* stop vsync callback */
+   VIDEO_SetPostRetraceCallback(NULL);
+   g_draw_done = false;
+   /* wait for next even field */
+   /* this prevents screen artefacts when switching between interlaced & non-interlaced modes */
+   do VIDEO_WaitVSync();
+   while (!VIDEO_GetNextField());
+
    VIDEO_SetBlack(true);
    VIDEO_Flush();
    viHeightMultiplier = 1;
@@ -279,35 +285,6 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
    gx->double_strike = (modetype == VI_NON_INTERLACE);
    gx->should_resize = true;
 
-   VIDEO_Configure(&gx_mode);
-   VIDEO_ClearFrameBuffer(&gx_mode, g_framebuf[0], COLOR_BLACK);
-   VIDEO_ClearFrameBuffer(&gx_mode, g_framebuf[1], COLOR_BLACK);
-   VIDEO_SetNextFramebuffer(g_framebuf[0]);
-   VIDEO_SetPostRetraceCallback(retrace_callback);
-   VIDEO_SetBlack(false);
-   VIDEO_Flush();
-
-   GX_SetViewportJitter(0, 0, gx_mode.fbWidth, gx_mode.efbHeight, 0, 1, 1);
-   GX_SetDispCopySrc(0, 0, gx_mode.fbWidth, gx_mode.efbHeight);
-
-   f32 y_scale = GX_GetYScaleFactor(gx_mode.efbHeight, gx_mode.xfbHeight);
-   u16 xfbWidth = VIDEO_PadFramebufferWidth(gx_mode.fbWidth);
-   u16 xfbHeight = GX_SetDispCopyYScale(y_scale);
-   (void)xfbHeight;
-   GX_SetDispCopyDst(xfbWidth, xfbHeight);
-
-   GX_SetCopyFilter(gx_mode.aa, gx_mode.sample_pattern, (gx_mode.xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE,
-         gx_mode.vfilter);
-   GXColor color = { 0, 0, 0, 0xff };
-   GX_SetCopyClear(color, GX_MAX_Z24);
-   GX_SetFieldMode(gx_mode.field_rendering, (gx_mode.viHeight == 2 * gx_mode.xfbHeight) ? GX_ENABLE : GX_DISABLE);
-   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-   GX_InvalidateTexAll();
-   GX_Flush();
-   _CPU_ISR_Restore(level);
-
-   RARCH_LOG("GX Resolution: %dx%d (%s)\n", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? "interlaced" : "progressive");
-
    if (rgui)
    {
       rgui->height = gx_mode.efbHeight / (gx->double_strike ? 1 : 2);
@@ -320,6 +297,31 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
       if (rgui->width > 400)
          rgui->width = 400;
    }
+
+   GX_SetViewportJitter(0, 0, gx_mode.fbWidth, gx_mode.efbHeight, 0, 1, 1);
+   GX_SetDispCopySrc(0, 0, gx_mode.fbWidth, gx_mode.efbHeight);
+
+   f32 y_scale = GX_GetYScaleFactor(gx_mode.efbHeight, gx_mode.xfbHeight);
+   u16 xfbWidth = VIDEO_PadFramebufferWidth(gx_mode.fbWidth);
+   u16 xfbHeight = GX_SetDispCopyYScale(y_scale);
+   GX_SetDispCopyDst(xfbWidth, xfbHeight);
+
+   GX_SetCopyFilter(gx_mode.aa, gx_mode.sample_pattern, (gx_mode.xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, gx_mode.vfilter);
+   GXColor color = { 0, 0, 0, 0xff };
+   GX_SetCopyClear(color, GX_MAX_Z24);
+   GX_SetFieldMode(gx_mode.field_rendering, (gx_mode.viHeight == 2 * gx_mode.xfbHeight) ? GX_ENABLE : GX_DISABLE);
+   GX_InvalidateTexAll();
+   GX_Flush();
+
+   VIDEO_Configure(&gx_mode);
+   VIDEO_ClearFrameBuffer(&gx_mode, g_framebuf[0], COLOR_BLACK);
+   VIDEO_ClearFrameBuffer(&gx_mode, g_framebuf[1], COLOR_BLACK);
+   VIDEO_SetNextFramebuffer(g_framebuf[0]);
+   g_current_framebuf = 0;
+   VIDEO_SetPostRetraceCallback(retrace_callback);
+   VIDEO_SetBlack(false);
+   VIDEO_Flush();
+   VIDEO_WaitVSync();
 
    if (tvmode == VI_PAL)
    {
@@ -336,12 +338,12 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
          driver_set_monitor_refresh_rate(59.94f);
    }
 
+   RARCH_LOG("GX Resolution: %dx%d (%s)\n", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? "interlaced" : "progressive");
    /* don't spam the queue when scrolling through resolutions*/
-   msg_queue_clear(g_extern.msg_queue);
+   /*msg_queue_clear(g_extern.msg_queue);*/
 
-   g_current_framebuf = 0;
    /* Wait a bit before proceeding..*/
-   usleep(30000);
+   /*usleep(30000);*/
 }
 
 void gx_set_resolution(void *data, unsigned res_index)
@@ -387,6 +389,9 @@ static void setup_video_mode(void *data)
    g_orientation = ORIENTATION_NORMAL;
    LWP_InitQueue(&g_video_cond);
 
+   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
+
+
    VIDEO_GetPreferredMode(&gx_mode);
    gx_set_video_mode(data, 0, 0);
 }
@@ -425,7 +430,6 @@ static void init_vtx(void *data)
 
    GX_SetCullMode(GX_CULL_NONE);
    GX_SetClipMode(GX_CLIP_DISABLE);
-   GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
    GX_SetZMode(GX_ENABLE, GX_ALWAYS, GX_ENABLE);
    GX_SetColorUpdate(GX_TRUE);
    GX_SetAlphaUpdate(GX_FALSE);
