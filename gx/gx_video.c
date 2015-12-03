@@ -336,10 +336,12 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
          driver_set_monitor_refresh_rate(59.94f);
    }
 
-   // don't spam the queue when scrolling through resolutions
+   /* don't spam the queue when scrolling through resolutions*/
    msg_queue_clear(g_extern.msg_queue);
 
    g_current_framebuf = 0;
+   /* Wait a bit before proceeding..*/
+   usleep(30000);
 }
 
 void gx_set_resolution(void *data, unsigned res_index)
@@ -352,10 +354,10 @@ void gx_set_resolution(void *data, unsigned res_index)
 	}
 }
 
-const char *gx_get_resolution(void)
+const char *gx_get_resolution(unsigned res_index)
 {
    static char format[16];
-   snprintf(format, sizeof(format), "%.3ux%.3u%c", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? 'i' : 'p');
+   snprintf(format, sizeof(format), "%.3ux%.3u", gx_resolutions[res_index][0], gx_resolutions[res_index][1]);
    return format;
 }
 

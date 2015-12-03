@@ -1890,7 +1890,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
-         strlcpy(type_str, gx_get_resolution(), type_str_size);
+         strlcpy(type_str, gx_get_resolution(g_extern.console.screen.resolutions.current.id), type_str_size);
          break;
 #elif defined(__CELLOS_LV2__)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:

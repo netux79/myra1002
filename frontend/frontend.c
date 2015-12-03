@@ -182,6 +182,10 @@ int main_entry_iterate(signature(), args_type() args)
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_GAME))
    {
+#ifdef GEKKO
+      // restore the resolution for the current core
+	  gx_set_resolution(driver.video_data, g_extern.console.screen.resolutions.current.id);
+#endif
       bool r;
       if (g_extern.is_paused && !g_extern.is_oneshot)
          r = rarch_main_idle_iterate();
@@ -238,10 +242,6 @@ int main_entry_iterate(signature(), args_type() args)
       {
          g_extern.lifecycle_state &= ~(1ULL << MODE_MENU);
          driver_set_nonblock_state(driver.nonblock_state);
-#ifdef GEKKO
-         // restore the resolution for the current core
-		 gx_set_resolution(driver.video_data, g_extern.console.screen.resolutions.current.id);
-#endif
 
          if (driver.audio_data && !g_extern.audio_data.mute && !audio_start_func())
          {

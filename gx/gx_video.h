@@ -2,7 +2,7 @@
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
  *  Copyright (C) 2011-2014 - Daniel De Matteis
  *  Copyright (C) 2012-2014 - Michael Lelli
- * 
+ *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -45,7 +45,7 @@ typedef struct gx_video
 } gx_video_t;
 
 void gx_set_resolution(void *data, unsigned res_index);
-const char *gx_get_resolution(void);
+const char *gx_get_resolution(unsigned res_index);
 
 enum
 {
@@ -74,12 +74,12 @@ enum
    GX_RESOLUTIONS_448_448,
    GX_RESOLUTIONS_480_448,
    GX_RESOLUTIONS_512_448,
-   GX_RESOLUTIONS_576_448, 
-   GX_RESOLUTIONS_608_448, 
-   GX_RESOLUTIONS_640_448, 
-   GX_RESOLUTIONS_340_464, 
-   GX_RESOLUTIONS_512_464, 
-   GX_RESOLUTIONS_512_472, 
+   GX_RESOLUTIONS_576_448,
+   GX_RESOLUTIONS_608_448,
+   GX_RESOLUTIONS_640_448,
+   GX_RESOLUTIONS_340_464,
+   GX_RESOLUTIONS_512_464,
+   GX_RESOLUTIONS_512_472,
    GX_RESOLUTIONS_384_480,
    GX_RESOLUTIONS_512_480,
    GX_RESOLUTIONS_530_480,
