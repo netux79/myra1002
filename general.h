@@ -1,7 +1,7 @@
 /*  RetroArch - A frontend for libretro.
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
  *  Copyright (C) 2011-2014 - Daniel De Matteis
- * 
+ *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -90,6 +90,9 @@ extern "C" {
 enum menu_enums
 {
    MODE_GAME = 0,
+#ifdef GEKKO
+   MODE_GAME_RUN,
+#endif
    MODE_LOAD_GAME,
    MODE_MENU,
    MODE_EXIT,
@@ -127,7 +130,7 @@ enum sound_mode_enums
 // All config related settings go here.
 struct settings
 {
-   struct 
+   struct
    {
       char driver[32];
       char gl_context[32];
@@ -181,7 +184,7 @@ struct settings
    } video;
 
 #ifdef HAVE_MENU
-   struct 
+   struct
    {
       char driver[32];
    } menu;
@@ -383,7 +386,7 @@ struct global
 #ifdef HAVE_FILE_LOGGER
    char default_log_file[PATH_MAX];
 #endif
-   
+
    char basename[PATH_MAX];
    char fullpath[PATH_MAX];
    char savefile_name_srm[PATH_MAX];
@@ -434,12 +437,12 @@ struct global
 
       const char *input_desc_btn[MAX_PLAYERS][RARCH_FIRST_CUSTOM_BIND];
       char valid_extensions[PATH_MAX];
-      
+
       retro_keyboard_event_t key_event;
 
       struct retro_audio_callback audio_callback;
 
-      struct retro_disk_control_callback disk_control; 
+      struct retro_disk_control_callback disk_control;
       struct retro_hw_render_callback hw_render_callback;
       struct retro_camera_callback camera_callback;
       struct retro_location_callback location_callback;
@@ -478,7 +481,7 @@ struct global
       const rarch_dsp_plugin_t *dsp_plugin;
       void *dsp_handle;
 
-      bool rate_control; 
+      bool rate_control;
       double orig_src_ratio;
       size_t driver_buffer_size;
 
@@ -762,5 +765,3 @@ static inline void rarch_fail(int error_code, const char *error)
 }
 
 #endif
-
-

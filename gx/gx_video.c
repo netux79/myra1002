@@ -34,7 +34,7 @@
 
 #define SYSMEM1_SIZE 0x01800000
 
-static unsigned gx_resolutions[35][2] = {
+static unsigned gx_resolutions[][2] = {
    { 512, 192 },
    { 598, 200 },
    { 640, 200 },
@@ -70,6 +70,7 @@ static unsigned gx_resolutions[35][2] = {
    { 512, 480 },
    { 530, 480 },
    { 640, 480 },
+   { 0, 0 },
 };
 
 void *g_framebuf[2];
@@ -141,17 +142,18 @@ static void gx_free_overlay(gx_video_t *gx)
 }
 #endif
 
-void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
+void gx_set_video_mode(void *data, unsigned res_index)
 {
    unsigned modetype, viHeightMultiplier, viWidth, tvmode,
-            max_width, max_height, i;
+            max_width, max_height, i, fbWidth, lines;
    bool progressive;
    gx_video_t *gx = (gx_video_t*)data;
+
    /* stop vsync callback */
    VIDEO_SetPostRetraceCallback(NULL);
    g_draw_done = false;
-   /* wait for next even field */
-   /* this prevents screen artefacts when switching between interlaced & non-interlaced modes */
+   /* wait for next even field, this prevents screen artefacts
+    * when switching between interlaced & non-interlaced modes */
    do VIDEO_WaitVSync();
    while (!VIDEO_GetNextField());
 
@@ -203,6 +205,9 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
          max_height = VI_MAX_HEIGHT_EURGB60;
          break;
    }
+
+   fbWidth = gx_resolutions[res_index][0];
+   lines = gx_resolutions[res_index][1];
 
    if (lines == 0 || fbWidth == 0)
    {
@@ -334,16 +339,6 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
    RARCH_LOG("GX Resolution: %dx%d (%s)\n", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? "interlaced" : "progressive");
 }
 
-void gx_set_resolution(void *data, unsigned res_index)
-{
-	static unsigned actual_res_index = GX_RESOLUTIONS_640_480;
-	if (res_index != actual_res_index)
-	{
-		gx_set_video_mode(data, gx_resolutions[res_index][0], gx_resolutions[res_index][1]);
-		actual_res_index = res_index;
-	}
-}
-
 const char *gx_get_resolution(unsigned res_index)
 {
    static char format[16];
@@ -353,7 +348,7 @@ const char *gx_get_resolution(unsigned res_index)
 
 static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
 {
-   gx_video_t *gx = (gx_video_t*)driver.video_data;
+   gx_video_t *gx = (gx_video_t*)data;
 
    if (aspect_ratio_idx == ASPECT_RATIO_SQUARE)
       gfx_set_square_pixel_viewport(g_extern.system.av_info.geometry.base_width, g_extern.system.av_info.geometry.base_height);
@@ -367,21 +362,44 @@ static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
    gx->should_resize = true;
 }
 
-static void setup_video_mode(void *data)
+static void gx_overlay_enable(void *data, bool state)
+{
+   gx_video_t *gx = (gx_video_t*)data;
+   gx->overlay_enable = state;
+}
+
+void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay)
+{
+	static unsigned actual_res_index = GX_RESOLUTIONS_DEFAULT;
+	static unsigned actual_aspect_ratio_index = ASPECT_RATIO_4_3;
+
+	if (res_index != actual_res_index)
+	{
+		gx_set_video_mode(data, res_index);
+		actual_res_index = res_index;
+	}
+
+	if (aspect_idx != actual_aspect_ratio_index)
+	{
+		gx_set_aspect_ratio(data, aspect_idx);
+		actual_aspect_ratio_index = aspect_idx;
+	}
+
+	gx_overlay_enable(data, show_overlay);
+}
+
+static void init_video_mode(void *data)
 {
    for (unsigned i = 0; i < 2; i++)
       g_framebuf[i] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
 
-   g_current_framebuf = 0;
-   g_draw_done = true;
    g_orientation = ORIENTATION_NORMAL;
    LWP_InitQueue(&g_video_cond);
 
    GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-
-
+   /* TODO: Check if this call is needed, within gx_set_video_mode all its params are been set manually */
    VIDEO_GetPreferredMode(&gx_mode);
-   gx_set_video_mode(data, 0, 0);
+   gx_set_video_mode(data, GX_RESOLUTIONS_DEFAULT);
 }
 
 static void init_texture(void *data, unsigned width, unsigned height)
@@ -412,9 +430,6 @@ static void init_texture(void *data, unsigned width, unsigned height)
 
 static void init_vtx(void *data)
 {
-   gx_video_t *gx = (gx_video_t*)data;
-   (void)gx;
-
    GX_SetCullMode(GX_CULL_NONE);
    GX_SetClipMode(GX_CLIP_DISABLE);
    GX_SetZMode(GX_ENABLE, GX_ALWAYS, GX_ENABLE);
@@ -549,7 +564,7 @@ static void *gx_init(const video_info_t *video,
    VIDEO_Init();
    GX_Init(gx_fifo, sizeof(gx_fifo));
 
-   setup_video_mode(gx);
+   init_video_mode(gx);
    init_vtx(gx);
    build_disp_list();
 
@@ -932,8 +947,6 @@ static bool gx_frame(void *data, const void *frame,
    gx_video_t *gx = (gx_video_t*)driver.video_data;
    u8 clear_efb = GX_FALSE;
 
-   (void)data;
-
    if(!frame && !gx->rgui_texture_enable)
       return true;
 
@@ -1180,12 +1193,6 @@ static void gx_overlay_vertex_geom(void *data, unsigned image, float x, float y,
    o->vertex_coord[2] = x + w; o->vertex_coord[3] = y;
    o->vertex_coord[4] = x;     o->vertex_coord[5] = y + h;
    o->vertex_coord[6] = x + w; o->vertex_coord[7] = y + h;
-}
-
-static void gx_overlay_enable(void *data, bool state)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   gx->overlay_enable = state;
 }
 
 static void gx_overlay_full_screen(void *data, bool enable)

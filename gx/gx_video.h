@@ -44,7 +44,7 @@ typedef struct gx_video
 #endif
 } gx_video_t;
 
-void gx_set_resolution(void *data, unsigned res_index);
+void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay);
 const char *gx_get_resolution(unsigned res_index);
 
 enum
@@ -84,8 +84,8 @@ enum
    GX_RESOLUTIONS_512_480,
    GX_RESOLUTIONS_530_480,
    GX_RESOLUTIONS_640_480,
-   GX_RESOLUTIONS_LAST,
+   GX_RESOLUTIONS_DEFAULT,
+   GX_RESOLUTIONS_LAST = GX_RESOLUTIONS_DEFAULT,
 };
 
 #endif
-

@@ -1251,9 +1251,10 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.video.aspect_ratio_idx < LAST_ASPECT_RATIO)
                g_settings.video.aspect_ratio_idx++;
          }
-
+#ifndef GEKKO
          if (driver.video_poke && driver.video_poke->set_aspect_ratio)
             driver.video_poke->set_aspect_ratio(video_data, g_settings.video.aspect_ratio_idx);
+#endif
          break;
 
       case RGUI_SETTINGS_TOGGLE_FULLSCREEN:

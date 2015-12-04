@@ -160,8 +160,10 @@ int main_entry_iterate(signature(), args_type() args)
       if (load_menu_game())
       {
          g_extern.lifecycle_state |= (1ULL << MODE_GAME);
+#ifndef GEKKO
          if (driver.video_poke && driver.video_poke->set_aspect_ratio)
-            driver.video_poke->set_aspect_ratio(driver.video_data, g_settings.video.aspect_ratio_idx);
+            video_set_aspect_ratio_func(driver.video_data, g_settings.video.aspect_ratio_idx);
+#endif
       }
       else
       {
@@ -181,11 +183,20 @@ int main_entry_iterate(signature(), args_type() args)
 
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_GAME))
-   {
 #ifdef GEKKO
-      // restore the resolution for the current core
-	  gx_set_resolution(driver.video_data, g_extern.console.screen.resolutions.current.id);
+   {
+	  g_extern.lifecycle_state |= (1ULL << MODE_GAME_RUN);
+      // setup the screen for the current core
+	  gx_update_screen_config(driver.video_data,
+							  g_extern.console.screen.resolutions.current.id,
+							  g_settings.video.aspect_ratio_idx,
+							  true);
+
+      g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
+   }
+   else if (g_extern.lifecycle_state & (1ULL << MODE_GAME_RUN))
 #endif
+   {
       bool r;
       if (g_extern.is_paused && !g_extern.is_oneshot)
          r = rarch_main_idle_iterate();
@@ -198,7 +209,11 @@ int main_entry_iterate(signature(), args_type() args)
             frontend_ctx->process_events(args);
       }
       else
-         g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
+#ifdef GEKKO
+         g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
+#else
+		 g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
+#endif
    }
 #ifdef HAVE_MENU
    else if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
@@ -206,8 +221,8 @@ int main_entry_iterate(signature(), args_type() args)
       // Menu should always run with vsync on.
       video_set_nonblock_state_func(false);
 #ifdef GEKKO
-      // Change video resolution to the standard 640 x 480
-      gx_set_resolution(driver.video_data, GX_RESOLUTIONS_640_480);
+      // Change video resolution to the preferred mode
+      gx_update_screen_config(driver.video_data, GX_RESOLUTIONS_DEFAULT, ASPECT_RATIO_4_3, false);
 #endif
       // Stop all rumbling when entering RGUI.
       for (i = 0; i < MAX_PLAYERS; i++)
