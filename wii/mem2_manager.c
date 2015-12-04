@@ -4,8 +4,8 @@
 
 #include <ogc/machine/asm.h>
 #include <ogc/lwp_heap.h>
+#include <ogc/lwp_threads.h>
 #include <ogc/system.h>
-#include "../gx/ppc_asm.h"
 #include <string.h>
 #include <malloc.h>
 #include <unistd.h>

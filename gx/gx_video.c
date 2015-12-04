@@ -32,9 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ppc_asm.h"
-#include "gx_video_inl.h"
-
 #define SYSMEM1_SIZE 0x01800000
 
 static unsigned gx_resolutions[35][2] = {
@@ -137,9 +134,6 @@ extern rgui_handle_t *rgui;
 static void gx_render_overlay(void *data);
 static void gx_free_overlay(gx_video_t *gx)
 {
-#ifdef GX_OPTS
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
-#endif
    free(gx->overlay);
    gx->overlay = NULL;
    gx->overlays = 0;
@@ -153,9 +147,6 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
             max_width, max_height, i;
    bool progressive;
    gx_video_t *gx = (gx_video_t*)data;
-#ifdef GX_OPTS
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
-#endif
    /* stop vsync callback */
    VIDEO_SetPostRetraceCallback(NULL);
    g_draw_done = false;
@@ -396,7 +387,6 @@ static void setup_video_mode(void *data)
 static void init_texture(void *data, unsigned width, unsigned height)
 {
    unsigned g_filter, rgui_w, rgui_h;
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
    gx_video_t *gx = (gx_video_t*)data;
 
    width &= ~3;
@@ -411,13 +401,13 @@ static void init_texture(void *data, unsigned width, unsigned height)
       rgui_h = rgui->height;
    }
 
-   struct __gx_texobj *fb_ptr = (struct __gx_texobj*)&g_tex.obj;
-   struct __gx_texobj *menu_ptr = (struct __gx_texobj*)&menu_tex.obj;
-   __GX_InitTexObj(fb_ptr, g_tex.data, width, height, (gx->rgb32) ? GX_TF_RGBA8 : gx->rgui_texture_enable ? GX_TF_RGB5A3 : GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-   __GX_InitTexObjFilterMode(fb_ptr, g_filter, g_filter);
-   __GX_InitTexObj(menu_ptr, menu_tex.data, rgui_w, rgui_h, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
-   __GX_InitTexObjFilterMode(menu_ptr, g_filter, g_filter);
-   __GX_InvalidateTexAll(__gx);
+   GXTexObj *fb_ptr = (GXTexObj*)&g_tex.obj;
+   GXTexObj *menu_ptr = (GXTexObj*)&menu_tex.obj;
+   GX_InitTexObj(fb_ptr, g_tex.data, width, height, (gx->rgb32) ? GX_TF_RGBA8 : gx->rgui_texture_enable ? GX_TF_RGB5A3 : GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+   GX_InitTexObjFilterMode(fb_ptr, g_filter, g_filter);
+   GX_InitTexObj(menu_ptr, menu_tex.data, rgui_w, rgui_h, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+   GX_InitTexObjFilterMode(menu_ptr, g_filter, g_filter);
+   GX_InvalidateTexAll();
 }
 
 static void init_vtx(void *data)
@@ -522,9 +512,6 @@ static void gx_restart(void) { }
 static void *gx_init(const video_info_t *video,
       const input_driver_t **input, void **input_data)
 {
-#ifdef GX_OPTS
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
-#endif
    g_vsync = video->vsync;
 
    if (driver.video_data)
@@ -943,7 +930,6 @@ static bool gx_frame(void *data, const void *frame,
       const char *msg)
 {
    gx_video_t *gx = (gx_video_t*)driver.video_data;
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
    u8 clear_efb = GX_FALSE;
 
    (void)data;
@@ -993,17 +979,17 @@ static bool gx_frame(void *data, const void *frame,
       DCFlushRange(menu_tex.data, rgui->width * rgui->height * 2);
    }
 
-   __GX_InvalidateTexAll(__gx);
+   GX_InvalidateTexAll();
 
-   __GX_SetCurrentMtx(__gx, GX_PNMTX0);
+   GX_SetCurrentMtx(GX_PNMTX0);
    GX_LoadTexObj(&g_tex.obj, GX_TEXMAP0);
-   __GX_CallDispList(__gx, display_list, display_list_size);
+   GX_CallDispList(display_list, display_list_size);
 
    if (gx->rgui_texture_enable)
    {
-      __GX_SetCurrentMtx(__gx, GX_PNMTX1);
+      GX_SetCurrentMtx(GX_PNMTX1);
       GX_LoadTexObj(&menu_tex.obj, GX_TEXMAP0);
-      __GX_CallDispList(__gx, display_list, display_list_size);
+      GX_CallDispList(display_list, display_list_size);
    }
 
 #ifdef HAVE_OVERLAY
@@ -1043,8 +1029,8 @@ static bool gx_frame(void *data, const void *frame,
       clear_efb = GX_TRUE;
    }
 
-   __GX_CopyDisp(__gx, g_framebuf[g_current_framebuf], clear_efb);
-   __GX_Flush(__gx);
+   GX_CopyDisp(g_framebuf[g_current_framebuf], clear_efb);
+   GX_Flush();
    VIDEO_SetNextFramebuffer(g_framebuf[g_current_framebuf]);
    VIDEO_Flush();
 
@@ -1141,9 +1127,6 @@ static bool gx_overlay_load(void *data, const struct texture_image *images, unsi
 {
    unsigned i;
    gx_video_t *gx = (gx_video_t*)data;
-#ifdef GX_OPTS
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
-#endif
 
    gx_free_overlay(gx);
    gx->overlay = (struct gx_overlay_data*)calloc(num_images, sizeof(*gx->overlay));
@@ -1220,9 +1203,6 @@ static void gx_overlay_set_alpha(void *data, unsigned image, float mod)
 static void gx_render_overlay(void *data)
 {
    gx_video_t *gx = (gx_video_t*)data;
-#ifdef GX_OPTS
-   struct __gx_regdef *__gx = (struct __gx_regdef*)__gxregs;
-#endif
 
    GX_SetCurrentMtx(GX_PNMTX1);
    GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);

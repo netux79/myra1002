@@ -20,7 +20,6 @@
 #include <fat.h>
 #include <gctypes.h>
 #include <ogc/cache.h>
-#include "../../gx/ppc_asm.h"
 #include <ogc/system.h>
 #include <ogc/usbstorage.h>
 #include <sdcard/wiisd_io.h>

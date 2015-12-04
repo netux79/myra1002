@@ -32,10 +32,12 @@
 #include <intrin.h>
 #endif
 
-#if defined(__CELLOS_LV2__) || defined(GEKKO)
+#if defined(__CELLOS_LV2__)
 #ifndef _PPU_INTRINSICS_H
 #include <ppu_intrinsics.h>
 #endif
+#elif defined(GEKKO)
+#define __mftb gettime
 #elif defined(_XBOX360)
 #include <PPCIntrinsics.h>
 #elif defined(_POSIX_MONOTONIC_CLOCK) || defined(ANDROID) || defined(__QNX__)

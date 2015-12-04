@@ -3,8 +3,8 @@
  *
  *  Wii Audio/Video Encoder support
  *
- *  Copyright (C) 2009 Eke-Eke, with some code from libogc (C) Hector Martin 
- * 
+ *  Copyright (C) 2009 Eke-Eke, with some code from libogc (C) Hector Martin
+ *
  *  Redistribution and use of this code or any derivative works are permitted
  *  provided that the following conditions are met:
  *
@@ -40,7 +40,7 @@
 #include <string.h>
 #include <gccore.h>
 #include <ogcsys.h>
-#include "../gx/ppc_asm.h"
+#include <ogc/machine/processor.h>
 
 #include "vi_encoder.h"
 
