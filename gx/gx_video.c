@@ -337,13 +337,10 @@ void gx_set_video_mode(void *data, unsigned fbWidth, unsigned lines)
       else
          driver_set_monitor_refresh_rate(59.94f);
    }
+   /* don't spam the queue when changing resolution */
+   msg_queue_clear(g_extern.msg_queue);
 
    RARCH_LOG("GX Resolution: %dx%d (%s)\n", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? "interlaced" : "progressive");
-   /* don't spam the queue when scrolling through resolutions*/
-   /*msg_queue_clear(g_extern.msg_queue);*/
-
-   /* Wait a bit before proceeding..*/
-   /*usleep(30000);*/
 }
 
 void gx_set_resolution(void *data, unsigned res_index)
