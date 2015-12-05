@@ -29,7 +29,7 @@ struct gx_overlay_data
 typedef struct gx_video
 {
    bool should_resize;
-   bool keep_aspect;
+   unsigned aspect_ratio_idx;
    bool double_strike;
    bool rgb32;
    uint32_t *menu_data; // FIXME: Should be const uint16_t*.

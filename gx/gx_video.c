@@ -357,8 +357,8 @@ static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
    else if (aspect_ratio_idx == ASPECT_RATIO_CONFIG)
       gfx_set_config_viewport();
 
+   gx->aspect_ratio_idx = aspect_ratio_idx;
    g_extern.system.aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
-   gx->keep_aspect = true;
    gx->should_resize = true;
 }
 
@@ -397,8 +397,6 @@ static void init_video_mode(void *data)
    LWP_InitQueue(&g_video_cond);
 
    GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-   /* TODO: Check if this call is needed, within gx_set_video_mode all its params are been set manually */
-   VIDEO_GetPreferredMode(&gx_mode);
    gx_set_video_mode(data, GX_RESOLUTIONS_DEFAULT);
 }
 
@@ -576,10 +574,6 @@ static void *gx_init(const video_info_t *video,
    return gx;
 }
 
-#define ASM_BLITTER
-
-#ifdef ASM_BLITTER
-
 static void update_texture_asm(const uint32_t *src, const uint32_t *dst,
       unsigned width, unsigned height, unsigned pitch)
 {
@@ -648,8 +642,6 @@ static void update_texture_asm(const uint32_t *src, const uint32_t *dst,
    );
 }
 
-#endif
-
 #define BLIT_LINE_16(off) \
 { \
    const uint32_t *tmp_src = src; \
@@ -683,30 +675,9 @@ static void update_texture_asm(const uint32_t *src, const uint32_t *dst,
 static void convert_texture16(const uint32_t *_src, uint32_t *_dst,
       unsigned width, unsigned height, unsigned pitch)
 {
-#ifdef ASM_BLITTER
    width &= ~3;
    height &= ~3;
    update_texture_asm(_src, _dst, width, height, pitch);
-#else
-   width &= ~3;
-   height &= ~3;
-   unsigned tmp_pitch = pitch >> 2;
-   unsigned width2 = width >> 1;
-
-   // Texture data is 4x4 tiled @ 16bpp.
-   // Use 32-bit to transfer more data per cycle.
-   const uint32_t *src = _src;
-   uint32_t *dst = _dst;
-   for (unsigned i = 0; i < height; i += 4, dst += 4 * width2)
-   {
-#define BLIT_LINE_16_CONV(x) x
-         BLIT_LINE_16(0)
-         BLIT_LINE_16(2)
-         BLIT_LINE_16(4)
-         BLIT_LINE_16(6)
-#undef BLIT_LINE_16_CONV
-   }
-#endif
 }
 
 static void convert_texture16_conv(const uint32_t *_src, uint32_t *_dst,
@@ -761,7 +732,7 @@ static void gx_resize(void *data)
 #endif
    GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
 
-   if ((gx->keep_aspect && gx_mode.efbHeight >= 480) || g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM) /* ignore this for custom resolutions */
+   if (gx_mode.efbHeight >= 480 || gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM) /* ignore this for custom resolutions */
    {
       float desired_aspect = g_extern.system.aspect_ratio;
       if (desired_aspect == 0.0)
@@ -776,7 +747,7 @@ static void gx_resize(void *data)
       float delta;
 
 #ifdef RARCH_CONSOLE
-      if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
+      if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
       {
          if (!g_extern.console.screen.viewports.custom_vp.width || !g_extern.console.screen.viewports.custom_vp.height)
          {
