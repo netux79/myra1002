@@ -130,18 +130,6 @@ static void retrace_callback(u32 retrace_count)
 
 extern rgui_handle_t *rgui;
 
-
-#ifdef HAVE_OVERLAY
-static void gx_render_overlay(void *data);
-static void gx_free_overlay(gx_video_t *gx)
-{
-   free(gx->overlay);
-   gx->overlay = NULL;
-   gx->overlays = 0;
-   GX_InvalidateTexAll();
-}
-#endif
-
 void gx_set_video_mode(void *data, unsigned res_index)
 {
    unsigned modetype, viHeightMultiplier, viWidth, tvmode,
@@ -365,7 +353,8 @@ static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
 static void gx_overlay_enable(void *data, bool state)
 {
    gx_video_t *gx = (gx_video_t*)data;
-   gx->overlay_enable = state;
+   /* include the state of the system's overlay, never enable it if it is not set */
+   gx->overlay_enable = (!driver.overlay) ? false : state;
 }
 
 void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay)
@@ -911,6 +900,142 @@ static void gx_blit_line(unsigned x, unsigned y, const char *message)
    }
 }
 
+#ifdef HAVE_OVERLAY
+static void gx_overlay_tex_geom(void *data, unsigned image, float x, float y, float w, float h)
+{
+   gx_video_t *gx = (gx_video_t*)data;
+   struct gx_overlay_data *o = &gx->overlay[image];
+
+   o->tex_coord[0] = x;     o->tex_coord[1] = y;
+   o->tex_coord[2] = x + w; o->tex_coord[3] = y;
+   o->tex_coord[4] = x;     o->tex_coord[5] = y + h;
+   o->tex_coord[6] = x + w; o->tex_coord[7] = y + h;
+}
+
+static void gx_overlay_vertex_geom(void *data, unsigned image, float x, float y, float w, float h)
+{
+   gx_video_t *gx = (gx_video_t*)data;
+   struct gx_overlay_data *o = &gx->overlay[image];
+
+   // Flipped, so we preserve top-down semantics.
+   y = 1.0f - y;
+   h = -h;
+
+   // expand from 0 - 1 to -1 - 1
+   x = (x * 2.0f) - 1.0f;
+   y = (y * 2.0f) - 1.0f;
+   w = (w * 2.0f);
+   h = (h * 2.0f);
+
+   o->vertex_coord[0] = x;     o->vertex_coord[1] = y;
+   o->vertex_coord[2] = x + w; o->vertex_coord[3] = y;
+   o->vertex_coord[4] = x;     o->vertex_coord[5] = y + h;
+   o->vertex_coord[6] = x + w; o->vertex_coord[7] = y + h;
+}
+
+static void gx_free_overlay(gx_video_t *gx)
+{
+   free(gx->overlay);
+   gx->overlay = NULL;
+   gx->overlays = 0;
+   GX_InvalidateTexAll();
+}
+
+static bool gx_overlay_load(void *data, const struct texture_image *images, unsigned num_images)
+{
+   unsigned i;
+   gx_video_t *gx = (gx_video_t*)data;
+
+   gx_free_overlay(gx);
+   gx->overlay = (struct gx_overlay_data*)calloc(num_images, sizeof(*gx->overlay));
+   if (!gx->overlay)
+      return false;
+
+   gx->overlays = num_images;
+
+   for (i = 0; i < num_images; i++)
+   {
+      struct gx_overlay_data *o = &gx->overlay[i];
+      GX_InitTexObj(&o->tex, images[i].pixels, images[i].width, images[i].height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+      GX_InitTexObjFilterMode(&g_tex.obj, GX_LINEAR, GX_LINEAR);
+      DCFlushRange(images[i].pixels, images[i].width * images[i].height * sizeof(uint32_t));
+      gx_overlay_tex_geom(gx, i, 0, 0, 1, 1); // Default. Stretch to whole screen.
+      gx_overlay_vertex_geom(gx, i, 0, 0, 1, 1);
+      gx->overlay[i].alpha_mod = 1.0f;
+   }
+
+   GX_InvalidateTexAll();
+   return true;
+}
+
+static void gx_overlay_full_screen(void *data, bool enable)
+{
+   gx_video_t *gx = (gx_video_t*)data;
+   gx->overlay_full_screen = enable;
+}
+
+static void gx_overlay_set_alpha(void *data, unsigned image, float mod)
+{
+   gx_video_t *gx = (gx_video_t*)data;
+   gx->overlay[image].alpha_mod = mod;
+}
+
+static void gx_render_overlay(void *data)
+{
+   gx_video_t *gx = (gx_video_t*)data;
+
+   /* Only render if an overlay is available */
+   if (!gx->overlay) return;
+
+   GX_SetCurrentMtx(GX_PNMTX1);
+   GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
+   GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+   GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+
+   for (unsigned i = 0; i < gx->overlays; i++)
+   {
+      GX_LoadTexObj(&gx->overlay[i].tex, GX_TEXMAP0);
+
+      GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, 4);
+      GX_Position3f32(gx->overlay[i].vertex_coord[0], gx->overlay[i].vertex_coord[1],  -0.5);
+      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_TexCoord2f32(gx->overlay[i].tex_coord[0], gx->overlay[i].tex_coord[1]);
+
+      GX_Position3f32(gx->overlay[i].vertex_coord[2], gx->overlay[i].vertex_coord[3],  -0.5);
+      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_TexCoord2f32(gx->overlay[i].tex_coord[2], gx->overlay[i].tex_coord[3]);
+
+      GX_Position3f32(gx->overlay[i].vertex_coord[4], gx->overlay[i].vertex_coord[5],  -0.5);
+      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_TexCoord2f32(gx->overlay[i].tex_coord[4], gx->overlay[i].tex_coord[5]);
+
+      GX_Position3f32(gx->overlay[i].vertex_coord[6], gx->overlay[i].vertex_coord[7],  -0.5);
+      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_TexCoord2f32(gx->overlay[i].tex_coord[6], gx->overlay[i].tex_coord[7]);
+      GX_End();
+   }
+
+   GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
+   GX_SetVtxDesc(GX_VA_TEX0, GX_INDEX8);
+   GX_SetVtxDesc(GX_VA_CLR0, GX_INDEX8);
+}
+
+static const video_overlay_interface_t gx_overlay_interface = {
+   gx_overlay_enable,
+   gx_overlay_load,
+   gx_overlay_tex_geom,
+   gx_overlay_vertex_geom,
+   gx_overlay_full_screen,
+   gx_overlay_set_alpha,
+};
+
+static void gx_get_overlay_interface(void *data, const video_overlay_interface_t **iface)
+{
+   (void)data;
+   *iface = &gx_overlay_interface;
+}
+#endif
+
 static bool gx_frame(void *data, const void *frame,
       unsigned width, unsigned height, unsigned pitch,
       const char *msg)
@@ -1103,136 +1228,6 @@ static void gx_get_poke_interface(void *data, const video_poke_interface_t **ifa
    (void)data;
    *iface = &gx_poke_interface;
 }
-
-#ifdef HAVE_OVERLAY
-static void gx_overlay_tex_geom(void *data, unsigned image, float x, float y, float w, float h);
-static void gx_overlay_vertex_geom(void *data, unsigned image, float x, float y, float w, float h);
-static bool gx_overlay_load(void *data, const struct texture_image *images, unsigned num_images)
-{
-   unsigned i;
-   gx_video_t *gx = (gx_video_t*)data;
-
-   gx_free_overlay(gx);
-   gx->overlay = (struct gx_overlay_data*)calloc(num_images, sizeof(*gx->overlay));
-   if (!gx->overlay)
-      return false;
-
-   gx->overlays = num_images;
-
-   for (i = 0; i < num_images; i++)
-   {
-      struct gx_overlay_data *o = &gx->overlay[i];
-      GX_InitTexObj(&o->tex, images[i].pixels, images[i].width, images[i].height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-      GX_InitTexObjFilterMode(&g_tex.obj, GX_LINEAR, GX_LINEAR);
-      DCFlushRange(images[i].pixels, images[i].width * images[i].height * sizeof(uint32_t));
-      gx_overlay_tex_geom(gx, i, 0, 0, 1, 1); // Default. Stretch to whole screen.
-      gx_overlay_vertex_geom(gx, i, 0, 0, 1, 1);
-      gx->overlay[i].alpha_mod = 1.0f;
-   }
-
-   GX_InvalidateTexAll();
-   return true;
-}
-
-static void gx_overlay_tex_geom(void *data, unsigned image, float x, float y, float w, float h)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   struct gx_overlay_data *o = &gx->overlay[image];
-
-   o->tex_coord[0] = x;     o->tex_coord[1] = y;
-   o->tex_coord[2] = x + w; o->tex_coord[3] = y;
-   o->tex_coord[4] = x;     o->tex_coord[5] = y + h;
-   o->tex_coord[6] = x + w; o->tex_coord[7] = y + h;
-}
-
-static void gx_overlay_vertex_geom(void *data, unsigned image, float x, float y, float w, float h)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   struct gx_overlay_data *o = &gx->overlay[image];
-
-   // Flipped, so we preserve top-down semantics.
-   y = 1.0f - y;
-   h = -h;
-
-   // expand from 0 - 1 to -1 - 1
-   x = (x * 2.0f) - 1.0f;
-   y = (y * 2.0f) - 1.0f;
-   w = (w * 2.0f);
-   h = (h * 2.0f);
-
-   o->vertex_coord[0] = x;     o->vertex_coord[1] = y;
-   o->vertex_coord[2] = x + w; o->vertex_coord[3] = y;
-   o->vertex_coord[4] = x;     o->vertex_coord[5] = y + h;
-   o->vertex_coord[6] = x + w; o->vertex_coord[7] = y + h;
-}
-
-static void gx_overlay_full_screen(void *data, bool enable)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   gx->overlay_full_screen = enable;
-}
-
-static void gx_overlay_set_alpha(void *data, unsigned image, float mod)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   gx->overlay[image].alpha_mod = mod;
-}
-
-static void gx_render_overlay(void *data)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-
-   /* Only render if an overlay is available */
-   if (!driver.overlay) return;
-
-   GX_SetCurrentMtx(GX_PNMTX1);
-   GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
-   GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
-   GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-
-   for (unsigned i = 0; i < gx->overlays; i++)
-   {
-      GX_LoadTexObj(&gx->overlay[i].tex, GX_TEXMAP0);
-
-      GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, 4);
-      GX_Position3f32(gx->overlay[i].vertex_coord[0], gx->overlay[i].vertex_coord[1],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
-      GX_TexCoord2f32(gx->overlay[i].tex_coord[0], gx->overlay[i].tex_coord[1]);
-
-      GX_Position3f32(gx->overlay[i].vertex_coord[2], gx->overlay[i].vertex_coord[3],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
-      GX_TexCoord2f32(gx->overlay[i].tex_coord[2], gx->overlay[i].tex_coord[3]);
-
-      GX_Position3f32(gx->overlay[i].vertex_coord[4], gx->overlay[i].vertex_coord[5],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
-      GX_TexCoord2f32(gx->overlay[i].tex_coord[4], gx->overlay[i].tex_coord[5]);
-
-      GX_Position3f32(gx->overlay[i].vertex_coord[6], gx->overlay[i].vertex_coord[7],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
-      GX_TexCoord2f32(gx->overlay[i].tex_coord[6], gx->overlay[i].tex_coord[7]);
-      GX_End();
-   }
-
-   GX_SetVtxDesc(GX_VA_POS, GX_INDEX8);
-   GX_SetVtxDesc(GX_VA_TEX0, GX_INDEX8);
-   GX_SetVtxDesc(GX_VA_CLR0, GX_INDEX8);
-}
-
-static const video_overlay_interface_t gx_overlay_interface = {
-   gx_overlay_enable,
-   gx_overlay_load,
-   gx_overlay_tex_geom,
-   gx_overlay_vertex_geom,
-   gx_overlay_full_screen,
-   gx_overlay_set_alpha,
-};
-
-static void gx_get_overlay_interface(void *data, const video_overlay_interface_t **iface)
-{
-   (void)data;
-   *iface = &gx_overlay_interface;
-}
-#endif
 
 const video_driver_t video_gx = {
    .init = gx_init,
