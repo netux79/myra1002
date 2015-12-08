@@ -346,7 +346,7 @@ static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
       gfx_set_config_viewport();
 
    gx->aspect_ratio_idx = aspect_ratio_idx;
-   g_extern.system.aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
+   gx->aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
    gx->should_resize = true;
 }
 
@@ -723,9 +723,7 @@ static void gx_resize(void *data)
 
    if (gx_mode.efbHeight >= 480 || gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM) /* ignore this for custom resolutions */
    {
-      float desired_aspect = g_extern.system.aspect_ratio;
-      if (desired_aspect == 0.0)
-         desired_aspect = 1.0;
+      float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f;
 #ifdef HW_RVL
       float device_aspect = CONF_GetAspectRatio() == CONF_ASPECT_4_3 ? 4.0 / 3.0 : 16.0 / 9.0;
 #else
@@ -968,12 +966,6 @@ static bool gx_overlay_load(void *data, const struct texture_image *images, unsi
    return true;
 }
 
-static void gx_overlay_full_screen(void *data, bool enable)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   gx->overlay_full_screen = enable;
-}
-
 static void gx_overlay_set_alpha(void *data, unsigned image, float mod)
 {
    gx_video_t *gx = (gx_video_t*)data;
@@ -1025,7 +1017,7 @@ static const video_overlay_interface_t gx_overlay_interface = {
    gx_overlay_load,
    gx_overlay_tex_geom,
    gx_overlay_vertex_geom,
-   gx_overlay_full_screen,
+   NULL,
    gx_overlay_set_alpha,
 };
 
