@@ -104,7 +104,6 @@ const struct platform_bind platform_keys[] = {
 #endif
 };
 
-
 extern const rarch_joypad_driver_t gx_joypad;
 
 static bool g_menu;
@@ -289,9 +288,7 @@ static int16_t gx_input_state(void *data, const struct retro_keybind **binds,
 
 static void gx_input_free_input(void *data)
 {
-   unsigned i;
    (void)data;
-   (void)i;
 }
 
 
@@ -300,9 +297,6 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
 {
    uint64_t *key = &g_settings.input.binds[port][id].joykey;
    size_t arr_size = sizeof(platform_keys) / sizeof(platform_keys[0]);
-
-   (void)device;
-   (void)data;
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND))
       *key = g_settings.input.binds[port][id].def_joykey;
@@ -556,7 +550,6 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
 
 static void *gx_input_init(void)
 {
-   unsigned i;
    gx_input_t *gx = (gx_input_t*)calloc(1, sizeof(*gx));
    if (!gx)
       return NULL;
@@ -571,7 +564,6 @@ static void *gx_input_init(void)
    SYS_SetPowerCallback(power_callback);
 #endif
 
-   (void)i;
    return gx;
 }
 
@@ -596,11 +588,6 @@ static void gx_input_poll(void *data)
 {
    gx_input_t *gx = (gx_input_t*)data;
 
-   gx->pad_state[0] = 0;
-   gx->pad_state[1] = 0;
-   gx->pad_state[2] = 0;
-   gx->pad_state[3] = 0;
-
    uint8_t gcpad = PAD_ScanPads();
 
 #ifdef HW_RVL
@@ -612,6 +599,7 @@ static void gx_input_poll(void *data)
       uint32_t down = 0;
 	  uint64_t *state_cur = &gx->pad_state[port];
 
+	  *state_cur = 0; /* first reset the state */
       if (gcpad & (1 << port))
       {
 		 down = PAD_ButtonsHeld(port);
@@ -657,10 +645,8 @@ static void gx_input_poll(void *data)
       if (connected == WPAD_ERR_NONE)
       {
          WPADData *wpaddata = WPAD_Data(port);
-
-         down = wpaddata->btns_h;
-
          expansion_t *exp = &wpaddata->exp;
+         down = wpaddata->btns_h;
 
          *state_cur |= (down & WPAD_BUTTON_A) ? (1ULL << GX_WIIMOTE_A) : 0;
          *state_cur |= (down & WPAD_BUTTON_B) ? (1ULL << GX_WIIMOTE_B) : 0;
@@ -670,15 +656,14 @@ static void gx_input_poll(void *data)
          *state_cur |= (down & WPAD_BUTTON_MINUS) ? (1ULL << GX_WIIMOTE_MINUS) : 0;
          *state_cur |= (down & WPAD_BUTTON_HOME) ? (1ULL << GX_WIIMOTE_HOME) : 0;
 
-          if (ptype != WPAD_EXP_NUNCHUK)
-          {
-             // rotated d-pad on Wiimote
-             *state_cur |= (down & WPAD_BUTTON_UP) ? (1ULL << GX_WIIMOTE_LEFT) : 0;
-             *state_cur |= (down & WPAD_BUTTON_DOWN) ? (1ULL << GX_WIIMOTE_RIGHT) : 0;
-             *state_cur |= (down & WPAD_BUTTON_LEFT) ? (1ULL << GX_WIIMOTE_DOWN) : 0;
-             *state_cur |= (down & WPAD_BUTTON_RIGHT) ? (1ULL << GX_WIIMOTE_UP) : 0;
-          }
-
+         if (ptype != WPAD_EXP_NUNCHUK)
+         {
+            // rotated d-pad on Wiimote
+            *state_cur |= (down & WPAD_BUTTON_UP) ? (1ULL << GX_WIIMOTE_LEFT) : 0;
+            *state_cur |= (down & WPAD_BUTTON_DOWN) ? (1ULL << GX_WIIMOTE_RIGHT) : 0;
+            *state_cur |= (down & WPAD_BUTTON_LEFT) ? (1ULL << GX_WIIMOTE_DOWN) : 0;
+            *state_cur |= (down & WPAD_BUTTON_RIGHT) ? (1ULL << GX_WIIMOTE_UP) : 0;
+         }
 
          if (ptype == WPAD_EXP_CLASSIC)
          {
@@ -781,11 +766,6 @@ static void gx_input_poll(void *data)
             }
          }
       }
-
-      for (int i = 0; i < 2; i++)
-         for (int j = 0; j < 2; j++)
-            if (gx->analog_state[port][i][j] == -0x8000)
-               gx->analog_state[port][i][j] = -0x7fff;
 #endif
    }
 
@@ -804,9 +784,9 @@ static void gx_input_poll(void *data)
       g_menu = false;
    }
 
-   if (*state_p1 & ((1ULL << GX_WIIMOTE_HOME) | (1ULL << GX_GC_HOME)
+   if (*state_p1 & ((1ULL << GX_GC_HOME)
 #ifdef HW_RVL
-            | (1ULL << GX_CLASSIC_HOME)
+            | (1ULL << GX_WIIMOTE_HOME) | (1ULL << GX_CLASSIC_HOME)
 #endif
             ))
       *lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
