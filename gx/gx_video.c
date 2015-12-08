@@ -446,7 +446,7 @@ static void init_vtx(void *data)
    GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
    GX_InvVtxCache();
 
-   GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+   GX_SetBlendMode(GX_BM_NONE, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
    g_tex.data = memalign(32, 4 * 4 * 4);
    memset(g_tex.data, 0, 4 * 4 * 4);
    memset(&g_tex.obj, 0, sizeof(GXTexObj));
