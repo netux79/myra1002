@@ -601,7 +601,9 @@ input_overlay_t *input_overlay_new(const char *overlay)
    ol->active = &ol->overlays[0];
 
    input_overlay_load_active(ol);
+#ifndef GEKKO /* don´t want enabled by default when selecting it, it will be enabled at game run time */
    ol->iface->enable(ol->iface_data, true);
+#endif
    ol->enable = true;
 
    input_overlay_set_alpha_mod(ol, g_settings.input.overlay_opacity);
@@ -822,4 +824,3 @@ void input_overlay_set_alpha_mod(input_overlay_t *ol, float mod)
    for (i = 0; i < ol->active->load_images_size; i++)
       ol->iface->set_alpha(ol->iface_data, i, g_settings.input.overlay_opacity);
 }
-
