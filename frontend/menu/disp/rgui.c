@@ -2,7 +2,7 @@
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
  *  Copyright (C) 2011-2014 - Daniel De Matteis
  *  Copyright (C) 2012-2014 - Michael Lelli
- * 
+ *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -79,7 +79,7 @@ static uint16_t gray_filler(unsigned x, unsigned y)
    y >>= 1;
    unsigned col = ((x + y) & 1) + 1;
 #if defined(GEKKO) || defined(PSP)
-   return (6 << 12) | (col << 8) | (col << 4) | (col << 0);
+   return (7 << 12) | (col << 8) | (col << 4) | (col << 0);
 #else
    return (col << 13) | (col << 9) | (col << 5) | (12 << 0);
 #endif
@@ -231,7 +231,7 @@ static void rgui_render_messagebox(void *data, void *video_data, const char *mes
    unsigned height = FONT_HEIGHT_STRIDE * list->size + 6 + 10;
    int x = (rgui->width - width) / 2;
    int y = (rgui->height - height) / 2;
-   
+
    fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
          x + 5, y + 5, width - 10, height - 10, gray_filler);
 
@@ -262,7 +262,7 @@ static void rgui_render(void *data, void *video_data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
 
-   if (rgui->need_refresh && 
+   if (rgui->need_refresh &&
          (g_extern.lifecycle_state & (1ULL << MODE_MENU))
          && !rgui->msg_force)
       return;
@@ -271,7 +271,7 @@ static void rgui_render(void *data, void *video_data)
       rgui->selection_ptr - RGUI_TERM_HEIGHT / 2 : 0;
    size_t end = rgui->selection_ptr + RGUI_TERM_HEIGHT <= rgui->selection_buf->size ?
       rgui->selection_ptr + RGUI_TERM_HEIGHT : rgui->selection_buf->size;
-   
+
    // Do not scroll if all items are visible.
    if (rgui->selection_buf->size <= RGUI_TERM_HEIGHT)
       begin = 0;
@@ -321,7 +321,7 @@ static void rgui_render(void *data, void *video_data)
    else if (menu_type == RGUI_SETTINGS_CORE_OPTIONS)
       strlcpy(title, "CORE OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CORE_INFO)
-      strlcpy(title, "CORE INFO", sizeof(title));		  
+      strlcpy(title, "CORE INFO", sizeof(title));
 #ifdef HAVE_SHADER_MANAGER
    else if (menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)
       snprintf(title, sizeof(title), "SHADER %s", dir);
