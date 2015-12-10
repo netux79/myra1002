@@ -91,7 +91,7 @@ static uint16_t green_filler(unsigned x, unsigned y)
    y >>= 1;
    unsigned col = ((x + y) & 1) + 1;
 #if defined(GEKKO) || defined(PSP)
-   return (6 << 12) | (col << 8) | (col << 5) | (col << 0);
+   return (7 << 12) | (col << 8) | (col << 5) | (col << 0);
 #else
    return (col << 13) | (col << 10) | (col << 5) | (12 << 0);
 #endif
