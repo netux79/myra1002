@@ -97,10 +97,6 @@ const struct platform_bind platform_keys[] = {
    { GX_WIIMOTE_HOME, "Wiimote Home button" },
    { GX_NUNCHUK_Z, "Nunchuk Z button" },
    { GX_NUNCHUK_C, "Nunchuk C button" },
-   { GX_NUNCHUK_LEFT, "Nunchuk Stick Left" },
-   { GX_NUNCHUK_RIGHT, "Nunchuk Stick Right" },
-   { GX_NUNCHUK_UP, "Nunchuk Stick Up" },
-   { GX_NUNCHUK_DOWN, "Nunchuk Stick Down" },
 #endif
 };
 
@@ -165,25 +161,25 @@ static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
       case CONSOLE_MENU_UP:
          return state & ((1ULL << GX_GC_UP)
 #ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_UP) | (1ULL << GX_CLASSIC_UP) |  (1ULL << GX_NUNCHUK_UP)
+               | (1ULL << GX_WIIMOTE_UP) | (1ULL << GX_CLASSIC_UP)
 #endif
                );
       case CONSOLE_MENU_DOWN:
          return state & ((1ULL << GX_GC_DOWN)
 #ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_DOWN) | (1ULL << GX_CLASSIC_DOWN) | (1ULL << GX_NUNCHUK_DOWN)
+               | (1ULL << GX_WIIMOTE_DOWN) | (1ULL << GX_CLASSIC_DOWN)
 #endif
                );
       case CONSOLE_MENU_LEFT:
          return state & ((1ULL << GX_GC_LEFT)
 #ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_LEFT) | (1ULL << GX_CLASSIC_LEFT) | (1ULL << GX_NUNCHUK_LEFT)
+               | (1ULL << GX_WIIMOTE_LEFT) | (1ULL << GX_CLASSIC_LEFT)
 #endif
                );
       case CONSOLE_MENU_RIGHT:
          return state & ((1ULL << GX_GC_RIGHT)
 #ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_RIGHT) | (1ULL << GX_CLASSIC_RIGHT) | (1ULL << GX_NUNCHUK_RIGHT)
+               | (1ULL << GX_WIIMOTE_RIGHT) | (1ULL << GX_CLASSIC_RIGHT)
 #endif
                );
       case CONSOLE_MENU_L:
@@ -587,8 +583,9 @@ static void gx_input_poll_mouse(gx_input_t *gx)
 static void gx_input_poll(void *data)
 {
    gx_input_t *gx = (gx_input_t*)data;
+   PADStatus gcpdata[PAD_CHANMAX];
 
-   uint8_t gcpad = PAD_ScanPads();
+   PAD_Read(gcpdata);
 
 #ifdef HW_RVL
    WPAD_ReadPending(WPAD_CHAN_ALL, NULL);
@@ -598,45 +595,52 @@ static void gx_input_poll(void *data)
    {
       uint32_t down = 0;
 	  uint64_t *state_cur = &gx->pad_state[port];
+	  static uint64_t prev_gc_state;
 
 	  *state_cur = 0; /* first reset the state */
-      if (gcpad & (1 << port))
+      switch (gcpdata[port].err)
       {
-		 down = PAD_ButtonsHeld(port);
+	     case PAD_ERR_NONE:
+		    down = gcpdata[port].button;
 
-		 *state_cur |= (down & PAD_BUTTON_A) ? (1ULL << GX_GC_A) : 0;
-		 *state_cur |= (down & PAD_BUTTON_B) ? (1ULL << GX_GC_B) : 0;
-		 *state_cur |= (down & PAD_BUTTON_X) ? (1ULL << GX_GC_X) : 0;
-		 *state_cur |= (down & PAD_BUTTON_Y) ? (1ULL << GX_GC_Y) : 0;
-		 *state_cur |= (down & PAD_BUTTON_UP) ? (1ULL << GX_GC_UP) : 0;
-		 *state_cur |= (down & PAD_BUTTON_DOWN) ? (1ULL << GX_GC_DOWN) : 0;
-		 *state_cur |= (down & PAD_BUTTON_LEFT) ? (1ULL << GX_GC_LEFT) : 0;
-		 *state_cur |= (down & PAD_BUTTON_RIGHT) ? (1ULL << GX_GC_RIGHT) : 0;
-		 *state_cur |= (down & PAD_BUTTON_START) ? (1ULL << GX_GC_START) : 0;
-		 *state_cur |= (down & PAD_TRIGGER_Z) ? (1ULL << GX_GC_Z_TRIGGER) : 0;
-		 *state_cur |= ((down & PAD_TRIGGER_L) || PAD_TriggerL(port) > 127) ? (1ULL << GX_GC_L_TRIGGER) : 0;
-		 *state_cur |= ((down & PAD_TRIGGER_R) || PAD_TriggerR(port) > 127) ? (1ULL << GX_GC_R_TRIGGER) : 0;
+			*state_cur |= (down & PAD_BUTTON_A) ? (1ULL << GX_GC_A) : 0;
+			*state_cur |= (down & PAD_BUTTON_B) ? (1ULL << GX_GC_B) : 0;
+			*state_cur |= (down & PAD_BUTTON_X) ? (1ULL << GX_GC_X) : 0;
+			*state_cur |= (down & PAD_BUTTON_Y) ? (1ULL << GX_GC_Y) : 0;
+			*state_cur |= (down & PAD_BUTTON_UP) ? (1ULL << GX_GC_UP) : 0;
+			*state_cur |= (down & PAD_BUTTON_DOWN) ? (1ULL << GX_GC_DOWN) : 0;
+			*state_cur |= (down & PAD_BUTTON_LEFT) ? (1ULL << GX_GC_LEFT) : 0;
+			*state_cur |= (down & PAD_BUTTON_RIGHT) ? (1ULL << GX_GC_RIGHT) : 0;
+			*state_cur |= (down & PAD_BUTTON_START) ? (1ULL << GX_GC_START) : 0;
+			*state_cur |= (down & PAD_TRIGGER_Z) ? (1ULL << GX_GC_Z_TRIGGER) : 0;
+			*state_cur |= ((down & PAD_TRIGGER_L) || gcpdata[port].substickX > 127) ? (1ULL << GX_GC_L_TRIGGER) : 0;
+			*state_cur |= ((down & PAD_TRIGGER_R) || gcpdata[port].substickY > 127) ? (1ULL << GX_GC_R_TRIGGER) : 0;
 
-		 int16_t ls_x = (int16_t)PAD_StickX(port) * 256;
-		 int16_t ls_y = (int16_t)PAD_StickY(port) * -256;
-		 int16_t rs_x = (int16_t)PAD_SubStickX(port) * 256;
-		 int16_t rs_y = (int16_t)PAD_SubStickY(port) * -256;
+			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = (int16_t)gcpdata[port].stickX << 8;
+			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = -((int16_t)gcpdata[port].stickY << 8);
+			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = (int16_t)gcpdata[port].substickX << 8;
+			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = -((int16_t)gcpdata[port].substickX << 8);
 
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ls_x;
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ls_y;
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = rs_x;
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = rs_y;
+			const uint64_t menu_combo = (1ULL << GX_GC_START) | (1ULL << GX_GC_Z_TRIGGER);
+			if ((*state_cur & menu_combo) == menu_combo) *state_cur |= (1ULL << GX_GC_HOME);
 
-		 const uint64_t menu_combo = (1ULL << GX_GC_START) | (1ULL << GX_GC_Z_TRIGGER) | (1ULL << GX_GC_L_TRIGGER) | (1ULL << GX_GC_R_TRIGGER);
-		 if ((*state_cur & menu_combo) == menu_combo)
-			*state_cur |= (1ULL << GX_GC_HOME);
+			prev_gc_state = *state_cur;
 
-		 if (g_settings.input.autodetect_enable)
-		 {
-			if (strcmp(g_settings.input.device_names[port], "Gamecube Controller") != 0)
-			   gx_input_set_keybinds(NULL, DEVICE_GAMECUBE, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-		 }
-      }
+		    if (g_settings.input.autodetect_enable)
+		    {
+		       if (strcmp(g_settings.input.device_names[port], "Gamecube Controller") != 0)
+		       gx_input_set_keybinds(NULL, DEVICE_GAMECUBE, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
+		    }
+
+			break;
+		 case PAD_ERR_NOT_READY:
+		 case PAD_ERR_TRANSFER:
+			*state_cur = prev_gc_state;
+			break;
+		 case PAD_ERR_NO_CONTROLLER:
+		    PAD_Reset(PAD_CHAN0_BIT >> port);
+		    break;
+	  }
 
 #ifdef HW_RVL
       uint32_t ptype = 0;
