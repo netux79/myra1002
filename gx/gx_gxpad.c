@@ -5,7 +5,7 @@
 #include "gx_gxpad.h"
 
 #define GX_NO_BUTTON 0x0
-#define WPAD_EXP_GAMECUBE WPAD_EXP_WIIBOARD + 1
+#define WPAD_EXP_GAMECUBE WPAD_EXP_CLASSIC + 1
 #define WPAD_EXP_WIIMOTE WPAD_EXP_NONE
 
 enum {
@@ -35,7 +35,7 @@ enum {
 	GX_A_WII_INVD,
 };
 
-static const char* gxblabels[] = {
+static const char* blabels[] = {
 	"B",
 	"Y",		"1",
 	"Minus",
@@ -54,16 +54,9 @@ static const char* gxblabels[] = {
 	"N/A",
 };
 
+/* The order here is the same set in wpad.h as the expansions list,
+ * as guitar hero is not used we take its place for GC controller */
 static const gxpadsetup valid_pad_config[] = {
-			{"Gamecube Pad",
-				{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
-				PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
-				PAD_BUTTON_A, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_R,
-				GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
-				{GX_B, GX_1, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
-				GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
-				4, {GX_GC_STND, GX_GX_INVD, GX_GC_STND, GX_GX_INVD},
-				WPAD_EXP_GAMECUBE},
 			{"Wiimote",
 				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
 				WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
@@ -91,6 +84,15 @@ static const gxpadsetup valid_pad_config[] = {
 				GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
 				4, {GX_A_WII_STND, GX_A_WII_INVD, GX_A_WII_STND, GX_A_WII_INVD},
 				WPAD_EXP_CLASSIC},
+			{"Gamecube Pad",
+				{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
+				PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
+				PAD_BUTTON_A, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_R,
+				GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
+				{GX_B, GX_1, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
+				GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
+				4, {GX_GC_STND, GX_GX_INVD, GX_GC_STND, GX_GX_INVD},
+				WPAD_EXP_GAMECUBE},
 		};
 
 #define GX_MAX_PADS 8
@@ -103,9 +105,29 @@ static bool _pad_thread_running = false;
 static bool _pad_thread_quit = false;
 static PADStatus _gcpdata[PAD_CHANMAX];
 
-static int32_t _rem_pad(struct gxpad *pad) {
-	free(pad);
-	pad = NULL;
+static void _free_pad(uint8_t pad_idx) {
+	if (_pad_list[pad_idx]) {
+		free(_pad_list[pad_idx]);
+		_pad_list[pad_idx] = NULL;
+	}
+}
+
+static int8_t _rem_pad(uint32_t type, int32_t p_slot) {
+	int8_t i, pad_idx -1;
+
+	/* Look if the setup is currently active */
+	for (i = 0; i<= GX_MAX_PADS; i++) {
+		if (_pad_list[i] &&
+			_pad_list[i]->config->type == type &&
+			_pad_list[i]->p_slot == p_slot) {
+				pad_idx = i;
+				break;
+		}
+	}
+
+	if (pad_idx != -1) _free_pad(pad_idx);
+
+	return pad_idx;
 }
 
 void gxpad_shutdown(void) {
@@ -118,61 +140,31 @@ void gxpad_shutdown(void) {
 
 	uint8_t i;
 	for (i = 0;i < GX_MAX_PADS; i++) {
-		_rem_pad(_pad_list[i]);
+		_free_pad(i);
 	}
 
 	_inited = false;
 }
 
-static int32_t _read_cb(int32_t result, void *usrdata) {
-	struct gxpad *pad = (struct gxpad*)usrdata;
+static int8_t _add_pad(uint32_t type, int32_t p_slot) {
 	uint8_t i;
-	const butsetup *b;
 
-	if (result) {
-		/* Verify if the pad has multiple pad info in the package. If yes, only process the configured. */
-		if (pad->config->multipad==0 || pad->config->multipad==pad->hid_buffer[0]) {
-			pad->b_state = 0; /* clear button state */
-			for (i = 0; i < BUTTON_SET; i++) {
-				b = &pad->config->buttons[i];
-				if (b->label < B_NA) {
-					pad->b_state |= ((pad->hid_buffer[b->offset] & b->mask) == b->mask) ? (1ULL << i) : 0;
+	/* Don allow any pad not defined  already in valid_pad_config */
+	if (type >= WPAD_EXP_WIIMOTE && type <= WPAD_EXP_GAMECUBE) {
+		/* look for an empty slot to assign it */
+		for (i = 0; i < GX_MAX_PADS; i++) {
+			/* find an empty slot */
+			if (_pad_list[i] == NULL) {
+				/* alloc and setup the pad data in the slot */
+				_pad_list[i] = malloc(sizeof(struct gxpad));
+				/* if succesfully allocated */
+				if (_pad_list[i]) {
+					memset(_pad_list[i], 0, sizeof(struct gxpad));
+					_pad_list[i]->config = &valid_pad_config[type];
+					_pad_list[i]->p_slot = p_slot;
+
+					return i; /* return the slot which we added it */
 				}
-			}
-
-			for (i = 0; i < pad->config->num_analogs; i++) {
-				pad->a_state[i] = (int8_t)pad->hid_buffer[pad->config->analogs[i].offset];
-			}
-		}
-	}
-	pad->reading = false;
-	return result;
-}
-
-static bool _new_hid_device(int32_t id) {
-    uint8_t i;
-	for (i = 0; i < GX_MAX_PADS; ++i) {
-        if (_pad_list[i] && _pad_list[i]->device_id == id) return false;
-    }
-    return true;
-}
-
-static int8_t _add_pad(int16_t cfg_idx, int32_t p_slot) {
-	uint8_t i;
-
-	/* look for an empty slot to assign it */
-	for (i = 0; i < GX_MAX_PADS; i++)	{
-		/* find an empty slot */
-		if (_pad_list[i] == NULL) {
-			/* alloc and setup the pad data in the slot */
-			_pad_list[i] = malloc(sizeof(struct gxpad));
-			/* if succesfully allocated */
-			if (_pad_list[i]) {
-				memset(_pad_list[i], 0, sizeof(struct gxpad));
-				_pad_list[i]->config = &valid_pad_config[cfg_idx];
-				_pad_list[i]->p_slot = p_slot;
-
-				return i; /* return the slot which we added it */
 			}
 		}
 	}
@@ -221,9 +213,10 @@ static int8_t _scan_devices() {
 					_add_pad(ptype, slot);
 					w_pst[slot] = ptype;
 					break;
-				}
+				} else if (w_pst[slot] == ptype)
+					break;
 				/* in case the pad is connected but a different type
-				 * we want to remove the pad so we can detect it later */
+				 * we fall thru to remove it and detect it later */
 			case WPAD_ERR_NOT_READY:
 			case WPAD_ERR_NO_CONTROLLER:
 				if (w_pst[slot] != WPAD_EXP_UNKNOWN) {
@@ -238,7 +231,27 @@ static int8_t _scan_devices() {
 }
 
 static inline int32_t _read_pad(struct gxpad *pad) {
-	return USB_ReadIntrMsgAsync(pad->fd, pad->epAddress, pad->mpSize, pad->hid_buffer, (usbcallback)_read_cb, pad);
+	uint8_t i;
+	const butsetup *b;
+
+	if (result) {
+		/* Verify if the pad has multiple pad info in the package. If yes, only process the configured. */
+		if (pad->config->multipad==0 || pad->config->multipad==pad->hid_buffer[0]) {
+			pad->b_state = 0; /* clear button state */
+			for (i = 0; i < BUTTON_SET; i++) {
+				b = &pad->config->buttons[i];
+				if (b->label < B_NA) {
+					pad->b_state |= ((pad->hid_buffer[b->offset] & b->mask) == b->mask) ? (1ULL << i) : 0;
+				}
+			}
+
+			for (i = 0; i < pad->config->num_analogs; i++) {
+				pad->a_state[i] = (int8_t)pad->hid_buffer[pad->config->analogs[i].offset];
+			}
+		}
+	}
+	pad->reading = false;
+	return result;
 }
 
 static void * _pad_polling(void *arg) {
@@ -249,10 +262,12 @@ static void * _pad_polling(void *arg) {
 		/* Scan for any device change */
 		_scan_devices();
 
-		/* read data for each available pad */
+		/* read data from each available pad */
 		for(i = 0; i < GX_MAX_PADS; i++) {
 			if (_pad_list[i]) _read_pad(_pad_list[i]);
 		}
+
+		/* Add here the mouse data polling */
 
 		/* wait 16.66 ms to process the available pads again */
 		usleep(16666);
@@ -261,15 +276,8 @@ static void * _pad_polling(void *arg) {
 	return NULL;
 }
 
-bool gxpad_init(uint8_t slots, bool skip_usb) {
+bool gxpad_init(void) {
 	if (!_inited) {
-
-		if (!skip_usb) { /* In case other party is already handling usb setup */
-			USB_Initialize();
-		}
-
-		/* don't allow more than the max possible pads number */
-		GX_MAX_PADS = (slots > GX_MAX_PADS) || (slots <= 0) ? GX_MAX_PADS : slots;
 
 		/* Set to null the whole pad list */
 		memset(_pad_list, 0, sizeof(_pad_list));
@@ -279,14 +287,12 @@ bool gxpad_init(uint8_t slots, bool skip_usb) {
 			_pad_thread_quit = false;
 			if (LWP_CreateThread(&_pad_thread, _pad_polling, NULL, NULL, 0, 65) < 0) {
 				_pad_thread_running = false;
-				gxpad_shutdown(skip_usb);
+				gxpad_shutdown();
 				return 0;
 			}
 			_pad_thread_running = true;
 		}
 
-		USB_DeviceChangeNotifyAsync(USB_CLASS_HID, _change_cb, NULL);
-		_pad_detected = true;  /* try open any existing gxpad device */
 		_inited = true;
     }
     return _inited;
@@ -302,15 +308,15 @@ uint64_t gxpad_buttons(uint8_t pad_idx) {
 
 const char *gxpad_label(uint8_t pad_idx, uint8_t b_idx) {
 	if (pad_idx < GX_MAX_PADS && b_idx < BUTTON_SET && _pad_list[pad_idx]) {
-		return blabels[_pad_list[pad_idx]->config->buttons[b_idx].label];
+		return blabels[_pad_list[pad_idx]->config->b_label[b_idx]];
 	}
 
-	return blabels[B_NA];
+	return blabels[GX_NA];
 }
 
 bool gxpad_buttonavail(uint8_t pad_idx, uint8_t b_idx) {
 	if (pad_idx < GX_MAX_PADS && b_idx < BUTTON_SET && _pad_list[pad_idx]) {
-		return (_pad_list[pad_idx]->config->buttons[b_idx].mask > 0);
+		return (_pad_list[pad_idx]->config->b_mask[b_idx] > GX_NO_BUTTON);
 	}
 
 	return false;
@@ -321,7 +327,7 @@ const char *gxpad_padname(uint8_t pad_idx) {
 		return _pad_list[pad_idx]->config->name;
 	}
 
-	return "No pad in USB slot";
+	return "No pad plugged in";
 }
 
 static inline int16_t _normalize_a(int16_t a_value, uint8_t axis_type) {
