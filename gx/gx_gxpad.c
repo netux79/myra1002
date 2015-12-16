@@ -54,6 +54,10 @@ static const char* blabels[] = {
 	"N/A",
 };
 
+static void _read_gc(uint8_t pad_idx);
+static void _read_wiimote(uint8_t pad_idx);
+static void _read_classic(uint8_t pad_idx);
+static void _read_nunchuk(uint8_t pad_idx);
 /* The order here is the same set in wpad.h as the expansions list,
  * as guitar hero is not used we take its place for GC controller */
 static const gxpadsetup valid_pad_config[] = {
@@ -65,7 +69,7 @@ static const gxpadsetup valid_pad_config[] = {
 				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_2, GX_NA, GX_NA, GX_NA, GX_NA, GX_HOME},
 				0, {GX_NO_AXIS, GX_NO_AXIS, GX_NO_AXIS, GX_NO_AXIS},
-				WPAD_EXP_WIIMOTE},
+				WPAD_EXP_WIIMOTE, _read_wiimote},
 			{"Wiimote + Nunchuk",
 				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
 				WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
@@ -74,7 +78,7 @@ static const gxpadsetup valid_pad_config[] = {
 				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_2, GX_Z, GX_C, GX_NA, GX_NA, GX_HOME},
 				2, {GX_A_WII_STND, GX_A_WII_STND, GX_NO_AXIS, GX_NO_AXIS},
-				WPAD_EXP_NUNCHUK},
+				WPAD_EXP_NUNCHUK, _read_nunchuk},
 			{"Classic",
 				{WPAD_CLASSIC_BUTTON_B, WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
 				WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT,
@@ -83,7 +87,7 @@ static const gxpadsetup valid_pad_config[] = {
 				{GX_B, GX_Y, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
 				4, {GX_A_WII_STND, GX_A_WII_INVD, GX_A_WII_STND, GX_A_WII_INVD},
-				WPAD_EXP_CLASSIC},
+				WPAD_EXP_CLASSIC, _read_classic},
 			{"Gamecube Pad",
 				{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
 				PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
@@ -92,7 +96,7 @@ static const gxpadsetup valid_pad_config[] = {
 				{GX_B, GX_1, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
 				4, {GX_GC_STND, GX_GX_INVD, GX_GC_STND, GX_GX_INVD},
-				WPAD_EXP_GAMECUBE},
+				WPAD_EXP_GAMECUBE, _read_gc},
 		};
 
 #define GX_MAX_PADS 8
@@ -230,28 +234,27 @@ static int8_t _scan_devices() {
     return 0;
 }
 
-static inline int32_t _read_pad(struct gxpad *pad) {
+static void _read_gc(uint8_t pad_idx) {
 	uint8_t i;
-	const butsetup *b;
+	uint32_t b = 0;
+	struct gxpad *p = _pad_list[pad_idx];
 
-	if (result) {
-		/* Verify if the pad has multiple pad info in the package. If yes, only process the configured. */
-		if (pad->config->multipad==0 || pad->config->multipad==pad->hid_buffer[0]) {
-			pad->b_state = 0; /* clear button state */
-			for (i = 0; i < BUTTON_SET; i++) {
-				b = &pad->config->buttons[i];
-				if (b->label < B_NA) {
-					pad->b_state |= ((pad->hid_buffer[b->offset] & b->mask) == b->mask) ? (1ULL << i) : 0;
-				}
-			}
-
-			for (i = 0; i < pad->config->num_analogs; i++) {
-				pad->a_state[i] = (int8_t)pad->hid_buffer[pad->config->analogs[i].offset];
+	switch (_gcpdata[p->p_slot].err)
+	{
+		case PAD_ERR_NONE:
+		b = _gcpdata[p->p_slot].button;
+		p->b_state = 0; /* clear button state */
+		for (i = 0; i < BUTTON_SET; i++) {
+			b = &pad->config->buttons[i];
+			if (b->label < B_NA) {
+				p->b_state |= ((pad->hid_buffer[b->offset] & b->mask) == b->mask) ? (1ULL << i) : 0;
 			}
 		}
 	}
-	pad->reading = false;
-	return result;
+
+	for (i = 0; i < pad->config->num_analogs; i++) {
+		pad->a_state[i] = (int8_t)pad->hid_buffer[pad->config->analogs[i].offset];
+	}
 }
 
 static void * _pad_polling(void *arg) {
@@ -264,7 +267,7 @@ static void * _pad_polling(void *arg) {
 
 		/* read data from each available pad */
 		for(i = 0; i < GX_MAX_PADS; i++) {
-			if (_pad_list[i]) _read_pad(_pad_list[i]);
+			if (_pad_list[i]) _pad_list[i]->read_pad(i);
 		}
 
 		/* Add here the mouse data polling */
