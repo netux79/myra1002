@@ -10,7 +10,6 @@ typedef struct _gxpadsetup {
 	uint32_t	b_mask[BUTTON_SET];
 	uint8_t		b_label[BUTTON_SET];
 	uint8_t		num_analogs;
-	uint8_t		a_type[AXIS_SET];
 	uint8_t		type;
 	void 		(*read_pad)(uint8_t pad_idx);
 } gxpadsetup;

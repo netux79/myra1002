@@ -63,13 +63,12 @@ static void _read_nunchuk(uint8_t pad_idx);
 static const gxpadsetup valid_pad_config[] = {
 			{"Wiimote",
 				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
-				WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
+				WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT, WPAD_BUTTON_DOWN, WPAD_BUTTON_UP,
 				WPAD_BUTTON_A, WPAD_BUTTON_2, GX_NO_BUTTON, GX_NO_BUTTON,
 				GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
 				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_2, GX_NA, GX_NA, GX_NA, GX_NA, GX_HOME},
-				0, {GX_NO_AXIS, GX_NO_AXIS, GX_NO_AXIS, GX_NO_AXIS},
-				WPAD_EXP_WIIMOTE, _read_wiimote},
+				0, WPAD_EXP_WIIMOTE, _read_wiimote},
 			{"Wiimote + Nunchuk",
 				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
 				WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
@@ -77,8 +76,7 @@ static const gxpadsetup valid_pad_config[] = {
 				GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
 				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_2, GX_Z, GX_C, GX_NA, GX_NA, GX_HOME},
-				2, {GX_A_WII_STND, GX_A_WII_STND, GX_NO_AXIS, GX_NO_AXIS},
-				WPAD_EXP_NUNCHUK, _read_nunchuk},
+				2, WPAD_EXP_NUNCHUK, _read_nunchuk},
 			{"Classic",
 				{WPAD_CLASSIC_BUTTON_B, WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
 				WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT,
@@ -86,8 +84,7 @@ static const gxpadsetup valid_pad_config[] = {
 				WPAD_CLASSIC_BUTTON_ZL, WPAD_CLASSIC_BUTTON_ZR, WPAD_CLASSIC_BUTTON_HOME},
 				{GX_B, GX_Y, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
-				4, {GX_A_WII_STND, GX_A_WII_INVD, GX_A_WII_STND, GX_A_WII_INVD},
-				WPAD_EXP_CLASSIC, _read_classic},
+				4, WPAD_EXP_CLASSIC, _read_classic},
 			{"Gamecube Pad",
 				{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
 				PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
@@ -95,8 +92,7 @@ static const gxpadsetup valid_pad_config[] = {
 				GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
 				{GX_B, GX_1, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
-				4, {GX_GC_STND, GX_GX_INVD, GX_GC_STND, GX_GX_INVD},
-				WPAD_EXP_GAMECUBE, _read_gc},
+				4, WPAD_EXP_GAMECUBE, _read_gc},
 		};
 
 #define GX_MAX_PADS 8
@@ -236,25 +232,87 @@ static int8_t _scan_devices() {
 
 static void _read_gc(uint8_t pad_idx) {
 	uint8_t i;
-	uint32_t b = 0;
+	uint32_t b, m;
 	struct gxpad *p = _pad_list[pad_idx];
 
-	switch (_gcpdata[p->p_slot].err)
-	{
-		case PAD_ERR_NONE:
+	/* Only process when the pad is perfectly ready */
+	if (_gcpdata[p->p_slot].err == PAD_ERR_NONE) {
+		/* BUTTONS */
 		b = _gcpdata[p->p_slot].button;
 		p->b_state = 0; /* clear button state */
 		for (i = 0; i < BUTTON_SET; i++) {
-			b = &pad->config->buttons[i];
-			if (b->label < B_NA) {
-				p->b_state |= ((pad->hid_buffer[b->offset] & b->mask) == b->mask) ? (1ULL << i) : 0;
+			m = p->config->b_mask[i];
+			if (m > GX_NO_BUTTON) {
+				p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
 			}
 		}
+		/* ANALOGS */
+		p->a_state[0] =   (int16_t)_gcpdata[p->p_slot].stickX << 8;
+		p->a_state[1] = -((int16_t)_gcpdata[p->p_slot].stickY << 8);
+		p->a_state[2] =   (int16_t)_gcpdata[p->p_slot].substickX << 8;
+		p->a_state[3] = -((int16_t)_gcpdata[p->p_slot].substickX << 8);
 	}
+}
 
-	for (i = 0; i < pad->config->num_analogs; i++) {
-		pad->a_state[i] = (int8_t)pad->hid_buffer[pad->config->analogs[i].offset];
+static void _read_wiimote(uint8_t pad_idx) {
+	uint8_t i;
+	uint32_t b, m;
+	struct gxpad *p = _pad_list[pad_idx];
+    WPADData *wdata = WPAD_Data(p->p_slot);
+
+	/* BUTTONS */
+    b = wdata->btns_h;
+	p->b_state = 0; /* clear button state */
+	for (i = 0; i < BUTTON_SET; i++) {
+		m = p->config->b_mask[i];
+		if (m > GX_NO_BUTTON) {
+			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
+		}
 	}
+}
+
+static void _read_nunchuk(uint8_t pad_idx) {
+	uint8_t i;
+	uint32_t b, m;
+	struct gxpad *p = _pad_list[pad_idx];
+    WPADData *wdata = WPAD_Data(p->p_slot);
+
+	/* BUTTONS */
+    b = wdata->btns_h;
+	p->b_state = 0; /* clear button state */
+	for (i = 0; i < BUTTON_SET; i++) {
+		m = p->config->b_mask[i];
+		if (m > GX_NO_BUTTON) {
+			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
+		}
+	}
+	/* ANALOGS */
+	expansion_t *e = &wdata->exp;
+	p->a_state[0] = _get_wii_ah(e->nunchuk.js.mag, e->nunchuk.js.ang);
+	p->a_state[1] = _get_wii_av(e->nunchuk.js.mag, e->nunchuk.js.ang);
+}
+
+static void _read_classic(uint8_t pad_idx) {
+	uint8_t i;
+	uint32_t b, m;
+	struct gxpad *p = _pad_list[pad_idx];
+    WPADData *wdata = WPAD_Data(p->p_slot);
+
+	/* BUTTONS */
+    b = wdata->btns_h;
+	p->b_state = 0; /* clear button state */
+	for (i = 0; i < BUTTON_SET; i++) {
+		m = p->config->b_mask[i];
+		if (m > GX_NO_BUTTON) {
+			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
+		}
+	}
+	/* ANALOGS */
+	expansion_t *e = &wdata->exp;
+	p->a_state[0] = _get_wii_ah(e->classic.ljs.mag, e->classic.ljs.ang);
+	p->a_state[1] = _get_wii_av(e->classic.ljs.mag, e->classic.ljs.ang);
+	p->a_state[2] = _get_wii_ah(e->classic.rjs.mag, e->classic.rjs.ang);
+	p->a_state[3] = _get_wii_av(e->classic.rjs.mag, e->classic.rjs.ang);
 }
 
 static void * _pad_polling(void *arg) {

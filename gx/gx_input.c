@@ -737,19 +737,11 @@ static void gx_input_poll(void *data)
             *state_cur |= (down & WPAD_NUNCHUK_BUTTON_Z) ? (1ULL << GX_NUNCHUK_Z) : 0;
             *state_cur |= (down & WPAD_NUNCHUK_BUTTON_C) ? (1ULL << GX_NUNCHUK_C) : 0;
 
-            float js_mag = exp->nunchuk.js.mag;
-            float js_ang = exp->nunchuk.js.ang;
+            int16_t js_x = (int8_t)exp->nunchuk.js.pos.x;
+            int16_t js_y = (int8_t)exp->nunchuk.js.pos.y;
 
-            if (js_mag > 1.0f)
-               js_mag = 1.0f;
-            else if (js_mag < -1.0f)
-               js_mag = -1.0f;
-
-            double js_val_x = js_mag * sin(M_PI * js_ang / 180.0);
-            double js_val_y = -js_mag * cos(M_PI * js_ang / 180.0);
-
-            int16_t x = (int16_t)(js_val_x * 32767.0f);
-            int16_t y = (int16_t)(js_val_y * 32767.0f);
+            int16_t x = ((js_x - 128) << 8);
+            int16_t y = ((js_y - 128) << 8);
 
             gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = x;
             gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = y;
