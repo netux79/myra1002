@@ -230,89 +230,71 @@ static int8_t _scan_devices() {
     return 0;
 }
 
-static void _read_gc(uint8_t pad_idx) {
+static inline void _get_buttons(struct gxpad *p, uint32_t b) {
 	uint8_t i;
-	uint32_t b, m;
+	uint32_t m;
+	p->b_state = 0; /* clear button state */
+	for (i = 0; i < BUTTON_SET; i++) {
+		m = p->config->b_mask[i];
+		if (m > GX_NO_BUTTON) {
+			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
+		}
+	}
+}
+
+#define GX_JS_SIM(a) ((int16_t)a << 8)
+#define GX_JS_SIM_INV(a) (-((int16_t)a << 8))
+#define GX_JS_NOR(a) (((int16_t)a - 128) << 8)
+#define GX_JS_NOR_INV(a) ((127 - (int16_t)a) << 8)
+
+static void _read_gc(uint8_t pad_idx) {
 	struct gxpad *p = _pad_list[pad_idx];
+	PADStatus gdata = _gcpdata[p->p_slot];
 
 	/* Only process when the pad is perfectly ready */
-	if (_gcpdata[p->p_slot].err == PAD_ERR_NONE) {
+	if (gdata.err == PAD_ERR_NONE) {
 		/* BUTTONS */
-		b = _gcpdata[p->p_slot].button;
-		p->b_state = 0; /* clear button state */
-		for (i = 0; i < BUTTON_SET; i++) {
-			m = p->config->b_mask[i];
-			if (m > GX_NO_BUTTON) {
-				p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
-			}
-		}
+		_get_buttons(p, gdata.button);
 		/* ANALOGS */
-		p->a_state[0] =   (int16_t)_gcpdata[p->p_slot].stickX << 8;
-		p->a_state[1] = -((int16_t)_gcpdata[p->p_slot].stickY << 8);
-		p->a_state[2] =   (int16_t)_gcpdata[p->p_slot].substickX << 8;
-		p->a_state[3] = -((int16_t)_gcpdata[p->p_slot].substickX << 8);
+		p->a_state[0] = GX_JS_SIM(gdata.stickX);
+		p->a_state[1] = GX_JS_SIM_INV(gdata.stickY);
+		p->a_state[2] = GX_JS_SIM(gdata.substickX);
+		p->a_state[3] = GX_JS_SIM_INV(gdata.substickX);
 	}
 }
 
 static void _read_wiimote(uint8_t pad_idx) {
-	uint8_t i;
-	uint32_t b, m;
 	struct gxpad *p = _pad_list[pad_idx];
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    b = wdata->btns_h;
-	p->b_state = 0; /* clear button state */
-	for (i = 0; i < BUTTON_SET; i++) {
-		m = p->config->b_mask[i];
-		if (m > GX_NO_BUTTON) {
-			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
-		}
-	}
+	_get_buttons(p, wdata->btns_h);
 }
 
 static void _read_nunchuk(uint8_t pad_idx) {
-	uint8_t i;
-	uint32_t b, m;
 	struct gxpad *p = _pad_list[pad_idx];
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    b = wdata->btns_h;
-	p->b_state = 0; /* clear button state */
-	for (i = 0; i < BUTTON_SET; i++) {
-		m = p->config->b_mask[i];
-		if (m > GX_NO_BUTTON) {
-			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
-		}
-	}
+    _get_buttons(p, wdata->btns_h);
 	/* ANALOGS */
 	expansion_t *e = &wdata->exp;
-	p->a_state[0] = _get_wii_ah(e->nunchuk.js.mag, e->nunchuk.js.ang);
-	p->a_state[1] = _get_wii_av(e->nunchuk.js.mag, e->nunchuk.js.ang);
+	p->a_state[0] = GX_JS_NOR(e->nunchuk.js.pos.x);
+	p->a_state[1] = GX_JS_NOR_INV(e->nunchuk.js.pox.y);
 }
 
 static void _read_classic(uint8_t pad_idx) {
-	uint8_t i;
-	uint32_t b, m;
 	struct gxpad *p = _pad_list[pad_idx];
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    b = wdata->btns_h;
-	p->b_state = 0; /* clear button state */
-	for (i = 0; i < BUTTON_SET; i++) {
-		m = p->config->b_mask[i];
-		if (m > GX_NO_BUTTON) {
-			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
-		}
-	}
+    _get_buttons(p, wdata->btns_h);
 	/* ANALOGS */
 	expansion_t *e = &wdata->exp;
-	p->a_state[0] = _get_wii_ah(e->classic.ljs.mag, e->classic.ljs.ang);
-	p->a_state[1] = _get_wii_av(e->classic.ljs.mag, e->classic.ljs.ang);
-	p->a_state[2] = _get_wii_ah(e->classic.rjs.mag, e->classic.rjs.ang);
-	p->a_state[3] = _get_wii_av(e->classic.rjs.mag, e->classic.rjs.ang);
+	p->a_state[0] = GX_JS_NOR(e->classic.ljs.pos.x);
+	p->a_state[1] = GX_JS_NOR_INV(e->classic.ljs.pos.y);
+	p->a_state[2] = GX_JS_NOR(e->classic.rjs.pos.x);
+	p->a_state[3] = GX_JS_NOR_INV(e->classic.rjs.pos.y);
 }
 
 static void * _pad_polling(void *arg) {

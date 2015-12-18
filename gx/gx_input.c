@@ -24,20 +24,12 @@
 #include <string.h>
 #include <math.h>
 
-#ifndef M_PI
-#define M_PI 3.14159265358979323846264338327
-#endif
-
 #include "gx_input.h"
 #include "../driver.h"
 #include "../libretro.h"
 #include <stdlib.h>
 
-#define GC_JOYSTICK_THRESHOLD (48 * 256)
-#define WII_JOYSTICK_THRESHOLD (40 * 256)
-
 #define MAX_PADS 4
-
 
 typedef struct gx_input
 {
@@ -687,38 +679,15 @@ static void gx_input_poll(void *data)
             *state_cur |= (down & WPAD_CLASSIC_BUTTON_ZL) ? (1ULL << GX_CLASSIC_ZL_TRIGGER) : 0;
             *state_cur |= (down & WPAD_CLASSIC_BUTTON_ZR) ? (1ULL << GX_CLASSIC_ZR_TRIGGER) : 0;
 
-            float ljs_mag = exp->classic.ljs.mag;
-            float ljs_ang = exp->classic.ljs.ang;
+            int16_t ljs_x = (int8_t)exp->classic.ljs.pos.x;
+            int16_t ljs_y = (int8_t)exp->classic.ljs.pos.y;
+            int16_t rjs_x = (int8_t)exp->classic.rjs.pos.x;
+            int16_t rjs_y = (int8_t)exp->classic.rjs.pos.y;
 
-            float rjs_mag = exp->classic.rjs.mag;
-            float rjs_ang = exp->classic.rjs.ang;
-
-            if (ljs_mag > 1.0f)
-               ljs_mag = 1.0f;
-            else if (ljs_mag < -1.0f)
-               ljs_mag = -1.0f;
-
-            if (rjs_mag > 1.0f)
-               rjs_mag = 1.0f;
-            else if (rjs_mag < -1.0f)
-               rjs_mag = -1.0f;
-
-            double ljs_val_x = ljs_mag * sin(M_PI * ljs_ang / 180.0);
-            double ljs_val_y = -ljs_mag * cos(M_PI * ljs_ang / 180.0);
-
-            double rjs_val_x = rjs_mag * sin(M_PI * rjs_ang / 180.0);
-            double rjs_val_y = -rjs_mag * cos(M_PI * rjs_ang / 180.0);
-
-            int16_t ls_x = (int16_t)(ljs_val_x * 32767.0f);
-            int16_t ls_y = (int16_t)(ljs_val_y * 32767.0f);
-
-            int16_t rs_x = (int16_t)(rjs_val_x * 32767.0f);
-            int16_t rs_y = (int16_t)(rjs_val_y * 32767.0f);
-
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ls_x;
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ls_y;
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = rs_x;
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = rs_y;
+            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ((ljs_x - 128) << 8);
+            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ((127 - ljs_y) << 8);
+            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = ((rjs_x - 128) << 8);
+            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = ((127 - rjs_y) << 8);
 
             if (g_settings.input.autodetect_enable)
             {
@@ -740,11 +709,8 @@ static void gx_input_poll(void *data)
             int16_t js_x = (int8_t)exp->nunchuk.js.pos.x;
             int16_t js_y = (int8_t)exp->nunchuk.js.pos.y;
 
-            int16_t x = ((js_x - 128) << 8);
-            int16_t y = ((js_y - 128) << 8);
-
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = x;
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = y;
+            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ((js_x - 128) << 8);
+            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ((127 - js_y) << 8);
 
             if (g_settings.input.autodetect_enable)
             {
