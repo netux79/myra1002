@@ -326,9 +326,9 @@ static void gx_input_poll(void *data)
          /* show the pad change */
          char msg[128];
          if (lt_active[port])
-		    snprintf(msg, sizeof(msg), "%s plugged -p %u", gxpad_padname(port), port);
+		    snprintf(msg, sizeof(msg), "%s plugged to player %u", gxpad_padname(port), port+1);
 		 else
-			snprintf(msg, sizeof(msg), "%s unplugged -p %u", g_settings.input.device_names[port], port);
+			snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], port+1);
          msg_queue_push(g_extern.msg_queue, msg, 0, 80);
 
 		 if (g_settings.input.autodetect_enable)
