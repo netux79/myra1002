@@ -1,12 +1,22 @@
 #include <gccore.h>
+#include <ogc/pad.h>
+#ifdef HW_RVL
+#include <wiiuse/wpad.h>
+#endif
+#include <malloc.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "gx_gxpad.h"
 
 #define GX_NO_BUTTON 0x0
+#ifdef HW_RVL
 #define WPAD_EXP_GAMECUBE WPAD_EXP_CLASSIC + 1
 #define WPAD_EXP_WIIMOTE WPAD_EXP_NONE
+#else
+#define WPAD_EXP_GAMECUBE 0
+#define WPAD_EXP_WIIMOTE WPAD_EXP_GAMECUBE
+#endif
 
 enum {
 	GX_B = 0,
@@ -27,15 +37,7 @@ enum {
 	GX_NA,
 };
 
-enum {
-	GX_NO_AXIS,
-	GX_GC_STND,
-	GX_GX_INVD,
-	GX_A_WII_STND,
-	GX_A_WII_INVD,
-};
-
-static const char* blabels[] = {
+static const char* gx_labels[] = {
 	"B",
 	"Y",		"1",
 	"Minus",
@@ -54,21 +56,25 @@ static const char* blabels[] = {
 	"N/A",
 };
 
-static void _read_gc(uint8_t pad_idx);
-static void _read_wiimote(uint8_t pad_idx);
-static void _read_classic(uint8_t pad_idx);
-static void _read_nunchuk(uint8_t pad_idx);
+static void _gx_read_gc(uint8_t pad_idx);
+#ifdef HW_RVL
+static void _gx_read_wiimote(uint8_t pad_idx);
+static void _gx_read_classic(uint8_t pad_idx);
+static void _gx_read_nunchuk(uint8_t pad_idx);
+#endif
+
 /* The order here is the same set in wpad.h as the expansions list,
  * as guitar hero is not used we take its place for GC controller */
-static const gxpadsetup valid_pad_config[] = {
+static const gxpadsetup _gx_pad_config[] = {
+#ifdef HW_RVL
 			{"Wiimote",
 				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
-				WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT, WPAD_BUTTON_DOWN, WPAD_BUTTON_UP,
+				WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
 				WPAD_BUTTON_A, WPAD_BUTTON_2, GX_NO_BUTTON, GX_NO_BUTTON,
 				GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
 				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_2, GX_NA, GX_NA, GX_NA, GX_NA, GX_HOME},
-				0, WPAD_EXP_WIIMOTE, _read_wiimote},
+				0, WPAD_EXP_WIIMOTE, _gx_read_wiimote},
 			{"Wiimote + Nunchuk",
 				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
 				WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
@@ -76,7 +82,7 @@ static const gxpadsetup valid_pad_config[] = {
 				GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
 				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_2, GX_Z, GX_C, GX_NA, GX_NA, GX_HOME},
-				2, WPAD_EXP_NUNCHUK, _read_nunchuk},
+				2, WPAD_EXP_NUNCHUK, _gx_read_nunchuk},
 			{"Classic",
 				{WPAD_CLASSIC_BUTTON_B, WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
 				WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT,
@@ -84,84 +90,84 @@ static const gxpadsetup valid_pad_config[] = {
 				WPAD_CLASSIC_BUTTON_ZL, WPAD_CLASSIC_BUTTON_ZR, WPAD_CLASSIC_BUTTON_HOME},
 				{GX_B, GX_Y, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
-				4, WPAD_EXP_CLASSIC, _read_classic},
+				4, WPAD_EXP_CLASSIC, _gx_read_classic},
+#endif
 			{"Gamecube Pad",
 				{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
 				PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
 				PAD_BUTTON_A, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_R,
 				GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
-				{GX_B, GX_1, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
+				{GX_B, GX_Y, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 				GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
-				4, WPAD_EXP_GAMECUBE, _read_gc},
+				4, WPAD_EXP_GAMECUBE, _gx_read_gc},
 		};
 
 #define GX_MAX_PADS 8
 
-static bool _inited = false;
-static bool _pad_detected = false;
-static struct gxpad *_pad_list[GX_MAX_PADS]; /* just hold a pointer for each possible pad */
-static lwp_t _pad_thread = LWP_THREAD_NULL;
-static bool _pad_thread_running = false;
-static bool _pad_thread_quit = false;
-static PADStatus _gcpdata[PAD_CHANMAX];
+static bool _gx_inited = false;
+static struct gxpad *_gx_list[GX_MAX_PADS]; /* just hold a pointer for each possible pad */
+static lwp_t _gx_thread = LWP_THREAD_NULL;
+static bool _gx_thread_running = false;
+static bool _gx_thread_quit = false;
+static PADStatus _gcpdata[PAD_CHANMAX]; /* Gamecube controllers data */
 
-static void _free_pad(uint8_t pad_idx) {
-	if (_pad_list[pad_idx]) {
-		free(_pad_list[pad_idx]);
-		_pad_list[pad_idx] = NULL;
+static void _gx_free_pad(uint8_t pad_idx) {
+	if (_gx_list[pad_idx]) {
+		free(_gx_list[pad_idx]);
+		_gx_list[pad_idx] = NULL;
 	}
 }
 
-static int8_t _rem_pad(uint32_t type, int32_t p_slot) {
-	int8_t i, pad_idx -1;
+static int8_t _gx_rem_pad(uint32_t type, int32_t p_slot) {
+	int8_t i, pad_idx = -1;
 
 	/* Look if the setup is currently active */
-	for (i = 0; i<= GX_MAX_PADS; i++) {
-		if (_pad_list[i] &&
-			_pad_list[i]->config->type == type &&
-			_pad_list[i]->p_slot == p_slot) {
+	for (i = 0; i < GX_MAX_PADS; i++) {
+		if (_gx_list[i] &&
+			_gx_list[i]->config->type == type &&
+			_gx_list[i]->p_slot == p_slot) {
 				pad_idx = i;
 				break;
 		}
 	}
 
-	if (pad_idx != -1) _free_pad(pad_idx);
+	if (pad_idx != -1) _gx_free_pad(pad_idx);
 
 	return pad_idx;
 }
 
 void gxpad_shutdown(void) {
 	/* First kill the running thread */
-	_pad_thread_quit = true;
-	if (_pad_thread_running) {
-		LWP_JoinThread(_pad_thread, NULL);
-		_pad_thread_running = false;
+	_gx_thread_quit = true;
+	if (_gx_thread_running) {
+		LWP_JoinThread(_gx_thread, NULL);
+		_gx_thread_running = false;
 	}
 
 	uint8_t i;
 	for (i = 0;i < GX_MAX_PADS; i++) {
-		_free_pad(i);
+		_gx_free_pad(i);
 	}
 
-	_inited = false;
+	_gx_inited = false;
 }
 
-static int8_t _add_pad(uint32_t type, int32_t p_slot) {
+static int8_t _gx_add_pad(uint32_t type, int32_t p_slot) {
 	uint8_t i;
 
-	/* Don allow any pad not defined  already in valid_pad_config */
+	/* Don allow any pad not defined  already in _gx_pad_config */
 	if (type >= WPAD_EXP_WIIMOTE && type <= WPAD_EXP_GAMECUBE) {
 		/* look for an empty slot to assign it */
 		for (i = 0; i < GX_MAX_PADS; i++) {
 			/* find an empty slot */
-			if (_pad_list[i] == NULL) {
+			if (_gx_list[i] == NULL) {
 				/* alloc and setup the pad data in the slot */
-				_pad_list[i] = malloc(sizeof(struct gxpad));
+				_gx_list[i] = malloc(sizeof(struct gxpad));
 				/* if succesfully allocated */
-				if (_pad_list[i]) {
-					memset(_pad_list[i], 0, sizeof(struct gxpad));
-					_pad_list[i]->config = &valid_pad_config[type];
-					_pad_list[i]->p_slot = p_slot;
+				if (_gx_list[i]) {
+					memset(_gx_list[i], 0, sizeof(struct gxpad));
+					_gx_list[i]->config = &_gx_pad_config[type];
+					_gx_list[i]->p_slot = p_slot;
 
 					return i; /* return the slot which we added it */
 				}
@@ -172,45 +178,47 @@ static int8_t _add_pad(uint32_t type, int32_t p_slot) {
     return -1; /* if this point is reached, no pad was added */
 }
 
-static int8_t _scan_devices() {
+static void _gx_scan_devices(void) {
     uint8_t slot;
-    uint32_t _rpads = 0;
-    uint32_t conn, ptype = 0;
+    uint32_t rpads = 0, ptype = 0;
     static bool g_lon[PAD_CHANMAX];
+#ifdef HW_RVL
+    uint32_t conn;
     static uint8_t w_pst[PAD_CHANMAX] = {WPAD_EXP_UNKNOWN, WPAD_EXP_UNKNOWN, WPAD_EXP_UNKNOWN, WPAD_EXP_UNKNOWN};
-
+#endif
 	/* First scan for GC controllers */
-	PAD_Read(gcpdata);
+	PAD_Read(_gcpdata);
 	for (slot = 0; slot < PAD_CHANMAX; ++slot) {
-		switch (gcpdata[slot].err) {
+		switch (_gcpdata[slot].err) {
 			case PAD_ERR_NONE:
 			case PAD_ERR_NOT_READY:
 			case PAD_ERR_TRANSFER:
 				if (g_lon[slot] == false) {
-					_add_pad(WPAD_EXP_GAMECUBE, slot);
+					_gx_add_pad(WPAD_EXP_GAMECUBE, slot);
 					g_lon[slot] = true;
 				}
 				break;
 			case PAD_ERR_NO_CONTROLLER:
-				_rpads |= PAD_CHAN0_BIT >> slot;
+				rpads |= PAD_CHAN0_BIT >> slot;
 				if (g_lon[slot] == true) {
-					_rem_pad(WPAD_EXP_GAMECUBE, slot);
+					_gx_rem_pad(WPAD_EXP_GAMECUBE, slot);
 					g_lon[slot] = false;
 				}
 				break;
 		}
 	}
 	/* reset any disconnectd pad */
-	if _rpads PAD_Reset(_rpads);
+	if (rpads) PAD_Reset(rpads);
 
+#ifdef HW_RVL
 	/* now go for the wii controllers */
     WPAD_ReadPending(WPAD_CHAN_ALL, NULL);
 	for (slot = 0; slot < PAD_CHANMAX; ++slot) {
-		_conn = WPAD_Probe(slot, &ptype);
-		switch (_conn) {
+		conn = WPAD_Probe(slot, &ptype);
+		switch (conn) {
 			case WPAD_ERR_NONE:
 				if (w_pst[slot] == WPAD_EXP_UNKNOWN) {
-					_add_pad(ptype, slot);
+					_gx_add_pad(ptype, slot);
 					w_pst[slot] = ptype;
 					break;
 				} else if (w_pst[slot] == ptype)
@@ -220,21 +228,20 @@ static int8_t _scan_devices() {
 			case WPAD_ERR_NOT_READY:
 			case WPAD_ERR_NO_CONTROLLER:
 				if (w_pst[slot] != WPAD_EXP_UNKNOWN) {
-					_rem_pad(w_pst[slot], slot);
+					_gx_rem_pad(w_pst[slot], slot);
 					w_pst[slot] = WPAD_EXP_UNKNOWN;
 				}
 				break;
 		}
 	}
-
-    return 0;
+#endif
 }
 
-static inline void _get_buttons(struct gxpad *p, uint32_t b) {
+static inline void _gx_get_buttons(struct gxpad *p, uint32_t b) {
 	uint8_t i;
 	uint32_t m;
 	p->b_state = 0; /* clear button state */
-	for (i = 0; i < BUTTON_SET; i++) {
+	for (i = 0; i < GX_BUTTON_SET; i++) {
 		m = p->config->b_mask[i];
 		if (m > GX_NO_BUTTON) {
 			p->b_state |= ((b & m) == m) ? (1ULL << i) : 0;
@@ -246,68 +253,74 @@ static inline void _get_buttons(struct gxpad *p, uint32_t b) {
 #define GX_JS_SIM_INV(a) (-((int16_t)a << 8))
 #define GX_JS_NOR(a) (((int16_t)a - 128) << 8)
 #define GX_JS_NOR_INV(a) ((127 - (int16_t)a) << 8)
+#define GX_JS_32(a) (((int16_t)a - 32) << 10)
+#define GX_JS_32_INV(a) ((31 - (int16_t)a) << 10)
+#define GX_JS_16(a) (((int16_t)a - 16) << 11)
+#define GX_JS_16_INV(a) ((15 - (int16_t)a) << 11)
 
-static void _read_gc(uint8_t pad_idx) {
-	struct gxpad *p = _pad_list[pad_idx];
+static void _gx_read_gc(uint8_t pad_idx) {
+	struct gxpad *p = _gx_list[pad_idx];
 	PADStatus gdata = _gcpdata[p->p_slot];
 
 	/* Only process when the pad is perfectly ready */
 	if (gdata.err == PAD_ERR_NONE) {
 		/* BUTTONS */
-		_get_buttons(p, gdata.button);
+		_gx_get_buttons(p, gdata.button);
 		/* ANALOGS */
 		p->a_state[0] = GX_JS_SIM(gdata.stickX);
 		p->a_state[1] = GX_JS_SIM_INV(gdata.stickY);
 		p->a_state[2] = GX_JS_SIM(gdata.substickX);
-		p->a_state[3] = GX_JS_SIM_INV(gdata.substickX);
+		p->a_state[3] = GX_JS_SIM_INV(gdata.substickY);
 	}
 }
 
-static void _read_wiimote(uint8_t pad_idx) {
-	struct gxpad *p = _pad_list[pad_idx];
+#ifdef HW_RVL
+static void _gx_read_wiimote(uint8_t pad_idx) {
+	struct gxpad *p = _gx_list[pad_idx];
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-	_get_buttons(p, wdata->btns_h);
+	_gx_get_buttons(p, wdata->btns_h);
 }
 
-static void _read_nunchuk(uint8_t pad_idx) {
-	struct gxpad *p = _pad_list[pad_idx];
+static void _gx_read_nunchuk(uint8_t pad_idx) {
+	struct gxpad *p = _gx_list[pad_idx];
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    _get_buttons(p, wdata->btns_h);
+    _gx_get_buttons(p, wdata->btns_h);
 	/* ANALOGS */
 	expansion_t *e = &wdata->exp;
 	p->a_state[0] = GX_JS_NOR(e->nunchuk.js.pos.x);
-	p->a_state[1] = GX_JS_NOR_INV(e->nunchuk.js.pox.y);
+	p->a_state[1] = GX_JS_NOR_INV(e->nunchuk.js.pos.y);
 }
 
-static void _read_classic(uint8_t pad_idx) {
-	struct gxpad *p = _pad_list[pad_idx];
+static void _gx_read_classic(uint8_t pad_idx) {
+	struct gxpad *p = _gx_list[pad_idx];
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    _get_buttons(p, wdata->btns_h);
+    _gx_get_buttons(p, wdata->btns_h);
 	/* ANALOGS */
 	expansion_t *e = &wdata->exp;
-	p->a_state[0] = GX_JS_NOR(e->classic.ljs.pos.x);
-	p->a_state[1] = GX_JS_NOR_INV(e->classic.ljs.pos.y);
-	p->a_state[2] = GX_JS_NOR(e->classic.rjs.pos.x);
-	p->a_state[3] = GX_JS_NOR_INV(e->classic.rjs.pos.y);
+	p->a_state[0] = GX_JS_32(e->classic.ljs.pos.x);
+	p->a_state[1] = GX_JS_32_INV(e->classic.ljs.pos.y);
+	p->a_state[2] = GX_JS_16(e->classic.rjs.pos.x);
+	p->a_state[3] = GX_JS_16_INV(e->classic.rjs.pos.y);
 }
+#endif
 
-static void * _pad_polling(void *arg) {
+static void * _gx_pad_polling(void *arg) {
 	uint8_t i;
 
-	while (!_pad_thread_quit) {
+	while (!_gx_thread_quit) {
 
 		/* Scan for any device change */
-		_scan_devices();
+		_gx_scan_devices();
 
 		/* read data from each available pad */
 		for(i = 0; i < GX_MAX_PADS; i++) {
-			if (_pad_list[i]) _pad_list[i]->read_pad(i);
+			if (_gx_list[i]) _gx_list[i]->config->read_pad(i);
 		}
 
 		/* Add here the mouse data polling */
@@ -320,85 +333,67 @@ static void * _pad_polling(void *arg) {
 }
 
 bool gxpad_init(void) {
-	if (!_inited) {
+	if (!_gx_inited) {
 
 		/* Set to null the whole pad list */
-		memset(_pad_list, 0, sizeof(_pad_list));
-
-		if (!_pad_thread_running) {
+		memset(_gx_list, 0, sizeof(_gx_list));
+		PAD_Init();
+#ifdef HW_RVL
+		WPAD_Init();
+#endif
+		if (!_gx_thread_running) {
 			// start the polling thread
-			_pad_thread_quit = false;
-			if (LWP_CreateThread(&_pad_thread, _pad_polling, NULL, NULL, 0, 65) < 0) {
-				_pad_thread_running = false;
+			_gx_thread_quit = false;
+			if (LWP_CreateThread(&_gx_thread, _gx_pad_polling, NULL, NULL, 0, 65) < 0) {
+				_gx_thread_running = false;
 				gxpad_shutdown();
 				return 0;
 			}
-			_pad_thread_running = true;
+			_gx_thread_running = true;
 		}
 
-		_inited = true;
+		_gx_inited = true;
     }
-    return _inited;
+    return _gx_inited;
 }
 
 uint64_t gxpad_buttons(uint8_t pad_idx) {
-	if (pad_idx < GX_MAX_PADS && _pad_list[pad_idx]) {
-		return _pad_list[pad_idx]->b_state;
+	if (pad_idx < GX_MAX_PADS && _gx_list[pad_idx]) {
+		return _gx_list[pad_idx]->b_state;
 	}
 
 	return 0ULL;
 };
 
 const char *gxpad_label(uint8_t pad_idx, uint8_t b_idx) {
-	if (pad_idx < GX_MAX_PADS && b_idx < BUTTON_SET && _pad_list[pad_idx]) {
-		return blabels[_pad_list[pad_idx]->config->b_label[b_idx]];
+	if (pad_idx < GX_MAX_PADS && b_idx < GX_BUTTON_SET && _gx_list[pad_idx]) {
+		return gx_labels[_gx_list[pad_idx]->config->b_label[b_idx]];
 	}
 
-	return blabels[GX_NA];
+	return gx_labels[GX_NA];
 }
 
 bool gxpad_buttonavail(uint8_t pad_idx, uint8_t b_idx) {
-	if (pad_idx < GX_MAX_PADS && b_idx < BUTTON_SET && _pad_list[pad_idx]) {
-		return (_pad_list[pad_idx]->config->b_mask[b_idx] > GX_NO_BUTTON);
+	if (pad_idx < GX_MAX_PADS && b_idx < GX_BUTTON_SET && _gx_list[pad_idx]) {
+		return (_gx_list[pad_idx]->config->b_mask[b_idx] > GX_NO_BUTTON);
 	}
 
 	return false;
 }
 
 const char *gxpad_padname(uint8_t pad_idx) {
-	if (pad_idx < GX_MAX_PADS && _pad_list[pad_idx]) {
-		return _pad_list[pad_idx]->config->name;
+	if (pad_idx < GX_MAX_PADS && _gx_list[pad_idx]) {
+		return _gx_list[pad_idx]->config->name;
 	}
 
 	return "No pad plugged in";
 }
 
-static inline int16_t _normalize_a(int16_t a_value, uint8_t axis_type) {
-	int16_t h;
-
-	switch (axis_type) {
-		case A_STANDARD:
-			a_value = (a_value - 128) << 8; break;
-		case A_INVERTED:
-			a_value = (127 - a_value) << 8;	break;
-		case A_HAT_PSXH:
-			h = HAT_GET(a_value);
-			a_value = HAT_LEFT(h) ? HAT_MIN: HAT_RIGHT(h) ? HAT_MAX: 0; break;
-		case A_HAT_PSXV:
-			h = HAT_GET(a_value);
-			a_value = HAT_UP(h) ? HAT_MIN: HAT_DOWN(h) ? HAT_MAX: 0; break;
-		default	:
-			a_value = 0;
-	}
-
-	return a_value;
-}
-
 int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx) {
 	if (pad_idx < GX_MAX_PADS) {
-		struct gxpad *pad = _pad_list[pad_idx];
+		struct gxpad *pad = _gx_list[pad_idx];
 		if (pad && a_idx < pad->config->num_analogs) {
-			return _normalize_a(pad->a_state[a_idx], pad->config->analogs[a_idx].type);
+			return pad->a_state[a_idx];
 		}
 	}
 
@@ -407,15 +402,15 @@ int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx) {
 
 bool gxpad_avail(uint8_t pad_idx) {
 	if (pad_idx < GX_MAX_PADS) {
-		return (_pad_list[pad_idx] != NULL);
+		return (_gx_list[pad_idx]);
 	}
 
 	return false;
 }
 
 uint8_t gxpad_nanalogs(uint8_t pad_idx) {
-	if (pad_idx < GX_MAX_PADS && _pad_list[pad_idx]) {
-		return _pad_list[pad_idx]->config->num_analogs;
+	if (pad_idx < GX_MAX_PADS && _gx_list[pad_idx]) {
+		return _gx_list[pad_idx]->config->num_analogs;
 	}
 
 	return 0;

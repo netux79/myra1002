@@ -1,7 +1,7 @@
 /*  RetroArch - A frontend for libretro.
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
  *  Copyright (C) 2011-2014 - Daniel De Matteis
- * 
+ *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -266,7 +266,7 @@ typedef enum
    RGUI_ACTION_NOOP
 } rgui_action_t;
 
-#define RGUI_MAX_BUTTONS 64
+#define RGUI_MAX_BUTTONS 32
 #define RGUI_MAX_AXES 32
 #define RGUI_MAX_HATS 4
 struct rgui_bind_state_port

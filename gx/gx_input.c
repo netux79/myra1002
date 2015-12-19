@@ -17,193 +17,82 @@
 
 #include <stdint.h>
 #include <gccore.h>
-#include <ogc/pad.h>
-#ifdef HW_RVL
-#include <wiiuse/wpad.h>
-#endif
 #include <string.h>
-#include <math.h>
 
 #include "gx_input.h"
 #include "../driver.h"
 #include "../libretro.h"
 #include <stdlib.h>
 
-#define MAX_PADS 4
+#define GX_NUM_PADS 8
+#define GX_JS_THRESHOLD (40 * 256)
 
 typedef struct gx_input
 {
-   uint64_t pad_state[MAX_PADS];
-   int16_t analog_state[MAX_PADS][2][2];
-#ifdef HW_RVL
+   uint64_t pad_state[GX_NUM_PADS];
+   int16_t analog_state[GX_NUM_PADS][2][2];
    bool mouse_l, mouse_r, mouse_m;
    int mouse_x, mouse_y;
    int mouse_last_x, mouse_last_y;
-#endif
 } gx_input_t;
-
-const struct platform_bind platform_keys[] = {
-   { GX_GC_A, "GC A button" },
-   { GX_GC_B, "GC B button" },
-   { GX_GC_X, "GC X button" },
-   { GX_GC_Y, "GC Y button" },
-   { GX_GC_UP, "GC D-Pad Up" },
-   { GX_GC_DOWN, "GC D-Pad Down" },
-   { GX_GC_LEFT, "GC D-Pad Left" },
-   { GX_GC_RIGHT, "GC D-Pad Right" },
-   { GX_GC_Z_TRIGGER, "GC Z Trigger" },
-   { GX_GC_L_TRIGGER, "GC Left Trigger" },
-   { GX_GC_R_TRIGGER, "GC Right Trigger" },
-   { GX_GC_START, "GC Start button" },
-   { GX_GC_HOME, "GC HOME Combo" },
-
-#ifdef HW_RVL
-   // CLASSIC CONTROLLER
-   { GX_CLASSIC_A, "Classic A button" },
-   { GX_CLASSIC_B, "Classic B button" },
-   { GX_CLASSIC_X, "Classic X button" },
-   { GX_CLASSIC_Y, "Classic Y button" },
-   { GX_CLASSIC_UP, "Classic D-Pad Up" },
-   { GX_CLASSIC_DOWN, "Classic D-Pad Down" },
-   { GX_CLASSIC_LEFT, "Classic D-Pad Left" },
-   { GX_CLASSIC_RIGHT, "Classic D-Pad Right" },
-   { GX_CLASSIC_PLUS, "Classic Plus button" },
-   { GX_CLASSIC_MINUS, "Classic Minus button" },
-   { GX_CLASSIC_HOME, "Classic Home button" },
-   { GX_CLASSIC_L_TRIGGER, "Classic L Trigger" },
-   { GX_CLASSIC_R_TRIGGER, "Classic R Trigger" },
-   { GX_CLASSIC_ZL_TRIGGER, "Classic ZL Trigger" },
-   { GX_CLASSIC_ZR_TRIGGER, "Classic ZR Trigger" },
-
-   // WIIMOTE (PLUS OPTIONAL NUNCHUK)
-   { GX_WIIMOTE_A, "Wiimote A button" },
-   { GX_WIIMOTE_B, "Wiimote B button" },
-   { GX_WIIMOTE_1, "Wiimote 1 button" },
-   { GX_WIIMOTE_2, "Wiimote 2 button" },
-   { GX_WIIMOTE_UP, "Wiimote D-Pad Up" },
-   { GX_WIIMOTE_DOWN, "Wiimote D-Pad Down" },
-   { GX_WIIMOTE_LEFT, "Wiimote D-Pad Left" },
-   { GX_WIIMOTE_RIGHT, "Wiimote D-Pad Right" },
-   { GX_WIIMOTE_PLUS, "Wiimote Plus button" },
-   { GX_WIIMOTE_MINUS, "Wiimote Minus button" },
-   { GX_WIIMOTE_HOME, "Wiimote Home button" },
-   { GX_NUNCHUK_Z, "Nunchuk Z button" },
-   { GX_NUNCHUK_C, "Nunchuk C button" },
-#endif
-};
 
 extern const rarch_joypad_driver_t gx_joypad;
 
 static bool g_menu;
-
 #ifdef HW_RVL
 static bool g_quit;
 
-static void power_callback(void)
+static void gx_power_callback(void)
 {
    g_quit = true;
 }
 #endif
-
-static void reset_cb(void)
+static void gx_reset_cb(void)
 {
    g_menu = true;
 }
 
-static bool gx_menu_input_state(uint64_t joykey, uint64_t state)
+static bool gx_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])
 {
+   bool a_dir;
+
    switch (joykey)
    {
       case CONSOLE_MENU_A:
-         return state & ((1ULL << GX_GC_A)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_A) | (1ULL << GX_CLASSIC_A) | (1ULL << GX_WIIMOTE_2)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_A);
       case CONSOLE_MENU_B:
-         return state & ((1ULL << GX_GC_B)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_B) | (1ULL << GX_CLASSIC_B) | (1ULL << GX_WIIMOTE_1)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_B);
       case CONSOLE_MENU_X:
-         return state & ((1ULL << GX_GC_X)
-#ifdef HW_RVL
-               | (1ULL << GX_CLASSIC_X)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_X);
       case CONSOLE_MENU_Y:
-         return state & ((1ULL << GX_GC_Y)
-#ifdef HW_RVL
-               | (1ULL << GX_CLASSIC_Y)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_Y);
       case CONSOLE_MENU_START:
-         return state & ((1ULL << GX_GC_START)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_PLUS) | (1ULL << GX_CLASSIC_PLUS)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_START);
       case CONSOLE_MENU_SELECT:
-         return state & ((1ULL << GX_GC_Z_TRIGGER)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_MINUS) | (1ULL << GX_CLASSIC_MINUS)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_SELECT);
       case CONSOLE_MENU_UP:
-         return state & ((1ULL << GX_GC_UP)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_UP) | (1ULL << GX_CLASSIC_UP)
-#endif
-               );
+		 a_dir = a_state[RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] < -GX_JS_THRESHOLD;
+         return (state & (1ULL << GX_GXPAD_UP)) || a_dir;
       case CONSOLE_MENU_DOWN:
-         return state & ((1ULL << GX_GC_DOWN)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_DOWN) | (1ULL << GX_CLASSIC_DOWN)
-#endif
-               );
+		 a_dir = a_state[RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] > GX_JS_THRESHOLD;
+         return (state & (1ULL << GX_GXPAD_DOWN)) || a_dir;
       case CONSOLE_MENU_LEFT:
-         return state & ((1ULL << GX_GC_LEFT)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_LEFT) | (1ULL << GX_CLASSIC_LEFT)
-#endif
-               );
+		 a_dir = a_state[RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] < -GX_JS_THRESHOLD;
+         return (state & (1ULL << GX_GXPAD_LEFT)) || a_dir;
       case CONSOLE_MENU_RIGHT:
-         return state & ((1ULL << GX_GC_RIGHT)
-#ifdef HW_RVL
-               | (1ULL << GX_WIIMOTE_RIGHT) | (1ULL << GX_CLASSIC_RIGHT)
-#endif
-               );
+		 a_dir = a_state[RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] > GX_JS_THRESHOLD;
+         return (state & (1ULL << GX_GXPAD_RIGHT)) || a_dir;
       case CONSOLE_MENU_L:
-         return state & ((1ULL << GX_GC_L_TRIGGER)
-#ifdef HW_RVL
-               | (1ULL << GX_CLASSIC_L_TRIGGER)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_L);
       case CONSOLE_MENU_R:
-         return state & ((1ULL << GX_GC_R_TRIGGER)
-#ifdef HW_RVL
-               | (1ULL << GX_CLASSIC_R_TRIGGER)
-#endif
-               );
+         return state & (1ULL << GX_GXPAD_R);
       case CONSOLE_MENU_HOME:
-         return state & ((1ULL << GX_GC_HOME) | (1ULL << GX_WIIMOTE_HOME)
-#ifdef HW_RVL
-               | (1ULL << GX_CLASSIC_HOME)
-#endif
-               );
-#ifdef HW_RVL
-      case CONSOLE_MENU_L2:
-         return state & (1ULL << GX_CLASSIC_ZL_TRIGGER);
-      case CONSOLE_MENU_R2:
-         return state & (1ULL << GX_CLASSIC_ZR_TRIGGER);
-#endif
+         return state & (1ULL << GX_GXPAD_HOME);
       default:
          return false;
    }
 }
 
-#ifdef HW_RVL
 static int16_t gx_mouse_state(gx_input_t *gx, unsigned id)
 {
    switch (id)
@@ -243,7 +132,6 @@ static int16_t gx_lightgun_state(gx_input_t *gx, unsigned id)
          return 0;
    }
 }
-#endif
 
 static int16_t gx_input_state(void *data, const struct retro_keybind **binds,
       unsigned port, unsigned device,
@@ -251,24 +139,22 @@ static int16_t gx_input_state(void *data, const struct retro_keybind **binds,
 {
    gx_input_t *gx = (gx_input_t*)data;
 
-   if (port >= MAX_PADS)
+   if (port >= GX_NUM_PADS)
       return 0;
 
    switch (device)
    {
       case RETRO_DEVICE_JOYPAD:
          if (binds[port][id].joykey >= CONSOLE_MENU_FIRST && binds[port][id].joykey <= CONSOLE_MENU_LAST)
-            return gx_menu_input_state(binds[port][id].joykey, gx->pad_state[port]) ? 1 : 0;
+            return gx_menu_input_state(binds[port][id].joykey, gx->pad_state[port], gx->analog_state[port]) ? 1 : 0;
          else
             return input_joypad_pressed(&gx_joypad, port, binds[port], id);
       case RETRO_DEVICE_ANALOG:
          return input_joypad_analog(&gx_joypad, port, index, id, binds[port]);
-#ifdef HW_RVL
       case RETRO_DEVICE_MOUSE:
          return gx_mouse_state(gx, id);
 	  case RETRO_DEVICE_LIGHTGUN:
          return gx_lightgun_state(gx, id);
-#endif
       default:
          return 0;
    }
@@ -277,241 +163,86 @@ static int16_t gx_input_state(void *data, const struct retro_keybind **binds,
 static void gx_input_free_input(void *data)
 {
    (void)data;
-}
 
+   if (!driver.video_data) {
+	   /* shutdown pads */
+	   gxpad_shutdown();
+   }
+}
 
 static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
       unsigned id, unsigned keybind_action)
 {
    uint64_t *key = &g_settings.input.binds[port][id].joykey;
-   size_t arr_size = sizeof(platform_keys) / sizeof(platform_keys[0]);
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND))
       *key = g_settings.input.binds[port][id].def_joykey;
 
+   /* Set the name when binding default keys too */
+   if ((keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME)) || (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS)))
+   {
+      /* We are not supporting different devices but GXPAD */
+      g_settings.input.device[port] = DEVICE_GXPAD;
+      strlcpy(g_settings.input.device_names[port], gxpad_padname(port), sizeof(g_settings.input.device_names[port]));
+   }
+
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS))
    {
-      switch (device)
-      {
-#ifdef HW_RVL
-         case DEVICE_WIIMOTE:
-            g_settings.input.device[port] = device;
-            strlcpy(g_settings.input.device_names[port], "Wiimote", sizeof(g_settings.input.device_names[port]));
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_1].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_A].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joykey  = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_MINUS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joykey   = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_PLUS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joykey      = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_UP].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joykey    = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_DOWN].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joykey    = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_LEFT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joykey   = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_RIGHT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_2].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_B].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NONE;
-            break;
-         case DEVICE_NUNCHUK:
-            g_settings.input.device[port] = device;
-            strlcpy(g_settings.input.device_names[port], "Wiimote + Nunchuk", sizeof(g_settings.input.device_names[port]));
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_B].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_2].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joykey  = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_MINUS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joykey   = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_PLUS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joykey      = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_UP].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joykey    = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_DOWN].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joykey    = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_LEFT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joykey   = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_RIGHT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_A].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joykey       = platform_keys[GX_DEVICE_WIIMOTE_ID_JOYPAD_1].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joykey       = platform_keys[GX_DEVICE_NUNCHUK_ID_JOYPAD_Z].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joykey       = platform_keys[GX_DEVICE_NUNCHUK_ID_JOYPAD_C].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joyaxis      = AXIS_POS(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joyaxis     = AXIS_NEG(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joyaxis      = AXIS_POS(1);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joyaxis     = AXIS_NEG(1);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NONE;
-            break;
-         case DEVICE_CLASSIC:
-            g_settings.input.device[port] = device;
-            strlcpy(g_settings.input.device_names[port], "Classic Controller", sizeof(g_settings.input.device_names[port]));
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joykey       = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_B].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joykey       = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_Y].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joykey  = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_MINUS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joykey   = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_PLUS].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joykey      = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_UP].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joykey    = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_DOWN].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joykey    = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_LEFT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joykey   = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_RIGHT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joykey       = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_A].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joykey       = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_X].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joykey       = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_L_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joykey       = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_R_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joykey      = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_ZL_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joykey      = platform_keys[GX_DEVICE_CLASSIC_ID_JOYPAD_ZR_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joyaxis      = AXIS_POS(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joyaxis     = AXIS_NEG(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joyaxis      = AXIS_POS(1);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joyaxis     = AXIS_NEG(1);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joyaxis     = AXIS_POS(2);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NEG(2);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_POS(3);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NEG(3);
-            break;
-#endif
-         case DEVICE_GAMECUBE:
-            g_settings.input.device[port] = device;
-            strlcpy(g_settings.input.device_names[port], "Gamecube Controller", sizeof(g_settings.input.device_names[port]));
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joykey       = platform_keys[GX_DEVICE_GC_ID_JOYPAD_B].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joykey       = platform_keys[GX_DEVICE_GC_ID_JOYPAD_Y].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joykey  = platform_keys[GX_DEVICE_GC_ID_JOYPAD_Z_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joykey   = platform_keys[GX_DEVICE_GC_ID_JOYPAD_START].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joykey      = platform_keys[GX_DEVICE_GC_ID_JOYPAD_UP].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joykey    = platform_keys[GX_DEVICE_GC_ID_JOYPAD_DOWN].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joykey    = platform_keys[GX_DEVICE_GC_ID_JOYPAD_LEFT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joykey   = platform_keys[GX_DEVICE_GC_ID_JOYPAD_RIGHT].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joykey       = platform_keys[GX_DEVICE_GC_ID_JOYPAD_A].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joykey       = platform_keys[GX_DEVICE_GC_ID_JOYPAD_X].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joykey       = platform_keys[GX_DEVICE_GC_ID_JOYPAD_L_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joykey       = platform_keys[GX_DEVICE_GC_ID_JOYPAD_R_TRIGGER].joykey;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joykey       = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joyaxis   = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joyaxis  = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joyaxis      = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joyaxis     = AXIS_NONE;
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joyaxis      = AXIS_POS(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joyaxis     = AXIS_NEG(0);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joyaxis      = AXIS_POS(1);
-            g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joyaxis     = AXIS_NEG(1);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joyaxis     = AXIS_POS(2);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NEG(2);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_POS(3);
-            g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NEG(3);
-            break;
-         default:
-            break;
-      }
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joykey       = GX_GXPAD_B;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joykey       = GX_GXPAD_Y;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joykey  = GX_GXPAD_SELECT;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joykey   = GX_GXPAD_START;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joykey      = GX_GXPAD_UP;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joykey    = GX_GXPAD_DOWN;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joykey    = GX_GXPAD_LEFT;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joykey   = GX_GXPAD_RIGHT;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joykey       = GX_GXPAD_A;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joykey       = GX_GXPAD_X;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joykey       = GX_GXPAD_L;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joykey       = GX_GXPAD_R;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joykey      = GX_GXPAD_L2;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joykey      = GX_GXPAD_R2;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joykey      = GX_GXPAD_L3;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joykey      = GX_GXPAD_R3;
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joykey       = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joykey      = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joykey       = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joykey      = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joykey      = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_START].def_joyaxis  = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_UP].def_joyaxis     = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_DOWN].def_joyaxis   = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_LEFT].def_joyaxis   = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_RIGHT].def_joyaxis  = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_A].def_joyaxis      = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_X].def_joyaxis      = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L].def_joyaxis      = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R].def_joyaxis      = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L2].def_joyaxis     = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R2].def_joyaxis     = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_L3].def_joyaxis     = AXIS_NONE;
+      g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_R3].def_joyaxis     = AXIS_NONE;
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_PLUS].def_joyaxis      = AXIS_POS(0);
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_X_MINUS].def_joyaxis     = AXIS_NEG(0);
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_PLUS].def_joyaxis      = AXIS_POS(1);
+      g_settings.input.binds[port][RARCH_ANALOG_LEFT_Y_MINUS].def_joyaxis     = AXIS_NEG(1);
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_PLUS].def_joyaxis     = AXIS_POS(2);
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NEG(2);
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_POS(3);
+      g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NEG(3);
 
+      /* Assign the default binding to the actual controller */
       for (unsigned i = 0; i < RARCH_CUSTOM_BIND_LIST_END - 1; i++)
       {
          g_settings.input.binds[port][i].id = i;
-         g_settings.input.binds[port][i].joykey = g_settings.input.binds[port][i].def_joykey;
-         g_settings.input.binds[port][i].joyaxis = g_settings.input.binds[port][i].def_joyaxis;
+		 g_settings.input.binds[port][i].joykey = g_settings.input.binds[port][i].def_joykey;
+		 g_settings.input.binds[port][i].joyaxis = g_settings.input.binds[port][i].def_joyaxis;
       }
    }
 
@@ -521,18 +252,8 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
 
       if (ret->joykey == NO_BTN)
          strlcpy(ret->desc, "No button", sizeof(ret->desc));
-      else
-      {
-         for (size_t i = 0; i < arr_size; i++)
-         {
-            if (platform_keys[i].joykey == ret->joykey)
-            {
-               strlcpy(ret->desc, platform_keys[i].desc, sizeof(ret->desc));
-               return;
-            }
-         }
-         strlcpy(ret->desc, "Unknown", sizeof(ret->desc));
-      }
+	  else
+         strlcpy(ret->desc, gxpad_label(port, ret->joykey), sizeof(ret->desc));
    }
 }
 
@@ -541,21 +262,16 @@ static void *gx_input_init(void)
    gx_input_t *gx = (gx_input_t*)calloc(1, sizeof(*gx));
    if (!gx)
       return NULL;
-   PAD_Init();
-#ifdef HW_RVL
-   WPAD_Init();
-   WPAD_SetVRes(0, 640, 480);
-   WPAD_SetDataFormat(WPAD_CHAN_0, WPAD_FMT_BTNS_ACC_IR); /* read IR info from wiimote 1 */
-#endif
-   SYS_SetResetCallback(reset_cb);
-#ifdef HW_RVL
-   SYS_SetPowerCallback(power_callback);
-#endif
+
+   SYS_SetResetCallback(gx_reset_cb);
+   SYS_SetPowerCallback(gx_power_callback);
+
+   gxpad_init();
 
    return gx;
 }
 
-#ifdef HW_RVL
+/*
 static void gx_input_poll_mouse(gx_input_t *gx)
 {
    ir_t ir;
@@ -565,193 +281,78 @@ static void gx_input_poll_mouse(gx_input_t *gx)
    gx->mouse_x = ir.x;
    gx->mouse_y = ir.y;
 
-   uint64_t *state = &gx->pad_state[0]; /* Check buttons from first port */
-   gx->mouse_l = *state & (1ULL << GX_WIIMOTE_B);
-   gx->mouse_m = *state & (1ULL << GX_WIIMOTE_1);
-   gx->mouse_r = *state & (1ULL << GX_WIIMOTE_A);
+   uint64_t *state = &gx->pad_state[0]; / Check buttons from first port /
+   gx->mouse_l = *state & (1ULL << GX_HID_WIIMOTE_B);
+   gx->mouse_m = *state & (1ULL << GX_HID_WIIMOTE_1);
+   gx->mouse_r = *state & (1ULL << GX_HID_WIIMOTE_A);
 }
-#endif
+*/
 
 static void gx_input_poll(void *data)
 {
+   static bool lt_active[GX_NUM_PADS];
    gx_input_t *gx = (gx_input_t*)data;
-   PADStatus gcpdata[PAD_CHANMAX];
 
-   PAD_Read(gcpdata);
-
-#ifdef HW_RVL
-   WPAD_ReadPending(WPAD_CHAN_ALL, NULL);
-#endif
-
-   for (unsigned port = 0; port < MAX_PADS; port++)
+   for (unsigned port = 0; port < GX_NUM_PADS; port++)
    {
-      uint32_t down = 0;
-	  uint64_t *state_cur = &gx->pad_state[port];
-	  static uint64_t prev_gc_state;
+	  bool hotplug = false;
+	  uint64_t *state = &gx->pad_state[port];
 
-	  *state_cur = 0; /* first reset the state */
-      switch (gcpdata[port].err)
+      if (gxpad_avail(port))
       {
-	     case PAD_ERR_NONE:
-		    down = gcpdata[port].button;
+	     *state = gxpad_buttons(port);
 
-			*state_cur |= (down & PAD_BUTTON_A) ? (1ULL << GX_GC_A) : 0;
-			*state_cur |= (down & PAD_BUTTON_B) ? (1ULL << GX_GC_B) : 0;
-			*state_cur |= (down & PAD_BUTTON_X) ? (1ULL << GX_GC_X) : 0;
-			*state_cur |= (down & PAD_BUTTON_Y) ? (1ULL << GX_GC_Y) : 0;
-			*state_cur |= (down & PAD_BUTTON_UP) ? (1ULL << GX_GC_UP) : 0;
-			*state_cur |= (down & PAD_BUTTON_DOWN) ? (1ULL << GX_GC_DOWN) : 0;
-			*state_cur |= (down & PAD_BUTTON_LEFT) ? (1ULL << GX_GC_LEFT) : 0;
-			*state_cur |= (down & PAD_BUTTON_RIGHT) ? (1ULL << GX_GC_RIGHT) : 0;
-			*state_cur |= (down & PAD_BUTTON_START) ? (1ULL << GX_GC_START) : 0;
-			*state_cur |= (down & PAD_TRIGGER_Z) ? (1ULL << GX_GC_Z_TRIGGER) : 0;
-			*state_cur |= ((down & PAD_TRIGGER_L) || gcpdata[port].substickX > 127) ? (1ULL << GX_GC_L_TRIGGER) : 0;
-			*state_cur |= ((down & PAD_TRIGGER_R) || gcpdata[port].substickY > 127) ? (1ULL << GX_GC_R_TRIGGER) : 0;
+		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = gxpad_js_lx(port);
+		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = gxpad_js_ly(port);
+		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = gxpad_js_rx(port);
+		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = gxpad_js_ry(port);
 
-			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = (int16_t)gcpdata[port].stickX << 8;
-			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = -((int16_t)gcpdata[port].stickY << 8);
-			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = (int16_t)gcpdata[port].substickX << 8;
-			gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = -((int16_t)gcpdata[port].substickX << 8);
+		 hotplug = (lt_active[port]) ? false : true;
+		 lt_active[port] = true;
+      }
+      else
+      {
+         *state = 0; /* reset the button state */
+         for (uint8_t j = 0; j < 2; j++)
+		    for (uint8_t i = 0; i < 2; i++)
+			   gx->analog_state[port][j][i] = 0; /*  clear also all the analogs */
 
-			const uint64_t menu_combo = (1ULL << GX_GC_START) | (1ULL << GX_GC_Z_TRIGGER);
-			if ((*state_cur & menu_combo) == menu_combo) *state_cur |= (1ULL << GX_GC_HOME);
-
-			prev_gc_state = *state_cur;
-
-		    if (g_settings.input.autodetect_enable)
-		    {
-		       if (strcmp(g_settings.input.device_names[port], "Gamecube Controller") != 0)
-		       gx_input_set_keybinds(NULL, DEVICE_GAMECUBE, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-		    }
-
-			break;
-		 case PAD_ERR_NOT_READY:
-		 case PAD_ERR_TRANSFER:
-			*state_cur = prev_gc_state;
-			break;
-		 case PAD_ERR_NO_CONTROLLER:
-		    PAD_Reset(PAD_CHAN0_BIT >> port);
-		    break;
+		 hotplug = (lt_active[port]) ? true : false;
+         lt_active[port] = false;
 	  }
 
-#ifdef HW_RVL
-      uint32_t ptype = 0;
-      uint32_t connected = WPAD_Probe(port, &ptype);
+	  if (hotplug)
+	  {
+         /* show the pad change */
+         char msg[128];
+         if (lt_active[port])
+		    snprintf(msg, sizeof(msg), "%s plugged -p %u", gxpad_padname(port), port);
+		 else
+			snprintf(msg, sizeof(msg), "%s unplugged -p %u", g_settings.input.device_names[port], port);
+         msg_queue_push(g_extern.msg_queue, msg, 0, 80);
 
-      if (connected == WPAD_ERR_NONE)
-      {
-         WPADData *wpaddata = WPAD_Data(port);
-         expansion_t *exp = &wpaddata->exp;
-         down = wpaddata->btns_h;
-
-         *state_cur |= (down & WPAD_BUTTON_A) ? (1ULL << GX_WIIMOTE_A) : 0;
-         *state_cur |= (down & WPAD_BUTTON_B) ? (1ULL << GX_WIIMOTE_B) : 0;
-         *state_cur |= (down & WPAD_BUTTON_1) ? (1ULL << GX_WIIMOTE_1) : 0;
-         *state_cur |= (down & WPAD_BUTTON_2) ? (1ULL << GX_WIIMOTE_2) : 0;
-         *state_cur |= (down & WPAD_BUTTON_PLUS) ? (1ULL << GX_WIIMOTE_PLUS) : 0;
-         *state_cur |= (down & WPAD_BUTTON_MINUS) ? (1ULL << GX_WIIMOTE_MINUS) : 0;
-         *state_cur |= (down & WPAD_BUTTON_HOME) ? (1ULL << GX_WIIMOTE_HOME) : 0;
-
-         if (ptype != WPAD_EXP_NUNCHUK)
-         {
-            // rotated d-pad on Wiimote
-            *state_cur |= (down & WPAD_BUTTON_UP) ? (1ULL << GX_WIIMOTE_LEFT) : 0;
-            *state_cur |= (down & WPAD_BUTTON_DOWN) ? (1ULL << GX_WIIMOTE_RIGHT) : 0;
-            *state_cur |= (down & WPAD_BUTTON_LEFT) ? (1ULL << GX_WIIMOTE_DOWN) : 0;
-            *state_cur |= (down & WPAD_BUTTON_RIGHT) ? (1ULL << GX_WIIMOTE_UP) : 0;
-         }
-
-         if (ptype == WPAD_EXP_CLASSIC)
-         {
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_A) ? (1ULL << GX_CLASSIC_A) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_B) ? (1ULL << GX_CLASSIC_B) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_X) ? (1ULL << GX_CLASSIC_X) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_Y) ? (1ULL << GX_CLASSIC_Y) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_UP) ? (1ULL << GX_CLASSIC_UP) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_DOWN) ? (1ULL << GX_CLASSIC_DOWN) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_LEFT) ? (1ULL << GX_CLASSIC_LEFT) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_RIGHT) ? (1ULL << GX_CLASSIC_RIGHT) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_PLUS) ? (1ULL << GX_CLASSIC_PLUS) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_MINUS) ? (1ULL << GX_CLASSIC_MINUS) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_HOME) ? (1ULL << GX_CLASSIC_HOME) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_FULL_L) ? (1ULL << GX_CLASSIC_L_TRIGGER) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_FULL_R) ? (1ULL << GX_CLASSIC_R_TRIGGER) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_ZL) ? (1ULL << GX_CLASSIC_ZL_TRIGGER) : 0;
-            *state_cur |= (down & WPAD_CLASSIC_BUTTON_ZR) ? (1ULL << GX_CLASSIC_ZR_TRIGGER) : 0;
-
-            int16_t ljs_x = (int8_t)exp->classic.ljs.pos.x;
-            int16_t ljs_y = (int8_t)exp->classic.ljs.pos.y;
-            int16_t rjs_x = (int8_t)exp->classic.rjs.pos.x;
-            int16_t rjs_y = (int8_t)exp->classic.rjs.pos.y;
-
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ((ljs_x - 128) << 8);
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ((127 - ljs_y) << 8);
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = ((rjs_x - 128) << 8);
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = ((127 - rjs_y) << 8);
-
-            if (g_settings.input.autodetect_enable)
-            {
-               if (strcmp(g_settings.input.device_names[port], "Classic Controller") != 0)
-                  gx_input_set_keybinds(NULL, DEVICE_CLASSIC, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-            }
-         }
-         else if (ptype == WPAD_EXP_NUNCHUK)
-         {
-            // wiimote is held upright with nunchuk, do not change d-pad orientation
-            *state_cur |= (down & WPAD_BUTTON_UP) ? (1ULL << GX_WIIMOTE_UP) : 0;
-            *state_cur |= (down & WPAD_BUTTON_DOWN) ? (1ULL << GX_WIIMOTE_DOWN) : 0;
-            *state_cur |= (down & WPAD_BUTTON_LEFT) ? (1ULL << GX_WIIMOTE_LEFT) : 0;
-            *state_cur |= (down & WPAD_BUTTON_RIGHT) ? (1ULL << GX_WIIMOTE_RIGHT) : 0;
-
-            *state_cur |= (down & WPAD_NUNCHUK_BUTTON_Z) ? (1ULL << GX_NUNCHUK_Z) : 0;
-            *state_cur |= (down & WPAD_NUNCHUK_BUTTON_C) ? (1ULL << GX_NUNCHUK_C) : 0;
-
-            int16_t js_x = (int8_t)exp->nunchuk.js.pos.x;
-            int16_t js_y = (int8_t)exp->nunchuk.js.pos.y;
-
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = ((js_x - 128) << 8);
-            gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = ((127 - js_y) << 8);
-
-            if (g_settings.input.autodetect_enable)
-            {
-               if (strcmp(g_settings.input.device_names[port], "Wiimote + Nunchuk") != 0)
-                  gx_input_set_keybinds(NULL, DEVICE_NUNCHUK, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-            }
-         }
+		 if (g_settings.input.autodetect_enable)
+            gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
          else
-         {
-            //no attachment, assume standalone Wiimote
-            if (g_settings.input.autodetect_enable)
-            {
-               if (strcmp(g_settings.input.device_names[port], "Wiimote") != 0)
-                  gx_input_set_keybinds(NULL, DEVICE_WIIMOTE, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-            }
-         }
-      }
-#endif
+            gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_PAD_NAME));
+	  }
    }
-
-#ifdef HW_RVL
-   gx_input_poll_mouse(gx);
-#endif
 
    uint64_t *state_p1 = &gx->pad_state[0];
-   uint64_t *lifecycle_state = &g_extern.lifecycle_state;
 
+   /* check if the user press the Wii's reset button, it works as the HOME button */
+   *state_p1 |= g_menu ? (1ULL << GX_GXPAD_HOME) : 0;
+   /* clear the reset Wii button flag */
+   g_menu = false;
+
+   /* poll mouse data
+   gx_input_poll_mouse(gx); */
+
+   /* Check if we need to get into the menu */
+   uint64_t *lifecycle_state = &g_extern.lifecycle_state;
    *lifecycle_state &= ~((1ULL << RARCH_MENU_TOGGLE));
 
-   if (g_menu)
-   {
-      *state_p1 |= (1ULL << GX_WIIMOTE_HOME);
-      g_menu = false;
-   }
-
-   if (*state_p1 & ((1ULL << GX_GC_HOME)
-#ifdef HW_RVL
-            | (1ULL << GX_WIIMOTE_HOME) | (1ULL << GX_CLASSIC_HOME)
-#endif
-            ))
-      *lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+   if (*state_p1 & (1ULL << GX_GXPAD_HOME)) *lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_input_key_pressed(void *data, int key)
@@ -765,10 +366,8 @@ static uint64_t gx_input_get_capabilities(void *data)
 
    caps |= (1 << RETRO_DEVICE_JOYPAD);
    caps |= (1 << RETRO_DEVICE_ANALOG);
-#ifdef HW_RVL
    caps |= (1 << RETRO_DEVICE_MOUSE);
    caps |= (1 << RETRO_DEVICE_LIGHTGUN);
-#endif
    return caps;
 }
 
@@ -804,16 +403,16 @@ static bool gx_joypad_button(unsigned port_num, uint16_t joykey)
 {
    gx_input_t *gx = (gx_input_t*)driver.input_data;
 
-   if (port_num >= MAX_PADS)
-      return false;
+   if (port_num < GX_NUM_PADS)
+      return gx->pad_state[port_num] & (1ULL << joykey);
 
-  return gx->pad_state[port_num] & (1ULL << joykey);
+   return false;
 }
 
 static int16_t gx_joypad_axis(unsigned port_num, uint32_t joyaxis)
 {
    gx_input_t *gx = (gx_input_t*)driver.input_data;
-   if (joyaxis == AXIS_NONE || port_num >= MAX_PADS)
+   if (joyaxis == AXIS_NONE || port_num >= GX_NUM_PADS)
       return 0;
 
    int val = 0;

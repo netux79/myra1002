@@ -198,7 +198,7 @@ static void gx_hid_input_set_keybinds(void *data, unsigned device, unsigned port
    if ((keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME)) || (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS)))
    {
       /* We are not supporting different devices but USBPAD */
-      g_settings.input.device[port] = DEVICE_USBPAD;
+      g_settings.input.device[port] = DEVICE_GXPAD;
       strlcpy(g_settings.input.device_names[port], usbpad_padname(port), sizeof(g_settings.input.device_names[port]));
    }
 
@@ -363,9 +363,9 @@ static void gx_hid_input_poll(void *data)
          msg_queue_push(g_extern.msg_queue, msg, 0, 80);
 
 		 if (g_settings.input.autodetect_enable)
-            gx_hid_input_set_keybinds(NULL, DEVICE_USBPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
+            gx_hid_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
          else
-            gx_hid_input_set_keybinds(NULL, DEVICE_USBPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_PAD_NAME));
+            gx_hid_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_PAD_NAME));
 	  }
    }
 

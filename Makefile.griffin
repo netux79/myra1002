@@ -110,7 +110,7 @@ endif
   HAVE_ZLIB                := 1
   HAVE_RPNG                := 1
   HAVE_OVERLAY             := 1
-  HAVE_WIIUSBPAD		   := 1
+  HAVE_WIIUSBPAD           := 1
 else ifeq ($(platform), psp1)
   CC = psp-gcc$(EXE_EXT)
   CXX = psp-g++$(EXE_EXT)

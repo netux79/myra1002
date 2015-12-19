@@ -1,14 +1,14 @@
 #ifndef _GX_GXPAD_H_
 #define _GX_GXPAD_H_
 
-#define BUTTON_SET 15
-#define AXIS_SET 4
-#define MAX_NAME_LEN 32
+#define GX_BUTTON_SET 15
+#define GX_AXIS_SET 4
+#define GX_MAX_NAME_LEN 32
 
 typedef struct _gxpadsetup {
-	char		name[MAX_NAME_LEN];
-	uint32_t	b_mask[BUTTON_SET];
-	uint8_t		b_label[BUTTON_SET];
+	char		name[GX_MAX_NAME_LEN];
+	uint32_t	b_mask[GX_BUTTON_SET];
+	uint8_t		b_label[GX_BUTTON_SET];
 	uint8_t		num_analogs;
 	uint8_t		type;
 	void 		(*read_pad)(uint8_t pad_idx);
@@ -18,11 +18,11 @@ struct gxpad {
 	const gxpadsetup *config;
 	uint8_t			 p_slot;
 	uint64_t		 b_state;
-	int16_t		 	 a_state[AXIS_SET];
+	int16_t		 	 a_state[GX_AXIS_SET];
 };
 
-bool gxpad_init();
-void gxpad_shutdown();
+bool gxpad_init(void);
+void gxpad_shutdown(void);
 uint64_t gxpad_buttons(uint8_t pad_idx);
 bool gxpad_avail(uint8_t index);
 const char *gxpad_padname(uint8_t pad_idx);

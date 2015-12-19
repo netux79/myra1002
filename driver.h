@@ -296,15 +296,7 @@ enum input_devices
    DEVICE_WIKIPAD,
    DEVICE_FC30_GAMEPAD,
 #elif defined(GEKKO)
-   DEVICE_GAMECUBE = 0,
-#ifdef HW_RVL
-   DEVICE_WIIMOTE,
-   DEVICE_NUNCHUK,
-   DEVICE_CLASSIC,
-#ifdef HAVE_WIIUSBPAD
-   DEVICE_USBPAD,
-#endif
-#endif
+   DEVICE_GXPAD = 0,
 #elif defined(_XBOX)
    DEVICE_XBOX_PAD = 0,
 #elif defined(__CELLOS_LV2__)

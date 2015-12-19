@@ -22,6 +22,7 @@
 #include <ogc/cache.h>
 #include <ogc/system.h>
 #include <ogc/usbstorage.h>
+#include <ogc/lwp_threads.h>
 #include <sdcard/wiisd_io.h>
 
 #define EXECUTE_ADDR ((uint8_t *) 0x91800000)

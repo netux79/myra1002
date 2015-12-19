@@ -294,6 +294,7 @@ INPUT
 #elif defined(SN_TARGET_PSP2) || defined(PSP)
 #include "../psp/psp_input.c"
 #elif defined(GEKKO)
+#include "../gx/gx_gxpad.c"
 #include "../gx/gx_input.c"
 #if defined (HW_RVL) && defined(HAVE_WIIUSBPAD)
 #include "../gx/gx_usbpad.c"
