@@ -3,6 +3,7 @@
 
 #define GX_BUTTON_SET 15
 #define GX_AXIS_SET 4
+#define GX_ML_BSET 5
 #define GX_MAX_NAME_LEN 32
 
 typedef struct _gxpadsetup {
@@ -34,5 +35,7 @@ int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx);
 #define gxpad_js_ly(a) gxpad_analog(a, 1)
 #define gxpad_js_rx(a) gxpad_analog(a, 2)
 #define gxpad_js_ry(a) gxpad_analog(a, 3)
-
+uint8_t gxpad_mlbuttons(void);
+int32_t gxpad_mlposx(void);
+int32_t gxpad_mlposy(void);
 #endif

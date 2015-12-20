@@ -33,8 +33,6 @@ enum {
    GX_GXPAD_R,
    GX_GXPAD_L2,
    GX_GXPAD_R2,
-   GX_GXPAD_L3,
-   GX_GXPAD_R3,
    GX_GXPAD_HOME,
 };
 

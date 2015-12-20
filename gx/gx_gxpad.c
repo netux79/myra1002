@@ -55,7 +55,15 @@ static const char* gx_labels[] = {
 	"Home",
 	"N/A",
 };
+#ifdef HW_RVL
+struct gx_mldata {
+	uint8_t	ml_buttons;
+	int32_t	x, y;
+};
 
+static const uint32_t _gx_mlmask[GX_ML_BSET] = {WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_A,
+												WPAD_BUTTON_PLUS, WPAD_BUTTON_MINUS};
+#endif
 static void _gx_read_gc(uint8_t pad_idx);
 #ifdef HW_RVL
 static void _gx_read_wiimote(uint8_t pad_idx);
@@ -106,6 +114,7 @@ static const gxpadsetup _gx_pad_config[] = {
 
 static bool _gx_inited = false;
 static struct gxpad *_gx_list[GX_MAX_PADS]; /* just hold a pointer for each possible pad */
+static struct gx_mldata _gx_mldata;
 static lwp_t _gx_thread = LWP_THREAD_NULL;
 static bool _gx_thread_running = false;
 static bool _gx_thread_quit = false;
@@ -237,6 +246,21 @@ static void _gx_scan_devices(void) {
 #endif
 }
 
+static inline void _gx_get_mlinfo(uint32_t b) {
+	uint8_t i;
+	ir_t ir;
+	/* Get the IR data from the wiimote */
+	WPAD_IR(WPAD_CHAN_0, &ir);
+	_gx_mldata.x = ir.x;
+	_gx_mldata.y = ir.y;
+	_gx_mldata.ml_buttons = 0; /* reset button state */
+	for (i = 0; i < GX_ML_BSET; i++) {
+		_gx_mldata.ml_buttons |= (b & _gx_mlmask[i]) ? (1 << i) : 0;
+	}
+	/* Small adjustment to match the RA buttons */
+	_gx_mldata.ml_buttons = _gx_mldata.ml_buttons << 2;
+}
+
 static inline void _gx_get_buttons(struct gxpad *p, uint32_t b) {
 	uint8_t i;
 	uint32_t m;
@@ -281,6 +305,10 @@ static void _gx_read_wiimote(uint8_t pad_idx) {
 
 	/* BUTTONS */
 	_gx_get_buttons(p, wdata->btns_h);
+
+	/* MOUSE & LIGHTGUN
+	 * Get data only from the first wiimote (port 0) */
+	if (p->p_slot == WPAD_CHAN_0) _gx_get_mlinfo(wdata->btns_h);
 }
 
 static void _gx_read_nunchuk(uint8_t pad_idx) {
@@ -288,7 +316,7 @@ static void _gx_read_nunchuk(uint8_t pad_idx) {
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    _gx_get_buttons(p, wdata->btns_h);
+	_gx_get_buttons(p, wdata->btns_h);
 	/* ANALOGS */
 	expansion_t *e = &wdata->exp;
 	p->a_state[0] = GX_JS_NOR(e->nunchuk.js.pos.x);
@@ -300,7 +328,7 @@ static void _gx_read_classic(uint8_t pad_idx) {
     WPADData *wdata = WPAD_Data(p->p_slot);
 
 	/* BUTTONS */
-    _gx_get_buttons(p, wdata->btns_h);
+	_gx_get_buttons(p, wdata->btns_h);
 	/* ANALOGS */
 	expansion_t *e = &wdata->exp;
 	p->a_state[0] = GX_JS_32(e->classic.ljs.pos.x);
@@ -340,6 +368,8 @@ bool gxpad_init(void) {
 		PAD_Init();
 #ifdef HW_RVL
 		WPAD_Init();
+		WPAD_SetVRes(0, 640, 480);
+		WPAD_SetDataFormat(WPAD_CHAN_0, WPAD_FMT_BTNS_ACC_IR); /* data from wiimote 1 */
 #endif
 		if (!_gx_thread_running) {
 			// start the polling thread
@@ -414,4 +444,17 @@ uint8_t gxpad_nanalogs(uint8_t pad_idx) {
 	}
 
 	return 0;
+}
+
+uint8_t gxpad_mlbuttons(void) {
+	return _gx_mldata.ml_buttons;
+}
+
+
+int32_t gxpad_mlposx(void) {
+	return _gx_mldata.x;
+}
+
+int32_t gxpad_mlposy(void) {
+	return _gx_mldata.y;
 }
