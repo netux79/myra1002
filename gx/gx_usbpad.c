@@ -2,13 +2,51 @@
 #include <gccore.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "gx_usbpad.h"
-#include "gx_padsetup.h"
 
 #define MAX_DEVICES	8
 #define MAX_HID_DATA_SIZE 64 /* Need to be multiple of 32 as it needs to be aligned to 32. */
 #define MAX_PADS 4
+#define MAX_NAME_LEN 32
+
+#define BUTTON_SET 17
+#define AXIS_SET 6
+
+typedef struct _butsetup {
+	uint8_t	offset;
+	uint8_t	mask;
+	uint8_t	label;
+} butsetup;
+
+typedef struct _axisetup {
+	uint8_t		offset;
+	uint8_t		type;
+} axisetup;
+
+typedef struct _padsetup {
+	uint16_t 	vid;
+	uint16_t 	pid;
+	char		name[MAX_NAME_LEN];
+	uint8_t		multipad;
+	uint8_t		num_analogs;
+	butsetup	buttons[BUTTON_SET];
+	axisetup	analogs[AXIS_SET];
+} padsetup;
+
+struct usbpad {
+	int32_t			device_id;
+	int32_t			fd;
+	bool			reading;
+	const padsetup	*config;
+	uint8_t			*hid_buffer;
+	uint64_t		b_state;
+	int8_t			a_state[AXIS_SET];
+	uint16_t		mpSize;
+	uint8_t			epAddress;
+};
+
+/* Include at this point so the structures are availabel to it */
+#include "gx_padsetup.h"
 
 static bool _inited = false;
 static bool _pad_detected = false;
@@ -77,7 +115,7 @@ static int32_t _read_cb(int32_t result, void *usrdata) {
 
 	if (result) {
 		/* Verify if the pad has multiple pad info in the package. If yes, only process the configured. */
-		if (pad->config->multipad==0 || pad->config->multipad==pad->hid_buffer[0]) {
+		if (pad->config->multipad == 0 || pad->config->multipad == pad->hid_buffer[0]) {
 			pad->b_state = 0; /* clear button state */
 			for (i = 0; i < BUTTON_SET; i++) {
 				b = &pad->config->buttons[i];

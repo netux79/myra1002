@@ -2066,7 +2066,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
             if (*device_name)
                strlcpy(type_str, device_name, type_str_size);
             else
-               snprintf(type_str, type_str_size, "N/A (port #%u)", map);
+               strlcpy(type_str, "N/A", type_str_size);
          }
          else
             strlcpy(type_str, "Disabled", type_str_size);

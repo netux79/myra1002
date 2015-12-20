@@ -21,13 +21,12 @@
 #include <wiiuse/wpad.h>
 #include <string.h>
 #include <math.h>
-
+#include <stdlib.h>
 #include "gx_hid_input.h"
 #include "../driver.h"
 #include "../libretro.h"
-#include <stdlib.h>
 
-#define NUM_PADS 2
+#define NUM_PADS 2 /* Matching the # of USB slots */
 #define JS_THRESHOLD (40 * 256)
 
 const struct platform_bind gx_hid_platform_keys[] = {
@@ -48,9 +47,10 @@ typedef struct gx_hid_input
 {
    uint64_t pad_state[NUM_PADS];
    int16_t analog_state[NUM_PADS][2][2];
-   bool mouse_l, mouse_r, mouse_m;
-   int mouse_x, mouse_y;
-   int mouse_last_x, mouse_last_y;
+   bool ml_left, ml_right;
+   bool ml_cursor, ml_pause, ml_start;
+   int ml_x, ml_y;
+   int ml_lastx, ml_lasty;
 } gx_hid_input_t;
 
 extern const rarch_joypad_driver_t gx_hid_joypad;
@@ -78,10 +78,6 @@ static bool gx_hid_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_s
          return state & ((1ULL << GX_HID_WIIMOTE_2) | (1ULL << GX_HID_USBPAD_A));
       case CONSOLE_MENU_B:
          return state & ((1ULL << GX_HID_WIIMOTE_1) | (1ULL << GX_HID_USBPAD_B));
-      case CONSOLE_MENU_X:
-         return state & ((1ULL << GX_HID_WIIMOTE_B) | (1ULL << GX_HID_USBPAD_X));
-      case CONSOLE_MENU_Y:
-         return state & ((1ULL << GX_HID_WIIMOTE_A) | (1ULL << GX_HID_USBPAD_Y));
       case CONSOLE_MENU_START:
          return state & ((1ULL << GX_HID_WIIMOTE_PLUS) | (1ULL << GX_HID_USBPAD_START));
       case CONSOLE_MENU_SELECT:
@@ -114,13 +110,13 @@ static int16_t gx_hid_mouse_state(gx_hid_input_t *gx, unsigned id)
    switch (id)
    {
       case RETRO_DEVICE_ID_MOUSE_X:
-         return gx->mouse_x - gx->mouse_last_x;
+         return gx->ml_x - gx->ml_lastx;
       case RETRO_DEVICE_ID_MOUSE_Y:
-         return gx->mouse_y - gx->mouse_last_y;
+         return gx->ml_y - gx->ml_lasty;
       case RETRO_DEVICE_ID_MOUSE_LEFT:
-         return gx->mouse_l;
+         return gx->ml_left;
       case RETRO_DEVICE_ID_MOUSE_RIGHT:
-         return gx->mouse_r;
+         return gx->ml_right;
       default:
          return 0;
    }
@@ -131,19 +127,19 @@ static int16_t gx_hid_lightgun_state(gx_hid_input_t *gx, unsigned id)
    switch (id)
    {
       case RETRO_DEVICE_ID_LIGHTGUN_X:
-         return gx->mouse_x - gx->mouse_last_x;
+         return gx->ml_x - gx->ml_lastx;
       case RETRO_DEVICE_ID_LIGHTGUN_Y:
-         return gx->mouse_y - gx->mouse_last_y;
+         return gx->ml_y - gx->ml_lasty;
       case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
-         return gx->mouse_l;
+         return gx->ml_left;
       case RETRO_DEVICE_ID_LIGHTGUN_CURSOR:
-         return gx->mouse_m;
+         return gx->ml_cursor;
       case RETRO_DEVICE_ID_LIGHTGUN_TURBO:
-         return gx->mouse_r;
-      case RETRO_DEVICE_ID_LIGHTGUN_START:
-         return gx->mouse_m && gx->mouse_r;
+         return gx->ml_right;
       case RETRO_DEVICE_ID_LIGHTGUN_PAUSE:
-         return gx->mouse_m && gx->mouse_l;
+         return gx->ml_pause;
+      case RETRO_DEVICE_ID_LIGHTGUN_START:
+         return gx->ml_start;
       default:
          return 0;
    }
@@ -293,19 +289,21 @@ static void *gx_hid_input_init(void)
    return gx;
 }
 
-static void gx_hid_input_poll_mouse(gx_hid_input_t *gx)
+static void gx_hid_input_poll_ml(gx_hid_input_t *gx)
 {
    ir_t ir;
-   WPAD_IR(0, &ir);
-   gx->mouse_last_x = gx->mouse_x;
-   gx->mouse_last_y = gx->mouse_y;
-   gx->mouse_x = ir.x;
-   gx->mouse_y = ir.y;
+   WPAD_IR(WPAD_CHAN_0, &ir);
+   gx->ml_lastx = gx->ml_x;
+   gx->ml_lasty = gx->ml_y;
+   gx->ml_x = ir.x;
+   gx->ml_y = ir.y;
 
    uint64_t *state = &gx->pad_state[0]; /* Check buttons from first port */
-   gx->mouse_l = *state & (1ULL << GX_HID_WIIMOTE_B);
-   gx->mouse_m = *state & (1ULL << GX_HID_WIIMOTE_1);
-   gx->mouse_r = *state & (1ULL << GX_HID_WIIMOTE_A);
+   gx->ml_left	 = *state & (1ULL << GX_HID_WIIMOTE_B); /* trigger */
+   gx->ml_cursor = *state & (1ULL << GX_HID_WIIMOTE_1);
+   gx->ml_right	 = *state & (1ULL << GX_HID_WIIMOTE_A); /* turbo */
+   gx->ml_pause	 = *state & (1ULL << GX_HID_WIIMOTE_PLUS);
+   gx->ml_start	 = *state & (1ULL << GX_HID_WIIMOTE_MINUS);
 }
 
 static void gx_hid_input_poll(void *data)
@@ -392,8 +390,8 @@ static void gx_hid_input_poll(void *data)
    /* clear the reset Wii button flag */
    g_menu = false;
 
-   /* poll mouse data */
-   gx_hid_input_poll_mouse(gx);
+   /* poll mouse & lightgun data */
+   gx_hid_input_poll_ml(gx);
 
    /* Check if we need to get into the menu */
    uint64_t *lifecycle_state = &g_extern.lifecycle_state;

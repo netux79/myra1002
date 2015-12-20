@@ -18,11 +18,10 @@
 #include <stdint.h>
 #include <gccore.h>
 #include <string.h>
-
+#include <stdlib.h>
 #include "gx_input.h"
 #include "../driver.h"
 #include "../libretro.h"
-#include <stdlib.h>
 
 #define GX_NUM_PADS 8
 #define GX_JS_THRESHOLD (40 * 256)
@@ -267,8 +266,7 @@ static void *gx_input_init(void)
    return gx;
 }
 
-
-static void gx_input_poll_mouse(gx_input_t *gx)
+static void gx_input_poll_ml(gx_input_t *gx)
 {
    gx->ml_lastx = gx->ml_x;
    gx->ml_lasty = gx->ml_y;
@@ -334,8 +332,8 @@ static void gx_input_poll(void *data)
    /* clear the reset Wii button flag */
    g_menu = false;
 
-   /* poll mouse data */
-   gx_input_poll_mouse(gx);
+   /* poll mouse & lightgun data */
+   gx_input_poll_ml(gx);
 
    /* Check if we need to get into the menu */
    uint64_t *lifecycle_state = &g_extern.lifecycle_state;
