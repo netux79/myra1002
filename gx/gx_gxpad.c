@@ -6,16 +6,47 @@
 #include <malloc.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "gx_gxpad.h"
 
 #define GX_NO_BUTTON 0x0
+#define GX_BUTTON_SET 15
+#define GX_AXIS_SET 4
+#define GX_ML_BSET 5
+#define GX_MAX_NAME_LEN 32
+#define GX_MAX_PADS 8
+
 #ifdef HW_RVL
 #define WPAD_EXP_GAMECUBE WPAD_EXP_CLASSIC + 1
 #define WPAD_EXP_WIIMOTE WPAD_EXP_NONE
 #else
 #define WPAD_EXP_GAMECUBE 0
 #define WPAD_EXP_WIIMOTE WPAD_EXP_GAMECUBE
+#endif
+
+typedef struct _gxpadsetup {
+	char		name[GX_MAX_NAME_LEN];
+	uint32_t	b_mask[GX_BUTTON_SET];
+	uint8_t		b_label[GX_BUTTON_SET];
+	uint8_t		num_analogs;
+	uint8_t		type;
+	void 		(*read_pad)(uint8_t pad_idx);
+} gxpadsetup;
+
+struct gxpad {
+	const gxpadsetup *config;
+	uint8_t			 p_slot;
+	uint64_t		 b_state;
+	int16_t		 	 a_state[GX_AXIS_SET];
+};
+
+#ifdef HW_RVL
+struct gx_mldata {
+	uint8_t	ml_buttons;
+	int32_t	x, y;
+};
+
+static const uint32_t _gx_mlmask[GX_ML_BSET] = {WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_A,
+												WPAD_BUTTON_PLUS, WPAD_BUTTON_MINUS};
 #endif
 
 enum {
@@ -55,15 +86,7 @@ static const char* gx_labels[] = {
 	"Home",
 	"N/A",
 };
-#ifdef HW_RVL
-struct gx_mldata {
-	uint8_t	ml_buttons;
-	int32_t	x, y;
-};
 
-static const uint32_t _gx_mlmask[GX_ML_BSET] = {WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_A,
-												WPAD_BUTTON_PLUS, WPAD_BUTTON_MINUS};
-#endif
 static void _gx_read_gc(uint8_t pad_idx);
 #ifdef HW_RVL
 static void _gx_read_wiimote(uint8_t pad_idx);
@@ -75,46 +98,44 @@ static void _gx_read_nunchuk(uint8_t pad_idx);
  * as guitar hero is not used we take its place for GC controller */
 static const gxpadsetup _gx_pad_config[] = {
 #ifdef HW_RVL
-			{"Wiimote",
-				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
-				WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
-				WPAD_BUTTON_A, WPAD_BUTTON_2, GX_NO_BUTTON, GX_NO_BUTTON,
-				GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
-				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
-				GX_A, GX_2, GX_NA, GX_NA, GX_NA, GX_NA, GX_HOME},
-				0, WPAD_EXP_WIIMOTE, _gx_read_wiimote},
-			{"Wiimote + Nunchuk",
-				{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
-				WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
-				WPAD_BUTTON_A, WPAD_BUTTON_2, WPAD_NUNCHUK_BUTTON_Z, WPAD_NUNCHUK_BUTTON_C,
-				GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
-				{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
-				GX_A, GX_2, GX_Z, GX_C, GX_NA, GX_NA, GX_HOME},
-				2, WPAD_EXP_NUNCHUK, _gx_read_nunchuk},
-			{"Classic",
-				{WPAD_CLASSIC_BUTTON_B, WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
-				WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT,
-				WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_X, WPAD_CLASSIC_BUTTON_FULL_L, WPAD_CLASSIC_BUTTON_FULL_R,
-				WPAD_CLASSIC_BUTTON_ZL, WPAD_CLASSIC_BUTTON_ZR, WPAD_CLASSIC_BUTTON_HOME},
-				{GX_B, GX_Y, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
-				GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
-				4, WPAD_EXP_CLASSIC, _gx_read_classic},
+	{"Wiimote",
+		{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
+		WPAD_BUTTON_RIGHT, WPAD_BUTTON_LEFT, WPAD_BUTTON_UP, WPAD_BUTTON_DOWN,
+		WPAD_BUTTON_A, WPAD_BUTTON_2, GX_NO_BUTTON, GX_NO_BUTTON,
+		GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
+		{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
+		GX_A, GX_2, GX_NA, GX_NA, GX_NA, GX_NA, GX_HOME},
+		0, WPAD_EXP_WIIMOTE, _gx_read_wiimote},
+	{"Wiimote + Nunchuk",
+		{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
+		WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
+		WPAD_BUTTON_A, WPAD_BUTTON_2, WPAD_NUNCHUK_BUTTON_Z, WPAD_NUNCHUK_BUTTON_C,
+		GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
+		{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
+		GX_A, GX_2, GX_Z, GX_C, GX_NA, GX_NA, GX_HOME},
+		2, WPAD_EXP_NUNCHUK, _gx_read_nunchuk},
+	{"Classic",
+		{WPAD_CLASSIC_BUTTON_B, WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
+		WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT,
+		WPAD_CLASSIC_BUTTON_A, WPAD_CLASSIC_BUTTON_X, WPAD_CLASSIC_BUTTON_FULL_L, WPAD_CLASSIC_BUTTON_FULL_R,
+		WPAD_CLASSIC_BUTTON_ZL, WPAD_CLASSIC_BUTTON_ZR, WPAD_CLASSIC_BUTTON_HOME},
+		{GX_B, GX_Y, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
+		GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
+		4, WPAD_EXP_CLASSIC, _gx_read_classic},
 #endif
-			{"Gamecube Pad",
-				{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
-				PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
-				PAD_BUTTON_A, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_R,
-				GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
-				{GX_B, GX_Y, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
-				GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
-				4, WPAD_EXP_GAMECUBE, _gx_read_gc},
-		};
-
-#define GX_MAX_PADS 8
+	{"Gamecube Pad",
+		{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
+		PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
+		PAD_BUTTON_A, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_R,
+		GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
+		{GX_B, GX_Y, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
+		GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
+		4, WPAD_EXP_GAMECUBE, _gx_read_gc},
+};
 
 static bool _gx_inited = false;
 static struct gxpad *_gx_list[GX_MAX_PADS]; /* just hold a pointer for each possible pad */
-static struct gx_mldata _gx_mldata;
+static struct gx_mldata _gx_mldata; /* mouse & lightgun data */
 static lwp_t _gx_thread = LWP_THREAD_NULL;
 static bool _gx_thread_running = false;
 static bool _gx_thread_quit = false;
@@ -350,8 +371,6 @@ static void * _gx_pad_polling(void *arg) {
 		for(i = 0; i < GX_MAX_PADS; i++) {
 			if (_gx_list[i]) _gx_list[i]->config->read_pad(i);
 		}
-
-		/* Add here the mouse data polling */
 
 		/* wait 16.66 ms to process the available pads again */
 		usleep(16666);
