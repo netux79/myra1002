@@ -1,6 +1,6 @@
 /*  RetroArch - A frontend for libretro.
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
- * 
+ *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
  *  ation, either version 3 of the License, or (at your option) any later version.
@@ -63,6 +63,8 @@ void libretro_free_system_info(struct retro_system_info *info);
 
 // Transforms a library id to a name suitable as a pathname.
 void libretro_get_current_core_pathname(char *name, size_t size);
+
+const struct retro_controller_description *libretro_find_controller_description(const struct retro_controller_info *info, unsigned id);
 
 extern void (*pretro_init)(void);
 extern void (*pretro_deinit)(void);

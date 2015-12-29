@@ -451,6 +451,9 @@ struct global
       retro_usec_t frame_time_last;
 
       core_option_manager_t *core_options;
+
+      struct retro_controller_info *ports;
+      unsigned num_ports;
    } system;
 
    struct
