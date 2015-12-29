@@ -268,10 +268,14 @@ static void *gx_input_init(void)
 
 static void gx_input_poll_ml(gx_input_t *gx)
 {
-   gx->ml_lastx = gx->ml_x;
-   gx->ml_lasty = gx->ml_y;
-   gx->ml_x = gxpad_mlposx();
-   gx->ml_y = gxpad_mlposy();
+   /* Only process if pointing to the screen */
+   if (gxpad_mlposvalid())
+   {
+	   gx->ml_lastx = gx->ml_x;
+	   gx->ml_lasty = gx->ml_y;
+	   gx->ml_x = gxpad_mlposx();
+	   gx->ml_y = gxpad_mlposy();
+   }
    gx->ml_state = gxpad_mlbuttons();
 }
 
