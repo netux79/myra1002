@@ -15,7 +15,6 @@ int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx);
 #define gxpad_js_rx(a) gxpad_analog(a, 2)
 #define gxpad_js_ry(a) gxpad_analog(a, 3)
 uint8_t gxpad_mlbuttons(void);
-bool gxpad_mlposvalid(void);
 int32_t gxpad_mlposx(void);
 int32_t gxpad_mlposy(void);
 #endif

@@ -293,14 +293,10 @@ static void gx_hid_input_poll_ml(gx_hid_input_t *gx)
 {
    ir_t ir;
    WPAD_IR(WPAD_CHAN_0, &ir);
-   /* Only process if pointing to the screen */
-   if (ir.valid)
-   {
-	   gx->ml_lastx = gx->ml_x;
-	   gx->ml_lasty = gx->ml_y;
-	   gx->ml_x = ir.x;
-	   gx->ml_y = ir.y;
-   }
+   gx->ml_lastx = gx->ml_x;
+   gx->ml_lasty = gx->ml_y;
+   gx->ml_x = ir.x;
+   gx->ml_y = ir.y;
 
    uint64_t *state = &gx->pad_state[0]; /* Check buttons from first port */
    gx->ml_left	 = *state & (1ULL << GX_HID_WIIMOTE_B); /* trigger */

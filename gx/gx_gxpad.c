@@ -41,9 +41,8 @@ struct gxpad {
 
 #ifdef HW_RVL
 struct gx_mldata {
-	int32_t	pos_valid;
-	int32_t	x, y;
 	uint8_t	ml_buttons;
+	int32_t	x, y;
 };
 
 static const uint32_t _gx_mlmask[GX_ML_BSET] = {WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_A,
@@ -273,7 +272,6 @@ static inline void _gx_get_mlinfo(uint32_t b) {
 	ir_t ir;
 	/* Get the IR data from the wiimote */
 	WPAD_IR(WPAD_CHAN_0, &ir);
-	_gx_mldata.pos_valid = ir.valid;
 	_gx_mldata.x = ir.x;
 	_gx_mldata.y = ir.y;
 	_gx_mldata.ml_buttons = 0; /* reset button state */
@@ -471,9 +469,6 @@ uint8_t gxpad_mlbuttons(void) {
 	return _gx_mldata.ml_buttons;
 }
 
-bool gxpad_mlposvalid(void) {
-	return _gx_mldata.pos_valid;
-}
 
 int32_t gxpad_mlposx(void) {
 	return _gx_mldata.x;
