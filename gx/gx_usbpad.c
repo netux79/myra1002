@@ -113,7 +113,7 @@ static int32_t _read_cb(int32_t result, void *usrdata) {
 	uint8_t i;
 	const butsetup *b;
 
-	if (result) {
+	if (result > 0) {
 		/* Verify if the pad has multiple pad info in the package. If yes, only process the configured. */
 		if (pad->config->multipad == 0 || pad->config->multipad == pad->hid_buffer[0]) {
 			pad->b_state = 0; /* clear button state */

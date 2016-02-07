@@ -32,7 +32,6 @@ typedef struct gx_input
    int16_t analog_state[GX_NUM_PADS][2][2];
    uint8_t ml_state;
    int ml_x, ml_y;
-   int ml_lastx, ml_lasty;
 } gx_input_t;
 
 extern const rarch_joypad_driver_t gx_joypad;
@@ -93,9 +92,9 @@ static int16_t gx_mouse_state(gx_input_t *gx, unsigned id)
    switch (id)
    {
       case RETRO_DEVICE_ID_MOUSE_X:
-         return gx->ml_x - gx->ml_lastx;
+         return gx->ml_x;
       case RETRO_DEVICE_ID_MOUSE_Y:
-         return gx->ml_y - gx->ml_lasty;
+         return gx->ml_y;
       case RETRO_DEVICE_ID_MOUSE_LEFT:
          return gx->ml_state & (1 << RETRO_DEVICE_ID_MOUSE_LEFT);
       case RETRO_DEVICE_ID_MOUSE_RIGHT:
@@ -110,9 +109,9 @@ static int16_t gx_lightgun_state(gx_input_t *gx, unsigned id)
    switch (id)
    {
       case RETRO_DEVICE_ID_LIGHTGUN_X:
-         return gx->ml_x - gx->ml_lastx;
+         return gx->ml_x;
       case RETRO_DEVICE_ID_LIGHTGUN_Y:
-         return gx->ml_y - gx->ml_lasty;
+         return gx->ml_y;
       case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
          return gx->ml_state & (1 << RETRO_DEVICE_ID_LIGHTGUN_TRIGGER);
       case RETRO_DEVICE_ID_LIGHTGUN_CURSOR:
@@ -268,8 +267,6 @@ static void *gx_input_init(void)
 
 static void gx_input_poll_ml(gx_input_t *gx)
 {
-   gx->ml_lastx = gx->ml_x;
-   gx->ml_lasty = gx->ml_y;
    gx->ml_x = gxpad_mlposx();
    gx->ml_y = gxpad_mlposy();
    gx->ml_state = gxpad_mlbuttons();

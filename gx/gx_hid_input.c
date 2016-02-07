@@ -50,7 +50,6 @@ typedef struct gx_hid_input
    bool ml_left, ml_right;
    bool ml_cursor, ml_pause, ml_start;
    int ml_x, ml_y;
-   int ml_lastx, ml_lasty;
 } gx_hid_input_t;
 
 extern const rarch_joypad_driver_t gx_hid_joypad;
@@ -110,9 +109,9 @@ static int16_t gx_hid_mouse_state(gx_hid_input_t *gx, unsigned id)
    switch (id)
    {
       case RETRO_DEVICE_ID_MOUSE_X:
-         return gx->ml_x - gx->ml_lastx;
+         return gx->ml_x;
       case RETRO_DEVICE_ID_MOUSE_Y:
-         return gx->ml_y - gx->ml_lasty;
+         return gx->ml_y;
       case RETRO_DEVICE_ID_MOUSE_LEFT:
          return gx->ml_left;
       case RETRO_DEVICE_ID_MOUSE_RIGHT:
@@ -127,9 +126,9 @@ static int16_t gx_hid_lightgun_state(gx_hid_input_t *gx, unsigned id)
    switch (id)
    {
       case RETRO_DEVICE_ID_LIGHTGUN_X:
-         return gx->ml_x - gx->ml_lastx;
+         return gx->ml_x;
       case RETRO_DEVICE_ID_LIGHTGUN_Y:
-         return gx->ml_y - gx->ml_lasty;
+         return gx->ml_y;
       case RETRO_DEVICE_ID_LIGHTGUN_TRIGGER:
          return gx->ml_left;
       case RETRO_DEVICE_ID_LIGHTGUN_CURSOR:
@@ -293,10 +292,15 @@ static void gx_hid_input_poll_ml(gx_hid_input_t *gx)
 {
    ir_t ir;
    WPAD_IR(WPAD_CHAN_0, &ir);
-   gx->ml_lastx = gx->ml_x;
-   gx->ml_lasty = gx->ml_y;
-   gx->ml_x = ir.x;
-   gx->ml_y = ir.y;
+   if (ir.valid) {
+	   gx->ml_x = ir.x;
+	   gx->ml_y = ir.y;
+   }
+   else {
+	   /* reset the position if we are offscreen */
+	   gx->ml_x = 0;
+	   gx->ml_y = 0;
+   }
 
    uint64_t *state = &gx->pad_state[0]; /* Check buttons from first port */
    gx->ml_left	 = *state & (1ULL << GX_HID_WIIMOTE_B); /* trigger */

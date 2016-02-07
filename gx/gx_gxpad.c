@@ -272,8 +272,16 @@ static inline void _gx_get_mlinfo(uint32_t b) {
 	ir_t ir;
 	/* Get the IR data from the wiimote */
 	WPAD_IR(WPAD_CHAN_0, &ir);
-	_gx_mldata.x = ir.x;
-	_gx_mldata.y = ir.y;
+
+	if (ir.valid) {
+		_gx_mldata.x = ir.x;
+		_gx_mldata.y = ir.y;
+	} else {
+		/* reset the position if the wiimote is offscreen */
+		_gx_mldata.x = 0;
+		_gx_mldata.y = 0;
+	}
+
 	_gx_mldata.ml_buttons = 0; /* reset button state */
 	for (i = 0; i < GX_ML_BSET; i++) {
 		_gx_mldata.ml_buttons |= (b & _gx_mlmask[i]) ? (1 << i) : 0;
