@@ -381,7 +381,7 @@ static void * _gx_pad_polling(void *arg) {
 		}
 
 		/* wait 16.66 ms to process the available pads again */
-		usleep(16666);
+		usleep(8000);/*16666*/
 	}
 
 	return NULL;

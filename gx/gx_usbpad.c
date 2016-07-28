@@ -308,7 +308,7 @@ static void * _pad_polling(void *arg) {
 		}
 
 		/* wait 10 ms to process the available pads again */
-		usleep(10000);
+		usleep(8000);/*10000*/
 	}
 
 	return NULL;
