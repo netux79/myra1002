@@ -177,7 +177,7 @@ void gx_set_video_mode(void *data, unsigned res_index)
    {
       case VI_PAL:
          max_width = VI_MAX_WIDTH_PAL;
-         max_height = /* VI_MAX_HEIGHT_PAL */ 574;
+         max_height = VI_MAX_HEIGHT_PAL;
          break;
       case VI_MPAL:
          max_width = VI_MAX_WIDTH_MPAL;
@@ -321,8 +321,6 @@ void gx_set_video_mode(void *data, unsigned res_index)
       else
          driver_set_monitor_refresh_rate(59.94f);
    }
-   /* don't spam the queue when changing resolution */
-   msg_queue_clear(g_extern.msg_queue);
 
    RARCH_LOG("GX Resolution: %dx%d (%s)\n", gx_mode.fbWidth, gx_mode.efbHeight, (gx_mode.viTVMode & 3) == VI_INTERLACE ? "interlaced" : "progressive");
 }
@@ -330,6 +328,10 @@ void gx_set_video_mode(void *data, unsigned res_index)
 const char *gx_get_resolution(unsigned res_index)
 {
    static char format[16];
+   
+   if (res_index == GX_RESOLUTIONS_AUTO)
+      return "AUTO";
+   
    snprintf(format, sizeof(format), "%.3ux%.3u", gx_resolutions[res_index][0], gx_resolutions[res_index][1]);
    return format;
 }
@@ -359,7 +361,7 @@ static void gx_overlay_enable(void *data, bool state)
 
 void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay)
 {
-	static unsigned actual_res_index = GX_RESOLUTIONS_DEFAULT;
+	static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
 	static unsigned actual_aspect_ratio_index = ASPECT_RATIO_4_3;
 
 	if (res_index != actual_res_index)
@@ -386,7 +388,7 @@ static void init_video_mode(void *data)
    LWP_InitQueue(&g_video_cond);
 
    GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
-   gx_set_video_mode(data, GX_RESOLUTIONS_DEFAULT);
+   gx_set_video_mode(data, GX_RESOLUTIONS_AUTO);
 }
 
 static void init_texture(void *data, unsigned width, unsigned height)
@@ -721,7 +723,7 @@ static void gx_resize(void *data)
 #endif
    GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
 
-   if (gx_mode.efbHeight >= 480 || gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM) /* ignore this for custom resolutions */
+   if (gx_mode.efbHeight > 240 || gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM) /* ignore this for custom resolutions */
    {
       float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f;
 #ifdef HW_RVL
@@ -1107,7 +1109,7 @@ static bool gx_frame(void *data, const void *frame,
    GX_DrawDone();
 
    char fps_txt[128], fps_text_buf[128];
-   bool fps_draw = g_settings.fps_show;
+   bool fps_draw = (g_settings.fps_show && !gx->rgui_texture_enable);
    gfx_get_fps(fps_txt, sizeof(fps_txt), fps_draw ? fps_text_buf : NULL, sizeof(fps_text_buf));
 
    if (fps_draw)

@@ -1280,15 +1280,21 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
-            if (g_extern.console.screen.resolutions.current.id < GX_RESOLUTIONS_LAST - 1)
+            if (g_extern.console.screen.resolutions.current.id < GX_RESOLUTIONS_LAST)
             {
-#ifdef HW_RVL
-               if ((g_extern.console.screen.resolutions.current.id + 1) > GX_RESOLUTIONS_640_480)
-                  if (CONF_GetVideo() != CONF_VIDEO_PAL)
-                     return 0;
-#endif
                g_extern.console.screen.resolutions.current.id++;
             }
+         }
+         else if (action == RGUI_ACTION_START)
+         {
+            g_extern.console.screen.resolutions.current.id = GX_RESOLUTIONS_AUTO;
+         }
+         else if (action == RGUI_ACTION_OK)
+         {
+            /* Display current game reported resolution */
+            char msg[64];
+            snprintf(msg, sizeof(msg), "Game internal resolution: %ux%u", g_extern.frame_cache.width, g_extern.frame_cache.height);
+            msg_queue_push(g_extern.msg_queue, msg, 0, 80);
          }
          break;
 #elif defined(__CELLOS_LV2__)
