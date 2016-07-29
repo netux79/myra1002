@@ -81,8 +81,8 @@ void shader_manager_init(void *data)
    config_file_t *conf = NULL;
 
    const char *config_path = NULL;
-   if (*g_extern.core_specific_config_path && g_settings.core_specific_config)
-      config_path = g_extern.core_specific_config_path;
+   if (*g_extern.specific_config_path && g_settings.config_type == CONFIG_PER_CORE)
+      config_path = g_extern.specific_config_path;
    else if (*g_extern.config_path)
       config_path = g_extern.config_path;
 
@@ -1866,7 +1866,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
       case RGUI_SETTINGS_GENERAL_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Configuration Save On Exit", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
-         file_list_push(rgui->selection_buf, "Configuration Per-Core", RGUI_SETTINGS_PER_CORE_CONFIG, 0);
+         file_list_push(rgui->selection_buf, "Configuration Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
 #ifdef HAVE_SCREENSHOTS
          file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
 #endif

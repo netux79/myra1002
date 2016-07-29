@@ -395,7 +395,7 @@ void config_set_defaults(void)
    g_settings.video.msg_pos_y = 0.90f;
    g_settings.video.aspect_ratio = -1.0f;
 
-   g_settings.core_specific_config = default_core_specific_config;
+   g_settings.config_type = default_config_type;
 
    // g_extern
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
@@ -450,9 +450,9 @@ void config_set_defaults(void)
 
 static void parse_config_file(void);
 
-static void config_load_core_specific(void)
+static void config_load_specific(void)
 {
-   *g_extern.core_specific_config_path = '\0';
+   *g_extern.specific_config_path = '\0';
 
    if (!*g_settings.libretro
 #ifdef HAVE_DYNAMIC
@@ -465,40 +465,40 @@ static void config_load_core_specific(void)
    if (*g_settings.rgui_config_directory)
    {
       path_resolve_realpath(g_settings.rgui_config_directory, sizeof(g_settings.rgui_config_directory));
-      strlcpy(g_extern.core_specific_config_path, g_settings.rgui_config_directory, sizeof(g_extern.core_specific_config_path));
+      strlcpy(g_extern.specific_config_path, g_settings.rgui_config_directory, sizeof(g_extern.specific_config_path));
    }
    else
 #endif
    {
       // Use original config file's directory as a fallback.
-      fill_pathname_basedir(g_extern.core_specific_config_path, g_extern.config_path, sizeof(g_extern.core_specific_config_path));
+      fill_pathname_basedir(g_extern.specific_config_path, g_extern.config_path, sizeof(g_extern.specific_config_path));
    }
 
-   fill_pathname_dir(g_extern.core_specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.core_specific_config_path));
+   fill_pathname_dir(g_extern.specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.specific_config_path));
 
-   if (g_settings.core_specific_config)
+   if (g_settings.config_type == CONFIG_PER_CORE)
    {
       char tmp[PATH_MAX];
       strlcpy(tmp, g_settings.libretro, sizeof(tmp));
-      RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.core_specific_config_path);
+      RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
 
-      if (!config_load_file(g_extern.core_specific_config_path, true))
+      if (!config_load_file(g_extern.specific_config_path, true))
          RARCH_WARN("Core-specific config not found, reusing last config.\n");
 
-      // Force some parameters which are implied when using core specific configs.
+      // Force some parameters which are implied when using specific configs.
 
       // Don't have the core config file overwrite the libretro path.
       strlcpy(g_settings.libretro, tmp, sizeof(g_settings.libretro));
       // This must be true for core specific configs.
-      g_settings.core_specific_config = true;
+      g_settings.config_type = CONFIG_PER_CORE;
    }
 }
 
 void config_load(void)
 {
    // Flush out per-core configs before loading a new config.
-   if (*g_extern.core_specific_config_path && g_extern.config_save_on_exit && g_settings.core_specific_config)
-      config_save_file(g_extern.core_specific_config_path);
+   if (*g_extern.specific_config_path && g_extern.config_save_on_exit && g_settings.config_type == CONFIG_PER_CORE)
+      config_save_file(g_extern.specific_config_path);
 
    if (!g_extern.block_config_read)
    {
@@ -506,8 +506,8 @@ void config_load(void)
       parse_config_file();
    }
 
-   // Per-core config handling.
-   config_load_core_specific();
+   // Per-core/game config handling.
+   config_load_specific();
 }
 
 static config_file_t *open_default_config_file(void)
@@ -1041,7 +1041,7 @@ bool config_load_file(const char *path, bool set_defaults)
 
    config_read_keybinds_conf(conf);
 
-   CONFIG_GET_BOOL(core_specific_config, "core_specific_config");
+   CONFIG_GET_INT(config_type, "config_type");
 
    config_file_free(conf);
    return true;
@@ -1364,7 +1364,7 @@ bool config_save_file(const char *path)
    for (i = 0; i < MAX_PLAYERS; i++)
       save_keybinds_player(conf, i);
 
-   config_set_bool(conf, "core_specific_config", g_settings.core_specific_config);
+   config_set_int(conf, "config_type", g_settings.config_type);
    config_set_int(conf, "libretro_log_level", g_settings.libretro_log_level);
 
    bool ret = config_file_write(conf, path);

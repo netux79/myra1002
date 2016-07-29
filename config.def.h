@@ -348,9 +348,9 @@ static bool default_block_config_read = false;
 #endif
 
 #ifdef RARCH_CONSOLE
-static bool default_core_specific_config = true;
+static unsigned char default_config_type = CONFIG_PER_CORE;
 #else
-static bool default_core_specific_config = false;
+static unsigned char default_config_type = CONFIG_GLOBAL;
 #endif
 
 #if defined(ANDROID)

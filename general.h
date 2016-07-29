@@ -127,6 +127,14 @@ enum sound_mode_enums
    SOUND_MODE_LAST
 };
 
+enum config_type_enums
+{
+   CONFIG_GLOBAL = 0,
+   CONFIG_PER_CORE,
+   CONFIG_PER_GAME,
+};
+
+
 // All config related settings go here.
 struct settings
 {
@@ -316,7 +324,7 @@ struct settings
 #endif
    bool fps_show;
 
-   bool core_specific_config;
+   unsigned char config_type;
 };
 
 enum rarch_game_type
@@ -671,7 +679,7 @@ struct global
    bool libretro_dummy;
 
    // Config file associated with per-core configs.
-   char core_specific_config_path[PATH_MAX];
+   char specific_config_path[PATH_MAX];
 };
 
 struct rarch_main_wrap

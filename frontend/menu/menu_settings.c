@@ -515,12 +515,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else if (action == RGUI_ACTION_START)
             g_settings.block_sram_overwrite = false;
          break;
-      case RGUI_SETTINGS_PER_CORE_CONFIG:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
-               || action == RGUI_ACTION_LEFT)
-            g_settings.core_specific_config = !g_settings.core_specific_config;
+      case RGUI_SETTINGS_CONFIG_TYPE:
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT)
+            g_settings.config_type = (g_settings.config_type + 1) % 3;
          else if (action == RGUI_ACTION_START)
-            g_settings.core_specific_config = default_core_specific_config;
+            g_settings.config_type = default_config_type;
          break;
 #if defined(HAVE_THREADS)
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
@@ -1952,8 +1951,13 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BLOCK_SRAM_OVERWRITE:
          strlcpy(type_str, g_settings.block_sram_overwrite ? "ON" : "OFF", type_str_size);
          break;
-      case RGUI_SETTINGS_PER_CORE_CONFIG:
-         strlcpy(type_str, g_settings.core_specific_config ? "ON" : "OFF", type_str_size);
+      case RGUI_SETTINGS_CONFIG_TYPE:
+         if (g_settings.config_type == CONFIG_PER_GAME)
+            strlcpy(type_str, "PER GAME", type_str_size);
+         else if (g_settings.config_type == CONFIG_PER_CORE)
+            strlcpy(type_str, "PER CORE", type_str_size);
+         else
+            strlcpy(type_str, "GLOBAL", type_str_size);
          break;
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
          if (g_settings.autosave_interval)
