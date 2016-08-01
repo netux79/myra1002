@@ -1867,7 +1867,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Configuration Save On Exit", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
          file_list_push(rgui->selection_buf, "Configuration Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
-         file_list_push(rgui->selection_buf, "Save Game Specific Config", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
+         if (g_extern.main_is_init && !g_extern.libretro_dummy && g_settings.config_type == CONFIG_PER_GAME)
+            file_list_push(rgui->selection_buf, "Game Specific Config Status", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
+         file_list_push(rgui->selection_buf, "RetroArch Config", RGUI_SETTINGS_CONFIG, 0);
+         file_list_push(rgui->selection_buf, "Save New Config", RGUI_SETTINGS_SAVE_CONFIG, 0);
 #if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
          file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
 #endif
@@ -1884,6 +1887,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #endif
          file_list_push(rgui->selection_buf, "Savestate Autosave On Exit", RGUI_SETTINGS_SAVESTATE_AUTO_SAVE, 0);
          file_list_push(rgui->selection_buf, "Savestate Autoload", RGUI_SETTINGS_SAVESTATE_AUTO_LOAD, 0);
+         file_list_push(rgui->selection_buf, "Help", RGUI_START_SCREEN, 0);
          break;
       case RGUI_SETTINGS_VIDEO_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -2131,26 +2135,26 @@ void menu_populate_entries(void *data, unsigned menu_type)
       case RGUI_SETTINGS:
          file_list_clear(rgui->selection_buf);
 
-#if defined(HAVE_DYNAMIC) || defined(HAVE_LIBRETRO_MANAGEMENT)
-         file_list_push(rgui->selection_buf, "Core", RGUI_SETTINGS_CORE, 0);
-#endif
          if (rgui->history)
-            file_list_push(rgui->selection_buf, "Load Content (History)", RGUI_SETTINGS_OPEN_HISTORY, 0);
+            file_list_push(rgui->selection_buf, "Load Recent", RGUI_SETTINGS_OPEN_HISTORY, 0);
 
          if (rgui->core_info && core_info_list_num_info_files(rgui->core_info))
-            file_list_push(rgui->selection_buf, "Load Content (Detect Core)", RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE, 0);
+            file_list_push(rgui->selection_buf, "Detect Content", RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE, 0);
 
          if (rgui->info.library_name || g_extern.system.info.library_name)
          {
             char load_game_core_msg[64];
-            snprintf(load_game_core_msg, sizeof(load_game_core_msg), "Load Content (%s)",
+            snprintf(load_game_core_msg, sizeof(load_game_core_msg), "Load Content on (%s)",
                   rgui->info.library_name ? rgui->info.library_name : g_extern.system.info.library_name);
             file_list_push(rgui->selection_buf, load_game_core_msg, RGUI_SETTINGS_OPEN_FILEBROWSER, 0);
          }
 
-         file_list_push(rgui->selection_buf, "Core Options", RGUI_SETTINGS_CORE_OPTIONS, 0);
+#if defined(HAVE_DYNAMIC) || defined(HAVE_LIBRETRO_MANAGEMENT)
+         file_list_push(rgui->selection_buf, "Select Core", RGUI_SETTINGS_CORE, 0);
+#endif
+
          file_list_push(rgui->selection_buf, "Core Information", RGUI_SETTINGS_CORE_INFO, 0);
-         file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Core Options", RGUI_SETTINGS_CORE_OPTIONS, 0);
 
          if (g_extern.main_is_init && !g_extern.libretro_dummy)
          {
@@ -2161,14 +2165,11 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #endif
             file_list_push(rgui->selection_buf, "Resume Content", RGUI_SETTINGS_RESUME_GAME, 0);
             file_list_push(rgui->selection_buf, "Restart Content", RGUI_SETTINGS_RESTART_GAME, 0);
-
          }
+         file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
 #ifndef HAVE_DYNAMIC
          file_list_push(rgui->selection_buf, "Restart RetroArch", RGUI_SETTINGS_RESTART_EMULATOR, 0);
 #endif
-         file_list_push(rgui->selection_buf, "RetroArch Config", RGUI_SETTINGS_CONFIG, 0);
-         file_list_push(rgui->selection_buf, "Save New Config", RGUI_SETTINGS_SAVE_CONFIG, 0);
-         file_list_push(rgui->selection_buf, "Help", RGUI_START_SCREEN, 0);
          file_list_push(rgui->selection_buf, "Quit RetroArch", RGUI_SETTINGS_QUIT_RARCH, 0);
          break;
    }

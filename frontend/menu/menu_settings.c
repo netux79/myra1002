@@ -516,20 +516,59 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             g_settings.block_sram_overwrite = false;
          break;
       case RGUI_SETTINGS_CONFIG_TYPE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT) {
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT)
+         {
             if (g_settings.config_type < CONFIG_PER_GAME)
+            {
                g_settings.config_type++;
+               config_load();
+            }
          }
-         else if (action == RGUI_ACTION_LEFT) {
+         else if (action == RGUI_ACTION_LEFT)
+         {
             if (g_settings.config_type > CONFIG_GLOBAL)
+            {
                g_settings.config_type--;
+               config_load();
+            }
          }
          else if (action == RGUI_ACTION_START)
-            g_settings.config_type = default_config_type;
+         {
+            if (g_settings.config_type != default_config_type)
+            {
+               g_settings.config_type = default_config_type;
+               config_load();
+            }
+         }
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
-         if (action == RGUI_ACTION_OK) {
-            /* Save per Game specific config */
+         if (action == RGUI_ACTION_OK) 
+         {
+            if (*g_extern.basename)
+            {
+               /* Calculate the game specific config path */
+               path_basedir(g_extern.specific_config_path);
+               fill_pathname_dir(g_extern.specific_config_path, g_extern.basename, ".cfg", sizeof(g_extern.specific_config_path));
+               RARCH_LOG("Saving game-specific config from: %s.\n", g_extern.specific_config_path);            
+               if (config_save_file(g_extern.specific_config_path))
+               {
+                  g_extern.using_per_game_config = true;
+                  char msg[64];
+                  snprintf(msg, sizeof(msg), "Game-specific config succesfully saved.\n");
+                  msg_queue_push(g_extern.msg_queue, msg, 0, 80);
+               }
+            }
+         } else if (action == RGUI_ACTION_START)
+         {
+            if (g_extern.using_per_game_config)
+            {
+               /* Remove game specific config file, */
+               RARCH_LOG("Removing game-specific config from: %s.\n", g_extern.specific_config_path);            
+               remove(g_extern.specific_config_path);
+               *g_extern.specific_config_path = '\0';
+               /* and load per-core config if available.*/
+               config_load();
+            }
          }
          break;
 #if defined(HAVE_THREADS)
@@ -1971,10 +2010,10 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
             strlcpy(type_str, "Global", type_str_size);
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
-         if (g_settings.config_type == CONFIG_PER_GAME)
-            strlcpy(type_str, "OK", type_str_size);
+         if (g_settings.config_type == CONFIG_PER_GAME && g_extern.using_per_game_config)
+            strlcpy(type_str, "Loaded - Press ENTER to Remove", type_str_size);
          else
-            strlcpy(type_str, "Not Available", type_str_size);
+            strlcpy(type_str, "N/A - Press OK to Create", type_str_size);
          break;
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
          if (g_settings.autosave_interval)

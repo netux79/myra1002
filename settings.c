@@ -405,7 +405,7 @@ void config_set_defaults(void)
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_FLICKER_FILTER_ENABLE);
 
-   g_extern.console.screen.resolutions.current.id = GX_RESOLUTIONS_640_480;
+   g_extern.console.screen.resolutions.current.id = GX_RESOLUTIONS_AUTO;
    strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
 
    g_extern.state_slot = 0;
@@ -492,12 +492,15 @@ static void config_load_specific(void)
             RARCH_LOG("Loading game-specific config from: %s.\n", g_extern.specific_config_path);
             if (config_load_file(g_extern.specific_config_path, true))
             {
-               /* We were successful loaading per-game so we let the system know */
+               /* We were successful loading per-game so we let the system know */
                g_extern.using_per_game_config = true;
                break;
             }
             else
+            {
                RARCH_WARN("Game-specific config not found, trying per-core config.\n");
+               path_basedir(g_extern.specific_config_path);
+            }
          }
          /* if we reach this point we failed, so we try to load per-core config */   
       case CONFIG_PER_CORE:
