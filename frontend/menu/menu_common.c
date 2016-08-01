@@ -81,7 +81,7 @@ void shader_manager_init(void *data)
    config_file_t *conf = NULL;
 
    const char *config_path = NULL;
-   if (*g_extern.specific_config_path && g_settings.config_type == CONFIG_PER_CORE)
+   if (*g_extern.specific_config_path && g_settings.config_type != CONFIG_GLOBAL)
       config_path = g_extern.specific_config_path;
    else if (*g_extern.config_path)
       config_path = g_extern.config_path;
@@ -1867,7 +1867,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Configuration Save On Exit", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
          file_list_push(rgui->selection_buf, "Configuration Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
-#ifdef HAVE_SCREENSHOTS
+         file_list_push(rgui->selection_buf, "Save Game Specific Config", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
+#if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
          file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
 #endif
          file_list_push(rgui->selection_buf, "Show Framerate", RGUI_SETTINGS_DEBUG_TEXT, 0);
@@ -1877,8 +1878,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #if defined(HAVE_THREADS)
          file_list_push(rgui->selection_buf, "SRAM Autosave", RGUI_SETTINGS_SRAM_AUTOSAVE, 0);
 #endif
+#ifndef GEKKO
          file_list_push(rgui->selection_buf, "Window Compositing", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Window Unfocus Pause", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);
+#endif
          file_list_push(rgui->selection_buf, "Savestate Autosave On Exit", RGUI_SETTINGS_SAVESTATE_AUTO_SAVE, 0);
          file_list_push(rgui->selection_buf, "Savestate Autoload", RGUI_SETTINGS_SAVESTATE_AUTO_LOAD, 0);
          break;
@@ -1950,6 +1953,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
                   rgui->core_info_current.display_name ? rgui->core_info_current.display_name : "");
             file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
 
+            snprintf(tmp, sizeof(tmp), "Running game: %s",
+                  *g_extern.basename ? path_basename(g_extern.basename) : "None");
+            file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+
             if (rgui->core_info_current.authors_list)
             {
                strlcpy(tmp, "Authors: ", sizeof(tmp));
@@ -2010,25 +2017,26 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "General Options", RGUI_SETTINGS_GENERAL_OPTIONS, 0);
-         file_list_push(rgui->selection_buf, "Video Options", RGUI_SETTINGS_VIDEO_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "General", RGUI_SETTINGS_GENERAL_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Video", RGUI_SETTINGS_VIDEO_OPTIONS, 0);
 #ifdef HAVE_SHADER_MANAGER
-         file_list_push(rgui->selection_buf, "Shader Options", RGUI_SETTINGS_SHADER_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Shader", RGUI_SETTINGS_SHADER_OPTIONS, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Audio Options", RGUI_SETTINGS_AUDIO_OPTIONS, 0);
-         file_list_push(rgui->selection_buf, "Input Options", RGUI_SETTINGS_INPUT_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Input", RGUI_SETTINGS_INPUT_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Audio", RGUI_SETTINGS_AUDIO_OPTIONS, 0);
 #ifdef HAVE_OVERLAY
-         file_list_push(rgui->selection_buf, "Overlay Options", RGUI_SETTINGS_OVERLAY_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Overlay", RGUI_SETTINGS_OVERLAY_OPTIONS, 0);
 #endif
 #ifdef HAVE_NETPLAY
-         file_list_push(rgui->selection_buf, "Netplay Options", RGUI_SETTINGS_NETPLAY_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Netplay", RGUI_SETTINGS_NETPLAY_OPTIONS, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Path Options", RGUI_SETTINGS_PATH_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Paths", RGUI_SETTINGS_PATH_OPTIONS, 0);
          if (g_extern.main_is_init && !g_extern.libretro_dummy)
          {
             if (g_extern.system.disk_control.get_num_images)
-               file_list_push(rgui->selection_buf, "Disk Options", RGUI_SETTINGS_DISK_OPTIONS, 0);
+               file_list_push(rgui->selection_buf, "Disk", RGUI_SETTINGS_DISK_OPTIONS, 0);
          }
+         file_list_push(rgui->selection_buf, "Drivers", RGUI_SETTINGS_DRIVERS, 0);
          break;
       case RGUI_SETTINGS_DISK_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -2143,7 +2151,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Core Options", RGUI_SETTINGS_CORE_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Core Information", RGUI_SETTINGS_CORE_INFO, 0);
          file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
-         file_list_push(rgui->selection_buf, "Drivers", RGUI_SETTINGS_DRIVERS, 0);
 
          if (g_extern.main_is_init && !g_extern.libretro_dummy)
          {

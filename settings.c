@@ -452,7 +452,11 @@ static void parse_config_file(void);
 
 static void config_load_specific(void)
 {
+   char tmp_path[PATH_MAX];
+   unsigned char config_t;
+
    *g_extern.specific_config_path = '\0';
+   g_extern.using_per_game_config = false;
 
    if (!*g_settings.libretro
 #ifdef HAVE_DYNAMIC
@@ -474,30 +478,46 @@ static void config_load_specific(void)
       fill_pathname_basedir(g_extern.specific_config_path, g_extern.config_path, sizeof(g_extern.specific_config_path));
    }
 
-   fill_pathname_dir(g_extern.specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.specific_config_path));
+   // Save some parameters which are implied when using specific configs.
+   strlcpy(tmp_path, g_settings.libretro, sizeof(tmp_path));
+   config_t = g_settings.config_type;
 
-   if (g_settings.config_type == CONFIG_PER_CORE)
+   switch (g_settings.config_type)
    {
-      char tmp[PATH_MAX];
-      strlcpy(tmp, g_settings.libretro, sizeof(tmp));
-      RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
-
-      if (!config_load_file(g_extern.specific_config_path, true))
-         RARCH_WARN("Core-specific config not found, reusing last config.\n");
-
-      // Force some parameters which are implied when using specific configs.
-
-      // Don't have the core config file overwrite the libretro path.
-      strlcpy(g_settings.libretro, tmp, sizeof(g_settings.libretro));
-      // This must be true for core specific configs.
-      g_settings.config_type = CONFIG_PER_CORE;
+      case CONFIG_PER_GAME:
+         /* Only try it if the game is already loaded */
+         if (*g_extern.basename)
+         {
+            fill_pathname_dir(g_extern.specific_config_path, g_extern.basename, ".cfg", sizeof(g_extern.specific_config_path));
+            RARCH_LOG("Loading game-specific config from: %s.\n", g_extern.specific_config_path);
+            if (config_load_file(g_extern.specific_config_path, true))
+            {
+               /* We were successful loaading per-game so we let the system know */
+               g_extern.using_per_game_config = true;
+               break;
+            }
+            else
+               RARCH_WARN("Game-specific config not found, trying per-core config.\n");
+         }
+         /* if we reach this point we failed, so we try to load per-core config */   
+      case CONFIG_PER_CORE:
+         fill_pathname_dir(g_extern.specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.specific_config_path));
+         RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
+         if (!config_load_file(g_extern.specific_config_path, true))
+            RARCH_WARN("Core-specific config not found, reusing last config.\n");
+         break;
    }
+
+   // Don't have the core config file overwrite the libretro path.
+   strlcpy(g_settings.libretro, tmp_path, sizeof(g_settings.libretro));
+   // This must be true for core/game specific configs.
+   g_settings.config_type = config_t;
 }
 
 void config_load(void)
 {
    // Flush out per-core configs before loading a new config.
-   if (*g_extern.specific_config_path && g_extern.config_save_on_exit && g_settings.config_type == CONFIG_PER_CORE)
+   if (*g_extern.specific_config_path && g_extern.config_save_on_exit && g_settings.config_type != CONFIG_GLOBAL)
       config_save_file(g_extern.specific_config_path);
 
    if (!g_extern.block_config_read)

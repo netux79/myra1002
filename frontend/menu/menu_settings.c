@@ -516,10 +516,21 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             g_settings.block_sram_overwrite = false;
          break;
       case RGUI_SETTINGS_CONFIG_TYPE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT)
-            g_settings.config_type = (g_settings.config_type + 1) % 3;
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT) {
+            if (g_settings.config_type < CONFIG_PER_GAME)
+               g_settings.config_type++;
+         }
+         else if (action == RGUI_ACTION_LEFT) {
+            if (g_settings.config_type > CONFIG_GLOBAL)
+               g_settings.config_type--;
+         }
          else if (action == RGUI_ACTION_START)
             g_settings.config_type = default_config_type;
+         break;
+      case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
+         if (action == RGUI_ACTION_OK) {
+            /* Save per Game specific config */
+         }
          break;
 #if defined(HAVE_THREADS)
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
@@ -1953,11 +1964,17 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_CONFIG_TYPE:
          if (g_settings.config_type == CONFIG_PER_GAME)
-            strlcpy(type_str, "PER GAME", type_str_size);
+            strlcpy(type_str, "Per Game", type_str_size);
          else if (g_settings.config_type == CONFIG_PER_CORE)
-            strlcpy(type_str, "PER CORE", type_str_size);
+            strlcpy(type_str, "Per Core", type_str_size);
          else
-            strlcpy(type_str, "GLOBAL", type_str_size);
+            strlcpy(type_str, "Global", type_str_size);
+         break;
+      case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
+         if (g_settings.config_type == CONFIG_PER_GAME)
+            strlcpy(type_str, "OK", type_str_size);
+         else
+            strlcpy(type_str, "Not Available", type_str_size);
          break;
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
          if (g_settings.autosave_interval)

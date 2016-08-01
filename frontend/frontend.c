@@ -288,7 +288,7 @@ void main_exit(args_type() args)
       config_save_file(g_extern.config_path);
 
       // Flush out the specific config.
-      if (*g_extern.specific_config_path && g_settings.config_type == CONFIG_PER_CORE)
+      if (*g_extern.specific_config_path && g_settings.config_type != CONFIG_GLOBAL)
          config_save_file(g_extern.specific_config_path);
    }
 #endif

@@ -678,7 +678,8 @@ struct global
    bool libretro_no_rom;
    bool libretro_dummy;
 
-   // Config file associated with per-core configs.
+   // Config file associated with per-core and per-game configs.
+   bool using_per_game_config;
    char specific_config_path[PATH_MAX];
 };
 
