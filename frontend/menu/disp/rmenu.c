@@ -167,8 +167,10 @@ static void rmenu_render(void *data, void *video_data)
       strlcpy(title, "OVERLAY OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_NETPLAY_OPTIONS)
       strlcpy(title, "NETPLAY OPTIONS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_GENERAL_OPTIONS)
-      strlcpy(title, "GENERAL OPTIONS", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_CONFIG_OPTIONS)
+      strlcpy(title, "CONFIG OPTIONS", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_SAVE_OPTIONS)
+      strlcpy(title, "SAVE OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
       strlcpy(title, "PATH OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_OPTIONS)
