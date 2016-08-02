@@ -2011,9 +2011,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
          if (g_settings.config_type == CONFIG_PER_GAME && g_extern.using_per_game_config)
-            strlcpy(type_str, "Loaded - Press ENTER to Remove", type_str_size);
+            strlcpy(type_str, "Active - ENTER to Remove", type_str_size);
          else
-            strlcpy(type_str, "N/A - Press OK to Create", type_str_size);
+            strlcpy(type_str, "N/A - OK to Create", type_str_size);
          break;
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
          if (g_settings.autosave_interval)

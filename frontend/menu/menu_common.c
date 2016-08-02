@@ -1868,8 +1868,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Configuration Save On Exit", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
          file_list_push(rgui->selection_buf, "Configuration Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
          if (g_extern.main_is_init && !g_extern.libretro_dummy && g_settings.config_type == CONFIG_PER_GAME)
-            file_list_push(rgui->selection_buf, "Game Specific Config Status", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
-         file_list_push(rgui->selection_buf, "RetroArch Config", RGUI_SETTINGS_CONFIG, 0);
+            file_list_push(rgui->selection_buf, "Per-Game Config Status", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
+         file_list_push(rgui->selection_buf, "Select Active Config", RGUI_SETTINGS_CONFIG, 0);
          file_list_push(rgui->selection_buf, "Save New Config", RGUI_SETTINGS_SAVE_CONFIG, 0);
 #if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
          file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
@@ -2144,7 +2144,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          if (rgui->info.library_name || g_extern.system.info.library_name)
          {
             char load_game_core_msg[64];
-            snprintf(load_game_core_msg, sizeof(load_game_core_msg), "Load Content on (%s)",
+            snprintf(load_game_core_msg, sizeof(load_game_core_msg), "Load Content On (%s)",
                   rgui->info.library_name ? rgui->info.library_name : g_extern.system.info.library_name);
             file_list_push(rgui->selection_buf, load_game_core_msg, RGUI_SETTINGS_OPEN_FILEBROWSER, 0);
          }
