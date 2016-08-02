@@ -434,6 +434,18 @@ static bool osk_callback_enter_filename_init(void *data)
 
 #endif
 
+void update_screen_overlay()
+{
+   if (driver.overlay)
+   {
+      input_overlay_free(driver.overlay);
+      driver.overlay = NULL;
+   }
+
+   if (*g_settings.input.overlay)
+      driver.overlay = input_overlay_new(g_settings.input.overlay);
+}
+
 #ifndef RARCH_DEFAULT_PORT
 #define RARCH_DEFAULT_PORT 55435
 #endif
@@ -522,6 +534,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             {
                g_settings.config_type++;
                config_load();
+               update_screen_overlay();
             }
          }
          else if (action == RGUI_ACTION_LEFT)
@@ -530,6 +543,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             {
                g_settings.config_type--;
                config_load();
+               update_screen_overlay();
             }
          }
          else if (action == RGUI_ACTION_START)
@@ -538,6 +552,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             {
                g_settings.config_type = default_config_type;
                config_load();
+               update_screen_overlay();
             }
          }
          break;
@@ -568,6 +583,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                *g_extern.specific_config_path = '\0';
                /* and load per-core config if available.*/
                config_load();
+               update_screen_overlay();
             }
          }
          break;
