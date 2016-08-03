@@ -1874,6 +1874,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Save As New Config", RGUI_SETTINGS_SAVE_CONFIG, 0);
          break;
       case RGUI_SETTINGS_SAVE_OPTIONS:
+         file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Rewind", RGUI_SETTINGS_REWIND_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Rewind Granularity", RGUI_SETTINGS_REWIND_GRANULARITY, 0);
          file_list_push(rgui->selection_buf, "SRAM Block Overwrite", RGUI_SETTINGS_BLOCK_SRAM_OVERWRITE, 0);
