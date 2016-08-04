@@ -448,22 +448,37 @@ void config_set_defaults(void)
    rarch_init_msg_queue();
 }
 
-static void parse_config_file(void);
+static void parse_global_config(void)
+{
+   bool ret;
+   if (*g_extern.config_path)
+   {
+      RARCH_LOG("Loading config from: %s.\n", g_extern.config_path);
+      ret = config_load_file(g_extern.config_path, false);
+   }
+   else
+   {
+      RARCH_LOG("Loading default config.\n");
+      ret = config_load_file(NULL, false);
+      if (*g_extern.config_path)
+         RARCH_LOG("Found default config: %s.\n", g_extern.config_path);
+   }
 
-static void config_load_specific(void)
+   if (!ret)
+   {
+      RARCH_ERR("Couldn't find config at path: \"%s\"\n", g_extern.config_path);
+#ifndef RARCH_CONSOLE
+      rarch_fail(1, "parse_global_config()");
+#endif
+   }
+}
+
+static void load_config_by_type(void)
 {
    char tmp_path[PATH_MAX];
    unsigned char config_t;
-
-   *g_extern.specific_config_path = '\0';
+   
    g_extern.using_per_game_config = false;
-
-   if (!*g_settings.libretro
-#ifdef HAVE_DYNAMIC
-      || g_extern.libretro_dummy
-#endif
-      )
-      return;
 
 #ifdef HAVE_MENU
    if (*g_settings.rgui_config_directory)
@@ -504,11 +519,24 @@ static void config_load_specific(void)
          }
          /* if we reach this point we failed, so we try to load per-core config */   
       case CONFIG_PER_CORE:
-         fill_pathname_dir(g_extern.specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.specific_config_path));
-         RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
-         if (!config_load_file(g_extern.specific_config_path, true))
-            RARCH_WARN("Core-specific config not found, reusing last config.\n");
-         break;
+         if (*g_settings.libretro
+#ifdef HAVE_DYNAMIC
+               || g_extern.libretro_dummy
+#endif
+         )
+         {
+            fill_pathname_dir(g_extern.specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.specific_config_path));
+            RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
+            if (config_load_file(g_extern.specific_config_path, true))
+               break;
+            else
+               RARCH_WARN("Core-specific config not found, using global config.\n");
+         }
+      /* GLOBAL */
+      default:
+         parse_global_config();
+         /* Clear the specific config path as we just load the global */
+         *g_extern.specific_config_path = '\0';
    }
 
    // Don't have the core config file overwrite the libretro path.
@@ -519,18 +547,15 @@ static void config_load_specific(void)
 
 void config_load(void)
 {
-   // Flush out per-core configs before loading a new config.
+   /* Flush out per-core configs before loading a new config. */
    if (*g_extern.specific_config_path && g_extern.config_save_on_exit && g_settings.config_type != CONFIG_GLOBAL)
       config_save_file(g_extern.specific_config_path);
 
    if (!g_extern.block_config_read)
-   {
       config_set_defaults();
-      parse_config_file();
-   }
 
-   // Per-core/game config handling.
-   config_load_specific();
+   /* Per-core/game/global config handling. */
+   load_config_by_type();
 }
 
 static config_file_t *open_default_config_file(void)
@@ -691,31 +716,6 @@ static config_file_t *open_default_config_file(void)
 }
 
 static void config_read_keybinds_conf(config_file_t *conf);
-
-static void parse_config_file(void)
-{
-   bool ret;
-   if (*g_extern.config_path)
-   {
-      RARCH_LOG("Loading config from: %s.\n", g_extern.config_path);
-      ret = config_load_file(g_extern.config_path, false);
-   }
-   else
-   {
-      RARCH_LOG("Loading default config.\n");
-      ret = config_load_file(NULL, false);
-      if (*g_extern.config_path)
-         RARCH_LOG("Found default config: %s.\n", g_extern.config_path);
-   }
-
-   if (!ret)
-   {
-      RARCH_ERR("Couldn't find config at path: \"%s\"\n", g_extern.config_path);
-#ifndef RARCH_CONSOLE
-      rarch_fail(1, "parse_config_file()");
-#endif
-   }
-}
 
 bool config_load_file(const char *path, bool set_defaults)
 {

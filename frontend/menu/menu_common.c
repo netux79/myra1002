@@ -2150,6 +2150,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifdef HAVE_SCREENSHOTS
             file_list_push(rgui->selection_buf, "Take Screenshot", RGUI_SETTINGS_SCREENSHOT, 0);
 #endif
+            /* Add a menu separator */
+            file_list_push(rgui->selection_buf, "------------------------------", RGUI_SETTINGS_CORE_OPTION_NONE, 0);
          }
          if (rgui->history)
             file_list_push(rgui->selection_buf, "Load Recent", RGUI_SETTINGS_OPEN_HISTORY, 0);

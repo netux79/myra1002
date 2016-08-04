@@ -162,7 +162,7 @@ int main_entry_iterate(signature(), args_type() args)
          g_extern.lifecycle_state |= (1ULL << MODE_GAME);
 #ifndef GEKKO
          if (driver.video_poke && driver.video_poke->set_aspect_ratio)
-            video_set_aspect_ratio_func(g_settings.video.aspect_ratio_idx);
+            driver.video_poke->set_aspect_ratio(driver.video_data, g_settings.video.aspect_ratio_idx);
 #endif
       }
       else

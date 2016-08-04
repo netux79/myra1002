@@ -435,8 +435,10 @@ static bool osk_callback_enter_filename_init(void *data)
 
 #endif
 
-void update_screen_overlay()
+void update_config_params()
 {
+   config_load();
+   
    if (driver.overlay)
    {
       input_overlay_free(driver.overlay);
@@ -445,6 +447,11 @@ void update_screen_overlay()
 
    if (*g_settings.input.overlay)
       driver.overlay = input_overlay_new(g_settings.input.overlay);
+      
+#ifndef GEKKO
+   if (driver.video_poke && driver.video_poke->set_aspect_ratio)
+      driver.video_poke->set_aspect_ratio(video_data, g_settings.video.aspect_ratio_idx);
+#endif
 }
 
 #ifndef RARCH_DEFAULT_PORT
@@ -534,8 +541,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.config_type < CONFIG_PER_GAME)
             {
                g_settings.config_type++;
-               config_load();
-               update_screen_overlay();
+               update_config_params();
             }
          }
          else if (action == RGUI_ACTION_LEFT)
@@ -543,8 +549,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.config_type > CONFIG_GLOBAL)
             {
                g_settings.config_type--;
-               config_load();
-               update_screen_overlay();
+               update_config_params();
             }
          }
          else if (action == RGUI_ACTION_START)
@@ -552,12 +557,14 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.config_type != default_config_type)
             {
                g_settings.config_type = default_config_type;
-               config_load();
-               update_screen_overlay();
+               update_config_params();
             }
          }
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
+         if (g_settings.config_type != CONFIG_PER_GAME)
+            break;
+            
          if (action == RGUI_ACTION_OK) 
          {
             if (*g_extern.basename)
@@ -583,8 +590,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                remove(g_extern.specific_config_path);
                *g_extern.specific_config_path = '\0';
                /* and load per-core config if available.*/
-               config_load();
-               update_screen_overlay();
+               update_config_params();
             }
          }
          break;
@@ -2027,10 +2033,12 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
             strlcpy(type_str, "Global", type_str_size);
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
-         if (g_settings.config_type == CONFIG_PER_GAME && g_extern.using_per_game_config)
-            strlcpy(type_str, "Active - ENTER to Remove", type_str_size);
+         if (g_settings.config_type != CONFIG_PER_GAME)
+            strlcpy(type_str, "Disabled", type_str_size);
+         else if (g_extern.using_per_game_config)
+            strlcpy(type_str, "Active", type_str_size);
          else
-            strlcpy(type_str, "N/A - OK to Create", type_str_size);
+            strlcpy(type_str, "Press OK to Add", type_str_size);
          break;
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
          if (g_settings.autosave_interval)

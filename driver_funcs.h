@@ -43,7 +43,6 @@
 #define video_focus_func() driver.video->focus(driver.video_data)
 #define video_set_shader_func(type, path) driver.video->set_shader(driver.video_data, type, path)
 #define video_set_rotation_func(rotate) driver.video->set_rotation(driver.video_data, rotate)
-#define video_set_aspect_ratio_func(aspect_idx) driver.video_poke->set_aspect_ratio(driver.video_data, aspect_idx)
 #define video_viewport_info_func(info) driver.video->viewport_info(driver.video_data, info)
 #define video_read_viewport_func(buffer) driver.video->read_viewport(driver.video_data, buffer)
 #define video_overlay_interface_func(iface) driver.video->overlay_interface(driver.video_data, iface)
