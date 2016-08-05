@@ -450,7 +450,7 @@ void update_config_params()
       
 #ifndef GEKKO
    if (driver.video_poke && driver.video_poke->set_aspect_ratio)
-      driver.video_poke->set_aspect_ratio(video_data, g_settings.video.aspect_ratio_idx);
+      driver.video_poke->set_aspect_ratio(driver.video_data, g_settings.video.aspect_ratio_idx);
 #endif
 }
 

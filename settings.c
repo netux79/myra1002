@@ -552,10 +552,15 @@ void config_load(void)
       config_save_file(g_extern.specific_config_path);
 
    if (!g_extern.block_config_read)
+   {
       config_set_defaults();
-
-   /* Per-core/game/global config handling. */
-   load_config_by_type();
+      parse_global_config();
+   }
+   else
+   {
+      /* Per-core/game/global config handling. */
+      load_config_by_type();
+   }
 }
 
 static config_file_t *open_default_config_file(void)
