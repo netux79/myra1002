@@ -552,9 +552,14 @@ static void load_config_by_type(void)
 
 void config_load(void)
 {
-   /* Flush out per-core configs before loading a new config. */
-   if (*g_extern.specific_config_path && g_extern.config_save_on_exit && g_settings.config_type != CONFIG_GLOBAL)
-      config_save_file(g_extern.specific_config_path);
+   /* Flush out configs before loading a new config. */
+   if (g_extern.config_save_on_exit)
+   {
+      if (*g_extern.specific_config_path && g_settings.config_type != CONFIG_GLOBAL)
+         config_save_file(g_extern.specific_config_path);
+      else if (*g_extern.config_path)
+         config_save_file(g_extern.config_path);
+   }
 
    if (!g_extern.block_config_read)
    {
