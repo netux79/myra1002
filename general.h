@@ -34,6 +34,7 @@
 #include "performance.h"
 #include "core_options.h"
 #include "miscellaneous.h"
+#include "gfx/filter.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -166,10 +167,14 @@ struct settings
       char shader_path[PATH_MAX];
       bool shader_enable;
 
+#ifdef HAVE_FILTERS_BUILTIN
+      unsigned filter_idx;
+#endif
       char filter_path[PATH_MAX];
       float refresh_rate;
       bool threaded;
 
+      char filter_dir[PATH_MAX];
       char shader_dir[PATH_MAX];
 
       char font_path[PATH_MAX];
@@ -513,20 +518,12 @@ struct global
 
    struct
    {
-      bool active;
-      uint32_t *buffer;
-      uint32_t *colormap;
-      unsigned pitch;
-      dylib_t lib;
+      rarch_softfilter_t *filter;
+
+      void *buffer;
       unsigned scale;
-
-      void (*psize)(unsigned *width, unsigned *height);
-      void (*prender)(uint32_t *colormap, uint32_t *output, unsigned outpitch,
-            const uint16_t *input, unsigned pitch, unsigned width, unsigned height);
-
-      // CPU filters only work on *XRGB1555*. We have to convert to XRGB1555 first.
-      struct scaler_ctx scaler;
-      uint16_t *scaler_out;
+      unsigned out_bpp;
+      bool out_rgb32;
    } filter;
 
    msg_queue_t *msg_queue;
@@ -732,7 +729,7 @@ void rarch_check_overlay(void);
 void rarch_check_block_hotkey(void);
 void rarch_init_rewind(void);
 void rarch_deinit_rewind(void);
-void rarch_set_fullscreen(bool fullscreen);
+void rarch_reset_drivers(void);
 bool rarch_check_fullscreen(void);
 void rarch_disk_control_set_eject(bool state, bool log);
 void rarch_disk_control_set_index(unsigned index);

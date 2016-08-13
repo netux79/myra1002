@@ -616,6 +616,11 @@ bool driver_set_rumble_state(unsigned port, enum retro_rumble_effect effect, uin
 bool driver_set_sensor_state(unsigned port, enum retro_sensor_action action, unsigned rate);
 float driver_sensor_get_input(unsigned port, unsigned action);
 
+#ifdef HAVE_DYLIB
+void rarch_deinit_filter(void);
+void rarch_init_filter(enum retro_pixel_format);
+#endif
+
 // Used by RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE
 #ifdef HAVE_CAMERA
 bool driver_camera_start(void);
@@ -691,6 +696,23 @@ extern const camera_driver_t camera_ios;
 extern const location_driver_t location_apple;
 extern const location_driver_t location_android;
 extern const input_osk_driver_t input_ps3_osk;
+
+#ifdef HAVE_FILTERS_BUILTIN
+extern const struct softfilter_implementation *blargg_ntsc_snes_rf_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *blargg_ntsc_snes_composite_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *blargg_ntsc_snes_svideo_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *blargg_ntsc_snes_rgb_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *lq2x_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *phosphor2x_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *twoxbr_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *epx_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *twoxsai_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *supereagle_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *supertwoxsai_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *twoxbr_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *darken_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *scale2x_get_implementation(softfilter_simd_mask_t simd);
+#endif
 
 #include "driver_funcs.h"
 

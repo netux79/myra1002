@@ -297,44 +297,40 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
    // Slightly messy code,
    // but we really need to do processing before blocking on VSync for best possible scheduling.
 #ifdef HAVE_FFMPEG
-   if (g_extern.recording && (!g_extern.filter.active || !g_settings.video.post_filter_record || !data || g_extern.record_gpu_buffer))
+   if (g_extern.recording && (!g_extern.filter.filter || !g_settings.video.post_filter_record || !data || g_extern.record_gpu_buffer))
       recording_dump_frame(data, width, height, pitch);
 #endif
 
    const char *msg = msg_queue_pull(g_extern.msg_queue);
    driver.current_msg = msg;
 
-#ifdef HAVE_DYLIB
-   if (g_extern.filter.active && data)
+   if (g_extern.filter.filter && data)
    {
-      struct scaler_ctx *scaler = &g_extern.filter.scaler;
-      scaler->in_width   = scaler->out_width = width;
-      scaler->in_height  = scaler->out_height = height;
-      scaler->in_stride  = pitch;
-      scaler->out_stride = width * sizeof(uint16_t);
+      unsigned owidth = 0;
+      unsigned oheight = 0;
+      unsigned opitch = 0;
+      rarch_softfilter_get_output_size(g_extern.filter.filter,
+            &owidth, &oheight, width, height);
 
-      scaler_ctx_scale(scaler, g_extern.filter.scaler_out, data);
+      opitch = owidth * g_extern.filter.out_bpp;
 
-      unsigned owidth = width;
-      unsigned oheight = height;
-      g_extern.filter.psize(&owidth, &oheight);
-      g_extern.filter.prender(g_extern.filter.colormap, g_extern.filter.buffer,
-            g_extern.filter.pitch, g_extern.filter.scaler_out, scaler->out_stride, width, height);
+      RARCH_PERFORMANCE_INIT(softfilter_process);
+      RARCH_PERFORMANCE_START(softfilter_process);
+      rarch_softfilter_process(g_extern.filter.filter,
+            g_extern.filter.buffer, opitch,
+            data, width, height, pitch);
+      RARCH_PERFORMANCE_STOP(softfilter_process);
 
 #ifdef HAVE_FFMPEG
       if (g_extern.recording && g_settings.video.post_filter_record)
-         recording_dump_frame(g_extern.filter.buffer, owidth, oheight, g_extern.filter.pitch);
+         recording_dump_frame(g_extern.filter.buffer, owidth, oheight, opitch);
 #endif
 
-      if (!video_frame_func(g_extern.filter.buffer, owidth, oheight, g_extern.filter.pitch, msg))
+      if (!video_frame_func(g_extern.filter.buffer, owidth, oheight, opitch, msg))
          g_extern.video_active = false;
    }
    else if (!video_frame_func(data, width, height, pitch, msg))
       g_extern.video_active = false;
-#else
-   if (!video_frame_func(data, width, height, pitch, msg))
-      g_extern.video_active = false;
-#endif
 }
 
 void rarch_render_cached_frame(void)
@@ -1413,14 +1409,13 @@ void rarch_init_recording(void)
       else
          params.aspect_ratio = (float)params.out_width / params.out_height;
 
-      if (g_settings.video.post_filter_record && g_extern.filter.active)
+      if (g_settings.video.post_filter_record && g_extern.filter.filter)
       {
-         g_extern.filter.psize(&params.out_width, &params.out_height);
-         params.pix_fmt = FFEMU_PIX_ARGB8888;
+         params.pix_fmt = g_extern.filter.out_rgb32 ? FFEMU_PIX_ARGB8888 : FFEMU_PIX_RGB565;
 
-         unsigned max_width  = params.fb_width;
-         unsigned max_height = params.fb_height;
-         g_extern.filter.psize(&max_width, &max_height);
+         unsigned max_width  = 0;
+         unsigned max_height = 0;
+         rarch_softfilter_get_max_output_size(g_extern.filter.filter, &max_width, &max_height);
          params.fb_width  = next_pow2(max_width);
          params.fb_height = next_pow2(max_height);
       }
@@ -2011,9 +2006,8 @@ static void check_savestates(bool immutable)
    }
 }
 
-void rarch_set_fullscreen(bool fullscreen)
+void rarch_reset_drivers(void)
 {
-   g_settings.video.fullscreen = fullscreen;
    driver.video_cache_context = g_extern.system.hw_render_callback.cache_context;
    driver.video_cache_context_ack = false;
    uninit_drivers();
@@ -2035,7 +2029,7 @@ bool rarch_check_fullscreen(void)
    if (toggle)
    {
       g_settings.video.fullscreen = !g_settings.video.fullscreen;
-      rarch_set_fullscreen(g_settings.video.fullscreen);
+      rarch_reset_drivers();
    }
 
    was_pressed = pressed;

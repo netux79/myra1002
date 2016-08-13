@@ -965,6 +965,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
    if (rgui->need_refresh && !(menu_type == RGUI_FILE_DIRECTORY ||
             menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
+            menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_CORE ||
             menu_type == RGUI_SETTINGS_CONFIG ||
@@ -1131,6 +1132,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
          if (
                menu_type_is(type) == RGUI_SETTINGS_SHADER_OPTIONS ||
                menu_type_is(type) == RGUI_FILE_DIRECTORY ||
+               type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
                type == RGUI_SETTINGS_OVERLAY_PRESET ||
                type == RGUI_SETTINGS_CORE ||
                type == RGUI_SETTINGS_CONFIG ||
@@ -1278,6 +1280,12 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
 #endif
+            else if (menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER)
+            {
+               fill_pathname_join(g_settings.video.filter_path, dir, path, sizeof(g_settings.video.filter_path));
+               rarch_reset_drivers();
+               menu_flush_stack_type(rgui, RGUI_SETTINGS_VIDEO_OPTIONS);
+            }
             else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
             {
                strlcpy(g_extern.savestate_dir, dir, sizeof(g_extern.savestate_dir));
@@ -1305,6 +1313,11 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
             else if (menu_type == RGUI_SHADER_DIR_PATH)
             {
                strlcpy(g_settings.video.shader_dir, dir, sizeof(g_settings.video.shader_dir));
+               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
+            }
+            else if (menu_type == RGUI_FILTER_DIR_PATH)
+            {
+               strlcpy(g_settings.video.filter_dir, dir, sizeof(g_settings.video.filter_dir));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
             else if (menu_type == RGUI_SYSTEM_DIR_PATH)
@@ -1381,6 +1394,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
    if (rgui->need_refresh && (menu_type == RGUI_FILE_DIRECTORY ||
             menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS ||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
+            menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_DEFERRED_CORE ||
             menu_type == RGUI_SETTINGS_CORE ||
@@ -1437,7 +1451,7 @@ bool menu_iterate(void *video_data)
    }
 
    input_state = menu_input();
-
+   
    if (rgui->do_held)
    {
       if (!first_held)
@@ -1899,6 +1913,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifdef HW_RVL
          file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_SOFT_FILTER, 0);
 #endif
+         file_list_push(rgui->selection_buf, "Video Soft Filter", RGUI_SETTINGS_VIDEO_SOFTFILTER, 0);
 #if defined(HW_RVL) || defined(_XBOX360)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);
 #endif
@@ -1906,12 +1921,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Soft filtering", RGUI_SETTINGS_SOFT_DISPLAY_FILTER, 0);
          file_list_push(rgui->selection_buf, "Flicker filtering", RGUI_SETTINGS_FLICKER_FILTER, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
+         file_list_push(rgui->selection_buf, "Crop Overscan", RGUI_SETTINGS_VIDEO_CROP_OVERSCAN, 0);
          file_list_push(rgui->selection_buf, "Aspect Ratio", RGUI_SETTINGS_VIDEO_ASPECT_RATIO, 0);
          file_list_push(rgui->selection_buf, "Custom Ratio", RGUI_SETTINGS_CUSTOM_VIEWPORT, 0);
-#if !defined(RARCH_CONSOLE) && !defined(RARCH_MOBILE)
-         file_list_push(rgui->selection_buf, "Toggle Fullscreen", RGUI_SETTINGS_TOGGLE_FULLSCREEN, 0);
-#endif
+         file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
          file_list_push(rgui->selection_buf, "VSync", RGUI_SETTINGS_VIDEO_VSYNC, 0);
          file_list_push(rgui->selection_buf, "Hard GPU Sync", RGUI_SETTINGS_VIDEO_HARD_SYNC, 0);
@@ -1924,17 +1937,20 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Threaded Driver", RGUI_SETTINGS_VIDEO_THREADED, 0);
 #endif
 #if !defined(RARCH_CONSOLE) && !defined(RARCH_MOBILE)
+         file_list_push(rgui->selection_buf, "Toggle Fullscreen", RGUI_SETTINGS_TOGGLE_FULLSCREEN, 0);
+         file_list_push(rgui->selection_buf, "Use Windowed Fullscreen", RGUI_SETTINGS_WINDOWED_FULLSCREEN, 0);
+#endif
+#if !defined(RARCH_CONSOLE) && !defined(RARCH_MOBILE)
          file_list_push(rgui->selection_buf, "Windowed Scale (X)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_X, 0);
          file_list_push(rgui->selection_buf, "Windowed Scale (Y)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_Y, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Crop Overscan (reload)", RGUI_SETTINGS_VIDEO_CROP_OVERSCAN, 0);
          file_list_push(rgui->selection_buf, "Estimated Monitor FPS", RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO, 0);
-#if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
-         file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
-#endif
-#ifndef GEKKO
+#ifndef RARCH_CONSOLE
          file_list_push(rgui->selection_buf, "Window Compositing", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Window Unfocus Pause", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);
+#endif
+#if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
+         file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
 #endif
          break;
       case RGUI_SETTINGS_CORE_OPTIONS:
@@ -2080,6 +2096,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Core Info Path", RGUI_LIBRETRO_INFO_DIR_PATH, 0);
 #ifdef HAVE_SHADER_MANAGER
          file_list_push(rgui->selection_buf, "Shader Path", RGUI_SHADER_DIR_PATH, 0);
+#endif
+#ifdef HAVE_DYLIB
+         file_list_push(rgui->selection_buf, "Soft Filter Path", RGUI_FILTER_DIR_PATH, 0);
 #endif
          file_list_push(rgui->selection_buf, "Savestate Path", RGUI_SAVESTATE_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Savefile Path", RGUI_SAVEFILE_DIR_PATH, 0);
@@ -2305,6 +2324,8 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
                exts = "cg|glsl";
             else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
                exts = "cfg";
+            else if (menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER)
+               exts = EXT_EXECUTABLES;               
             else if (menu_type_is(menu_type) == RGUI_FILE_DIRECTORY)
                exts = ""; // we ignore files anyway
             else if (rgui->defer_core)

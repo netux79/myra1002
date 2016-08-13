@@ -700,7 +700,7 @@ retro_proc_address_t driver_get_proc_address(const char *sym)
 bool driver_update_system_av_info(const struct retro_system_av_info *info)
 {
    g_extern.system.av_info = *info;
-   rarch_set_fullscreen(g_settings.video.fullscreen);
+   rarch_reset_drivers();
    // Cannot continue recording with different parameters.
    // Take the easiest route out and just restart the recording.
 #ifdef HAVE_FFMPEG
@@ -1285,45 +1285,28 @@ void uninit_audio(void)
    compute_audio_buffer_statistics();
 }
 
-#ifdef HAVE_DYLIB
-static void deinit_filter(void)
+void rarch_deinit_filter(void)
 {
-   g_extern.filter.active = false;
-
-   if (g_extern.filter.lib)
-      dylib_close(g_extern.filter.lib);
-   g_extern.filter.lib = NULL;
-
+   rarch_softfilter_free(g_extern.filter.filter);
    free(g_extern.filter.buffer);
-   free(g_extern.filter.colormap);
-   free(g_extern.filter.scaler_out);
-   g_extern.filter.buffer     = NULL;
-   g_extern.filter.colormap   = NULL;
-   g_extern.filter.scaler_out = NULL;
-
-   scaler_ctx_gen_reset(&g_extern.filter.scaler);
-   memset(&g_extern.filter.scaler, 0, sizeof(g_extern.filter.scaler));
+   memset(&g_extern.filter, 0, sizeof(g_extern.filter));
 }
 
-static void init_filter(bool rgb32)
+void rarch_init_filter(enum retro_pixel_format colfmt)
 {
-   unsigned i;
-   if (g_extern.filter.active)
-      return;
+   rarch_deinit_filter();
+#ifndef HAVE_FILTERS_BUILTIN
    if (!*g_settings.video.filter_path)
       return;
+#endif
+
+   // Deprecated format. Gets pre-converted.
+   if (colfmt == RETRO_PIXEL_FORMAT_0RGB1555)
+      colfmt = RETRO_PIXEL_FORMAT_RGB565;
 
    if (g_extern.system.hw_render_callback.context_type)
    {
       RARCH_WARN("Cannot use CPU filters when hardware rendering is used.\n");
-      return;
-   }
-
-   RARCH_LOG("Loading bSNES filter from \"%s\"\n", g_settings.video.filter_path);
-   g_extern.filter.lib = dylib_load(g_settings.video.filter_path);
-   if (!g_extern.filter.lib)
-   {
-      RARCH_ERR("Failed to load filter \"%s\"\n", g_settings.video.filter_path);
       return;
    }
 
@@ -1334,69 +1317,38 @@ static void init_filter(bool rgb32)
    unsigned pow2_y  = 0;
    unsigned maxsize = 0;
 
-   g_extern.filter.psize =
-      (void (*)(unsigned*, unsigned*))dylib_proc(g_extern.filter.lib, "filter_size");
-   g_extern.filter.prender =
-      (void (*)(uint32_t*, uint32_t*,
-                unsigned, const uint16_t*,
-                unsigned, unsigned, unsigned))dylib_proc(g_extern.filter.lib, "filter_render");
+#ifndef HAVE_FILTERS_BUILTIN
+   RARCH_LOG("Loading softfilter from \"%s\"\n", g_settings.video.filter_path);
+#endif
+   g_extern.filter.filter = rarch_softfilter_new(g_settings.video.filter_path,
+         RARCH_SOFTFILTER_THREADS_AUTO, colfmt, width, height);
 
-   if (!g_extern.filter.psize || !g_extern.filter.prender)
+   if (!g_extern.filter.filter)
    {
-      RARCH_ERR("Failed to find functions in filter...\n");
-      goto error;
+      RARCH_ERR("Failed to load filter.\n");
+      return;
    }
 
-   g_extern.filter.active = true;
-   g_extern.filter.psize(&width, &height);
-
+   rarch_softfilter_get_max_output_size(g_extern.filter.filter, &width, &height);
    pow2_x  = next_pow2(width);
    pow2_y  = next_pow2(height);
-   maxsize = pow2_x > pow2_y ? pow2_x : pow2_y;
+   maxsize = max(pow2_x, pow2_y); 
    g_extern.filter.scale = maxsize / RARCH_SCALE_BASE;
 
-   g_extern.filter.buffer = (uint32_t*)malloc(RARCH_SCALE_BASE * RARCH_SCALE_BASE *
-         g_extern.filter.scale * g_extern.filter.scale * sizeof(uint32_t));
+   g_extern.filter.out_rgb32 = rarch_softfilter_get_output_format(g_extern.filter.filter) == RETRO_PIXEL_FORMAT_XRGB8888;
+   g_extern.filter.out_bpp = g_extern.filter.out_rgb32 ? sizeof(uint32_t) : sizeof(uint16_t);
+
+   // TODO: Aligned output.
+   g_extern.filter.buffer = malloc(width * height * g_extern.filter.out_bpp);
    if (!g_extern.filter.buffer)
-      goto error;
-
-   g_extern.filter.pitch = RARCH_SCALE_BASE * g_extern.filter.scale * sizeof(uint32_t);
-
-   g_extern.filter.colormap = (uint32_t*)malloc(0x10000 * sizeof(uint32_t));
-   if (!g_extern.filter.colormap)
-      goto error;
-
-   // Set up conversion map from 16-bit XRGB1555 to 32-bit ARGB.
-   for (i = 0; i < 0x10000; i++)
-   {
-      unsigned r = (i >> 10) & 0x1f;
-      unsigned g = (i >>  5) & 0x1f;
-      unsigned b = (i >>  0) & 0x1f;
-
-      r = (r << 3) | (r >> 2);
-      g = (g << 3) | (g >> 2);
-      b = (b << 3) | (b >> 2);
-      g_extern.filter.colormap[i] = (r << 16) | (g << 8) | (b << 0);
-   }
-
-   g_extern.filter.scaler_out = (uint16_t*)malloc(sizeof(uint16_t) * geom->max_width * geom->max_height);
-   if (!g_extern.filter.scaler_out)
-      goto error;
-
-   g_extern.filter.scaler.scaler_type = SCALER_TYPE_POINT;
-   g_extern.filter.scaler.in_fmt      = rgb32 ? SCALER_FMT_ARGB8888 : SCALER_FMT_RGB565;
-   g_extern.filter.scaler.out_fmt     = SCALER_FMT_0RGB1555;
-
-   if (!scaler_ctx_gen_filter(&g_extern.filter.scaler))
       goto error;
 
    return;
 
 error:
-   RARCH_ERR("CPU filter init failed.\n");
-   deinit_filter();
+   RARCH_ERR("Softfilter initialization failed.\n");
+   rarch_deinit_filter();
 }
-#endif
 
 static void deinit_shader_dir(void)
 {
@@ -1460,9 +1412,7 @@ static bool init_video_pixel_converter(unsigned size)
 
 void init_video_input(void)
 {
-#ifdef HAVE_DYLIB
-   init_filter(g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
-#endif
+   rarch_init_filter(g_extern.system.pix_fmt);
 
    init_shader_dir();
 
@@ -1471,7 +1421,7 @@ void init_video_input(void)
    unsigned scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
    scale = max(scale, 1);
 
-   if (g_extern.filter.active)
+   if (g_extern.filter.filter)
       scale = g_extern.filter.scale;
 
    // Update core-dependent aspect ratio values.
@@ -1536,7 +1486,7 @@ void init_video_input(void)
    video.force_aspect = g_settings.video.force_aspect;
    video.smooth = g_settings.video.smooth;
    video.input_scale = scale;
-   video.rgb32 = g_extern.filter.active || (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
+   video.rgb32 = g_extern.filter.filter ? g_extern.filter.out_rgb32 : (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
 
    const input_driver_t *tmp = driver.input;
    find_video_driver(); // Need to grab the "real" video driver interface on a reinit.
@@ -1643,9 +1593,7 @@ void uninit_video_input(void)
 
    deinit_pixel_converter();
 
-#ifdef HAVE_DYLIB
-   deinit_filter();
-#endif
+   rarch_deinit_filter();
 
    deinit_shader_dir();
    compute_monitor_fps_statistics();

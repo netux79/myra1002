@@ -783,7 +783,7 @@ static void *omap_gfx_init(const video_info_t *video, const input_driver_t **inp
 
   /* Don't support filters at the moment since they make estimations  *
    * on the maximum used resolution difficult.                        */
-  if (g_extern.filter.active) {
+  if (g_extern.filter.filter) {
     RARCH_ERR("video_omap: filters are not supported\n");
     return NULL;
   }

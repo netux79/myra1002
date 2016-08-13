@@ -85,6 +85,7 @@ unsigned menu_type_is(unsigned type)
 
    type_found = type == RGUI_BROWSER_DIR_PATH ||
       type == RGUI_SHADER_DIR_PATH ||
+      type == RGUI_FILTER_DIR_PATH ||
       type == RGUI_SAVESTATE_DIR_PATH ||
       type == RGUI_LIBRETRO_DIR_PATH ||
       type == RGUI_LIBRETRO_INFO_DIR_PATH ||
@@ -874,6 +875,38 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             break;
          }
 #endif
+      case RGUI_SETTINGS_VIDEO_SOFTFILTER:
+         switch (action)
+         {
+#ifdef HAVE_FILTERS_BUILTIN
+            case RGUI_ACTION_LEFT:
+               if (g_settings.video.filter_idx > 0)
+                  g_settings.video.filter_idx--;
+               break;
+            case RGUI_ACTION_RIGHT:
+               if ((g_settings.video.filter_idx + 1) != softfilter_get_last_idx())
+                  g_settings.video.filter_idx++;
+               break;
+#endif
+            case RGUI_ACTION_OK:
+#if defined(HAVE_DYLIB)
+               file_list_push(rgui->menu_stack, g_settings.video.filter_dir, setting, rgui->selection_ptr);
+               menu_clear_navigation(rgui);
+#else
+               rarch_reset_drivers();
+#endif
+               rgui->need_refresh = true;
+               break;
+            case RGUI_ACTION_START:
+#ifdef HAVE_FILTERS_BUILTIN
+               g_settings.video.filter_idx = 0;
+#else
+               strlcpy(g_settings.video.filter_path, "", sizeof(g_settings.video.filter_path));
+#endif
+               rarch_reset_drivers();
+               break;
+         }
+         break;
          // controllers
       case RGUI_SETTINGS_BIND_PLAYER:
          if (action == RGUI_ACTION_START)
@@ -1180,6 +1213,10 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (action == RGUI_ACTION_START)
             *g_settings.video.shader_dir = '\0';
          break;
+      case RGUI_FILTER_DIR_PATH:
+         if (action == RGUI_ACTION_START)
+            *g_settings.video.filter_dir = '\0';
+         break;
       case RGUI_SYSTEM_DIR_PATH:
          if (action == RGUI_ACTION_START)
             *g_settings.system_directory = '\0';
@@ -1338,7 +1375,18 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
       case RGUI_SETTINGS_TOGGLE_FULLSCREEN:
          if (action == RGUI_ACTION_OK)
-            rarch_set_fullscreen(!g_settings.video.fullscreen);
+         {
+            g_settings.video.fullscreen = !g_settings.video.fullscreen;
+            rarch_reset_drivers();
+         }
+         break;
+
+      case RGUI_SETTINGS_WINDOWED_FULLSCREEN:
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
+         {
+            g_settings.video.windowed_fullscreen = !g_settings.video.windowed_fullscreen;
+            rarch_reset_drivers();
+         }
          break;
 
 #if defined(GEKKO)
@@ -1560,7 +1608,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          *scale = max(*scale, 1.0f);
 
          if (old_scale != *scale && !g_settings.video.fullscreen)
-            rarch_set_fullscreen(g_settings.video.fullscreen); // Reinit video driver.
+            rarch_reset_drivers();
 
          break;
       }
@@ -1577,7 +1625,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             g_settings.video.threaded = false;
 
          if (g_settings.video.threaded != old)
-            rarch_set_fullscreen(g_settings.video.fullscreen); // Reinit video driver.
+            rarch_reset_drivers();
          break;
       }
 #endif
@@ -1801,12 +1849,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
          {
             g_settings.video.disable_composition = !g_settings.video.disable_composition;
-            rarch_set_fullscreen(g_settings.video.fullscreen);
+            rarch_reset_drivers();
          }
          else if (action == RGUI_ACTION_START)
          {
             g_settings.video.disable_composition = false;
-            rarch_set_fullscreen(g_settings.video.fullscreen);
+            rarch_reset_drivers();
          }
          break;
 #ifdef HAVE_NETPLAY
@@ -2093,6 +2141,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SHADER_DIR_PATH:
          strlcpy(type_str, *g_settings.video.shader_dir ? g_settings.video.shader_dir : "<default>", type_str_size);
          break;
+      case RGUI_FILTER_DIR_PATH:
+         strlcpy(type_str, *g_settings.video.filter_dir ? g_settings.video.filter_dir : "<default>", type_str_size);
+         break;
       case RGUI_SYSTEM_DIR_PATH:
          strlcpy(type_str, *g_settings.system_directory ? g_settings.system_directory : "<ROM dir>", type_str_size);
          break;
@@ -2141,6 +2192,12 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_CUSTOM_BIND_ALL:
       case RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL:
          strlcpy(type_str, "...", type_str_size);
+         break;
+      case RGUI_SETTINGS_VIDEO_SOFTFILTER:
+         {
+            const char *filter_name = rarch_softfilter_get_name(g_extern.filter.filter);
+            strlcpy(type_str, filter_name ? filter_name : "N/A", type_str_size);
+         }
          break;
 #ifdef HAVE_OVERLAY
       case RGUI_SETTINGS_OVERLAY_PRESET:
@@ -2322,6 +2379,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          snprintf(type_str, type_str_size, g_settings.osk.enable ? "ON" : "OFF");
          break;
 #endif
+      case RGUI_SETTINGS_WINDOWED_FULLSCREEN:
+         strlcpy(type_str, g_settings.video.windowed_fullscreen ? "ON" : "OFF", type_str_size);
+         break;
       default:
          *type_str = '\0';
          *w = 0;

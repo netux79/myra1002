@@ -381,6 +381,8 @@ void config_set_defaults(void)
    *g_settings.content_directory = '\0';
    *g_settings.video.shader_path = '\0';
    *g_settings.video.shader_dir = '\0';
+   *g_settings.video.filter_dir = '\0';
+   *g_settings.video.filter_path = '\0';
 #ifdef HAVE_MENU
    *g_settings.rgui_content_directory = '\0';
    *g_settings.rgui_config_directory = '\0';
@@ -430,6 +432,9 @@ void config_set_defaults(void)
 
    if (default_shader_dir)
       fill_pathname_expand_special(g_settings.video.shader_dir, default_shader_dir, sizeof(g_settings.video.shader_dir));
+
+   if (default_filter_dir)
+      fill_pathname_expand_special(g_settings.video.filter_dir, default_filter_dir, sizeof(g_settings.video.filter_dir));
 
    if (default_libretro_path && !g_extern.has_set_libretro)
       fill_pathname_expand_special(g_settings.libretro, default_libretro_path, sizeof(g_settings.libretro));
@@ -652,9 +657,9 @@ static config_file_t *open_default_config_file(void)
 
    // XDG_CONFIG_HOME falls back to $HOME/.config.
    if (xdg)
-      fill_pathname_join(conf_path, xdg, "retroarch/retroarch.cfg", sizeof(conf_path));
+      fill_pathname_join(conf_path, xdg, "myra1002/retroarch.cfg", sizeof(conf_path));
    else if (home)
-      fill_pathname_join(conf_path, home, ".config/retroarch/retroarch.cfg", sizeof(conf_path));
+      fill_pathname_join(conf_path, home, ".config/myra1002/retroarch.cfg", sizeof(conf_path));
 
    if (xdg || home)
    {
@@ -675,9 +680,9 @@ static config_file_t *open_default_config_file(void)
    {
       // XDG_CONFIG_HOME falls back to $HOME/.config.
       if (xdg)
-         fill_pathname_join(conf_path, xdg, "retroarch/retroarch.cfg", sizeof(conf_path));
+         fill_pathname_join(conf_path, xdg, "myra1002/retroarch.cfg", sizeof(conf_path));
       else if (home)
-         fill_pathname_join(conf_path, home, ".config/retroarch/retroarch.cfg", sizeof(conf_path));
+         fill_pathname_join(conf_path, home, ".config/myra1002/retroarch.cfg", sizeof(conf_path));
 
       char basedir[PATH_MAX];
       fill_pathname_basedir(basedir, conf_path, sizeof(basedir));
@@ -809,6 +814,10 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_FLOAT(video.msg_pos_y, "video_message_pos_y");
    CONFIG_GET_INT(video.rotation, "video_rotation");
 
+#if defined(HAVE_FILTERS_BUILTIN)
+   CONFIG_GET_INT(video.filter_idx, "filter_index");
+#endif
+
 #ifdef RARCH_CONSOLE
    /* TODO - will be refactored later to make it more clean - it's more 
     * important that it works for consoles right now */
@@ -891,6 +900,10 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_PATH(video.shader_dir, "video_shader_dir");
    if (!strcmp(g_settings.video.shader_dir, "default"))
       *g_settings.video.shader_dir = '\0';
+
+   CONFIG_GET_PATH(video.filter_dir, "video_filter_dir");
+   if (!strcmp(g_settings.video.filter_dir, "default"))
+      *g_settings.video.filter_dir = '\0';
 
    CONFIG_GET_FLOAT(input.axis_threshold, "input_axis_threshold");
    CONFIG_GET_BOOL(input.netplay_client_swap_input, "netplay_client_swap_input");
@@ -1269,6 +1282,9 @@ bool config_save_file(const char *path)
    config_set_path(conf, "libretro_info_path", g_settings.libretro_info_path);
    config_set_path(conf, "cheat_database_path", g_settings.cheat_database);
    config_set_bool(conf, "rewind_enable", g_settings.rewind_enable);
+#ifdef HAVE_FILTERS_BUILTIN
+   config_set_int(conf,   "filter_index",  g_settings.video.filter_idx);
+#endif
    config_set_int(conf, "rewind_granularity", g_settings.rewind_granularity);
    config_set_path(conf, "video_shader", g_settings.video.shader_path);
    config_set_bool(conf, "video_shader_enable", g_settings.video.shader_enable);
@@ -1281,6 +1297,7 @@ bool config_save_file(const char *path)
    config_set_bool(conf, "video_smooth", g_settings.video.smooth);
    config_set_bool(conf, "video_threaded", g_settings.video.threaded);
    config_set_bool(conf, "video_fullscreen", g_settings.video.fullscreen);
+   config_set_bool(conf, "video_windowed_fullscreen", g_settings.video.windowed_fullscreen);
    config_set_float(conf, "video_refresh_rate", g_settings.video.refresh_rate);
    config_set_string(conf, "video_driver", g_settings.video.driver);
    config_set_bool(conf, "video_vsync", g_settings.video.vsync);
@@ -1308,6 +1325,8 @@ bool config_save_file(const char *path)
    config_set_path(conf, "savefile_directory", *g_extern.savefile_dir ? g_extern.savefile_dir : "default");
    config_set_path(conf, "savestate_directory", *g_extern.savestate_dir ? g_extern.savestate_dir : "default");
    config_set_path(conf, "video_shader_dir", *g_settings.video.shader_dir ? g_settings.video.shader_dir : "default");
+   config_set_path(conf, "video_filter", g_settings.video.filter_path);
+   config_set_path(conf, "video_filter_dir", *g_settings.video.filter_dir ? g_settings.video.filter_dir : "default");
 
    config_set_path(conf, "content_directory", *g_settings.content_directory ? g_settings.content_directory : "default");
 #ifdef HAVE_MENU

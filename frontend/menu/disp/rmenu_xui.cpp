@@ -454,6 +454,8 @@ static void rmenu_xui_render(void *data, void *video_data)
    else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
       snprintf(title, sizeof(title), "OVERLAY %s", dir);
 #endif
+   else if (menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER)
+      snprintf(title, sizeof(title), "SOFT FILTER %s", dir);
    else if (menu_type == RGUI_BROWSER_DIR_PATH)
       snprintf(title, sizeof(title), "BROWSER DIR %s", dir);
 #ifdef HAVE_SCREENSHOTS
@@ -462,6 +464,8 @@ static void rmenu_xui_render(void *data, void *video_data)
 #endif
    else if (menu_type == RGUI_SHADER_DIR_PATH)
       snprintf(title, sizeof(title), "SHADER DIR %s", dir);
+   else if (menu_type == RGUI_FILTER_DIR_PATH)
+      snprintf(title, sizeof(title), "FILTER DIR %s", dir);
    else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
       snprintf(title, sizeof(title), "SAVESTATE DIR %s", dir);
 #ifdef HAVE_DYNAMIC
@@ -578,6 +582,7 @@ static void rmenu_xui_render(void *data, void *video_data)
 #ifdef HAVE_OVERLAY
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
 #endif
+            menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
             menu_type == RGUI_SETTINGS_DISK_APPEND ||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY)
       {
