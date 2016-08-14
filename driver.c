@@ -1320,8 +1320,7 @@ void rarch_init_filter(enum retro_pixel_format colfmt)
 #ifndef HAVE_FILTERS_BUILTIN
    RARCH_LOG("Loading softfilter from \"%s\"\n", g_settings.video.filter_path);
 #endif
-   g_extern.filter.filter = rarch_softfilter_new(g_settings.video.filter_path,
-         RARCH_SOFTFILTER_THREADS_AUTO, colfmt, width, height);
+   g_extern.filter.filter = rarch_softfilter_new(g_settings.video.filter_path, colfmt, width, height);
 
    if (!g_extern.filter.filter)
    {
