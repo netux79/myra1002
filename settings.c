@@ -662,9 +662,9 @@ static config_file_t *open_default_config_file(void)
 
    // XDG_CONFIG_HOME falls back to $HOME/.config.
    if (xdg)
-      fill_pathname_join(conf_path, xdg, "myra1002/retroarch.cfg", sizeof(conf_path));
+      fill_pathname_join(conf_path, xdg, "retroarch/retroarch.cfg", sizeof(conf_path));
    else if (home)
-      fill_pathname_join(conf_path, home, ".config/myra1002/retroarch.cfg", sizeof(conf_path));
+      fill_pathname_join(conf_path, home, ".config/retroarch/retroarch.cfg", sizeof(conf_path));
 
    if (xdg || home)
    {
@@ -685,9 +685,9 @@ static config_file_t *open_default_config_file(void)
    {
       // XDG_CONFIG_HOME falls back to $HOME/.config.
       if (xdg)
-         fill_pathname_join(conf_path, xdg, "myra1002/retroarch.cfg", sizeof(conf_path));
+         fill_pathname_join(conf_path, xdg, "retroarch/retroarch.cfg", sizeof(conf_path));
       else if (home)
-         fill_pathname_join(conf_path, home, ".config/myra1002/retroarch.cfg", sizeof(conf_path));
+         fill_pathname_join(conf_path, home, ".config/retroarch/retroarch.cfg", sizeof(conf_path));
 
       char basedir[PATH_MAX];
       fill_pathname_basedir(basedir, conf_path, sizeof(basedir));
