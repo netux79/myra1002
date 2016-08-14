@@ -85,7 +85,9 @@ unsigned menu_type_is(unsigned type)
 
    type_found = type == RGUI_BROWSER_DIR_PATH ||
       type == RGUI_SHADER_DIR_PATH ||
+#ifndef HAVE_FILTERS_BUILTIN
       type == RGUI_FILTER_DIR_PATH ||
+#endif
       type == RGUI_SAVESTATE_DIR_PATH ||
       type == RGUI_LIBRETRO_DIR_PATH ||
       type == RGUI_LIBRETRO_INFO_DIR_PATH ||
@@ -889,7 +891,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                break;
 #endif
             case RGUI_ACTION_OK:
-#if defined(HAVE_DYLIB)
+#if !defined(HAVE_FILTERS_BUILTIN) && defined(HAVE_DYLIB)
                file_list_push(rgui->menu_stack, g_settings.video.filter_dir, setting, rgui->selection_ptr);
                menu_clear_navigation(rgui);
 #else
@@ -1213,9 +1215,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (action == RGUI_ACTION_START)
             *g_settings.video.shader_dir = '\0';
          break;
+#ifndef HAVE_FILTERS_BUILTIN
       case RGUI_FILTER_DIR_PATH:
          if (action == RGUI_ACTION_START)
             *g_settings.video.filter_dir = '\0';
+#endif
          break;
       case RGUI_SYSTEM_DIR_PATH:
          if (action == RGUI_ACTION_START)
@@ -2141,9 +2145,11 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SHADER_DIR_PATH:
          strlcpy(type_str, *g_settings.video.shader_dir ? g_settings.video.shader_dir : "<default>", type_str_size);
          break;
+#ifndef HAVE_FILTERS_BUILTIN
       case RGUI_FILTER_DIR_PATH:
          strlcpy(type_str, *g_settings.video.filter_dir ? g_settings.video.filter_dir : "<default>", type_str_size);
          break;
+#endif         
       case RGUI_SYSTEM_DIR_PATH:
          strlcpy(type_str, *g_settings.system_directory ? g_settings.system_directory : "<ROM dir>", type_str_size);
          break;
@@ -2196,7 +2202,11 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_SOFTFILTER:
          {
             const char *filter_name = rarch_softfilter_get_name(g_extern.filter.filter);
+#ifdef HAVE_FILTERS_BUILTIN
+            strlcpy(type_str, filter_name ? filter_name : "OFF", type_str_size);
+#else
             strlcpy(type_str, filter_name ? filter_name : "N/A", type_str_size);
+#endif
          }
          break;
 #ifdef HAVE_OVERLAY

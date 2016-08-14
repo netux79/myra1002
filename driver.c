@@ -1295,10 +1295,13 @@ void rarch_deinit_filter(void)
 void rarch_init_filter(enum retro_pixel_format colfmt)
 {
    rarch_deinit_filter();
-#ifndef HAVE_FILTERS_BUILTIN
+
+#ifdef HAVE_FILTERS_BUILTIN
+   if (!g_settings.video.filter_idx)
+#else
    if (!*g_settings.video.filter_path)
-      return;
 #endif
+      return;
 
    // Deprecated format. Gets pre-converted.
    if (colfmt == RETRO_PIXEL_FORMAT_0RGB1555)

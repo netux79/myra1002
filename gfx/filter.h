@@ -44,5 +44,9 @@ void rarch_softfilter_process(rarch_softfilter_t *filt,
 
 const char *rarch_softfilter_get_name(void *data);
 
+#ifdef HAVE_FILTERS_BUILTIN
+unsigned softfilter_get_last_idx(void);
+#endif
+
 #endif
 

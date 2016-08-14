@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "msvc/msvc_compat.h"
 #include "gfx/scaler/scaler.h"
+#include "gfx/filters/softfilter.h"
 #include "gfx/image/image.h"
 #include "input/overlay.h"
 
@@ -700,17 +701,8 @@ extern const input_osk_driver_t input_ps3_osk;
 #ifdef HAVE_FILTERS_BUILTIN
 extern const struct softfilter_implementation *blargg_ntsc_snes_rf_get_implementation(softfilter_simd_mask_t simd);
 extern const struct softfilter_implementation *blargg_ntsc_snes_composite_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *blargg_ntsc_snes_svideo_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *blargg_ntsc_snes_rgb_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *lq2x_get_implementation(softfilter_simd_mask_t simd);
 extern const struct softfilter_implementation *phosphor2x_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *twoxbr_get_implementation(softfilter_simd_mask_t simd);
 extern const struct softfilter_implementation *epx_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *twoxsai_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *supereagle_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *supertwoxsai_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *twoxbr_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *darken_get_implementation(softfilter_simd_mask_t simd);
 extern const struct softfilter_implementation *scale2x_get_implementation(softfilter_simd_mask_t simd);
 #endif
 

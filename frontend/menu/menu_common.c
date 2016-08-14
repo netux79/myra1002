@@ -1315,11 +1315,13 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                strlcpy(g_settings.video.shader_dir, dir, sizeof(g_settings.video.shader_dir));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
+#ifndef HAVE_FILTERS_BUILTIN
             else if (menu_type == RGUI_FILTER_DIR_PATH)
             {
                strlcpy(g_settings.video.filter_dir, dir, sizeof(g_settings.video.filter_dir));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
+#endif            
             else if (menu_type == RGUI_SYSTEM_DIR_PATH)
             {
                strlcpy(g_settings.system_directory, dir, sizeof(g_settings.system_directory));
@@ -2097,7 +2099,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifdef HAVE_SHADER_MANAGER
          file_list_push(rgui->selection_buf, "Shader Path", RGUI_SHADER_DIR_PATH, 0);
 #endif
-#ifdef HAVE_DYLIB
+#ifndef HAVE_FILTERS_BUILTIN
          file_list_push(rgui->selection_buf, "Soft Filter Path", RGUI_FILTER_DIR_PATH, 0);
 #endif
          file_list_push(rgui->selection_buf, "Savestate Path", RGUI_SAVESTATE_DIR_PATH, 0);

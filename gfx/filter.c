@@ -42,17 +42,9 @@ static const struct softfilter_implementation *(*softfilter_drivers[]) (softfilt
    NULL,
    &blargg_ntsc_snes_rf_get_implementation,
    &blargg_ntsc_snes_composite_get_implementation,
-   &blargg_ntsc_snes_svideo_get_implementation,
-   &blargg_ntsc_snes_rgb_get_implementation,
-   &lq2x_get_implementation,
-   &phosphor2x_get_implementation,
-   &twoxbr_get_implementation,
-   &darken_get_implementation,
-   &twoxsai_get_implementation,
-   &supertwoxsai_get_implementation,
-   &supereagle_get_implementation,
-   &epx_get_implementation,
    &scale2x_get_implementation,
+   &epx_get_implementation,
+   &phosphor2x_get_implementation,
 };
 
 unsigned softfilter_get_last_idx(void)
@@ -66,7 +58,6 @@ static softfilter_get_implementation_t softfilter_get_implementation_from_idx(un
       return softfilter_drivers[i];
    return NULL;
 }
-
 #endif
 
 const char *rarch_softfilter_get_name(void *data)
@@ -108,7 +99,7 @@ rarch_softfilter_t *rarch_softfilter_new(const char *filter_path,
       return NULL;
 
    cb = NULL;
-#if defined(HAVE_FILTERS_BUILTIN)
+#ifdef HAVE_FILTERS_BUILTIN
    cb = (softfilter_get_implementation_t)softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
 #elif defined(HAVE_DYLIB)
    filt->lib = dylib_load(filter_path);
