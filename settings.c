@@ -478,13 +478,8 @@ static void parse_global_config(void)
    }
 }
 
-static void load_config_by_type(void)
+static void calculate_specific_config_path(const char *in_basename)
 {
-   char tmp_path[PATH_MAX];
-   unsigned char config_t;
-   
-   g_extern.using_per_game_config = false;
-
 #ifdef HAVE_MENU
    if (*g_settings.rgui_config_directory)
    {
@@ -497,8 +492,20 @@ static void load_config_by_type(void)
       // Use original config file's directory as a fallback.
       fill_pathname_basedir(g_extern.specific_config_path, g_extern.config_path, sizeof(g_extern.specific_config_path));
    }
+   
+   fill_pathname_dir(g_extern.specific_config_path, in_basename, ".cfg", sizeof(g_extern.specific_config_path));
+}
 
-   // Save some parameters which are implied when using specific configs.
+static void load_config_by_type(void)
+{
+   char tmp_path[PATH_MAX];
+   unsigned char config_t;
+   
+   /* Clear the specific config vars */
+   *g_extern.specific_config_path = '\0';
+   g_extern.using_per_game_config = false;
+
+   // Save some parameters which need too keeps between configs.
    strlcpy(tmp_path, g_settings.libretro, sizeof(tmp_path));
    config_t = g_settings.config_type;
 
@@ -508,7 +515,7 @@ static void load_config_by_type(void)
          /* Only try it if the game is already loaded */
          if (*g_extern.basename)
          {
-            fill_pathname_dir(g_extern.specific_config_path, g_extern.basename, ".cfg", sizeof(g_extern.specific_config_path));
+            calculate_specific_config_path(g_extern.basename);
             RARCH_LOG("Loading game-specific config from: %s.\n", g_extern.specific_config_path);
             if (config_load_file(g_extern.specific_config_path, true))
             {
@@ -517,10 +524,7 @@ static void load_config_by_type(void)
                break;
             }
             else
-            {
                RARCH_WARN("Game-specific config not found, trying per-core config.\n");
-               path_basedir(g_extern.specific_config_path);
-            }
          }
          /* if we reach this point we failed, so we try to load per-core config */   
       case CONFIG_PER_CORE:
@@ -530,23 +534,20 @@ static void load_config_by_type(void)
 #endif
          )
          {
-            fill_pathname_dir(g_extern.specific_config_path, g_settings.libretro, ".cfg", sizeof(g_extern.specific_config_path));
+            calculate_specific_config_path(g_settings.libretro);
             RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
             if (config_load_file(g_extern.specific_config_path, true))
                break;
             else
                RARCH_WARN("Core-specific config not found, using global config.\n");
          }
-      /* GLOBAL */
       default:
+      case CONFIG_GLOBAL:
          parse_global_config();
-         /* Clear the specific config path as we just load the global */
-         *g_extern.specific_config_path = '\0';
    }
 
-   // Don't have the core config file overwrite the libretro path.
+   // Restore saved params to the current config.
    strlcpy(g_settings.libretro, tmp_path, sizeof(g_settings.libretro));
-   // This must be true for core/game specific configs.
    g_settings.config_type = config_t;
 }
 
@@ -555,7 +556,7 @@ void config_load(void)
    /* Flush out configs before loading a new config. */
    if (g_extern.config_save_on_exit)
    {
-      if (*g_extern.specific_config_path && g_settings.config_type != CONFIG_GLOBAL)
+      if (*g_extern.specific_config_path)
          config_save_file(g_extern.specific_config_path);
       else if (*g_extern.config_path)
          config_save_file(g_extern.config_path);

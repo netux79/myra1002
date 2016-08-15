@@ -442,14 +442,7 @@ void update_config_params()
 {
    config_load();
    
-   if (driver.overlay)
-   {
-      input_overlay_free(driver.overlay);
-      driver.overlay = NULL;
-   }
-
-   if (*g_settings.input.overlay)
-      driver.overlay = input_overlay_new(g_settings.input.overlay);
+   rarch_reset_drivers();
       
 #ifndef GEKKO
    if (driver.video_poke && driver.video_poke->set_aspect_ratio)

@@ -281,15 +281,16 @@ void main_exit(args_type() args)
 
    menu_free(driver.video_data);
 
-   if (g_extern.config_save_on_exit && *g_extern.config_path)
+   if (g_extern.config_save_on_exit)
    {
+      // Flush out the specific config.
+      if (*g_extern.specific_config_path)
+         config_save_file(g_extern.specific_config_path);
+
       // save last specific config to the default config location, needed on
       // consoles for core switching and reusing last good config for new cores.
-      config_save_file(g_extern.config_path);
-
-      // Flush out the specific config.
-      if (*g_extern.specific_config_path && g_settings.config_type != CONFIG_GLOBAL)
-         config_save_file(g_extern.specific_config_path);
+      if(*g_extern.config_path)
+         config_save_file(g_extern.config_path);
    }
 #endif
 

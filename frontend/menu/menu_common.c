@@ -81,7 +81,7 @@ void shader_manager_init(void *data)
    config_file_t *conf = NULL;
 
    const char *config_path = NULL;
-   if (*g_extern.specific_config_path && g_settings.config_type != CONFIG_GLOBAL)
+   if (*g_extern.specific_config_path)
       config_path = g_extern.specific_config_path;
    else if (*g_extern.config_path)
       config_path = g_extern.config_path;
