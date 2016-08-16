@@ -20,8 +20,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 #define DISABLE_CORRECTION 0
 
-#undef PI
-#define PI 3.14159265358979323846f
+#define PI_NUM 3.14159265358979323846f
 
 #ifndef LUMA_CUTOFF
 	#define LUMA_CUTOFF 0.20
@@ -86,7 +85,7 @@ static void init_filters( init_t* impl, snes_ntsc_setup_t const* setup )
 		int i;
 		/* quadratic mapping to reduce negative (blurring) range */
 		float to_angle = (float) setup->resolution + 1;
-		to_angle = PI / maxh * (float) LUMA_CUTOFF * (to_angle * to_angle + 1);
+		to_angle = PI_NUM / maxh * (float) LUMA_CUTOFF * (to_angle * to_angle + 1);
 		
 		kernels [kernel_size * 3 / 2] = maxh; /* default center value */
 		for ( i = 0; i < kernel_half * 2 + 1; i++ )
@@ -110,7 +109,7 @@ static void init_filters( init_t* impl, snes_ntsc_setup_t const* setup )
 		sum = 0;
 		for ( i = 0; i < kernel_half * 2 + 1; i++ )
 		{
-			float x = PI * 2 / (kernel_half * 2) * i;
+			float x = PI_NUM * 2 / (kernel_half * 2) * i;
 			float blackman = 0.42f - 0.5f * (float) cos( x ) + 0.08f * (float) cos( x * 2 );
 			sum += (kernels [kernel_size * 3 / 2 - kernel_half + i] *= blackman);
 		}
@@ -232,14 +231,14 @@ static void init( init_t* impl, snes_ntsc_setup_t const* setup )
 	
 	/* setup decoder matricies */
 	{
-		float hue = (float) setup->hue * PI + PI / 180 * ext_decoder_hue;
+		float hue = (float) setup->hue * PI_NUM + PI_NUM / 180 * ext_decoder_hue;
 		float sat = (float) setup->saturation + 1;
 		float const* decoder = setup->decoder_matrix;
 		if ( !decoder )
 		{
 			decoder = default_decoder;
 			if ( STD_HUE_CONDITION( setup ) )
-				hue += PI / 180 * (std_decoder_hue - ext_decoder_hue);
+				hue += PI_NUM / 180 * (std_decoder_hue - ext_decoder_hue);
 		}
 		
 		{
