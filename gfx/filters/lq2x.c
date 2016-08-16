@@ -110,7 +110,7 @@ static void lq2x_generic_rgb565(unsigned width, unsigned height,
    {
       int prevline, nextline;
       prevline = (y == 0 ? 0 : src_stride);
-      nextline = (y == height - 1 || last) ? 0 : src_stride;
+      nextline = (y == height - 1) ? 0 : src_stride;
 
       for(x = 0; x < width; x++)
       {
@@ -156,7 +156,7 @@ static void lq2x_generic_xrgb8888(unsigned width, unsigned height,
    for(y = 0; y < height; y++)
    {
       int prevline = (y == 0 ? 0 : src_stride);
-      int nextline = (y == height - 1 || last) ? 0 : src_stride;
+      int nextline = (y == height - 1) ? 0 : src_stride;
 
       for(x = 0; x < width; x++)
       {

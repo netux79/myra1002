@@ -50,8 +50,8 @@ struct filter_data
 #define SCALE2X_GENERIC(typename_t, width, height, first, last, src, src_stride, dst, dst_stride, out0, out1) \
    for (y = 0; y < height; ++y) \
    { \
-      const int prevline = ((y == 0) && first) ? 0 : src_stride; \
-      const int nextline = ((y == height - 1) && last) ? 0 : src_stride; \
+      const int prevline = (y == 0) ? 0 : src_stride; \
+      const int nextline = (y == height - 1) ? 0 : src_stride; \
       \
       for (x = 0; x < width; ++x) \
       { \

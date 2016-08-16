@@ -106,7 +106,7 @@ static void EPX_16 (int width, int height,
 	uint32_t	*dP1, *dP2;
 	int		w, prevline;
 
-   prevline = (first) ? 0 : src_stride;
+   prevline = src_stride;
 
 	height -= 2;
 

@@ -585,7 +585,7 @@ static void twoxbr_generic_xrgb8888(void *data, unsigned width, unsigned height,
 
    (void)filt;
 
-   nextline = (last) ? 0 : src_stride;
+   nextline = src_stride;
    
    for (; height; height--)
    {
@@ -623,7 +623,7 @@ static void twoxbr_generic_rgb565(void *data, unsigned width, unsigned height,
    pg_green_mask = GREEN_MASK565;
    pg_blue_mask  = BLUE_MASK565;
    pg_lbmask     = PG_LBMASK565;
-   nextline = (last) ? 0 : src_stride;
+   nextline = src_stride;
    
  
    for (; height; height--)

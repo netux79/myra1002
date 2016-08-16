@@ -477,6 +477,11 @@ FILTERS
 #include "../gfx/filters/blargg_ntsc_snes_rf.c"
 #include "../gfx/filters/blargg_ntsc_snes_composite.c"
 #include "../gfx/filters/phosphor2x.c"
+#include "../gfx/filters/supereagle.c"
+#include "../gfx/filters/lq2x.c"
+#include "../gfx/filters/2xsai.c"
+#include "../gfx/filters/2xbr.c"
+#include "../gfx/filters/super2xsai.c"
 #endif
 #include "../gfx/filter.c"
 

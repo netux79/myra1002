@@ -213,7 +213,7 @@ static void supereagle_generic_xrgb8888(unsigned width, unsigned height,
       unsigned src_stride, uint32_t *dst, unsigned dst_stride)
 {
    unsigned finish, nextline;
-   nextline = (last) ? 0 : src_stride;
+   nextline = src_stride;
 
    for (; height; height--)
    {
@@ -237,7 +237,7 @@ static void supereagle_generic_rgb565(unsigned width, unsigned height,
       unsigned src_stride, uint16_t *dst, unsigned dst_stride)
 {
    unsigned nextline, finish;
-   nextline = (last) ? 0 : src_stride;
+   nextline = src_stride;
 
    for (; height; height--)
    {

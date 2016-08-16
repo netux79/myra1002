@@ -42,9 +42,14 @@ static const struct softfilter_implementation *(*softfilter_drivers[]) (softfilt
    NULL,
    &blargg_ntsc_snes_rf_get_implementation,
    &blargg_ntsc_snes_composite_get_implementation,
-   &scale2x_get_implementation,
-   &epx_get_implementation,
+   &lq2x_get_implementation,
    &phosphor2x_get_implementation,
+   &twoxsai_get_implementation,
+   &supereagle_get_implementation,
+   &epx_get_implementation,   
+   &scale2x_get_implementation,
+   &twoxbr_get_implementation,
+   &supertwoxsai_get_implementation,
 };
 
 unsigned softfilter_get_last_idx(void)
