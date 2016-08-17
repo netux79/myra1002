@@ -535,10 +535,6 @@ const rarch_setting_t* setting_data_get_list()
          CONFIG_BOOL(g_settings.video.gpu_screenshot,       "video_gpu_screenshot",       "GPU Screenshot",             gpu_screenshot)
          CONFIG_BOOL(g_settings.video.allow_rotate,         "video_allow_rotate",         "Allow rotation",             allow_rotate)
          CONFIG_BOOL(g_settings.video.crop_overscan,        "video_crop_overscan",        "Crop Overscan (reload)",     crop_overscan)
-
-         #ifdef HAVE_DYLIB
-         CONFIG_PATH(g_settings.video.filter_path,          "video_filter",               "Software filter",            DEFAULT_ME_YO)       WITH_FLAGS(SD_FLAG_ALLOW_EMPTY)
-         #endif
       END_SUB_GROUP()
 
       START_SUB_GROUP("Messages")

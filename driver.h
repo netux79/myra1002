@@ -24,7 +24,9 @@
 #include <stdint.h>
 #include "msvc/msvc_compat.h"
 #include "gfx/scaler/scaler.h"
+#ifdef HAVE_FILTERS_BUILTIN
 #include "gfx/filters/softfilter.h"
+#endif
 #include "gfx/image/image.h"
 #include "input/overlay.h"
 
@@ -616,11 +618,6 @@ bool driver_set_rumble_state(unsigned port, enum retro_rumble_effect effect, uin
 // Used by RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE
 bool driver_set_sensor_state(unsigned port, enum retro_sensor_action action, unsigned rate);
 float driver_sensor_get_input(unsigned port, unsigned action);
-
-#ifdef HAVE_DYLIB
-void rarch_deinit_filter(void);
-void rarch_init_filter(enum retro_pixel_format);
-#endif
 
 // Used by RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE
 #ifdef HAVE_CAMERA

@@ -23,7 +23,7 @@
 
 typedef struct rarch_softfilter rarch_softfilter_t;
 
-rarch_softfilter_t *rarch_softfilter_new(const char *filter_path,
+rarch_softfilter_t *rarch_softfilter_new(
       enum retro_pixel_format in_pixel_format,
       unsigned max_width, unsigned max_height);
 
@@ -44,9 +44,7 @@ void rarch_softfilter_process(rarch_softfilter_t *filt,
 
 const char *rarch_softfilter_get_name(void *data);
 
-#ifdef HAVE_FILTERS_BUILTIN
 unsigned softfilter_get_last_idx(void);
-#endif
 
 #endif
 

@@ -965,7 +965,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
    if (rgui->need_refresh && !(menu_type == RGUI_FILE_DIRECTORY ||
             menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
-            menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_CORE ||
             menu_type == RGUI_SETTINGS_CONFIG ||
@@ -1132,7 +1131,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
          if (
                menu_type_is(type) == RGUI_SETTINGS_SHADER_OPTIONS ||
                menu_type_is(type) == RGUI_FILE_DIRECTORY ||
-               type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
                type == RGUI_SETTINGS_OVERLAY_PRESET ||
                type == RGUI_SETTINGS_CORE ||
                type == RGUI_SETTINGS_CONFIG ||
@@ -1280,12 +1278,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
 #endif
-            else if (menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER)
-            {
-               fill_pathname_join(g_settings.video.filter_path, dir, path, sizeof(g_settings.video.filter_path));
-               rarch_reset_drivers();
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_VIDEO_OPTIONS);
-            }
             else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
             {
                strlcpy(g_extern.savestate_dir, dir, sizeof(g_extern.savestate_dir));
@@ -1315,13 +1307,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                strlcpy(g_settings.video.shader_dir, dir, sizeof(g_settings.video.shader_dir));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
-#ifndef HAVE_FILTERS_BUILTIN
-            else if (menu_type == RGUI_FILTER_DIR_PATH)
-            {
-               strlcpy(g_settings.video.filter_dir, dir, sizeof(g_settings.video.filter_dir));
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
-            }
-#endif            
             else if (menu_type == RGUI_SYSTEM_DIR_PATH)
             {
                strlcpy(g_settings.system_directory, dir, sizeof(g_settings.system_directory));
@@ -1396,7 +1381,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
    if (rgui->need_refresh && (menu_type == RGUI_FILE_DIRECTORY ||
             menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS ||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
-            menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_DEFERRED_CORE ||
             menu_type == RGUI_SETTINGS_CORE ||
@@ -1915,7 +1899,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifdef HW_RVL
          file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_SOFT_FILTER, 0);
 #endif
+#ifdef RGUI_SETTINGS_VIDEO_SOFTFILTER
          file_list_push(rgui->selection_buf, "Video Soft Filter", RGUI_SETTINGS_VIDEO_SOFTFILTER, 0);
+#endif
 #if defined(HW_RVL) || defined(_XBOX360)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);
 #endif
@@ -2098,9 +2084,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Core Info Path", RGUI_LIBRETRO_INFO_DIR_PATH, 0);
 #ifdef HAVE_SHADER_MANAGER
          file_list_push(rgui->selection_buf, "Shader Path", RGUI_SHADER_DIR_PATH, 0);
-#endif
-#ifndef HAVE_FILTERS_BUILTIN
-         file_list_push(rgui->selection_buf, "Soft Filter Path", RGUI_FILTER_DIR_PATH, 0);
 #endif
          file_list_push(rgui->selection_buf, "Savestate Path", RGUI_SAVESTATE_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Savefile Path", RGUI_SAVEFILE_DIR_PATH, 0);
@@ -2326,8 +2309,6 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
                exts = "cg|glsl";
             else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
                exts = "cfg";
-            else if (menu_type == RGUI_SETTINGS_VIDEO_SOFTFILTER)
-               exts = EXT_EXECUTABLES;               
             else if (menu_type_is(menu_type) == RGUI_FILE_DIRECTORY)
                exts = ""; // we ignore files anyway
             else if (rgui->defer_core)

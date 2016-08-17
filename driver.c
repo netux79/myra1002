@@ -1285,6 +1285,7 @@ void uninit_audio(void)
    compute_audio_buffer_statistics();
 }
 
+#ifdef HAVE_FILTERS_BUILTIN
 void rarch_deinit_filter(void)
 {
    rarch_softfilter_free(g_extern.filter.filter);
@@ -1296,11 +1297,7 @@ void rarch_init_filter(enum retro_pixel_format colfmt)
 {
    rarch_deinit_filter();
 
-#ifdef HAVE_FILTERS_BUILTIN
    if (!g_settings.video.filter_idx)
-#else
-   if (!*g_settings.video.filter_path)
-#endif
       return;
 
    // Deprecated format. Gets pre-converted.
@@ -1320,10 +1317,7 @@ void rarch_init_filter(enum retro_pixel_format colfmt)
    unsigned pow2_y  = 0;
    unsigned maxsize = 0;
 
-#ifndef HAVE_FILTERS_BUILTIN
-   RARCH_LOG("Loading softfilter from \"%s\"\n", g_settings.video.filter_path);
-#endif
-   g_extern.filter.filter = rarch_softfilter_new(g_settings.video.filter_path, colfmt, width, height);
+   g_extern.filter.filter = rarch_softfilter_new(colfmt, width, height);
 
    if (!g_extern.filter.filter)
    {
@@ -1351,6 +1345,7 @@ error:
    RARCH_ERR("Softfilter initialization failed.\n");
    rarch_deinit_filter();
 }
+#endif
 
 static void deinit_shader_dir(void)
 {
@@ -1414,8 +1409,9 @@ static bool init_video_pixel_converter(unsigned size)
 
 void init_video_input(void)
 {
+#iffdef HAVE_FILTERS_BUILTIN
    rarch_init_filter(g_extern.system.pix_fmt);
-
+#endif
    init_shader_dir();
 
    const struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
@@ -1423,9 +1419,10 @@ void init_video_input(void)
    unsigned scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
    scale = max(scale, 1);
 
+#iffdef HAVE_FILTERS_BUILTIN
    if (g_extern.filter.filter)
       scale = g_extern.filter.scale;
-
+#endif
    // Update core-dependent aspect ratio values.
    gfx_set_square_pixel_viewport(geom->base_width, geom->base_height);
    gfx_set_core_viewport();
@@ -1488,7 +1485,11 @@ void init_video_input(void)
    video.force_aspect = g_settings.video.force_aspect;
    video.smooth = g_settings.video.smooth;
    video.input_scale = scale;
+#iffdef HAVE_FILTERS_BUILTIN   
    video.rgb32 = g_extern.filter.filter ? g_extern.filter.out_rgb32 : (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
+#else
+   video.rgb32 = (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
+#endif
 
    const input_driver_t *tmp = driver.input;
    find_video_driver(); // Need to grab the "real" video driver interface on a reinit.
@@ -1595,8 +1596,9 @@ void uninit_video_input(void)
 
    deinit_pixel_converter();
 
+#ifdef HAVE_FILTERS_BUILTIN
    rarch_deinit_filter();
-
+#endif
    deinit_shader_dir();
    compute_monitor_fps_statistics();
 }

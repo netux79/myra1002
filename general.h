@@ -34,7 +34,10 @@
 #include "performance.h"
 #include "core_options.h"
 #include "miscellaneous.h"
+
+#ifdef HAVE_FILTERS_BUILTIN
 #include "gfx/filter.h"
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -170,13 +173,10 @@ struct settings
 #ifdef HAVE_FILTERS_BUILTIN
       unsigned filter_idx;
 #endif
-      char filter_path[PATH_MAX];
       float refresh_rate;
       bool threaded;
 
-      char filter_dir[PATH_MAX];
       char shader_dir[PATH_MAX];
-
       char font_path[PATH_MAX];
       float font_size;
       bool font_enable;

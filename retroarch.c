@@ -297,13 +297,18 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
    // Slightly messy code,
    // but we really need to do processing before blocking on VSync for best possible scheduling.
 #ifdef HAVE_FFMPEG
-   if (g_extern.recording && (!g_extern.filter.filter || !g_settings.video.post_filter_record || !data || g_extern.record_gpu_buffer))
+   if (g_extern.recording && (
+#ifdef HAVE_FILTERS_BUILTIN
+   !g_extern.filter.filter || 
+#endif
+   !g_settings.video.post_filter_record || !data || g_extern.record_gpu_buffer))
       recording_dump_frame(data, width, height, pitch);
 #endif
 
    const char *msg = msg_queue_pull(g_extern.msg_queue);
    driver.current_msg = msg;
 
+#ifdef HAVE_FILTERS_BUILTIN 
    if (g_extern.filter.filter && *g_extern.basename) /* only use filter if game is running */
    {
       unsigned owidth = 0;
@@ -329,7 +334,9 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
       if (!video_frame_func(g_extern.filter.buffer, owidth, oheight, opitch, msg))
          g_extern.video_active = false;
    }
-   else if (!video_frame_func(data, width, height, pitch, msg))
+   else 
+#endif
+   if (!video_frame_func(data, width, height, pitch, msg))
       g_extern.video_active = false;
 }
 
@@ -1409,6 +1416,7 @@ void rarch_init_recording(void)
       else
          params.aspect_ratio = (float)params.out_width / params.out_height;
 
+#ifdef HAVE_FILTERS_BUILTIN
       if (g_settings.video.post_filter_record && g_extern.filter.filter)
       {
          params.pix_fmt = g_extern.filter.out_rgb32 ? FFEMU_PIX_ARGB8888 : FFEMU_PIX_RGB565;
@@ -1419,6 +1427,7 @@ void rarch_init_recording(void)
          params.fb_width  = next_pow2(max_width);
          params.fb_height = next_pow2(max_height);
       }
+#endif
    }
 
    RARCH_LOG("Recording with FFmpeg to %s @ %ux%u. (FB size: %ux%u pix_fmt: %u)\n",

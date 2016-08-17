@@ -23,10 +23,6 @@
 
 struct rarch_softfilter
 {
-#if !defined(HAVE_FILTERS_BUILTIN) && defined(HAVE_DYLIB)
-   dylib_t lib;
-#endif
-
    const struct softfilter_implementation *impl;
    void *impl_data;
 
@@ -36,7 +32,6 @@ struct rarch_softfilter
    struct softfilter_work_packet *packets;
 };
 
-#ifdef HAVE_FILTERS_BUILTIN
 static const struct softfilter_implementation *(*softfilter_drivers[]) (softfilter_simd_mask_t) =
 {
    NULL,
@@ -63,12 +58,10 @@ static softfilter_get_implementation_t softfilter_get_implementation_from_idx(un
       return softfilter_drivers[i];
    return NULL;
 }
-#endif
 
 const char *rarch_softfilter_get_name(void *data)
 {
    (void)data;
-#ifdef HAVE_FILTERS_BUILTIN
    unsigned cpu_features;
    const struct softfilter_implementation *impl;
    softfilter_get_implementation_t cb = (softfilter_get_implementation_t)softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
@@ -81,38 +74,21 @@ const char *rarch_softfilter_get_name(void *data)
    }
 
    return NULL;
-#else
-   rarch_softfilter_t *filt = (rarch_softfilter_t*)data;
-   if (!filt || !filt->impl)
-      return NULL;
-
-   return filt->impl->ident;
-#endif
 }
 
-rarch_softfilter_t *rarch_softfilter_new(const char *filter_path,
+rarch_softfilter_t *rarch_softfilter_new(
       enum retro_pixel_format in_pixel_format,
       unsigned max_width, unsigned max_height)
 {
    unsigned cpu_features, output_fmts, input_fmts, input_fmt;
    softfilter_get_implementation_t cb;
     
-   (void)filter_path;
-
    rarch_softfilter_t *filt = (rarch_softfilter_t*)calloc(1, sizeof(*filt));
    if (!filt)
       return NULL;
 
    cb = NULL;
-#ifdef HAVE_FILTERS_BUILTIN
    cb = (softfilter_get_implementation_t)softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
-#elif defined(HAVE_DYLIB)
-   filt->lib = dylib_load(filter_path);
-   if (!filt->lib)
-      goto error;
-
-   cb = (softfilter_get_implementation_t)dylib_proc(filt->lib, "softfilter_get_implementation");
-#endif
    if (!cb)
    {
       RARCH_ERR("Couldn't find softfilter symbol.\n");
@@ -199,11 +175,6 @@ void rarch_softfilter_free(rarch_softfilter_t *filt)
    free(filt->packets);
    if (filt->impl && filt->impl_data)
       filt->impl->destroy(filt->impl_data);
-#if !defined(HAVE_FILTERS_BUILTIN) && defined(HAVE_DYLIB)
-   if (filt->lib)
-      dylib_close(filt->lib);
-#endif
-
    free(filt);
 }
 
