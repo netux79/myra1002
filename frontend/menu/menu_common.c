@@ -1899,7 +1899,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifdef HW_RVL
          file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_SOFT_FILTER, 0);
 #endif
-#ifdef RGUI_SETTINGS_VIDEO_SOFTFILTER
+#ifdef HAVE_FILTERS_BUILTIN
          file_list_push(rgui->selection_buf, "Video Soft Filter", RGUI_SETTINGS_VIDEO_SOFTFILTER, 0);
 #endif
 #if defined(HW_RVL) || defined(_XBOX360)

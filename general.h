@@ -516,6 +516,7 @@ struct global
       uint64_t frame_time_samples_count;
    } measure_data;
 
+#ifdef HAVE_FILTERS_BUILTIN
    struct
    {
       rarch_softfilter_t *filter;
@@ -525,6 +526,7 @@ struct global
       unsigned out_bpp;
       bool out_rgb32;
    } filter;
+#endif
 
    msg_queue_t *msg_queue;
 

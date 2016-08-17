@@ -308,7 +308,7 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
    const char *msg = msg_queue_pull(g_extern.msg_queue);
    driver.current_msg = msg;
 
-#ifdef HAVE_FILTERS_BUILTIN 
+#ifdef HAVE_FILTERS_BUILTIN
    if (g_extern.filter.filter && *g_extern.basename) /* only use filter if game is running */
    {
       unsigned owidth = 0;

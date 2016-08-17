@@ -24,9 +24,6 @@
 #include <stdint.h>
 #include "msvc/msvc_compat.h"
 #include "gfx/scaler/scaler.h"
-#ifdef HAVE_FILTERS_BUILTIN
-#include "gfx/filters/softfilter.h"
-#endif
 #include "gfx/image/image.h"
 #include "input/overlay.h"
 
@@ -36,6 +33,10 @@
 
 #ifdef HAVE_COMMAND
 #include "command.h"
+#endif
+
+#ifdef HAVE_FILTERS_BUILTIN
+#include "gfx/filters/softfilter.h"
 #endif
 
 #ifdef __cplusplus

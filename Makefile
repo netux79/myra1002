@@ -213,7 +213,7 @@ ifeq ($(HAVE_OMAP), 1)
 endif
 
 ifeq ($(HAVE_FILTERS_BUILTIN), 1)
-   OBJ += gfx/filters/epx.o gfx/filters/scale2x.o gfx/filters/blargg_ntsc_snes_rf.o gfx/filters/blargg_ntsc_snes_composite.o gfx/filters/phosphor2x.o gfx/filters/snes_ntsc/snes_ntsc.o gfx/filters/supereagle.o gfx/filters/lq2x.o gfx/filters/2xsai.o gfx/filters/2xbr.o gfx/filters/super2xsai.o
+   OBJ += gfx/filter.o gfx/filters/epx.o gfx/filters/scale2x.o gfx/filters/blargg_ntsc_snes_rf.o gfx/filters/blargg_ntsc_snes_composite.o gfx/filters/phosphor2x.o gfx/filters/snes_ntsc/snes_ntsc.o gfx/filters/supereagle.o gfx/filters/lq2x.o gfx/filters/2xsai.o gfx/filters/2xbr.o gfx/filters/super2xsai.o
 endif
 
 ifeq ($(HAVE_OPENGL), 1)
@@ -303,7 +303,6 @@ endif
 
 ifeq ($(HAVE_DYLIB), 1)
    LIBS += $(DYLIB_LIB)
-   OBJ += gfx/filter.o
 endif
 
 ifeq ($(HAVE_FREETYPE), 1)

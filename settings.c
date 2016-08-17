@@ -815,7 +815,7 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_FLOAT(video.msg_pos_y, "video_message_pos_y");
    CONFIG_GET_INT(video.rotation, "video_rotation");
 
-#if defined(HAVE_FILTERS_BUILTIN)
+#ifdef HAVE_FILTERS_BUILTIN
    CONFIG_GET_INT(video.filter_idx, "filter_index");
 #endif
 
