@@ -75,11 +75,6 @@ static unsigned twoxbr_generic_output_fmts(unsigned input_fmts)
    return input_fmts;
 }
  
-static unsigned twoxbr_generic_threads(void *data)
-{
-   return 1;
-}
-
 #define RED_MASK565   0xF800
 #define GREEN_MASK565 0x07E0
 #define BLUE_MASK565  0x001F
@@ -216,16 +211,15 @@ static void SetupFormat(void * data)
 }
  
 static void *twoxbr_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height,
-      unsigned threads, softfilter_simd_mask_t simd)
+      unsigned max_width, unsigned max_height)
 {
-   (void)simd;
- 
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
    if (!filt)
       return NULL;
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
+
    filt->in_fmt  = in_fmt;
+
+   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
    if (!filt->workers)
    {
       free(filt);
@@ -695,16 +689,13 @@ static const struct softfilter_implementation twoxbr_generic = {
    twoxbr_generic_create,
    twoxbr_generic_destroy,
  
-   twoxbr_generic_threads,
    twoxbr_generic_output,
    twoxbr_generic_packets,
    "2xBR",
-   SOFTFILTER_API_VERSION,
 };
  
-const struct softfilter_implementation *softfilter_get_implementation(softfilter_simd_mask_t simd)
+const struct softfilter_implementation *softfilter_get_implementation(void)
 {
-   (void)simd;
    return &twoxbr_generic;
 }
  

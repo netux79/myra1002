@@ -32,7 +32,7 @@ struct rarch_softfilter
    struct softfilter_work_packet *packets;
 };
 
-static const struct softfilter_implementation *(*softfilter_drivers[]) (softfilter_simd_mask_t) =
+static const struct softfilter_implementation *(*softfilter_drivers[]) (void) =
 {
    NULL,
    &blargg_ntsc_snes_rf_get_implementation,
@@ -62,13 +62,11 @@ static softfilter_get_implementation_t softfilter_get_implementation_from_idx(un
 const char *rarch_softfilter_get_name(void *data)
 {
    (void)data;
-   unsigned cpu_features;
    const struct softfilter_implementation *impl;
    softfilter_get_implementation_t cb = (softfilter_get_implementation_t)softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
    if (cb)
    {
-      cpu_features = rarch_get_cpu_features();
-      impl = (const struct softfilter_implementation *)cb(cpu_features);
+      impl = (const struct softfilter_implementation *)cb();
       if (impl)
          return impl->ident;
    }
@@ -80,7 +78,7 @@ rarch_softfilter_t *rarch_softfilter_new(
       enum retro_pixel_format in_pixel_format,
       unsigned max_width, unsigned max_height)
 {
-   unsigned cpu_features, output_fmts, input_fmts, input_fmt;
+   unsigned output_fmts, input_fmts, input_fmt;
    softfilter_get_implementation_t cb;
     
    rarch_softfilter_t *filt = (rarch_softfilter_t*)calloc(1, sizeof(*filt));
@@ -95,18 +93,11 @@ rarch_softfilter_t *rarch_softfilter_new(
       goto error;
    }
 
-   cpu_features = rarch_get_cpu_features();
-   filt->impl = cb(cpu_features);
+   filt->impl = cb();
    if (!filt->impl)
       goto error;
 
    RARCH_LOG("Loaded softfilter \"%s\".\n", filt->impl->ident);
-
-   if (filt->impl->api_version != SOFTFILTER_API_VERSION)
-   {
-      RARCH_ERR("Softfilter ABI mismatch.\n");
-      goto error;
-   }
 
    // Simple assumptions.
    filt->pix_fmt = in_pixel_format;
@@ -146,7 +137,7 @@ rarch_softfilter_t *rarch_softfilter_new(
    filt->max_width = max_width;
    filt->max_height = max_height;
 
-   filt->impl_data = filt->impl->create(input_fmt, input_fmt, max_width, max_height, 1, cpu_features);
+   filt->impl_data = filt->impl->create(input_fmt, input_fmt, max_width, max_height);
    if (!filt->impl_data)
    {
       RARCH_ERR("Failed to create softfilter state.\n");

@@ -55,11 +55,6 @@ static unsigned blargg_ntsc_snes_svideo_generic_output_fmts(unsigned input_fmts)
    return input_fmts;
 }
 
-static unsigned blargg_ntsc_snes_svideo_generic_threads(void *data)
-{
-   return 1;
-}
-
 static void blargg_ntsc_snes_svideo_initialize(void *data)
 {
    snes_ntsc_setup_t setup;
@@ -75,22 +70,24 @@ static void blargg_ntsc_snes_svideo_initialize(void *data)
 }
 
 static void *blargg_ntsc_snes_svideo_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height,
-      unsigned threads, softfilter_simd_mask_t simd)
+      unsigned max_width, unsigned max_height)
 {
-   (void)simd;
-
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
+
    if (!filt)
       return NULL;
+   
    filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
    filt->in_fmt  = in_fmt;
+   
    if (!filt->workers)
    {
       free(filt);
       return NULL;
    }
+   
    blargg_ntsc_snes_svideo_initialize(filt);
+   
    return filt;
 }
 
@@ -173,16 +170,13 @@ static const struct softfilter_implementation blargg_ntsc_snes_svideo_generic = 
    blargg_ntsc_snes_svideo_generic_create,
    blargg_ntsc_snes_svideo_generic_destroy,
 
-   blargg_ntsc_snes_svideo_generic_threads,
    blargg_ntsc_snes_svideo_generic_output,
    blargg_ntsc_snes_svideo_generic_packets,
    "Blargg NTSC S-Video",
-   SOFTFILTER_API_VERSION,
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(softfilter_simd_mask_t simd)
+const struct softfilter_implementation *softfilter_get_implementation(void)
 {
-   (void)simd;
    return &blargg_ntsc_snes_svideo_generic;
 }
 

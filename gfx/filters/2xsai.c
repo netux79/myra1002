@@ -53,27 +53,22 @@ static unsigned twoxsai_generic_output_fmts(unsigned input_fmts)
    return input_fmts;
 }
 
-static unsigned twoxsai_generic_threads(void *data)
-{
-   return 1;
-}
-
 static void *twoxsai_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height,
-      unsigned threads, softfilter_simd_mask_t simd)
+      unsigned max_width, unsigned max_height)
 {
-   (void)simd;
-
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
    if (!filt)
       return NULL;
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
+   
    filt->in_fmt  = in_fmt;
+   
+   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
    if (!filt->workers)
    {
       free(filt);
       return NULL;
    }
+   
    return filt;
 }
 
@@ -319,16 +314,13 @@ static const struct softfilter_implementation twoxsai_generic = {
    twoxsai_generic_create,
    twoxsai_generic_destroy,
 
-   twoxsai_generic_threads,
    twoxsai_generic_output,
    twoxsai_generic_packets,
    "2xSaI",
-   SOFTFILTER_API_VERSION,
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(softfilter_simd_mask_t simd)
+const struct softfilter_implementation *softfilter_get_implementation(void)
 {
-   (void)simd;
    return &twoxsai_generic;
 }
 

@@ -23,32 +23,10 @@
 extern "C" {
 #endif
 
-#define SOFTFILTER_SIMD_SSE      (1 << 0)
-#define SOFTFILTER_SIMD_SSE2     (1 << 1)
-#define SOFTFILTER_SIMD_VMX      (1 << 2)
-#define SOFTFILTER_SIMD_VMX128   (1 << 3)
-#define SOFTFILTER_SIMD_AVX      (1 << 4)
-#define SOFTFILTER_SIMD_NEON     (1 << 5)
-#define SOFTFILTER_SIMD_SSE3     (1 << 6)
-#define SOFTFILTER_SIMD_SSSE3    (1 << 7)
-#define SOFTFILTER_SIMD_MMX      (1 << 8)
-#define SOFTFILTER_SIMD_MMXEXT   (1 << 9)
-#define SOFTFILTER_SIMD_SSE4     (1 << 10)
-#define SOFTFILTER_SIMD_SSE42    (1 << 11)
-#define SOFTFILTER_SIMD_AVX2     (1 << 12)
-#define SOFTFILTER_SIMD_VFPU     (1 << 13)
-#define SOFTFILTER_SIMD_PS       (1 << 14)
-
-// A bit-mask of all supported SIMD instruction sets.
-// Allows an implementation to pick different softfilter_implementation structs.
-typedef unsigned softfilter_simd_mask_t;
-
 // Dynamic library entrypoint.
-typedef const struct softfilter_implementation *(*softfilter_get_implementation_t)(softfilter_simd_mask_t);
+typedef const struct softfilter_implementation *(*softfilter_get_implementation_t)(void);
 // The same SIMD mask argument is forwarded to create() callback as well to avoid having to keep lots of state around.
-const struct softfilter_implementation *softfilter_get_implementation(softfilter_simd_mask_t simd);
-
-#define SOFTFILTER_API_VERSION  1
+const struct softfilter_implementation *softfilter_get_implementation(void);
 
 // Required base color formats
 
@@ -77,8 +55,7 @@ struct softfilter_work_packet
 // Create a filter with given input and output formats as well as maximum possible input size.
 // Input sizes can very per call to softfilter_process_t, but they will never be larger than the maximum.
 typedef void *(*softfilter_create_t)(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height,
-      unsigned threads, softfilter_simd_mask_t simd);
+      unsigned max_width, unsigned max_height);
 typedef void (*softfilter_destroy_t)(void *data);
 
 // Given an input size, query the output size of the filter.
@@ -95,11 +72,6 @@ typedef void (*softfilter_get_work_packets_t)(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride);
 
-// Returns the number of worker threads the filter will use.
-// This can differ from the value passed to create() instead the filter cannot be parallelized, etc. The number of threads must be less-or-equal compared to the value passed to create().
-typedef unsigned (*softfilter_query_num_threads_t)(void *data);
-/////
-
 struct softfilter_implementation
 {
    softfilter_query_input_formats_t query_input_formats;
@@ -108,12 +80,10 @@ struct softfilter_implementation
    softfilter_create_t create;
    softfilter_destroy_t destroy;
 
-   softfilter_query_num_threads_t query_num_threads;
    softfilter_query_output_size_t query_output_size;
    softfilter_get_work_packets_t get_work_packets;
 
    const char *ident; // Human readable identifier of implementation.
-   unsigned api_version; // Must be SOFTFILTER_API_VERSION
 };
 
 #ifdef __cplusplus

@@ -697,16 +697,16 @@ extern const location_driver_t location_android;
 extern const input_osk_driver_t input_ps3_osk;
 
 #ifdef HAVE_FILTERS_BUILTIN
-extern const struct softfilter_implementation *blargg_ntsc_snes_rf_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *blargg_ntsc_snes_composite_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *phosphor2x_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *epx_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *scale2x_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *lq2x_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *twoxsai_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *supereagle_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *twoxbr_get_implementation(softfilter_simd_mask_t simd);
-extern const struct softfilter_implementation *supertwoxsai_get_implementation(softfilter_simd_mask_t simd);
+extern const struct softfilter_implementation *blargg_ntsc_snes_rf_get_implementation(void);
+extern const struct softfilter_implementation *blargg_ntsc_snes_composite_get_implementation(void);
+extern const struct softfilter_implementation *phosphor2x_get_implementation(void);
+extern const struct softfilter_implementation *epx_get_implementation(void);
+extern const struct softfilter_implementation *scale2x_get_implementation(void);
+extern const struct softfilter_implementation *lq2x_get_implementation(void);
+extern const struct softfilter_implementation *twoxsai_get_implementation(void);
+extern const struct softfilter_implementation *supereagle_get_implementation(void);
+extern const struct softfilter_implementation *twoxbr_get_implementation(void);
+extern const struct softfilter_implementation *supertwoxsai_get_implementation(void);
 #endif
 
 #include "driver_funcs.h"

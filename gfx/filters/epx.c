@@ -53,27 +53,22 @@ static unsigned epx_generic_output_fmts(unsigned input_fmts)
    return input_fmts;
 }
 
-static unsigned epx_generic_threads(void *data)
-{
-   return 1;
-}
-
 static void *epx_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height,
-      unsigned threads, softfilter_simd_mask_t simd)
+      unsigned max_width, unsigned max_height)
 {
-   (void)simd;
-
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
    if (!filt)
       return NULL;
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
+
    filt->in_fmt  = in_fmt;
+
+   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
    if (!filt->workers)
    {
       free(filt);
       return NULL;
    }
+   
    return filt;
 }
 
@@ -390,16 +385,13 @@ static const struct softfilter_implementation epx_generic = {
    epx_generic_create,
    epx_generic_destroy,
 
-   epx_generic_threads,
    epx_generic_output,
    epx_generic_packets,
    "EPX",
-   SOFTFILTER_API_VERSION,
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(softfilter_simd_mask_t simd)
+const struct softfilter_implementation *softfilter_get_implementation(void)
 {
-   (void)simd;
    return &epx_generic;
 }
 
