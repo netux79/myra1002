@@ -33,16 +33,12 @@ struct softfilter_thread_data
    const void *in_data;
    size_t out_pitch;
    size_t in_pitch;
-   unsigned colfmt;
    unsigned width;
    unsigned height;
-   int first;
-   int last;
 };
 
 struct filter_data
 {
-   unsigned threads;
    struct softfilter_thread_data *workers;
    unsigned in_fmt;
 };
@@ -59,8 +55,7 @@ static unsigned darken_output_fmts(unsigned input_fmts)
 
 static unsigned darken_threads(void *data)
 {
-   struct filter_data *filt = (struct filter_data*)data;
-   return filt->threads;
+   return 1;
 }
 
 static void *darken_create(unsigned in_fmt, unsigned out_fmt,
@@ -72,8 +67,7 @@ static void *darken_create(unsigned in_fmt, unsigned out_fmt,
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
    if (!filt)
       return NULL;
-   filt->workers = (struct softfilter_thread_data*)calloc(threads, sizeof(struct softfilter_thread_data));
-   filt->threads = threads;
+   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
    filt->in_fmt  = in_fmt;
    if (!filt->workers)
    {
@@ -130,26 +124,22 @@ static void darken_packets(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
-   unsigned i;
    struct filter_data *filt = (struct filter_data*)data;
-   for (i = 0; i < filt->threads; i++)
-   {
-      struct softfilter_thread_data *thr = (struct softfilter_thread_data*)&filt->workers[i];
-      unsigned y_start = (height * i) / filt->threads;
-      unsigned y_end = (height * (i + 1)) / filt->threads;
-      thr->out_data = (uint8_t*)output + y_start * output_stride;
-      thr->in_data = (const uint8_t*)input + y_start * input_stride;
-      thr->out_pitch = output_stride;
-      thr->in_pitch = input_stride;
-      thr->width = width;
-      thr->height = y_end - y_start;
+   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)filt->workers;
 
-      if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
-         packets[i].work = darken_work_cb_xrgb8888;
-      else if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-         packets[i].work = darken_work_cb_rgb565;
-      packets[i].thread_data = thr;
-   }
+   thr->out_data = (uint8_t*)output;
+   thr->in_data = (const uint8_t*)input;
+   thr->out_pitch = output_stride;
+   thr->in_pitch = input_stride;
+   thr->width = width;
+   thr->height = height;
+
+   if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
+      packets->work = darken_work_cb_xrgb8888;
+   else if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
+      packets->work = darken_work_cb_rgb565;
+
+   packets->thread_data = thr;
 }
 
 static const struct softfilter_implementation darken = {

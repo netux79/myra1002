@@ -119,7 +119,7 @@ void snes_ntsc_init( snes_ntsc_t* ntsc, snes_ntsc_setup_t const* setup )
 #ifndef SNES_NTSC_NO_BLITTERS
 
 void snes_ntsc_blit( snes_ntsc_t const* ntsc, SNES_NTSC_IN_T const* input, long in_row_width,
-		int burst_phase, int in_width, int in_height, void* rgb_out, long out_pitch, int first, int last )
+		int burst_phase, int in_width, int in_height, void* rgb_out, long out_pitch )
 {
 	int chunk_count = (in_width - 1) / snes_ntsc_in_chunk;
 	for ( ; in_height; --in_height )
@@ -172,7 +172,7 @@ void snes_ntsc_blit( snes_ntsc_t const* ntsc, SNES_NTSC_IN_T const* input, long 
 }
 
 void snes_ntsc_blit_hires( snes_ntsc_t const* ntsc, SNES_NTSC_IN_T const* input, long in_row_width,
-		int burst_phase, int in_width, int in_height, void* rgb_out, long out_pitch, int first, int last )
+		int burst_phase, int in_width, int in_height, void* rgb_out, long out_pitch )
 {
 	int chunk_count = (in_width - 2) / (snes_ntsc_in_chunk * 2);
 	for ( ; in_height; --in_height )

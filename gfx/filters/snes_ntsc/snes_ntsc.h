@@ -50,11 +50,11 @@ In_row_width is the number of pixels to get to the next input row. Out_pitch
 is the number of *bytes* to get to the next output row. */
 void snes_ntsc_blit( snes_ntsc_t const* ntsc, SNES_NTSC_IN_T const* input,
 		long in_row_width, int burst_phase, int in_width, int in_height,
-		void* rgb_out, long out_pitch, int first, int last);
+		void* rgb_out, long out_pitch);
 
 void snes_ntsc_blit_hires( snes_ntsc_t const* ntsc, SNES_NTSC_IN_T const* input,
 		long in_row_width, int burst_phase, int in_width, int in_height,
-		void* rgb_out, long out_pitch, int first, int last);
+		void* rgb_out, long out_pitch);
 
 /* Number of output pixels written by low-res blitter for given input width. Width
 might be rounded down slightly; use SNES_NTSC_IN_WIDTH() on result to find rounded

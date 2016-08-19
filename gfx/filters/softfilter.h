@@ -56,9 +56,6 @@ const struct softfilter_implementation *softfilter_get_implementation(softfilter
 #define SOFTFILTER_FMT_RGB565   (1 << 0)
 #define SOFTFILTER_FMT_XRGB8888 (1 << 1)
 
-// Optional color formats
-#define SOFTFILTER_FMT_RGB4444  (1 << 2)
-
 #define SOFTFILTER_BPP_RGB565   2
 #define SOFTFILTER_BPP_XRGB8888 4
 
