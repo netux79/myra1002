@@ -210,8 +210,7 @@ static void SetupFormat(void * data)
    }
 }
  
-static void *twoxbr_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height)
+static void *twoxbr_generic_create(unsigned in_fmt)
 {
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
    if (!filt)

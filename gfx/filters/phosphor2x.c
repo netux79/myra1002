@@ -205,15 +205,10 @@ static unsigned phosphor2x_generic_output_fmts(unsigned input_fmts)
    return input_fmts;
 }
 
-static void *phosphor2x_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height)
+static void *phosphor2x_generic_create(unsigned in_fmt)
 {
    unsigned i;
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
-
-   (void)out_fmt;
-   (void)max_width;
-   (void)max_height;
 
    if (!filt)
       return NULL;

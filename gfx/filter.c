@@ -27,9 +27,7 @@ struct rarch_softfilter
    void *impl_data;
 
    unsigned max_width, max_height;
-   enum retro_pixel_format pix_fmt, out_pix_fmt;
-
-   struct softfilter_work_packet *packets;
+   enum retro_pixel_format out_pix_fmt;
 };
 
 static const struct softfilter_implementation *(*softfilter_drivers[]) (void) =
@@ -100,7 +98,6 @@ rarch_softfilter_t *rarch_softfilter_new(
    RARCH_LOG("Loaded softfilter \"%s\".\n", filt->impl->ident);
 
    // Simple assumptions.
-   filt->pix_fmt = in_pixel_format;
    input_fmts = filt->impl->query_input_formats();
 
    switch (in_pixel_format)
@@ -137,17 +134,10 @@ rarch_softfilter_t *rarch_softfilter_new(
    filt->max_width = max_width;
    filt->max_height = max_height;
 
-   filt->impl_data = filt->impl->create(input_fmt, input_fmt, max_width, max_height);
+   filt->impl_data = filt->impl->create(input_fmt);
    if (!filt->impl_data)
    {
       RARCH_ERR("Failed to create softfilter state.\n");
-      goto error;
-   }
-
-   filt->packets = (struct softfilter_work_packet*)calloc(1, sizeof(*filt->packets));
-   if (!filt->packets)
-   {
-      RARCH_ERR("Failed to allocate softfilter packets.\n");
       goto error;
    }
 
@@ -163,7 +153,6 @@ void rarch_softfilter_free(rarch_softfilter_t *filt)
    if (!filt)
       return;
 
-   free(filt->packets);
    if (filt->impl && filt->impl_data)
       filt->impl->destroy(filt->impl_data);
    free(filt);
@@ -192,11 +181,7 @@ void rarch_softfilter_process(rarch_softfilter_t *filt,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
-   if (filt && filt->impl && filt->impl->get_work_packets)
-   {
-      filt->impl->get_work_packets(filt->impl_data, filt->packets,
-            output, output_stride, input, width, height, input_stride);
-   
-      filt->packets->work(filt->impl_data, filt->packets->thread_data);
-   }
+   if (filt && filt->impl && filt->impl->render_filter)
+      filt->impl->render_filter(filt->impl_data, output, output_stride, 
+         input, width, height, input_stride);
 }

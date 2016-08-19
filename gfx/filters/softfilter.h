@@ -44,18 +44,9 @@ typedef unsigned (*softfilter_query_input_formats_t)(void);
 // Returns a bitmask of supported output formats for a given input format.
 typedef unsigned (*softfilter_query_output_formats_t)(unsigned input_format);
 
-// In softfilter_process_t, the softfilter implementation submits work units to a worker thread pool.
-typedef void (*softfilter_work_t)(void *data, void *thread_data);
-struct softfilter_work_packet
-{
-   softfilter_work_t work;
-   void *thread_data;
-};
-
 // Create a filter with given input and output formats as well as maximum possible input size.
 // Input sizes can very per call to softfilter_process_t, but they will never be larger than the maximum.
-typedef void *(*softfilter_create_t)(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height);
+typedef void *(*softfilter_create_t)(unsigned in_fmt);
 typedef void (*softfilter_destroy_t)(void *data);
 
 // Given an input size, query the output size of the filter.
@@ -64,11 +55,9 @@ typedef void (*softfilter_query_output_size_t)(void *data,
       unsigned *out_width, unsigned *out_height,
       unsigned width, unsigned height);
 
-// First step of processing a frame. The filter submits work by filling in the packets array.
-// The number of elements in the array is as returned by query_num_threads.
-// The processing itself happens in worker threads after this returns.
-typedef void (*softfilter_get_work_packets_t)(void *data,
-      struct softfilter_work_packet *packets,
+// First step of processing a frame. It provides all the information to the filter to
+// rendered to the ouput buffer.
+typedef void (*softfilter_render_filter_t)(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride);
 
@@ -81,7 +70,7 @@ struct softfilter_implementation
    softfilter_destroy_t destroy;
 
    softfilter_query_output_size_t query_output_size;
-   softfilter_get_work_packets_t get_work_packets;
+   softfilter_render_filter_t render_filter;
 
    const char *ident; // Human readable identifier of implementation.
 };

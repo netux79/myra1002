@@ -69,8 +69,7 @@ static void blargg_ntsc_snes_rgb_initialize(void *data)
    filt->burst_toggle = (setup.merge_fields ? 0 : 1);
 }
 
-static void *blargg_ntsc_snes_rgb_generic_create(unsigned in_fmt, unsigned out_fmt,
-      unsigned max_width, unsigned max_height)
+static void *blargg_ntsc_snes_rgb_generic_create(unsigned in_fmt)
 {
    struct filter_data *filt = (struct filter_data*)calloc(1, sizeof(*filt));
    if (!filt)
