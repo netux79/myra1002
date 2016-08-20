@@ -40,25 +40,13 @@
 
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation twoxbr_get_implementation
-#define softfilter_thread_data twoxbr_softfilter_thread_data
 #define filter_data twoxbr_filter_data
 #endif
 
 #define TWOXBR_SCALE 2
 
-struct softfilter_thread_data
-{
-   void *out_data;
-   const void *in_data;
-   size_t out_pitch;
-   size_t in_pitch;
-   unsigned width;
-   unsigned height;
-};
-
 struct filter_data
 {
-   struct softfilter_thread_data *workers;
    unsigned in_fmt;
    uint16_t RGBtoYUV[65536];
    uint16_t tbl_5_to_8[32];
@@ -216,14 +204,7 @@ static void *twoxbr_generic_create(unsigned in_fmt)
    if (!filt)
       return NULL;
 
-   filt->in_fmt  = in_fmt;
-
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
-   if (!filt->workers)
-   {
-      free(filt);
-      return NULL;
-   }
+   filt->in_fmt = in_fmt;
 
    SetupFormat(filt);
 
@@ -240,15 +221,8 @@ static void twoxbr_generic_output(void *data, unsigned *out_width, unsigned *out
 static void twoxbr_generic_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   free(filt->workers);
    free(filt);
 }
- 
- 
-//---------------------------------------------------------------------------------------------------------------------------
- 
- 
-
  
 #define ALPHA_BLEND_128_W(dst, src) dst = ((src & pg_lbmask) >> 1) + ((dst & pg_lbmask) >> 1)
  
@@ -569,8 +543,6 @@ static void twoxbr_generic_xrgb8888(void *data, unsigned width, unsigned height,
    uint32_t pg_alpha_mask    = ALPHA_MASK8888;
    struct filter_data *filt = (struct filter_data*)data;
 
-   (void)filt;
-
    nextline = src_stride;
    
    for (; height; height--)
@@ -610,7 +582,6 @@ static void twoxbr_generic_rgb565(void *data, unsigned width, unsigned height,
    pg_lbmask     = PG_LBMASK565;
    nextline = src_stride;
    
- 
    for (; height; height--)
    {
       uint16_t *in  = (uint16_t*)src;
@@ -635,50 +606,20 @@ static void twoxbr_generic_rgb565(void *data, unsigned width, unsigned height,
    }
 }
  
-static void twoxbr_work_cb_rgb565(void *data, void *thread_data)
-{
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   uint16_t *input = (uint16_t*)thr->in_data;
-   uint16_t *output = (uint16_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
- 
-   twoxbr_generic_rgb565(data, width, height,
-         input, thr->in_pitch / SOFTFILTER_BPP_RGB565, output, thr->out_pitch / SOFTFILTER_BPP_RGB565);
-}
- 
-static void twoxbr_work_cb_xrgb8888(void *data, void *thread_data)
-{
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   uint32_t *input = (uint32_t*)thr->in_data;
-   uint32_t *output = (uint32_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
- 
-   twoxbr_generic_xrgb8888(data, width, height,
-         input, thr->in_pitch / SOFTFILTER_BPP_XRGB8888, output, thr->out_pitch / SOFTFILTER_BPP_XRGB8888);
-}
- 
-static void twoxbr_generic_packets(void *data,
-      struct softfilter_work_packet *packets,
+static void twoxbr_generic_render(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)filt->workers;
-
-   thr->out_data = (uint8_t*)output;
-   thr->in_data = (const uint8_t*)input;
-   thr->out_pitch = output_stride;
-   thr->in_pitch = input_stride;
-   thr->width = width;
-   thr->height = height;
 
    if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      packets->work = twoxbr_work_cb_rgb565;
+      twoxbr_generic_rgb565(data, width, height,
+         (uint16_t *)input, input_stride / SOFTFILTER_BPP_RGB565, 
+         (uint16_t *)output, output_stride / SOFTFILTER_BPP_RGB565);
    else if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
-      packets->work = twoxbr_work_cb_xrgb8888;
-   packets->thread_data = thr;
+      twoxbr_generic_xrgb8888(data, width, height,
+         (uint32_t *)input, input_stride / SOFTFILTER_BPP_XRGB8888, 
+         (uint32_t *)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
  
 static const struct softfilter_implementation twoxbr_generic = {
@@ -689,7 +630,7 @@ static const struct softfilter_implementation twoxbr_generic = {
    twoxbr_generic_destroy,
  
    twoxbr_generic_output,
-   twoxbr_generic_packets,
+   twoxbr_generic_render,
    "2xBR",
 };
  
@@ -700,6 +641,5 @@ const struct softfilter_implementation *softfilter_get_implementation(void)
  
 #ifdef RARCH_INTERNAL
 #undef softfilter_get_implementation
-#undef softfilter_thread_data
 #undef filter_data
 #endif

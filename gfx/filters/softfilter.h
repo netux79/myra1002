@@ -25,7 +25,6 @@ extern "C" {
 
 // Dynamic library entrypoint.
 typedef const struct softfilter_implementation *(*softfilter_get_implementation_t)(void);
-// The same SIMD mask argument is forwarded to create() callback as well to avoid having to keep lots of state around.
 const struct softfilter_implementation *softfilter_get_implementation(void);
 
 // Required base color formats

@@ -21,25 +21,13 @@
 
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation epx_get_implementation
-#define softfilter_thread_data epx_softfilter_thread_data
 #define filter_data epx_filter_data
 #endif
 
 #define EPX_SCALE 2
 
-struct softfilter_thread_data
-{
-   void *out_data;
-   const void *in_data;
-   size_t out_pitch;
-   size_t in_pitch;
-   unsigned width;
-   unsigned height;
-};
-
 struct filter_data
 {
-   struct softfilter_thread_data *workers;
    unsigned in_fmt;
 };
 
@@ -60,13 +48,6 @@ static void *epx_generic_create(unsigned in_fmt)
       return NULL;
 
    filt->in_fmt  = in_fmt;
-
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
-   if (!filt->workers)
-   {
-      free(filt);
-      return NULL;
-   }
    
    return filt;
 }
@@ -81,11 +62,10 @@ static void epx_generic_output(void *data, unsigned *out_width, unsigned *out_he
 static void epx_generic_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   free(filt->workers);
    free(filt);
 }
 
-static void EPX_16 (int width, int height,
+static void epx_generic_rgb565 (int width, int height,
       uint16_t *src, int src_stride, uint16_t *dst, int dst_stride)
 {
 	uint16_t	colorX, colorA, colorB, colorC, colorD;
@@ -337,44 +317,16 @@ static void EPX_16 (int width, int height,
 		*dP1 = *dP2 = (colorX << 16) + colorX;
 }
 
-static void epx_generic_rgb565(unsigned width, unsigned height,
-      uint16_t *src, unsigned src_stride, uint16_t *dst, unsigned dst_stride)
-{
-   EPX_16(width, height, src, src_stride, dst, dst_stride);
-}
-
-static void epx_work_cb_rgb565(void *data, void *thread_data)
-{
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   uint16_t *input = (uint16_t*)thr->in_data;
-   uint16_t *output = (uint16_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
-
-   epx_generic_rgb565(width, height,
-         input, thr->in_pitch / SOFTFILTER_BPP_RGB565, output, thr->out_pitch / SOFTFILTER_BPP_RGB565);
-}
-
-
-static void epx_generic_packets(void *data,
-      struct softfilter_work_packet *packets,
+static void epx_generic_render(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)filt->workers;
-
-   thr->out_data = (uint8_t*)output;
-   thr->in_data = (const uint8_t*)input;
-   thr->out_pitch = output_stride;
-   thr->in_pitch = input_stride;
-   thr->width = width;
-   thr->height = height;
 
    if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      packets->work = epx_work_cb_rgb565;
-
-   packets->thread_data = thr;
+      epx_generic_rgb565(width, height,
+         (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
+         (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }
 
 static const struct softfilter_implementation epx_generic = {
@@ -385,7 +337,7 @@ static const struct softfilter_implementation epx_generic = {
    epx_generic_destroy,
 
    epx_generic_output,
-   epx_generic_packets,
+   epx_generic_render,
    "EPX",
 };
 
@@ -396,6 +348,5 @@ const struct softfilter_implementation *softfilter_get_implementation(void)
 
 #ifdef RARCH_INTERNAL
 #undef softfilter_get_implementation
-#undef softfilter_thread_data
 #undef filter_data
 #endif

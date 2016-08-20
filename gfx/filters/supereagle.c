@@ -21,25 +21,13 @@
 
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation supereagle_get_implementation
-#define softfilter_thread_data supereagle_softfilter_thread_data
 #define filter_data supereagle_filter_data
 #endif
 
 #define SUPEREAGLE_SCALE 2
 
-struct softfilter_thread_data
-{
-   void *out_data;
-   const void *in_data;
-   size_t out_pitch;
-   size_t in_pitch;
-   unsigned width;
-   unsigned height;
-};
-
 struct filter_data
 {
-   struct softfilter_thread_data *workers;
    unsigned in_fmt;
 };
 
@@ -61,13 +49,6 @@ static void *supereagle_generic_create(unsigned in_fmt)
 
    filt->in_fmt  = in_fmt;
 
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
-   if (!filt->workers)
-   {
-      free(filt);
-      return NULL;
-   }
-
    return filt;
 }
 
@@ -81,7 +62,6 @@ static void supereagle_generic_output(void *data, unsigned *out_width, unsigned 
 static void supereagle_generic_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   free(filt->workers);
    free(filt);
 }
 
@@ -242,50 +222,20 @@ static void supereagle_generic_rgb565(unsigned width, unsigned height,
    }
 }
 
-static void supereagle_work_cb_rgb565(void *data, void *thread_data)
-{
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   uint16_t *input = (uint16_t*)thr->in_data;
-   uint16_t *output = (uint16_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
-
-   supereagle_generic_rgb565(width, height,
-         input, thr->in_pitch / SOFTFILTER_BPP_RGB565, output, thr->out_pitch / SOFTFILTER_BPP_RGB565);
-}
-
-static void supereagle_work_cb_xrgb8888(void *data, void *thread_data)
-{
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   uint32_t *input = (uint32_t*)thr->in_data;
-   uint32_t *output = (uint32_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
-
-   supereagle_generic_xrgb8888(width, height,
-         input, thr->in_pitch / SOFTFILTER_BPP_XRGB8888, output, thr->out_pitch / SOFTFILTER_BPP_XRGB8888);
-}
-
-static void supereagle_generic_packets(void *data,
-      struct softfilter_work_packet *packets,
+static void supereagle_generic_render(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)filt->workers;
-
-   thr->out_data = (uint8_t*)output;
-   thr->in_data = (const uint8_t*)input;
-   thr->out_pitch = output_stride;
-   thr->in_pitch = input_stride;
-   thr->width = width;
-   thr->height = height;
 
    if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      packets->work = supereagle_work_cb_rgb565;
+      supereagle_generic_rgb565(width, height,
+         (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
+         (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
    else if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
-      packets->work = supereagle_work_cb_xrgb8888;
-   packets->thread_data = thr;
+      supereagle_generic_xrgb8888(width, height,
+         (uint32_t*)input, input_stride / SOFTFILTER_BPP_XRGB8888, 
+         (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
 
 static const struct softfilter_implementation supereagle_generic = {
@@ -296,7 +246,7 @@ static const struct softfilter_implementation supereagle_generic = {
    supereagle_generic_destroy,
 
    supereagle_generic_output,
-   supereagle_generic_packets,
+   supereagle_generic_render,
    "SuperEagle",
 };
 
@@ -307,6 +257,5 @@ const struct softfilter_implementation *softfilter_get_implementation(void)
 
 #ifdef RARCH_INTERNAL
 #undef softfilter_get_implementation
-#undef softfilter_thread_data
 #undef filter_data
 #endif

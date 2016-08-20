@@ -23,23 +23,11 @@
 
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation darken_get_implementation
-#define softfilter_thread_data darken_softfilter_thread_data
 #define filter_data darken_filter_data
 #endif
 
-struct softfilter_thread_data
-{
-   void *out_data;
-   const void *in_data;
-   size_t out_pitch;
-   size_t in_pitch;
-   unsigned width;
-   unsigned height;
-};
-
 struct filter_data
 {
-   struct softfilter_thread_data *workers;
    unsigned in_fmt;
 };
 
@@ -61,13 +49,6 @@ static void *darken_create(unsigned in_fmt)
 
    filt->in_fmt  = in_fmt;
 
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
-   if (!filt->workers)
-   {
-      free(filt);
-      return NULL;
-   }
-
    return filt;
 }
 
@@ -81,59 +62,39 @@ static void darken_output(void *data, unsigned *out_width, unsigned *out_height,
 static void darken_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   free(filt->workers);
    free(filt);
 }
 
-static void darken_work_cb_xrgb8888(void *data, void *thread_data)
+static void darken_work_xrgb8888(unsigned width, unsigned height, uint32_t *input, int pitch, 
+      uint32_t *output, int outpitch)
 {
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   const uint32_t *input = (const uint32_t*)thr->in_data;
-   uint32_t *output = (uint32_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
-
    unsigned x, y;
-   for (y = 0; y < height; y++, input += thr->in_pitch >> 2, output += thr->out_pitch >> 2)
+   
+   for (y = 0; y < height; y++, input += pitch >> 2, output += outpitch >> 2)
       for (x = 0; x < width; x++)
          output[x] = (input[x] >> 2) & (0x3f * 0x01010101);
 }
 
-static void darken_work_cb_rgb565(void *data, void *thread_data)
+static void darken_work_rgb565(unsigned width, unsigned height, uint16_t *input, int pitch, 
+      uint16_t *output, int outpitch
 {
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   const uint16_t *input = (const uint16_t*)thr->in_data;
-   uint16_t *output = (uint16_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
-
    unsigned x, y;
-   for (y = 0; y < height; y++, input += thr->in_pitch >> 1, output += thr->out_pitch >> 1)
+
+   for (y = 0; y < height; y++, input += pitch >> 1, output += output >> 1)
       for (x = 0; x < width; x++)
          output[x] = (input[x] >> 2) & ((0x7 << 0) | (0xf << 5) | (0x7 << 11));
 }
 
-static void darken_packets(void *data,
-      struct softfilter_work_packet *packets,
+static void darken_render(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)filt->workers;
-
-   thr->out_data = (uint8_t*)output;
-   thr->in_data = (const uint8_t*)input;
-   thr->out_pitch = output_stride;
-   thr->in_pitch = input_stride;
-   thr->width = width;
-   thr->height = height;
 
    if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
-      packets->work = darken_work_cb_xrgb8888;
+      darken_work_xrgb8888(width, height, (uint32_t *)input, input_stride, (uint32_t *)output, output_stride);
    else if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      packets->work = darken_work_cb_rgb565;
-
-   packets->thread_data = thr;
+      darken_work_rgb565(width, height, (uint16_t *)input, input_stride, (uint16_t *)output, output_stride);
 }
 
 static const struct softfilter_implementation darken = {
@@ -144,7 +105,7 @@ static const struct softfilter_implementation darken = {
    darken_destroy,
 
    darken_output,
-   darken_packets,
+   darken_render,
    "Darken",
 };
 
@@ -155,6 +116,5 @@ const struct softfilter_implementation *softfilter_get_implementation(void)
 
 #ifdef RARCH_INTERNAL
 #undef softfilter_get_implementation
-#undef softfilter_thread_data
 #undef filter_data
 #endif

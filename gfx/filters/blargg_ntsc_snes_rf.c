@@ -20,25 +20,13 @@
 
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation blargg_ntsc_snes_rf_get_implementation
-#define softfilter_thread_data blargg_ntsc_snes_rf_softfilter_thread_data
 #define filter_data blargg_ntsc_snes_rf_filter_data
 #else
 #include "snes_ntsc/snes_ntsc.c"
 #endif
 
-struct softfilter_thread_data
-{
-   void *out_data;
-   const void *in_data;
-   size_t out_pitch;
-   size_t in_pitch;
-   unsigned width;
-   unsigned height;
-};
-
 struct filter_data
 {
-   struct softfilter_thread_data *workers;
    unsigned in_fmt;
    struct snes_ntsc_t *ntsc;
    int burst;
@@ -77,13 +65,6 @@ static void *blargg_ntsc_snes_rf_generic_create(unsigned in_fmt)
 
    filt->in_fmt  = in_fmt;
 
-   filt->workers = (struct softfilter_thread_data*)calloc(1, sizeof(struct softfilter_thread_data));
-   if (!filt->workers)
-   {
-      free(filt);
-      return NULL;
-   }
-
    blargg_ntsc_snes_rf_initialize(filt);
 
    return filt;
@@ -103,7 +84,6 @@ static void blargg_ntsc_snes_rf_generic_destroy(void *data)
    if(filt->ntsc)
       free(filt->ntsc);
 
-   free(filt->workers);
    free(filt);
 }
 
@@ -119,44 +99,16 @@ static void blargg_ntsc_snes_rf_render_rgb565(void *data, int width, int height,
    filt->burst ^= filt->burst_toggle;
 }
 
-static void blargg_ntsc_snes_rf_rgb565(void *data, unsigned width, unsigned height,
-      uint16_t *src, unsigned src_stride, uint16_t *dst, unsigned dst_stride)
-{
-   blargg_ntsc_snes_rf_render_rgb565(data, width, height,
-         src, src_stride,
-         dst, dst_stride);
-}
-
-static void blargg_ntsc_snes_rf_work_cb_rgb565(void *data, void *thread_data)
-{
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)thread_data;
-   uint16_t *input = (uint16_t*)thr->in_data;
-   uint16_t *output = (uint16_t*)thr->out_data;
-   unsigned width = thr->width;
-   unsigned height = thr->height;
-
-   blargg_ntsc_snes_rf_rgb565(data, width, height,
-         input, thr->in_pitch / SOFTFILTER_BPP_RGB565, output, thr->out_pitch / SOFTFILTER_BPP_RGB565);
-}
-
-static void blargg_ntsc_snes_rf_generic_packets(void *data,
-      struct softfilter_work_packet *packets,
+static void blargg_ntsc_snes_rf_generic_render(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   struct softfilter_thread_data *thr = (struct softfilter_thread_data*)filt->workers;
-
-   thr->out_data = (uint8_t*)output;
-   thr->in_data = (const uint8_t*)input;
-   thr->out_pitch = output_stride;
-   thr->in_pitch = input_stride;
-   thr->width = width;
-   thr->height = height;
 
    if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      packets->work = blargg_ntsc_snes_rf_work_cb_rgb565;
-   packets->thread_data = thr;
+      blargg_ntsc_snes_rf_render_rgb565(data, width, height,
+         (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
+         (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }
 
 static const struct softfilter_implementation blargg_ntsc_snes_rf_generic = {
@@ -167,7 +119,7 @@ static const struct softfilter_implementation blargg_ntsc_snes_rf_generic = {
    blargg_ntsc_snes_rf_generic_destroy,
 
    blargg_ntsc_snes_rf_generic_output,
-   blargg_ntsc_snes_rf_generic_packets,
+   blargg_ntsc_snes_rf_generic_render,
    "Blargg NTSC RF",
 };
 
@@ -178,6 +130,5 @@ const struct softfilter_implementation *softfilter_get_implementation(void)
 
 #ifdef RARCH_INTERNAL
 #undef softfilter_get_implementation
-#undef softfilter_thread_data
 #undef filter_data
 #endif

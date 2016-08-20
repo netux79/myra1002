@@ -62,7 +62,6 @@ static void twoxsai_generic_output(void *data, unsigned *out_width, unsigned *ou
 static void twoxsai_generic_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
-   free(filt->workers);
    free(filt);
 }
 
@@ -249,12 +248,12 @@ static void twoxsai_generic_render(void *data,
 
    if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
       twoxsai_generic_rgb565(width, height, 
-            (uint16_t*)input, thr->in_pitch / SOFTFILTER_BPP_RGB565, 
-            (uint16_t*)output, thr->out_pitch / SOFTFILTER_BPP_RGB565);
+            (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
+            (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
    else if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
       twoxsai_generic_xrgb8888(width, height,
-            (uint32_t*)input, thr->in_pitch / SOFTFILTER_BPP_XRGB8888, 
-            (uint32_t*)output, thr->out_pitch / SOFTFILTER_BPP_XRGB8888);
+            (uint32_t*)input, input_stride / SOFTFILTER_BPP_XRGB8888, 
+            (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
 
 static const struct softfilter_implementation twoxsai_generic = {
