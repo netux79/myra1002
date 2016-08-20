@@ -707,6 +707,7 @@ extern const struct softfilter_implementation *twoxsai_get_implementation(void);
 extern const struct softfilter_implementation *supereagle_get_implementation(void);
 extern const struct softfilter_implementation *twoxbr_get_implementation(void);
 extern const struct softfilter_implementation *supertwoxsai_get_implementation(void);
+extern const struct softfilter_implementation *hq2x_get_implementation(void);
 #endif
 
 #include "driver_funcs.h"

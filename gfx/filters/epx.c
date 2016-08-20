@@ -65,6 +65,12 @@ static void epx_generic_destroy(void *data)
    free(filt);
 }
 
+#if 0
+#define A1565(el0, el1) (((el0) & (el1)) + ((((el0) ^ (el1)) & 0xF7DE) >> 1))
+#else
+#define A1565(el0, el1) el0
+#endif
+
 static void epx_generic_rgb565 (int width, int height,
       uint16_t *src, int src_stride, uint16_t *dst, int dst_stride)
 {
@@ -91,11 +97,11 @@ static void epx_generic_rgb565 (int width, int height,
       if ((colorX != colorC) && (colorB != colorD))
       {
          #ifdef MSB_FIRST
-         *dP1 = (colorX << 16) + ((colorC == colorD) ? colorC : colorX);
-         *dP2 = (colorX << 16) + ((colorB == colorC) ? colorB : colorX);
+         *dP1 = (colorX << 16) + ((colorC == colorD) ? A1565(colorC, colorX) : colorX);
+         *dP2 = (colorX << 16) + ((colorB == colorC) ? A1565(colorB, colorX) : colorX);
          #else
-         *dP1 = colorX + (((colorC == colorD) ? colorC : colorX) << 16);
-         *dP2 = colorX + (((colorB == colorC) ? colorB : colorX) << 16);
+         *dP1 = colorX + (((colorC == colorD) ? A1565(colorC, colorX) : colorX) << 16);
+         *dP2 = colorX + (((colorB == colorC) ? A1565(colorB, colorX) : colorX) << 16);
          #endif
       }
       else
@@ -117,11 +123,11 @@ static void epx_generic_rgb565 (int width, int height,
          if ((colorA != colorC) && (colorB != colorD))
          {
 #ifdef MSB_FIRST
-           *dP1 = (((colorD == colorA) ? colorD : colorX) << 16) + ((colorC == colorD) ? colorC : colorX);
-           *dP2 = (((colorA == colorB) ? colorA : colorX) << 16) + ((colorB == colorC) ? colorB : colorX);
+           *dP1 = (((colorD == colorA) ? A1565(colorD, colorX) : colorX) << 16) + ((colorC == colorD) ? A1565(colorC, colorX) : colorX);
+           *dP2 = (((colorA == colorB) ? A1565(colorA, colorX) : colorX) << 16) + ((colorB == colorC) ? A1565(colorB, colorX) : colorX);
 #else
-           *dP1 = ((colorD == colorA) ? colorD : colorX) + (((colorC == colorD) ? colorC : colorX) << 16);
-           *dP2 = ((colorA == colorB) ? colorA : colorX) + (((colorB == colorC) ? colorB : colorX) << 16);
+           *dP1 = ((colorD == colorA) ? A1565(colorD, colorX) : colorX) + (((colorC == colorD) ? A1565(colorC, colorX) : colorX) << 16);
+           *dP2 = ((colorA == colorB) ? A1565(colorA, colorX) : colorX) + (((colorB == colorC) ? A1565(colorB, colorX) : colorX) << 16);
 #endif
          }
          else
@@ -141,11 +147,11 @@ static void epx_generic_rgb565 (int width, int height,
       if ((colorA != colorX) && (colorB != colorD))
       {
 #ifdef MSB_FIRST
-         *dP1 = (((colorD == colorA) ? colorD : colorX) << 16) + colorX;
-         *dP2 = (((colorA == colorB) ? colorA : colorX) << 16) + colorX;
+         *dP1 = (((colorD == colorA) ? A1565(colorD, colorX) : colorX) << 16) + colorX;
+         *dP2 = (((colorA == colorB) ? A1565(colorA, colorX) : colorX) << 16) + colorX;
 #else
-         *dP1 = ((colorD == colorA) ? colorD : colorX) + (colorX << 16);
-         *dP2 = ((colorA == colorB) ? colorA : colorX) + (colorX << 16);
+         *dP1 = ((colorD == colorA) ? A1565(colorD, colorX) : colorX) + (colorX << 16);
+         *dP2 = ((colorA == colorB) ? A1565(colorA, colorX) : colorX) + (colorX << 16);
 #endif
       }
       else

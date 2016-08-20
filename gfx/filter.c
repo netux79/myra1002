@@ -43,6 +43,7 @@ static const struct softfilter_implementation *(*softfilter_drivers[]) (void) =
    &scale2x_get_implementation,
    &twoxbr_get_implementation,
    &supertwoxsai_get_implementation,
+   &hq2x_get_implementation,
 };
 
 unsigned softfilter_get_last_idx(void)

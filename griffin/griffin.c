@@ -482,6 +482,7 @@ FILTERS
 #include "../gfx/filters/2xsai.c"
 #include "../gfx/filters/2xbr.c"
 #include "../gfx/filters/super2xsai.c"
+#include "../gfx/filters/hq2x.c"
 #include "../gfx/filter.c"
 #endif
 
