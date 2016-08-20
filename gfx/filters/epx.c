@@ -71,9 +71,7 @@ static void epx_generic_rgb565 (int width, int height,
 	uint16_t	colorX, colorA, colorB, colorC, colorD;
 	uint16_t	*sP, *uP, *lP;
 	uint32_t	*dP1, *dP2;
-	int		w, prevline;
-
-   prevline = src_stride;
+	int		w;
 
 	height -= 2;
 
@@ -83,7 +81,7 @@ static void epx_generic_rgb565 (int width, int height,
 
 	// top edge
 
-	sP  = (uint16_t *)(src - prevline);
+	sP  = (uint16_t *) src;
 	lP  = (uint16_t *) (src + src_stride);
 	dP1 = (uint32_t *) dst;
 	dP2 = (uint32_t *) (dst + dst_stride);
