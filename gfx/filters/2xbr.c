@@ -546,14 +546,14 @@ int eq8(uint32_t A, uint32_t B, uint32_t pg_red_mask, uint32_t pg_green_mask, ui
 static void twoxbr_generic_xrgb8888(void *data, unsigned width, unsigned height,
       uint32_t *src, unsigned src_stride, uint32_t *dst, unsigned dst_stride)
 {
+   uint32_t pg_red_mask, pg_green_mask, pg_blue_mask, pg_lbmask, pg_alpha_mask;
    unsigned nextline, finish;
-   uint32_t pg_red_mask      = RED_MASK8888;
-   uint32_t pg_green_mask    = GREEN_MASK8888;
-   uint32_t pg_blue_mask     = BLUE_MASK8888;
-   uint32_t pg_lbmask        = PG_LBMASK8888;
-   uint32_t pg_alpha_mask    = ALPHA_MASK8888;
-   struct filter_data *filt = (struct filter_data*)data;
 
+   pg_red_mask      = RED_MASK8888;
+   pg_green_mask    = GREEN_MASK8888;
+   pg_blue_mask     = BLUE_MASK8888;
+   pg_lbmask        = PG_LBMASK8888;
+   pg_alpha_mask    = ALPHA_MASK8888;
    nextline = src_stride;
    
    for (; height; height--)
@@ -572,7 +572,7 @@ static void twoxbr_generic_xrgb8888(void *data, unsigned width, unsigned height,
          //                          G0 PG PH PI I4
          //                             G5 H5 I5
  
-         twoxbr_function(FILTRO_RGB8888, filt);
+         twoxbr_function(FILTRO_RGB8888, NULL);
       }
  
       src += src_stride;
