@@ -471,18 +471,20 @@ SCALERS
 FILTERS
 ============================================================ */
 #ifdef HAVE_FILTERS_BUILTIN
-#include "../gfx/filters/epx.c"
-#include "../gfx/filters/scale2x.c"
 #include "../gfx/filters/snes_ntsc/snes_ntsc.c"
 #include "../gfx/filters/blargg_ntsc.c"
-#include "../gfx/filters/phosphor2x.c"
-#include "../gfx/filters/supereagle.c"
-#include "../gfx/filters/lq2x.c"
+#include "../gfx/filters/epx.c"
 #include "../gfx/filters/2xsai.c"
-#include "../gfx/filters/2xbr.c"
+#include "../gfx/filters/supereagle.c"
 #include "../gfx/filters/super2xsai.c"
 #include "../gfx/filters/hq2x.c"
+#ifndef GEKKO
+#include "../gfx/filters/scale2x.c"
+#include "../gfx/filters/lq2x.c"
+#include "../gfx/filters/phosphor2x.c"
+#include "../gfx/filters/2xbr.c"
 #include "../gfx/filters/darken.c"
+#endif
 #include "../gfx/filter.c"
 #endif
 

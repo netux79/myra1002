@@ -35,20 +35,24 @@ static const softfilter_implementation_t *softfilter_drivers[] =
    NULL,
    &blargg_ntsc_rf_implementation,
    &blargg_ntsc_composite_implementation,
+#ifndef GEKKO
    &blargg_ntsc_rgb_implementation,
    &blargg_ntsc_svideo_implementation,
    &blargg_ntsc_monochrome_implementation,
+#endif
    &twoxsai_implementation,
    &supereagle_implementation,
    &supertwoxsai_implementation,
    &epx_implementation,
    &epxsmooth_implementation,
-   &lq2x_implementation,
    &hq2x_implementation,
+#ifndef GEKKO
+   &lq2x_implementation,
    &scale2x_implementation,
    &twoxbr_implementation,
    &phosphor2x_implementation,
    &darken_implementation,
+#endif
 };
 
 unsigned softfilter_get_last_idx(void)
