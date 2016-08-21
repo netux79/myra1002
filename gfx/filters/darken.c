@@ -22,7 +22,6 @@
 #include <stdlib.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation darken_get_implementation
 #define filter_data darken_filter_data
 #endif
 
@@ -76,11 +75,11 @@ static void darken_work_xrgb8888(unsigned width, unsigned height, uint32_t *inpu
 }
 
 static void darken_work_rgb565(unsigned width, unsigned height, uint16_t *input, int pitch, 
-      uint16_t *output, int outpitch
+      uint16_t *output, int outpitch)
 {
    unsigned x, y;
 
-   for (y = 0; y < height; y++, input += pitch >> 1, output += output >> 1)
+   for (y = 0; y < height; y++, input += pitch >> 1, output += outpitch >> 1)
       for (x = 0; x < width; x++)
          output[x] = (input[x] >> 2) & ((0x7 << 0) | (0xf << 5) | (0x7 << 11));
 }
@@ -97,7 +96,7 @@ static void darken_render(void *data,
       darken_work_rgb565(width, height, (uint16_t *)input, input_stride, (uint16_t *)output, output_stride);
 }
 
-static const struct softfilter_implementation darken = {
+const softfilter_implementation_t darken_implementation = {
    darken_input_fmts,
    darken_output_fmts,
 
@@ -109,12 +108,6 @@ static const struct softfilter_implementation darken = {
    "Darken",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &darken;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

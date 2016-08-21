@@ -23,10 +23,6 @@
 extern "C" {
 #endif
 
-// Dynamic library entrypoint.
-typedef const struct softfilter_implementation *(*softfilter_get_implementation_t)(void);
-const struct softfilter_implementation *softfilter_get_implementation(void);
-
 // Required base color formats
 
 #define SOFTFILTER_FMT_NONE     0
@@ -60,7 +56,7 @@ typedef void (*softfilter_render_filter_t)(void *data,
       void *output, size_t output_stride,
       const void *input, unsigned width, unsigned height, size_t input_stride);
 
-struct softfilter_implementation
+typedef struct softfilter_implementation
 {
    softfilter_query_input_formats_t query_input_formats;
    softfilter_query_output_formats_t query_output_formats;
@@ -72,7 +68,7 @@ struct softfilter_implementation
    softfilter_render_filter_t render_filter;
 
    const char *ident; // Human readable identifier of implementation.
-};
+} softfilter_implementation_t;
 
 #ifdef __cplusplus
 }

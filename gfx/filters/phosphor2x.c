@@ -22,7 +22,6 @@
 #include <math.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation phosphor2x_get_implementation
 #define filter_data phosphor2x_filter_data
 #endif
 
@@ -315,13 +314,13 @@ static void phosphor2x_generic_render(void *data,
       phosphor2x_generic_rgb565(data, width, height,
          (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
-   if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
+   else if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
       phosphor2x_generic_xrgb8888(data, width, height,
          (uint32_t*)input, input_stride / SOFTFILTER_BPP_XRGB8888, 
          (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
 
-static const struct softfilter_implementation phosphor2x_generic = {
+const softfilter_implementation_t phosphor2x_implementation = {
    phosphor2x_generic_input_fmts,
    phosphor2x_generic_output_fmts,
 
@@ -333,12 +332,6 @@ static const struct softfilter_implementation phosphor2x_generic = {
    "Phosphor2x",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &phosphor2x_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

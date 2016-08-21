@@ -19,7 +19,6 @@
 #include "snes_ntsc/snes_ntsc.h"
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation blargg_ntsc_snes_rgb_get_implementation
 #define filter_data blargg_ntsc_snes_rgb_filter_data
 #else
 #include "snes_ntsc/snes_ntsc.c"
@@ -112,7 +111,7 @@ static void blargg_ntsc_snes_rgb_generic_render(void *data,
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }
 
-static const struct softfilter_implementation blargg_ntsc_snes_rgb_generic = {
+const softfilter_implementation_t blargg_ntsc_snes_rgb_implementation = {
    blargg_ntsc_snes_rgb_generic_input_fmts,
    blargg_ntsc_snes_rgb_generic_output_fmts,
 
@@ -124,12 +123,6 @@ static const struct softfilter_implementation blargg_ntsc_snes_rgb_generic = {
    "Blargg NTSC RGB",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &blargg_ntsc_snes_rgb_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

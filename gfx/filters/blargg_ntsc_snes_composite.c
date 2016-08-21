@@ -19,8 +19,6 @@
 #include "snes_ntsc/snes_ntsc.h"
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation blargg_ntsc_snes_composite_get_implementation
-#define softfilter_thread_data blargg_ntsc_snes_composite_softfilter_thread_data
 #define filter_data blargg_ntsc_snes_composite_filter_data
 #else
 #include "snes_ntsc/snes_ntsc.c"
@@ -94,6 +92,7 @@ static void blargg_ntsc_snes_composite_render_rgb565(void *data, int width, int 
       uint16_t *input, int pitch, uint16_t *output, int outpitch)
 {
    struct filter_data *filt = (struct filter_data*)data;
+
    if(width > 256)
       snes_ntsc_blit_hires(filt->ntsc, input, pitch, filt->burst, width, height, output, outpitch * 2);
    else
@@ -114,7 +113,7 @@ static void blargg_ntsc_snes_composite_generic_render(void *data,
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }
 
-static const struct softfilter_implementation blargg_ntsc_snes_composite_generic = {
+const softfilter_implementation_t blargg_ntsc_snes_composite_implementation = {
    blargg_ntsc_snes_composite_generic_input_fmts,
    blargg_ntsc_snes_composite_generic_output_fmts,
 
@@ -126,12 +125,6 @@ static const struct softfilter_implementation blargg_ntsc_snes_composite_generic
    "Blargg NTSC Composite",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &blargg_ntsc_snes_composite_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

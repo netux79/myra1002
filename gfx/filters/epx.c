@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation epx_get_implementation
 #define filter_data epx_filter_data
 #endif
 
@@ -273,7 +272,7 @@ static void epxsmooth_generic_render(void *data,
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }
 
-static const struct softfilter_implementation epx_generic = {
+const softfilter_implementation_t epx_implementation = {
    epx_generic_input_fmts,
    epx_generic_output_fmts,
 
@@ -285,7 +284,7 @@ static const struct softfilter_implementation epx_generic = {
    "EPX",
 };
 
-static const struct softfilter_implementation epxsmooth_generic = {
+const softfilter_implementation_t epxsmooth_implementation = {
    epx_generic_input_fmts,
    epx_generic_output_fmts,
 
@@ -297,17 +296,6 @@ static const struct softfilter_implementation epxsmooth_generic = {
    "EPX Smooth",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &epx_generic;
-}
-
-const struct softfilter_implementation *epxsmooth_get_implementation(void)
-{
-   return &epxsmooth_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

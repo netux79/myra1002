@@ -40,7 +40,6 @@
 #include <math.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation twoxbr_get_implementation
 #define filter_data twoxbr_filter_data
 #endif
 
@@ -634,7 +633,7 @@ static void twoxbr_generic_render(void *data,
          (uint32_t *)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
  
-static const struct softfilter_implementation twoxbr_generic = {
+const softfilter_implementation_t twoxbr_implementation = {
    twoxbr_generic_input_fmts,
    twoxbr_generic_output_fmts,
  
@@ -645,13 +644,7 @@ static const struct softfilter_implementation twoxbr_generic = {
    twoxbr_generic_render,
    "2xBR",
 };
- 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &twoxbr_generic;
-}
- 
+
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

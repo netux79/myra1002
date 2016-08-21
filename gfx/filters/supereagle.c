@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation supereagle_get_implementation
 #define filter_data supereagle_filter_data
 #endif
 
@@ -238,7 +237,7 @@ static void supereagle_generic_render(void *data,
          (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
 
-static const struct softfilter_implementation supereagle_generic = {
+const softfilter_implementation_t supereagle_implementation = {
    supereagle_generic_input_fmts,
    supereagle_generic_output_fmts,
 
@@ -250,12 +249,6 @@ static const struct softfilter_implementation supereagle_generic = {
    "SuperEagle",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &supereagle_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

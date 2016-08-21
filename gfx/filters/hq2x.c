@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation hq2x_get_implementation
 #define filter_data hq2x_filter_data
 #endif
 
@@ -3133,7 +3132,7 @@ static void hq2x_generic_render(void *data,
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }
 
-static const struct softfilter_implementation hq2x_generic = {
+const softfilter_implementation_t hq2x_implementation = {
    hq2x_generic_input_fmts,
    hq2x_generic_output_fmts,
 
@@ -3145,12 +3144,6 @@ static const struct softfilter_implementation hq2x_generic = {
    "HQ2x",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &hq2x_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

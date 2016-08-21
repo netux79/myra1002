@@ -697,18 +697,22 @@ extern const location_driver_t location_android;
 extern const input_osk_driver_t input_ps3_osk;
 
 #ifdef HAVE_FILTERS_BUILTIN
-extern const struct softfilter_implementation *blargg_ntsc_snes_rf_get_implementation(void);
-extern const struct softfilter_implementation *blargg_ntsc_snes_composite_get_implementation(void);
-extern const struct softfilter_implementation *phosphor2x_get_implementation(void);
-extern const struct softfilter_implementation *epx_get_implementation(void);
-extern const struct softfilter_implementation *scale2x_get_implementation(void);
-extern const struct softfilter_implementation *lq2x_get_implementation(void);
-extern const struct softfilter_implementation *twoxsai_get_implementation(void);
-extern const struct softfilter_implementation *supereagle_get_implementation(void);
-extern const struct softfilter_implementation *twoxbr_get_implementation(void);
-extern const struct softfilter_implementation *supertwoxsai_get_implementation(void);
-extern const struct softfilter_implementation *hq2x_get_implementation(void);
-extern const struct softfilter_implementation *epxsmooth_get_implementation(void);
+extern const softfilter_implementation_t blargg_ntsc_rf_implementation;
+extern const softfilter_implementation_t blargg_ntsc_composite_implementation;
+extern const softfilter_implementation_t blargg_ntsc_rgb_implementation;
+extern const softfilter_implementation_t blargg_ntsc_svideo_implementation;
+extern const softfilter_implementation_t blargg_ntsc_monochrome_implementation;
+extern const softfilter_implementation_t phosphor2x_implementation;
+extern const softfilter_implementation_t epx_implementation;
+extern const softfilter_implementation_t scale2x_implementation;
+extern const softfilter_implementation_t lq2x_implementation;
+extern const softfilter_implementation_t twoxsai_implementation;
+extern const softfilter_implementation_t supereagle_implementation;
+extern const softfilter_implementation_t twoxbr_implementation;
+extern const softfilter_implementation_t supertwoxsai_implementation;
+extern const softfilter_implementation_t hq2x_implementation;
+extern const softfilter_implementation_t epxsmooth_implementation;
+extern const softfilter_implementation_t darken_implementation;
 #endif
 
 #include "driver_funcs.h"

@@ -20,7 +20,6 @@
 #include <stdlib.h>
 
 #ifdef RARCH_INTERNAL
-#define softfilter_get_implementation twoxsai_get_implementation
 #define filter_data twoxsai_filter_data
 #endif
 
@@ -253,7 +252,7 @@ static void twoxsai_generic_render(void *data,
             (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
 
-static const struct softfilter_implementation twoxsai_generic = {
+const softfilter_implementation_t twoxsai_implementation = {
    twoxsai_generic_input_fmts,
    twoxsai_generic_output_fmts,
 
@@ -265,12 +264,6 @@ static const struct softfilter_implementation twoxsai_generic = {
    "2xSaI",
 };
 
-const struct softfilter_implementation *softfilter_get_implementation(void)
-{
-   return &twoxsai_generic;
-}
-
 #ifdef RARCH_INTERNAL
-#undef softfilter_get_implementation
 #undef filter_data
 #endif

@@ -23,28 +23,32 @@
 
 struct rarch_softfilter
 {
-   const struct softfilter_implementation *impl;
+   const softfilter_implementation_t *impl;
    void *impl_data;
 
    unsigned max_width, max_height;
    enum retro_pixel_format out_pix_fmt;
 };
 
-static const struct softfilter_implementation *(*softfilter_drivers[]) (void) =
+static const softfilter_implementation_t *softfilter_drivers[] =
 {
    NULL,
-   &blargg_ntsc_snes_rf_get_implementation,
-   &blargg_ntsc_snes_composite_get_implementation,
-   &lq2x_get_implementation,
-   &phosphor2x_get_implementation,
-   &twoxsai_get_implementation,
-   &supereagle_get_implementation,
-   &epx_get_implementation,
-   &epxsmooth_get_implementation,
-   &scale2x_get_implementation,
-   &twoxbr_get_implementation,
-   &supertwoxsai_get_implementation,
-   &hq2x_get_implementation,
+   &blargg_ntsc_rf_implementation,
+   &blargg_ntsc_composite_implementation,
+   &blargg_ntsc_rgb_implementation,
+   &blargg_ntsc_svideo_implementation,
+   &blargg_ntsc_monochrome_implementation,
+   &twoxsai_implementation,
+   &supereagle_implementation,
+   &supertwoxsai_implementation,
+   &epx_implementation,
+   &epxsmooth_implementation,
+   &lq2x_implementation,
+   &hq2x_implementation,
+   &scale2x_implementation,
+   &twoxbr_implementation,
+   &phosphor2x_implementation,
+   &darken_implementation,
 };
 
 unsigned softfilter_get_last_idx(void)
@@ -52,24 +56,19 @@ unsigned softfilter_get_last_idx(void)
    return sizeof(softfilter_drivers) / sizeof(softfilter_drivers[0]);
 }
 
-static softfilter_get_implementation_t softfilter_get_implementation_from_idx(unsigned i)
+const softfilter_implementation_t *softfilter_get_implementation_from_idx(unsigned i)
 {
    if (i < softfilter_get_last_idx())
       return softfilter_drivers[i];
    return NULL;
 }
 
-const char *rarch_softfilter_get_name(void *data)
+const char *rarch_softfilter_get_name(unsigned index)
 {
-   (void)data;
-   const struct softfilter_implementation *impl;
-   softfilter_get_implementation_t cb = (softfilter_get_implementation_t)softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
-   if (cb)
-   {
-      impl = (const struct softfilter_implementation *)cb();
-      if (impl)
-         return impl->ident;
-   }
+   const softfilter_implementation_t *impl;
+   impl = softfilter_get_implementation_from_idx(index);
+   if (impl)
+      return impl->ident;
 
    return NULL;
 }
@@ -79,25 +78,16 @@ rarch_softfilter_t *rarch_softfilter_new(
       unsigned max_width, unsigned max_height)
 {
    unsigned output_fmts, input_fmts, input_fmt;
-   softfilter_get_implementation_t cb;
     
    rarch_softfilter_t *filt = (rarch_softfilter_t*)calloc(1, sizeof(*filt));
    if (!filt)
       return NULL;
 
-   cb = NULL;
-   cb = (softfilter_get_implementation_t)softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
-   if (!cb)
-   {
-      RARCH_ERR("Couldn't find softfilter symbol.\n");
-      goto error;
-   }
-
-   filt->impl = cb();
+   filt->impl = softfilter_get_implementation_from_idx(g_settings.video.filter_idx);
    if (!filt->impl)
       goto error;
 
-   RARCH_LOG("Loaded softfilter \"%s\".\n", filt->impl->ident);
+   RARCH_LOG("Selected softfilter \"%s\".\n", filt->impl->ident);
 
    // Simple assumptions.
    input_fmts = filt->impl->query_input_formats();

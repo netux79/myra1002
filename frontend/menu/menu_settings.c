@@ -2172,7 +2172,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
 #ifdef HAVE_FILTERS_BUILTIN
       case RGUI_SETTINGS_VIDEO_SOFTFILTER:
          {
-            const char *filter_name = rarch_softfilter_get_name(g_extern.filter.filter);
+            const char *filter_name = rarch_softfilter_get_name(g_settings.video.filter_idx);
             strlcpy(type_str, filter_name ? filter_name : "OFF", type_str_size);
          }
          break;
