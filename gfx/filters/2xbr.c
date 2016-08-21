@@ -37,6 +37,7 @@
  
 #include "softfilter.h"
 #include <stdlib.h>
+#include <math.h>
 
 #ifdef RARCH_INTERNAL
 #define softfilter_get_implementation twoxbr_get_implementation
@@ -48,7 +49,7 @@
 struct filter_data
 {
    unsigned in_fmt;
-   uint16_t RGBtoYUV[65536];
+   uint16_t *RGBtoYUV;
    uint16_t tbl_5_to_8[32];
    uint16_t tbl_6_to_8[64];
 };
@@ -205,6 +206,13 @@ static void *twoxbr_generic_create(unsigned in_fmt)
       return NULL;
 
    filt->in_fmt = in_fmt;
+   
+   filt->RGBtoYUV = (uint16_t *)calloc(1 << 16, sizeof(filt->RGBtoYUV));
+   if (!filt->RGBtoYUV)
+   {
+      free(filt);
+      return NULL;
+   }
 
    SetupFormat(filt);
 
@@ -221,6 +229,10 @@ static void twoxbr_generic_output(void *data, unsigned *out_width, unsigned *out
 static void twoxbr_generic_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
+   
+   if(filt->RGBtoYUV) 
+      free(filt->RGBtoYUV);
+   
    free(filt);
 }
  
@@ -390,9 +402,9 @@ float df8(uint32_t A, uint32_t B, uint32_t pg_red_mask, uint32_t pg_green_mask, 
    r = abs((int)(((A & pg_red_mask        ) -  (B & pg_red_mask         ))));
 #endif
 
-   y = abs(0.299*r + 0.587*g + 0.114*b);
-   u = abs(-0.169*r - 0.331*g + 0.500*b);
-   v = abs(0.500*r - 0.419*g - 0.081*b);
+   y = fabs(0.299*r + 0.587*g + 0.114*b);
+   u = fabs(-0.169*r - 0.331*g + 0.500*b);
+   v = fabs(0.500*r - 0.419*g - 0.081*b);
 
    return 48*y + 7*u + 6*v;
 }
@@ -412,9 +424,9 @@ int eq8(uint32_t A, uint32_t B, uint32_t pg_red_mask, uint32_t pg_green_mask, ui
    r = abs((int)(((A & pg_red_mask        ) -  (B & pg_red_mask         ))));
 #endif
    
-    y = abs(0.299*r + 0.587*g + 0.114*b);
-    u = abs(-0.169*r - 0.331*g + 0.500*b);
-    v = abs(0.500*r - 0.419*g - 0.081*b);
+    y = fabs(0.299*r + 0.587*g + 0.114*b);
+    u = fabs(-0.169*r - 0.331*g + 0.500*b);
+    v = fabs(0.500*r - 0.419*g - 0.081*b);
 
     return ((48 >= y) && (7 >= u) && (6 >= v)) ? 1 : 0;
 }

@@ -24,6 +24,12 @@
 #define filter_data hq2x_filter_data
 #endif
 
+struct filter_data
+{
+   unsigned in_fmt;
+   uint16_t *RGBtoYUV;
+};
+
 #define HQ2X_SCALE 2
 
 #define MASK16_2 0x07E0
@@ -298,16 +304,6 @@
 #define X4PIXEL33_81   *(dp + dst1line + dst1line + dst1line + 3) = Interp08(w5, w6);
 #define X4PIXEL33_82   *(dp + dst1line + dst1line + dst1line + 3) = Interp08(w5, w8);
 
-#define Absolute(c) \
-(!(c & (1 << 31)) ? c : (~c + 1))
-
-struct filter_data
-{
-   unsigned in_fmt;
-};
-
-static uint16_t *RGBtoYUV = NULL;
-
 #define Interp01(c1, c2) \
 (c1 == c2) ? c1 : \
 (((((c1 & MASK16_2) *  3 + (c2 & MASK16_2)    ) >> 2) & MASK16_2) + \
@@ -354,10 +350,11 @@ static uint16_t *RGBtoYUV = NULL;
 
 #define DECOMPOSE_PIXEL(PIX, R, G, B)   { (R) = (PIX) >> 11; (G) = ((PIX) >> 6) & 0x1f; (B) = (PIX) & 0x1f; }
 
-static void InitLUTs (void)
+static void InitLUTs (void * data)
 {
    uint32_t   r, g, b, i;
    int      y, u, v;
+   struct filter_data *filt = (struct filter_data*)data;
 
    for (i = 0 ; i < (1 << 15) ; i++)
    {
@@ -370,7 +367,7 @@ static void InitLUTs (void)
       u = (int) (-0.148223f * r - 0.290993f * g + 0.439216f * b + 0.5f) + 128;
       v = (int) ( 0.439216f * r - 0.367788f * g - 0.071427f * b + 0.5f) + 128;
 
-      RGBtoYUV[i] = (y << 16) + (u << 8) + v;
+      filt->RGBtoYUV[i] = (y << 16) + (u << 8) + v;
    }
 }
 
@@ -381,13 +378,14 @@ static inline unsigned char Diff (int c1, int c2)
             ( abs((c1 & Vmask) - (c2 & Vmask)) > trV ) );
 }
 
-static void hq2x_16_rgb565 (int width, int height,
+static void hq2x_16_rgb565(void *data, int width, int height,
       uint16_t *sp, int src1line, uint16_t *dp, int dst1line)
 {
    int   w1, w2, w3, w4, w5, w6, w7, w8, w9;
 
    uint32_t  pattern;
    int     l, y;
+   struct filter_data *filt = (struct filter_data*)data;
 
    while (height--)
    {
@@ -411,17 +409,17 @@ static void hq2x_16_rgb565 (int width, int height,
          w6 = *(sp);
          w9 = *(sp + src1line);
 
-         y = RGBtoYUV[w5];
+         y = filt->RGBtoYUV[w5];
          pattern = 0;
 
-         if ((w1 != w5) && (Diff(y, RGBtoYUV[w1]))) pattern |= (1 << 0);
-         if ((w2 != w5) && (Diff(y, RGBtoYUV[w2]))) pattern |= (1 << 1);
-         if ((w3 != w5) && (Diff(y, RGBtoYUV[w3]))) pattern |= (1 << 2);
-         if ((w4 != w5) && (Diff(y, RGBtoYUV[w4]))) pattern |= (1 << 3);
-         if ((w6 != w5) && (Diff(y, RGBtoYUV[w6]))) pattern |= (1 << 4);
-         if ((w7 != w5) && (Diff(y, RGBtoYUV[w7]))) pattern |= (1 << 5);
-         if ((w8 != w5) && (Diff(y, RGBtoYUV[w8]))) pattern |= (1 << 6);
-         if ((w9 != w5) && (Diff(y, RGBtoYUV[w9]))) pattern |= (1 << 7);
+         if ((w1 != w5) && (Diff(y, filt->RGBtoYUV[w1]))) pattern |= (1 << 0);
+         if ((w2 != w5) && (Diff(y, filt->RGBtoYUV[w2]))) pattern |= (1 << 1);
+         if ((w3 != w5) && (Diff(y, filt->RGBtoYUV[w3]))) pattern |= (1 << 2);
+         if ((w4 != w5) && (Diff(y, filt->RGBtoYUV[w4]))) pattern |= (1 << 3);
+         if ((w6 != w5) && (Diff(y, filt->RGBtoYUV[w6]))) pattern |= (1 << 4);
+         if ((w7 != w5) && (Diff(y, filt->RGBtoYUV[w7]))) pattern |= (1 << 5);
+         if ((w8 != w5) && (Diff(y, filt->RGBtoYUV[w8]))) pattern |= (1 << 6);
+         if ((w9 != w5) && (Diff(y, filt->RGBtoYUV[w9]))) pattern |= (1 << 7);
 
          switch (pattern)
          {
@@ -584,7 +582,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 50:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -602,7 +600,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_20
                X2PIXEL01_22
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -617,7 +615,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_20
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -631,7 +629,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 10:
             case 138:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -704,7 +702,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 54:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -722,7 +720,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_20
                X2PIXEL01_22
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -737,7 +735,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_20
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -751,7 +749,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 11:
             case 139:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -767,7 +765,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 19:
             case 51:
             {
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL00_11
                   X2PIXEL01_10
@@ -785,7 +783,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 178:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                   X2PIXEL11_12
@@ -802,7 +800,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 85:
             {
                X2PIXEL00_20
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL01_11
                   X2PIXEL11_10
@@ -820,7 +818,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_20
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL10_12
                   X2PIXEL11_10
@@ -837,7 +835,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_20
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                   X2PIXEL11_11
@@ -852,7 +850,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 73:
             case 77:
             {
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL00_12
                   X2PIXEL10_10
@@ -869,7 +867,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 42:
             case 170:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                   X2PIXEL10_11
@@ -886,7 +884,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 14:
             case 142:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                   X2PIXEL01_12
@@ -967,7 +965,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 26:
             case 31:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -975,7 +973,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_20
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -991,7 +989,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 214:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1000,7 +998,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_20
                }
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1015,7 +1013,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1023,7 +1021,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_20
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1036,7 +1034,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 74:
             case 107:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1045,7 +1043,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_20
                }
                X2PIXEL01_21
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1058,7 +1056,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 27:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1074,7 +1072,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 86:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1091,7 +1089,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_21
                X2PIXEL01_22
                X2PIXEL10_10
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1105,7 +1103,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_10
                X2PIXEL01_21
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1119,7 +1117,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 30:
             {
                X2PIXEL00_10
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1136,7 +1134,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_22
                X2PIXEL01_10
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1150,7 +1148,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1163,7 +1161,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 75:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1274,7 +1272,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 58:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1282,7 +1280,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1297,7 +1295,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 83:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1306,7 +1304,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_70
                }
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1320,7 +1318,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_11
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1328,7 +1326,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1340,7 +1338,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 202:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1349,7 +1347,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_70
                }
                X2PIXEL01_21
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1362,7 +1360,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 78:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1371,7 +1369,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_70
                }
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1384,7 +1382,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 154:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1392,7 +1390,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1407,7 +1405,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 114:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1416,7 +1414,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_70
                }
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1430,7 +1428,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1438,7 +1436,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1450,7 +1448,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 90:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1458,7 +1456,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1466,7 +1464,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_70
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1474,7 +1472,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1487,7 +1485,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 55:
             case 23:
             {
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL00_11
                   X2PIXEL01_0
@@ -1505,7 +1503,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 150:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                   X2PIXEL11_12
@@ -1522,7 +1520,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 212:
             {
                X2PIXEL00_20
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL01_11
                   X2PIXEL11_0
@@ -1540,7 +1538,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_20
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL10_12
                   X2PIXEL11_0
@@ -1557,7 +1555,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_20
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                   X2PIXEL11_11
@@ -1572,7 +1570,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 109:
             case 105:
             {
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL00_12
                   X2PIXEL10_0
@@ -1589,7 +1587,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 171:
             case 43:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                   X2PIXEL10_11
@@ -1606,7 +1604,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 143:
             case 15:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                   X2PIXEL01_12
@@ -1624,7 +1622,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_11
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1637,7 +1635,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 203:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1653,7 +1651,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 62:
             {
                X2PIXEL00_10
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1670,7 +1668,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_11
                X2PIXEL01_10
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1683,7 +1681,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 118:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1700,7 +1698,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_12
                X2PIXEL01_22
                X2PIXEL10_10
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1714,7 +1712,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_10
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1727,7 +1725,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 155:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1808,7 +1806,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_11
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1816,7 +1814,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1828,7 +1826,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 158:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1836,7 +1834,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1850,7 +1848,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 234:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1859,7 +1857,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_70
                }
                X2PIXEL01_21
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1873,7 +1871,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 242:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1882,7 +1880,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_70
                }
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -1894,7 +1892,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 59:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1902,7 +1900,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_20
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1918,7 +1916,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -1926,7 +1924,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_20
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1939,7 +1937,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 87:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -1948,7 +1946,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_20
                }
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -1960,7 +1958,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 79:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -1969,7 +1967,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_20
                }
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -1982,7 +1980,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 122:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -1990,7 +1988,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -1998,7 +1996,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_70
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2006,7 +2004,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_20
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -2018,7 +2016,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 94:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -2026,7 +2024,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2034,7 +2032,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_20
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -2042,7 +2040,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -2054,7 +2052,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 218:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -2062,7 +2060,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -2070,7 +2068,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_70
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -2078,7 +2076,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2090,7 +2088,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 91:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2098,7 +2096,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_20
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -2106,7 +2104,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_70
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -2114,7 +2112,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -2158,7 +2156,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 186:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -2166,7 +2164,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_70
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -2181,7 +2179,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 115:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -2190,7 +2188,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_70
                }
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -2204,7 +2202,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_11
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -2212,7 +2210,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_70
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -2224,7 +2222,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 206:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -2233,7 +2231,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_70
                }
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -2249,7 +2247,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_20
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_10
                }
@@ -2263,7 +2261,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 174:
             case 46:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_10
                }
@@ -2280,7 +2278,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 147:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_10
                }
@@ -2298,7 +2296,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_20
                X2PIXEL01_11
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_10
                }
@@ -2327,7 +2325,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 126:
             {
                X2PIXEL00_10
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2335,7 +2333,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_20
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2348,7 +2346,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 219:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2358,7 +2356,7 @@ static void hq2x_16_rgb565 (int width, int height,
                }
                X2PIXEL01_10
                X2PIXEL10_10
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2370,7 +2368,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 125:
             {
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL00_12
                   X2PIXEL10_0
@@ -2387,7 +2385,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 221:
             {
                X2PIXEL00_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL01_11
                   X2PIXEL11_0
@@ -2402,7 +2400,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 207:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                   X2PIXEL01_12
@@ -2420,7 +2418,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_10
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                   X2PIXEL11_11
@@ -2435,7 +2433,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 190:
             {
                X2PIXEL00_10
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                   X2PIXEL11_12
@@ -2450,7 +2448,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 187:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                   X2PIXEL10_11
@@ -2468,7 +2466,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_11
                X2PIXEL01_10
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL10_12
                   X2PIXEL11_0
@@ -2482,7 +2480,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 119:
             {
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL00_11
                   X2PIXEL01_0
@@ -2501,7 +2499,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_20
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2515,7 +2513,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 175:
             case 47:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2532,7 +2530,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 151:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2550,7 +2548,7 @@ static void hq2x_16_rgb565 (int width, int height,
                X2PIXEL00_20
                X2PIXEL01_11
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2564,7 +2562,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_10
                X2PIXEL01_10
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2572,7 +2570,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_20
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2584,7 +2582,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 123:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2593,7 +2591,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_20
                }
                X2PIXEL01_10
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2606,7 +2604,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 95:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2614,7 +2612,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_20
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2629,7 +2627,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 222:
             {
                X2PIXEL00_10
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2638,7 +2636,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_20
                }
                X2PIXEL10_10
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2652,7 +2650,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_21
                X2PIXEL01_11
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2660,7 +2658,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_20
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2674,7 +2672,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_22
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2682,7 +2680,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_100
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2694,7 +2692,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 235:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2703,7 +2701,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_20
                }
                X2PIXEL01_21
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2716,7 +2714,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 111:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2725,7 +2723,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_100
                }
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2738,7 +2736,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 63:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2746,7 +2744,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_100
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2760,7 +2758,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 159:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2768,7 +2766,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_20
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2783,7 +2781,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 215:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2792,7 +2790,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_100
                }
                X2PIXEL10_21
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2805,7 +2803,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 246:
             {
                X2PIXEL00_22
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2814,7 +2812,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_20
                }
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2827,7 +2825,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 254:
             {
                X2PIXEL00_10
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2835,7 +2833,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_20
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2843,7 +2841,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_20
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2857,7 +2855,7 @@ static void hq2x_16_rgb565 (int width, int height,
             {
                X2PIXEL00_12
                X2PIXEL01_11
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2865,7 +2863,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_100
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2877,7 +2875,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 251:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2886,7 +2884,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_20
                }
                X2PIXEL01_10
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2894,7 +2892,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_100
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -2906,7 +2904,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 239:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2915,7 +2913,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL00_100
                }
                X2PIXEL01_12
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2928,7 +2926,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 127:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2936,7 +2934,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_100
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2944,7 +2942,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_20
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -2957,7 +2955,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 191:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2965,7 +2963,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_100
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2979,7 +2977,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 223:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -2987,7 +2985,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_20
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -2996,7 +2994,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_100
                }
                X2PIXEL10_10
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -3009,7 +3007,7 @@ static void hq2x_16_rgb565 (int width, int height,
             case 247:
             {
                X2PIXEL00_11
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -3018,7 +3016,7 @@ static void hq2x_16_rgb565 (int width, int height,
                   X2PIXEL01_100
                }
                X2PIXEL10_12
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -3030,7 +3028,7 @@ static void hq2x_16_rgb565 (int width, int height,
             }
             case 255:
             {
-               if (Diff(RGBtoYUV[w4], RGBtoYUV[w2]))
+               if (Diff(filt->RGBtoYUV[w4], filt->RGBtoYUV[w2]))
                {
                   X2PIXEL00_0
                }
@@ -3038,7 +3036,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL00_100
                }
-               if (Diff(RGBtoYUV[w2], RGBtoYUV[w6]))
+               if (Diff(filt->RGBtoYUV[w2], filt->RGBtoYUV[w6]))
                {
                   X2PIXEL01_0
                }
@@ -3046,7 +3044,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL01_100
                }
-               if (Diff(RGBtoYUV[w8], RGBtoYUV[w4]))
+               if (Diff(filt->RGBtoYUV[w8], filt->RGBtoYUV[w4]))
                {
                   X2PIXEL10_0
                }
@@ -3054,7 +3052,7 @@ static void hq2x_16_rgb565 (int width, int height,
                {
                   X2PIXEL10_100
                }
-               if (Diff(RGBtoYUV[w6], RGBtoYUV[w8]))
+               if (Diff(filt->RGBtoYUV[w6], filt->RGBtoYUV[w8]))
                {
                   X2PIXEL11_0
                }
@@ -3091,8 +3089,8 @@ static void hq2x_generic_destroy(void *data)
 {
    struct filter_data *filt = (struct filter_data*)data;
    
-   if(RGBtoYUV) 
-      free(RGBtoYUV);
+   if(filt->RGBtoYUV) 
+      free(filt->RGBtoYUV);
    free(filt);
 }
 
@@ -3104,14 +3102,14 @@ static void *hq2x_generic_create(unsigned in_fmt)
 
    filt->in_fmt  = in_fmt;
 
-   RGBtoYUV = (uint16_t *)calloc(1 << 15, sizeof(RGBtoYUV));
-   if (!RGBtoYUV)
+   filt->RGBtoYUV = (uint16_t *)calloc(1 << 15, sizeof(filt->RGBtoYUV));
+   if (!filt->RGBtoYUV)
    {
       free(filt);
       return NULL;
    }
 
-   InitLUTs();
+   InitLUTs((void *)filt);
    
    return filt;
 }
@@ -3130,7 +3128,7 @@ static void hq2x_generic_render(void *data,
    struct filter_data *filt = (struct filter_data*)data;
 
    if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      hq2x_16_rgb565(width, height,
+      hq2x_16_rgb565(data, width, height,
          (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
 }

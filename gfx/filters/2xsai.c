@@ -47,7 +47,7 @@ static void *twoxsai_generic_create(unsigned in_fmt)
    if (!filt)
       return NULL;
    
-   filt->in_fmt  = in_fmt;
+   filt->in_fmt = in_fmt;
 
    return filt;
 }
@@ -92,9 +92,7 @@ static void twoxsai_generic_destroy(void *data)
          typename_t colorM = *(in + nextline + nextline - 1); \
          typename_t colorN = *(in + nextline + nextline + 0); \
          typename_t colorO = *(in + nextline + nextline + 1); \
-         //typename_t colorP = *(in + nextline + nextline + 2);
 
-#ifndef twoxsai_function
 #define twoxsai_function(result_cb, interpolate_cb, interpolate2_cb) \
          if (colorA == colorD && colorB != colorC) \
          { \
@@ -180,7 +178,6 @@ static void twoxsai_generic_destroy(void *data)
          out[dst_stride + 1] = product2; \
          ++in; \
          out += 2
-#endif
 
 static void twoxsai_generic_xrgb8888(unsigned width, unsigned height,
       uint32_t *src, unsigned src_stride, uint32_t *dst, unsigned dst_stride)
