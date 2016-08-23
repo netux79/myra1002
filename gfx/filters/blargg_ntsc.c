@@ -148,7 +148,7 @@ const softfilter_implementation_t blargg_ntsc_rf_implementation = {
    blargg_ntsc_generic_render,
    "Blargg NTSC RF",
 };
-#ifndef GEKKO
+
 const softfilter_implementation_t blargg_ntsc_composite_implementation = {
    blargg_ntsc_generic_input_fmts,
    blargg_ntsc_generic_output_fmts,
@@ -161,6 +161,7 @@ const softfilter_implementation_t blargg_ntsc_composite_implementation = {
    "Blargg NTSC Composite",
 };
 
+#ifndef GEKKO
 const softfilter_implementation_t blargg_ntsc_rgb_implementation = {
    blargg_ntsc_generic_input_fmts,
    blargg_ntsc_generic_output_fmts,
