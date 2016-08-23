@@ -98,7 +98,7 @@ static void *blargg_ntsc_monochrome_create(unsigned in_fmt) { return blargg_ntsc
 static void blargg_ntsc_generic_output(void *data, unsigned *out_width, unsigned *out_height,
       unsigned width, unsigned height)
 {
-   *out_width  = (width > 256) ? SNES_NTSC_OUT_WIDTH(width / 2) : SNES_NTSC_OUT_WIDTH(width);
+   *out_width  = (width > 320) ? SNES_NTSC_OUT_WIDTH(width / 2) : SNES_NTSC_OUT_WIDTH(width);
    *out_height = height;
 }
 
@@ -117,7 +117,7 @@ static void blargg_ntsc_rgb565(void *data, int width, int height,
 {
    struct filter_data *filt = (struct filter_data*)data;
 
-   if(width > 256)
+   if(width > 320)
       snes_ntsc_blit_hires(filt->ntsc, input, pitch, filt->burst, width, height, output, outpitch * 2);
    else
       snes_ntsc_blit(filt->ntsc, input, pitch, filt->burst, width, height, output, outpitch * 2);
