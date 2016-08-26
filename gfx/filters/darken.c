@@ -90,10 +90,14 @@ static void darken_render(void *data,
 {
    struct filter_data *filt = (struct filter_data*)data;
 
-   if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
-      darken_work_xrgb8888(width, height, (uint32_t *)input, input_stride, (uint32_t *)output, output_stride);
-   else if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
-      darken_work_rgb565(width, height, (uint16_t *)input, input_stride, (uint16_t *)output, output_stride);
+   if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
+      darken_work_rgb565(width, height, 
+         (uint16_t *)input, input_stride, 
+         (uint16_t *)output, output_stride);   
+   else if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
+      darken_work_xrgb8888(width, height, 
+         (uint32_t *)input, input_stride, 
+         (uint32_t *)output, output_stride);
 }
 
 const softfilter_implementation_t darken_implementation = {

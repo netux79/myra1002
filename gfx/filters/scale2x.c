@@ -127,14 +127,14 @@ static void scale2x_generic_render(void *data,
 {
    struct filter_data *filt = (struct filter_data*)data;
 
-   if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
-      scale2x_generic_xrgb8888(width, height,
-         (uint32_t*)input, input_stride / SOFTFILTER_BPP_XRGB8888, 
-         (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
-   else if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
+   if (filt->in_fmt == SOFTFILTER_FMT_RGB565)
       scale2x_generic_rgb565(width, height,
          (uint16_t*)input, input_stride / SOFTFILTER_BPP_RGB565, 
          (uint16_t*)output, output_stride / SOFTFILTER_BPP_RGB565);
+   else if (filt->in_fmt == SOFTFILTER_FMT_XRGB8888)
+      scale2x_generic_xrgb8888(width, height,
+         (uint32_t*)input, input_stride / SOFTFILTER_BPP_XRGB8888, 
+         (uint32_t*)output, output_stride / SOFTFILTER_BPP_XRGB8888);
 }
 
 const softfilter_implementation_t scale2x_implementation = {
