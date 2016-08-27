@@ -14,6 +14,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include "file_list.h"
 #include "../../compat/strcasestr.h"
