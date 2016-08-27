@@ -376,7 +376,9 @@ void config_set_defaults(void)
    *g_settings.cheat_settings_path = '\0';
    *g_settings.screenshot_directory = '\0';
    *g_settings.system_directory = '\0';
+#ifndef RARCH_CONSOLE
    *g_settings.input.autoconfig_dir = '\0';
+#endif
    *g_settings.input.overlay = '\0';
    *g_settings.content_directory = '\0';
    *g_settings.video.shader_path = '\0';
@@ -1024,7 +1026,9 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_BOOL(input.debug_enable, "input_debug_enable");
 
    CONFIG_GET_BOOL(input.autodetect_enable, "input_autodetect_enable");
+#ifndef RARCH_CONSOLE
    CONFIG_GET_PATH(input.autoconfig_dir, "joypad_autoconfig_dir");
+#endif
 
 #ifdef ANDROID
    CONFIG_GET_INT(input.back_behavior, "input_back_behavior");
@@ -1328,7 +1332,9 @@ bool config_save_file(const char *path)
 
    config_set_path(conf, "game_history_path", g_settings.game_history_path);
    config_set_int(conf, "game_history_size", g_settings.game_history_size);
+#ifndef RARCH_CONSOLE
    config_set_path(conf, "joypad_autoconfig_dir", g_settings.input.autoconfig_dir);
+#endif
    config_set_bool(conf, "input_autodetect_enable", g_settings.input.autodetect_enable);
 
 #ifdef HAVE_OVERLAY

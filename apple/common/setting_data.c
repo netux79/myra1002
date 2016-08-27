@@ -579,7 +579,9 @@ const rarch_setting_t* setting_data_get_list()
    START_GROUP("Input")
       START_SUB_GROUP("Input")
          CONFIG_BOOL(g_settings.input.autodetect_enable,    "input_autodetect_enable",    "Use joypad autodetection",   input_autodetect_enable)
+#ifndef RARCH_CONSOLE
          CONFIG_PATH(g_settings.input.autoconfig_dir,       "joypad_autoconfig_dir",      "Joypad Autoconfig Directory",DEFAULT_ME_YO)          WITH_FLAGS(SD_FLAG_ALLOW_EMPTY | SD_FLAG_PATH_DIR)
+#endif
       END_SUB_GROUP()
 
       START_SUB_GROUP("Joypad Mapping")

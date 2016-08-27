@@ -91,6 +91,9 @@ unsigned menu_type_is(unsigned type)
       type == RGUI_CONFIG_DIR_PATH ||
       type == RGUI_SAVEFILE_DIR_PATH ||
       type == RGUI_OVERLAY_DIR_PATH ||
+#ifndef RARCH_CONSOLE
+      type == RGUI_AUTOCONF_DIR_PATH ||
+#endif
       type == RGUI_SCREENSHOT_DIR_PATH ||
       type == RGUI_SYSTEM_DIR_PATH;
 
@@ -1170,6 +1173,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             *g_extern.overlay_dir = '\0';
          break;
 #endif
+#ifndef RARCH_CONSOLE
+      case RGUI_AUTOCONF_DIR_PATH:
+         if (action == RGUI_ACTION_START)
+            *g_extern.overlay_dir = '\0';
+         break;
+#endif
       case RGUI_SAVESTATE_DIR_PATH:
          if (action == RGUI_ACTION_START)
             *g_extern.savestate_dir = '\0';
@@ -2103,6 +2112,11 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
 #ifdef HAVE_OVERLAY
       case RGUI_OVERLAY_DIR_PATH:
          strlcpy(type_str, *g_extern.overlay_dir ? g_extern.overlay_dir : "<default>", type_str_size);
+         break;
+#endif
+#ifndef RARCH_CONSOLE
+      case RGUI_AUTOCONF_DIR_PATH:
+         strlcpy(type_str, *g_settings.input.autoconfig_dir ? g_settings.input.autoconfig_dir : "<None>", type_str_size);
          break;
 #endif
       case RGUI_SAVESTATE_DIR_PATH:

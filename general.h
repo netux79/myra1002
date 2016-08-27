@@ -285,8 +285,9 @@ struct settings
       char overlay[PATH_MAX];
       float overlay_opacity;
       float overlay_scale;
-
+#ifndef RARCH_CONSOLE
       char autoconfig_dir[PATH_MAX];
+#endif
    } input;
 
    char core_options_path[PATH_MAX];

@@ -1180,8 +1180,10 @@ void input_config_autoconfigure_joypad(unsigned index, const char *name, const c
    if (!name)
       return;
 
+#ifndef RARCH_CONSOLE
    // false = load from both cfg files and internal
    bool internal_only = !*g_settings.input.autoconfig_dir;
+#endif
 
 #ifdef HAVE_BUILTIN_AUTOCONFIG
    // First internal
@@ -1195,6 +1197,7 @@ void input_config_autoconfigure_joypad(unsigned index, const char *name, const c
    }
 #endif
 
+#ifndef RARCH_CONSOLE
    // Now try files
    if (!internal_only)
    {
@@ -1215,6 +1218,7 @@ void input_config_autoconfigure_joypad(unsigned index, const char *name, const c
 
       string_list_free(list);
    }
+#endif
 }
 
 void input_get_bind_string(char *buf, const struct retro_keybind *bind, size_t size)

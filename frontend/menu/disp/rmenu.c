@@ -223,6 +223,10 @@ static void rmenu_render(void *data, void *video_data)
    else if (menu_type == RGUI_OVERLAY_DIR_PATH)
       snprintf(title, sizeof(title), "OVERLAY DIR %s", dir);
 #endif
+#ifndef RARCH_CONSOLE
+   else if (menu_type == RGUI_AUTOCONF_DIR_PATH)
+      snprintf(title, sizeof(title), "AUTOCONFIG DIR %s", dir);
+#endif
    else if (menu_type == RGUI_SYSTEM_DIR_PATH)
       snprintf(title, sizeof(title), "SYSTEM DIR %s", dir);
    else
