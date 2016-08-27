@@ -72,9 +72,9 @@ const void* apple_get_frontend_settings(void)
 
       // Set ios_btmode options based on runtime environment
       if (btstack_try_load())
-         settings[4].values = "icade|keyboard|small_keyboard|btstack";
+         settings[4].values = "none|icade|small_keyboard|btstack";
       else
-         settings[4].values = "icade|keyboard|small_keyboard";
+         settings[4].values = "none|icade|small_keyboard";
 
       settings[5] = setting_data_string_setting(ST_STRING, "ios_orientations", "Screen Orientations", apple_frontend_settings.orientations,
                                                  sizeof(apple_frontend_settings.orientations), "both");
