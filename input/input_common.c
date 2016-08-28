@@ -1117,6 +1117,7 @@ void input_config_parse_joy_axis(config_file_t *conf, const char *prefix,
 }
 
 #if !defined(IS_JOYCONFIG) && !defined(IS_RETROLAUNCH)
+#ifndef RARCH_CONSOLE
 static void input_autoconfigure_joypad_conf(config_file_t *conf, struct retro_keybind *binds)
 {
    unsigned i;
@@ -1158,6 +1159,7 @@ static bool input_try_autoconfigure_joypad_from_conf(config_file_t *conf, unsign
 
    return false;
 }
+#endif
 
 void input_config_autoconfigure_joypad(unsigned index, const char *name, const char *driver)
 {
@@ -1166,9 +1168,11 @@ void input_config_autoconfigure_joypad(unsigned index, const char *name, const c
    if (!g_settings.input.autodetect_enable)
       return;
 
+#if defined(HAVE_BUILTIN_AUTOCONFIG) || !defined(RARCH_CONSOLE)
    // This will be the case if input driver is reinit. No reason to spam autoconfigure messages
    // every time (fine in log).
    bool block_osd_spam = g_settings.input.autoconfigured[index] && name;
+#endif
 
    for (i = 0; i < RARCH_BIND_LIST_END; i++)
    {
