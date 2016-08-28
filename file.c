@@ -52,6 +52,9 @@ static void patch_rom(uint8_t **buf, ssize_t *size)
    ssize_t patch_size = 0;
    void *patch_data = NULL;
    bool success = false;
+   
+   (void)patch_desc;
+   (void)patch_path;
 
    if (g_extern.ups_pref + g_extern.bps_pref + g_extern.ips_pref > 1)
    {

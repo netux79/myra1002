@@ -344,6 +344,10 @@ returntype main_entry(signature())
       rarch_init_msg_queue();
    }
 
+#if !defined(RARC_CONSOLE) && defined(HAVE_FILE_LOGGER)
+   g_extern.log_file = fopen(LOG_FILENAME, "w");
+#endif
+
    if (frontend_ctx && frontend_ctx->environment_get)
    {
       frontend_ctx->environment_get(argc, argv, args);

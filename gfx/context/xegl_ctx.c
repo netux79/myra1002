@@ -83,6 +83,9 @@ static void egl_report_error(void)
 {
    EGLint error = eglGetError();
    const char *str = NULL;
+   
+   (void)str;
+   
    switch (error)
    {
       case EGL_SUCCESS:

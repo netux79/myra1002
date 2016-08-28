@@ -372,6 +372,8 @@ static void handle_hotplug(udev_input_t *udev)
 
    device_handle_cb cb = NULL;
    const char *devtype = NULL;
+   
+   (void)devtype;
 
    if (!is_keyboard && !is_mouse && !is_touchpad)
       goto end;

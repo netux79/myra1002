@@ -442,6 +442,8 @@ static bool gfx_ctx_set_video_mode(void *data,
    if (g_is_double)
    {
       const char *swap_func = NULL;
+      
+      (void)swap_func;
 
       g_pglSwapIntervalEXT = (void (*)(Display*, GLXDrawable, int))glXGetProcAddress((const GLubyte*)"glXSwapIntervalEXT");
       g_pglSwapInterval = (int (*)(int))glXGetProcAddress((const GLubyte*)"glXSwapIntervalMESA");
