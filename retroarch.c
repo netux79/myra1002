@@ -1920,6 +1920,9 @@ static void save_auto_state(void)
          ".auto", sizeof(savestate_name_auto));
 
    bool ret = save_state(savestate_name_auto);
+   
+   (void)ret;
+   
    RARCH_LOG("Auto save state to \"%s\" %s.\n", savestate_name_auto, ret ? "succeeded" : "failed");
 }
 

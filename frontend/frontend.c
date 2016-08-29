@@ -344,7 +344,7 @@ returntype main_entry(signature())
       rarch_init_msg_queue();
    }
 
-#if !defined(RARC_CONSOLE) && defined(HAVE_FILE_LOGGER)
+#if !defined(RARCH_CONSOLE) && defined(HAVE_FILE_LOGGER)
    g_extern.log_file = fopen(LOG_FILENAME, "w");
 #endif
 

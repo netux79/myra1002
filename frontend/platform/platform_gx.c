@@ -227,7 +227,7 @@ static void get_environment_settings(int argc, char *argv[], void *args)
 #if defined(HAVE_LOGGER)
    logger_init();
 #elif defined(HAVE_FILE_LOGGER)
-   g_extern.log_file = fopen("/retroarch-log.txt", "w");
+   g_extern.log_file = fopen(LOG_FILENAME, "a");
 #endif
 #endif
 

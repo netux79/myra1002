@@ -1168,6 +1168,9 @@ static void compute_audio_buffer_statistics(void)
 
    float avg_filled = 1.0f - (float)avg / g_extern.audio_data.driver_buffer_size;
    float deviation = (float)stddev / g_extern.audio_data.driver_buffer_size;
+   
+   (void)avg_filled;
+   (void)deviation;
 
    unsigned low_water_size = g_extern.audio_data.driver_buffer_size * 3 / 4;
    unsigned high_water_size = g_extern.audio_data.driver_buffer_size / 4;

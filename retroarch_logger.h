@@ -23,9 +23,14 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_FILE_LOGGER
+#if defined(HAVE_FILE_LOGGER) && !defined(IS_SALAMANDER)
 #define LOG_FILE (g_extern.log_file)
+
+#ifdef GEKKO
+#define LOG_FILENAME "/retroarch/retroarch.log"
+#else
 #define LOG_FILENAME "/tmp/retroarch.log"
+#endif
 
 #define RARCH_LOG(...) do { \
       fprintf(LOG_FILE, "RetroArch: " __VA_ARGS__); \

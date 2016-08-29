@@ -685,6 +685,8 @@ bool rarch_environment_cb(unsigned cmd, void *data)
             "A (right)", "X (up)",
             "L", "R", "L2", "R2", "L3", "R3",
          };
+         
+         (void)libretro_btn_desc;
 
          RARCH_LOG("Environ SET_INPUT_DESCRIPTORS:\n");
          for (p = 0; p < MAX_PLAYERS; p++)
