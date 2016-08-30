@@ -13,7 +13,6 @@ DOWNLOAD_SHADERS	= 1
 STRIPPING_ENABLE	= 0
 DEBUG			      = 0
 HAVE_GCMGL	      = 1
-HAVE_LOGGER		   = 0
 HAVE_FREETYPE	   = 0
 HAVE_RLAUNCH      = 0
 PERF_TEST		   = 0
@@ -117,11 +116,6 @@ ifeq ($(DEBUG), 1)
    PPU_OPTIMIZE_LV	:= -O0 -g
 else
    PPU_OPTIMIZE_LV	:= -O3 -g
-endif
-
-ifeq ($(HAVE_LOGGER), 1)
-DEFINES			+= -DHAVE_LOGGER
-INCDIRS        +=  -Iconsole/logger
 endif
 
 PPU_CFLAGS := $(PPU_OPTIMIZE_LV) $(INCDIRS) $(DEFINES)

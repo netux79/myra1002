@@ -28,12 +28,6 @@ CONSOLE EXTENSIONS
 ============================================================ */
 #ifdef RARCH_CONSOLE
 
-#if defined(HAVE_LOGGER) && defined(__PSL1GHT__)
-#include "../console/logger/psl1ght_logger.c"
-#elif defined(HAVE_LOGGER) && !defined(ANDROID)
-#include "../console/logger/logger.c"
-#endif
-
 #ifdef HW_DOL
 #include "../ngc/ssaram.c"
 #endif

@@ -4,7 +4,6 @@
 ##
 
 DEBUG			= 0
-HAVE_LOGGER		= 0
 HAVE_FILE_LOGGER	= 0
 
 # system platform
@@ -41,16 +40,8 @@ APP_BOOTER_DIR = wii/app_booter
 
 OBJ = frontend/frontend_salamander.o frontend/frontend_context.o file_path.o compat/compat.o conf/config_file.o $(APP_BOOTER_DIR)/app_booter.binobj
 
-ifeq ($(HAVE_LOGGER), 1)
-CFLAGS		+= -DHAVE_LOGGER
-CFLAGS          += -DPC_DEVELOPMENT_IP_ADDRESS=\"$(PC_DEVELOPMENT_IP_ADDRESS)\" -DPC_DEVELOPMENT_UDP_PORT=$(PC_DEVELOPMENT_UDP_PORT)
-CFLAGS          += -Iconsole/logger
-OBJ             += console/logger/logger.o
-endif
-
 ifeq ($(HAVE_FILE_LOGGER), 1)
 CFLAGS		+= -DHAVE_FILE_LOGGER
-CFLAGS          += -Iconsole/logger
 endif
 
 CFLAGS += -std=gnu99 -DIS_SALAMANDER -DRARCH_CONSOLE -DHAVE_RARCH_EXEC -DGEKKO -Wno-char-subscripts 

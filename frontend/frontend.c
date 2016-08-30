@@ -303,9 +303,7 @@ void main_exit(args_type() args)
    rarch_perf_log();
 #endif
 
-#if defined(HAVE_LOGGER) && !defined(ANDROID)
-   logger_shutdown();
-#elif defined(HAVE_FILE_LOGGER)
+#ifdef HAVE_FILE_LOGGER
    if (g_extern.log_file)
       fclose(g_extern.log_file);
    g_extern.log_file = NULL;

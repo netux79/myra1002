@@ -126,7 +126,7 @@ enum
    GX_DEVICE_END
 };
 
-#if defined(HAVE_LOGGER) || defined(HAVE_FILE_LOGGER)
+#ifdef HAVE_FILE_LOGGER
 static devoptab_t dotab_stdout = {
    "stdout",   // device name
    0,          // size of file structure
@@ -195,17 +195,7 @@ static int gx_get_device_from_path(const char *path)
 }
 #endif
 
-#ifdef HAVE_LOGGER
-int gx_logger_net(struct _reent *r, int fd, const char *ptr, size_t len)
-{
-   static char temp[4000];
-   size_t l = len >= 4000 ? 3999 : len;
-   memcpy(temp, ptr, l);
-   temp[l] = 0;
-   logger_send("%s", temp);
-   return len;
-}
-#elif defined(HAVE_FILE_LOGGER)
+#ifdef HAVE_FILE_LOGGER
 int gx_logger_file(struct _reent *r, int fd, const char *ptr, size_t len)
 {
    fwrite(ptr, 1, len, g_extern.log_file);
@@ -224,9 +214,7 @@ static void get_environment_settings(int argc, char *argv[], void *args)
 #ifndef IS_SALAMANDER
    g_extern.verbose = true;
 
-#if defined(HAVE_LOGGER)
-   logger_init();
-#elif defined(HAVE_FILE_LOGGER)
+#ifdef HAVE_FILE_LOGGER
    g_extern.log_file = fopen(LOG_FILENAME, "a");
 #endif
 #endif
@@ -279,11 +267,7 @@ static void system_init(void *data)
 
    fatInitDefault();
 
-#ifdef HAVE_LOGGER
-   devoptab_list[STD_OUT] = &dotab_stdout;
-   devoptab_list[STD_ERR] = &dotab_stdout;
-   dotab_stdout.write_r = gx_logger_net;
-#elif defined(HAVE_FILE_LOGGER) && !defined(IS_SALAMANDER)
+#if defined (HAVE_FILE_LOGGER) && !defined(IS_SALAMANDER)
    devoptab_list[STD_OUT] = &dotab_stdout;
    devoptab_list[STD_ERR] = &dotab_stdout;
    dotab_stdout.write_r = gx_logger_file;

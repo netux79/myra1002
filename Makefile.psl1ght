@@ -1,7 +1,6 @@
 RARCH_VERSION		= "0.9.9.3"
 
 DEBUG			= 0
-HAVE_LOGGER		= 0
 HAVE_FILE_LOGGER	= 0
 
 PC_DEVELOPMENT_IP_ADDRESS	= "192.168.1.7"
@@ -80,11 +79,6 @@ MAKE_FSELF_NPDRM = $(CELL_SDK)/host-win32/bin/make_fself_npdrm.exe
 MAKE_PACKAGE_NPDRM = $(CELL_SDK)/host-win32/bin/make_package_npdrm.exe
 
 OBJ = griffin/griffin.o
-
-ifeq ($(HAVE_LOGGER), 1)
-CFLAGS		+= -DHAVE_LOGGER
-CFLAGS		+= -Iconsole/logger
-endif
 
 ifeq ($(HAVE_FILE_LOGGER), 1)
 CFLAGS		+= -DHAVE_FILE_LOGGER
