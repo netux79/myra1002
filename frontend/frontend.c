@@ -303,12 +303,6 @@ void main_exit(args_type() args)
    rarch_perf_log();
 #endif
 
-#ifdef HAVE_FILE_LOGGER
-   if (g_extern.log_file)
-      fclose(g_extern.log_file);
-   g_extern.log_file = NULL;
-#endif
-
    if (frontend_ctx && frontend_ctx->deinit)
       frontend_ctx->deinit(args);
 
@@ -341,10 +335,6 @@ returntype main_entry(signature())
       rarch_main_clear_state();
       rarch_init_msg_queue();
    }
-
-#if !defined(RARCH_CONSOLE) && defined(HAVE_FILE_LOGGER)
-   g_extern.log_file = fopen(LOG_FILENAME, "w");
-#endif
 
    if (frontend_ctx && frontend_ctx->environment_get)
    {

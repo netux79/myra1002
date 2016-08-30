@@ -126,34 +126,6 @@ enum
    GX_DEVICE_END
 };
 
-#ifdef HAVE_FILE_LOGGER
-static devoptab_t dotab_stdout = {
-   "stdout",   // device name
-   0,          // size of file structure
-   NULL,       // device open
-   NULL,       // device close
-   NULL,       // device write
-   NULL,       // device read
-   NULL,       // device seek
-   NULL,       // device fstat
-   NULL,       // device stat
-   NULL,       // device link
-   NULL,       // device unlink
-   NULL,       // device chdir
-   NULL,       // device rename
-   NULL,       // device mkdir
-   0,          // dirStateSize
-   NULL,       // device diropen_r
-   NULL,       // device dirreset_r
-   NULL,       // device dirnext_r
-   NULL,       // device dirclose_r
-   NULL,       // device statvfs_r
-   NULL,       // device ftrunctate_r
-   NULL,       // device fsync_r
-   NULL,       // deviceData;
-};
-#endif
-
 #ifdef HW_RVL
 static struct {
    bool mounted;
@@ -194,15 +166,6 @@ static int gx_get_device_from_path(const char *path)
    return -1;
 }
 #endif
-
-#ifdef HAVE_FILE_LOGGER
-int gx_logger_file(struct _reent *r, int fd, const char *ptr, size_t len)
-{
-   fwrite(ptr, 1, len, g_extern.log_file);
-   return len;
-}
-#endif
-
 #endif
 
 #ifdef IS_SALAMANDER
@@ -213,10 +176,6 @@ static void get_environment_settings(int argc, char *argv[], void *args)
 {
 #ifndef IS_SALAMANDER
    g_extern.verbose = true;
-
-#ifdef HAVE_FILE_LOGGER
-   g_extern.log_file = fopen(LOG_FILENAME, "a");
-#endif
 #endif
 
 #ifdef HW_DOL
@@ -266,12 +225,6 @@ static void system_init(void *data)
 #endif
 
    fatInitDefault();
-
-#if defined (HAVE_FILE_LOGGER) && !defined(IS_SALAMANDER)
-   devoptab_list[STD_OUT] = &dotab_stdout;
-   devoptab_list[STD_ERR] = &dotab_stdout;
-   dotab_stdout.write_r = gx_logger_file;
-#endif
 
 #if defined(HW_RVL) && !defined(IS_SALAMANDER)
    lwp_t gx_device_thread;

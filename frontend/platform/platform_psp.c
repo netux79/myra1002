@@ -34,12 +34,6 @@ static int exit_callback(int arg1, int arg2, void *common)
 {
    g_extern.verbose = false;
 
-#ifdef HAVE_FILE_LOGGER
-   if (g_extern.log_file)
-      fclose(g_extern.log_file);
-   g_extern.log_file = NULL;
-#endif
-
    sceKernelExitGame();
    return 0;
 }
@@ -49,10 +43,6 @@ static void get_environment_settings(int argc, char *argv[], void *args)
    (void)args;
 #ifndef IS_SALAMANDER
    g_extern.verbose = true;
-
-#ifdef HAVE_FILE_LOGGER
-   g_extern.log_file = fopen("ms0:/retroarch-log.txt", "w");
-#endif
 #endif
 
    fill_pathname_basedir(default_paths.port_dir, argv[0], sizeof(default_paths.port_dir));

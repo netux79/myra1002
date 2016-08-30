@@ -7,9 +7,6 @@ DEBUG			= 0
 STRIPPING_ENABLE	=  1
 RGL_2D      = 1
 
-PC_DEVELOPMENT_IP_ADDRESS	= "192.168.1.7"
-PC_DEVELOPMENT_UDP_PORT		= 3490
-
 CELL_MK_DIR		?= $(CELL_SDK)/samples/mk
 include $(CELL_MK_DIR)/sdk.makedef.mk
 

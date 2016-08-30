@@ -2848,6 +2848,11 @@ static void init_state_first(void)
    unsigned i;
 
    init_state();
+   
+#ifdef HAVE_FILE_LOGGER
+   g_extern.log_file = fopen(LOG_FILENAME, "a");
+#endif
+
    for (i = 0; i < MAX_PLAYERS; i++)
       g_settings.input.libretro_device[i] = RETRO_DEVICE_JOYPAD;
 }
@@ -2856,8 +2861,10 @@ void rarch_main_clear_state(void)
 {
    memset(&g_settings, 0, sizeof(g_settings));
 
+#ifdef HAVE_FILE_LOGGER
    if (g_extern.log_file)
       fclose(g_extern.log_file);
+#endif
 
    memset(&g_extern, 0, sizeof(g_extern));
 
@@ -3317,10 +3324,8 @@ int rarch_main_init_wrap(const struct rarch_main_wrap *args)
    if (args->verbose)
       argv[argc++] = strdup("-v");
 
-#ifdef HAVE_FILE_LOGGER
    for (i = 0; i < argc; i++)
       RARCH_LOG("arg #%d: %s\n", i, argv[i]);
-#endif
 
    // The pointers themselves are not const, and can be messed around with by getopt_long().
    memcpy(argv_copy, argv, sizeof(argv));

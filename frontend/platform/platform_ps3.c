@@ -167,10 +167,6 @@ static void get_environment_settings(int argc, char *argv[], void *args)
    (void)args;
 #ifndef IS_SALAMANDER
    g_extern.verbose = true;
-
-#ifdef HAVE_FILE_LOGGER
-   g_extern.log_file = fopen("/retroarch-log.txt", "w");
-#endif
 #endif
 
    int ret;
