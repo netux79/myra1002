@@ -283,7 +283,7 @@ static bool parse_line(config_file_t *conf, struct config_entry_list *list, char
       }
    }
    else if (conf->include_depth >= MAX_INCLUDE_DEPTH)
-      fprintf(stderr, "!!! #include depth exceeded for config. Might be a cycle.\n");
+      RARCH_ERR("!!! #include depth exceeded for config. Might be a cycle.\n");
 
    // Skips to first character.
    while (isspace(*line))

@@ -728,7 +728,7 @@ static void print_features(void)
 
 static void print_compiler(FILE *file)
 {
-   fprintf(file, "\nCompiler: ");
+   fprintf(file, "Compiler: ");
 #if defined(_MSC_VER)
    fprintf(file, "MSVC (%d) %u-bit\n", _MSC_VER, (unsigned)(CHAR_BIT * sizeof(size_t)));
 #elif defined(__SNC__)
@@ -2853,6 +2853,9 @@ static void init_state_first(void)
    g_extern.log_file = fopen(LOG_FILENAME, "a");
 #endif
 
+   /* Default pixel format */
+   g_extern.system.pix_fmt = RETRO_PIXEL_FORMAT_RGB565;
+
    for (i = 0; i < MAX_PLAYERS; i++)
       g_settings.input.libretro_device[i] = RETRO_DEVICE_JOYPAD;
 }
@@ -2955,9 +2958,9 @@ int rarch_main_init(int argc, char *argv[])
 
    if (g_extern.verbose)
    {
-      RARCH_LOG_OUTPUT("=== Build =======================================");
-      print_compiler(stderr);
+      RARCH_LOG_OUTPUT("=== Build =======================================\n");
       RARCH_LOG_OUTPUT("Version: %s\n", PACKAGE_VERSION);
+      print_compiler(LOG_FILE);
 #ifdef HAVE_GIT_VERSION
       RARCH_LOG_OUTPUT("Git: %s\n", rarch_git_version);
 #endif

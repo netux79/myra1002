@@ -72,7 +72,7 @@
       fflush(LOG_FILE); \
    } while (0)
 #else
-#define LOG_FILE
+#define LOG_FILE stdout
 #define RARCH_LOG(...)
 #define RARCH_LOG_V(tag, fmt, vp)
 #define RARCH_LOG_OUTPUT(...)
