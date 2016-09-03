@@ -1288,7 +1288,7 @@ void uninit_audio(void)
    compute_audio_buffer_statistics();
 }
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
 void rarch_deinit_filter(void)
 {
    rarch_softfilter_free(g_extern.filter.filter);
@@ -1412,7 +1412,7 @@ static bool init_video_pixel_converter(unsigned size)
 
 void init_video_input(void)
 {
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
    rarch_init_filter(g_extern.system.pix_fmt);
 #endif
    init_shader_dir();
@@ -1422,7 +1422,7 @@ void init_video_input(void)
    unsigned scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
    scale = max(scale, 1);
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
    if (g_extern.filter.filter)
       scale = g_extern.filter.scale;
 #endif
@@ -1488,7 +1488,7 @@ void init_video_input(void)
    video.force_aspect = g_settings.video.force_aspect;
    video.smooth = g_settings.video.smooth;
    video.input_scale = scale;
-#ifdef HAVE_FILTERS_BUILTIN   
+#ifdef HAVE_SCALERS_BUILTIN   
    video.rgb32 = g_extern.filter.filter ? g_extern.filter.out_rgb32 : (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
 #else
    video.rgb32 = (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
@@ -1599,7 +1599,7 @@ void uninit_video_input(void)
 
    deinit_pixel_converter();
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
    rarch_deinit_filter();
 #endif
    deinit_shader_dir();

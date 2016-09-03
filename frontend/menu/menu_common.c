@@ -1894,20 +1894,20 @@ void menu_populate_entries(void *data, unsigned menu_type)
       case RGUI_SETTINGS_VIDEO_OPTIONS:
          file_list_clear(rgui->selection_buf);
 #if defined(GEKKO) || defined(__CELLOS_LV2__)
-         file_list_push(rgui->selection_buf, "Screen Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
+         file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
 #endif
          file_list_push(rgui->selection_buf, "Show Framerate", RGUI_SETTINGS_DEBUG_TEXT, 0);
 #if defined(__CELLOS_LV2__)
          file_list_push(rgui->selection_buf, "PAL60 Mode", RGUI_SETTINGS_VIDEO_PAL60, 0);
 #endif
 #ifndef HAVE_SHADER_MANAGER
-         file_list_push(rgui->selection_buf, "Default Filter", RGUI_SETTINGS_VIDEO_FILTER, 0);
+         file_list_push(rgui->selection_buf, "Bilinear Filtering", RGUI_SETTINGS_VIDEO_BILINEAR, 0);
 #endif
 #ifdef HW_RVL
-         file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_SOFT_FILTER, 0);
+         file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_VITRAP_FILTER, 0);
 #endif
-#ifdef HAVE_FILTERS_BUILTIN
-         file_list_push(rgui->selection_buf, "Video Soft Filter", RGUI_SETTINGS_VIDEO_SOFTFILTER, 0);
+#ifdef HAVE_SCALERS_BUILTIN
+         file_list_push(rgui->selection_buf, "Soft Scaling", RGUI_SETTINGS_VIDEO_SOFT_SCALER, 0);
 #endif
 #if defined(HW_RVL) || defined(_XBOX360)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);

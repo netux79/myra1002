@@ -35,7 +35,7 @@
 #include "command.h"
 #endif
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
 #include "gfx/filters/softfilter.h"
 #endif
 
@@ -696,7 +696,7 @@ extern const location_driver_t location_apple;
 extern const location_driver_t location_android;
 extern const input_osk_driver_t input_ps3_osk;
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
 extern const softfilter_implementation_t blargg_ntsc_rf_implementation;
 extern const softfilter_implementation_t blargg_ntsc_composite_implementation;
 extern const softfilter_implementation_t epx_implementation;

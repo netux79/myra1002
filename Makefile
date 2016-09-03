@@ -212,7 +212,7 @@ ifeq ($(HAVE_OMAP), 1)
    OBJ += gfx/omap_gfx.o
 endif
 
-ifeq ($(HAVE_FILTERS_BUILTIN), 1)
+ifeq ($(HAVE_SCALERS_BUILTIN), 1)
    OBJ += gfx/filter.o gfx/filters/epx.o gfx/filters/scale2x.o gfx/filters/blargg_ntsc.o gfx/filters/phosphor2x.o gfx/filters/snes_ntsc/snes_ntsc.o gfx/filters/supereagle.o gfx/filters/lq2x.o gfx/filters/2xsai.o gfx/filters/2xbr.o gfx/filters/super2xsai.o gfx/filters/hq2x.o gfx/filters/darken.o
 endif
 

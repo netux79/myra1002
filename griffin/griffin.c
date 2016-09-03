@@ -464,7 +464,7 @@ SCALERS
 /*============================================================
 FILTERS
 ============================================================ */
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
 #include "../gfx/filters/snes_ntsc/snes_ntsc.c"
 #include "../gfx/filters/blargg_ntsc.c"
 #include "../gfx/filters/epx.c"

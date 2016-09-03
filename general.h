@@ -35,7 +35,7 @@
 #include "core_options.h"
 #include "miscellaneous.h"
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
 #include "gfx/filter.h"
 #endif
 
@@ -170,7 +170,7 @@ struct settings
       char shader_path[PATH_MAX];
       bool shader_enable;
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
       unsigned filter_idx;
 #endif
       float refresh_rate;
@@ -512,7 +512,7 @@ struct global
       uint64_t frame_time_samples_count;
    } measure_data;
 
-#ifdef HAVE_FILTERS_BUILTIN
+#ifdef HAVE_SCALERS_BUILTIN
    struct
    {
       rarch_softfilter_t *filter;

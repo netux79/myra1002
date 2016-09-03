@@ -870,8 +870,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             break;
          }
 #endif
-#ifdef HAVE_FILTERS_BUILTIN
-      case RGUI_SETTINGS_VIDEO_SOFTFILTER:
+#ifdef HAVE_SCALERS_BUILTIN
+      case RGUI_SETTINGS_VIDEO_SOFT_SCALER:
          switch (action)
          {
             case RGUI_ACTION_LEFT:
@@ -1229,7 +1229,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          break;
 
-      case RGUI_SETTINGS_VIDEO_FILTER:
+      case RGUI_SETTINGS_VIDEO_BILINEAR:
          if (action == RGUI_ACTION_START)
             g_settings.video.smooth = video_smooth;
          else
@@ -1485,7 +1485,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
 #endif
 #ifdef HW_RVL
-      case RGUI_SETTINGS_VIDEO_SOFT_FILTER:
+      case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
          if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE))
             g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
          else
@@ -1923,15 +1923,12 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          strlcpy(type_str, rotation_lut[g_settings.video.rotation],
                type_str_size);
          break;
-      case RGUI_SETTINGS_VIDEO_SOFT_FILTER:
+      case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
          snprintf(type_str, type_str_size,
                (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE)) ? "ON" : "OFF");
          break;
-      case RGUI_SETTINGS_VIDEO_FILTER:
-         if (g_settings.video.smooth)
-            strlcpy(type_str, "Bilinear filtering", type_str_size);
-         else
-            strlcpy(type_str, "Point filtering", type_str_size);
+      case RGUI_SETTINGS_VIDEO_BILINEAR:
+         strlcpy(type_str, g_settings.video.smooth ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_GAMMA:
          snprintf(type_str, type_str_size, "%d", g_extern.console.screen.gamma_correction);
@@ -2183,8 +2180,8 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL:
          strlcpy(type_str, "...", type_str_size);
          break;
-#ifdef HAVE_FILTERS_BUILTIN
-      case RGUI_SETTINGS_VIDEO_SOFTFILTER:
+#ifdef HAVE_SCALERS_BUILTIN
+      case RGUI_SETTINGS_VIDEO_SOFT_SCALER:
          {
             const char *filter_name = rarch_softfilter_get_name(g_settings.video.filter_idx);
             strlcpy(type_str, filter_name ? filter_name : "OFF", type_str_size);

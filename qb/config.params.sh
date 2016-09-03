@@ -42,5 +42,5 @@ HAVE_NEON=no            # Forcefully enable ARM NEON optimizations
 HAVE_SSE=yes            # Forcefully enable x86 SSE optimizations (SSE, SSE2)
 HAVE_FLOATHARD=no       # Force hard float ABI (for ARM)
 HAVE_FLOATSOFTFP=no     # Force soft float ABI (for ARM)
-HAVE_FILTERS_BUILTIN=yes # Use filters bultin, otherwise it will load dynamically
+HAVE_SCALERS_BUILTIN=yes # Enable use of scaler postprocessing.
 HAVE_FILE_LOGGER=no     # Generate file with all the log information, otherwise ommited

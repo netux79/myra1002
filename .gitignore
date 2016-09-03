@@ -57,3 +57,8 @@ apple/RetroArch_iOS.xcodeproj/project.xcworkspace/*
 /phoenix/
 /python/
 /rsound.h
+config.h
+config.mk
+retroarch
+tools/retroarch-joyconfig
+tools/retrolaunch/retrolaunch
