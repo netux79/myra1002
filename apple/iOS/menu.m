@@ -598,7 +598,7 @@ static void RunActionSheet(const char* title, const struct string_list* items, U
 
 - (void)loadHistory
 {
-   NSString* history_path = [NSString stringWithFormat:@"%@/%s", [RetroArch_iOS get].systemDirectory, ".retroarch-game-history.txt"];
+   NSString* history_path = [NSString stringWithFormat:@"%@/%s", [RetroArch_iOS get].systemDirectory, "retroarch-game-history.txt"];
    [self.navigationController pushViewController:[[RAHistoryMenu alloc] initWithHistoryPath:history_path] animated:YES];
 }
 

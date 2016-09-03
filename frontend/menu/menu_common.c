@@ -346,7 +346,7 @@ static void menu_init_history(void)
       else
       {
          fill_pathname_resolve_relative(history_path, g_extern.config_path,
-               ".retroarch-game-history.txt", sizeof(history_path));
+               "retroarch-game-history.txt", sizeof(history_path));
       }
 
       RARCH_LOG("[RGUI]: Opening history: %s.\n", history_path);
