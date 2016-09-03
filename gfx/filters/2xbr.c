@@ -641,6 +641,8 @@ const softfilter_implementation_t twoxbr_implementation = {
    twoxbr_generic_destroy,
  
    twoxbr_generic_output,
+   NULL,
+   
    twoxbr_generic_render,
    "2xBR",
 };

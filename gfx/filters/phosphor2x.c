@@ -328,6 +328,8 @@ const softfilter_implementation_t phosphor2x_implementation = {
    phosphor2x_generic_destroy,
 
    phosphor2x_generic_output,
+   NULL,
+   
    phosphor2x_generic_render,
    "Phosphor2x",
 };

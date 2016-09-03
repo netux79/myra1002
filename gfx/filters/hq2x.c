@@ -3140,6 +3140,8 @@ const softfilter_implementation_t hq2x_implementation = {
    hq2x_generic_destroy,
 
    hq2x_generic_output,
+   NULL,
+   
    hq2x_generic_render,
    "HQ2x",
 };

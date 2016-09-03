@@ -280,6 +280,8 @@ const softfilter_implementation_t epx_implementation = {
    epx_generic_destroy,
 
    epx_generic_output,
+   NULL,
+   
    epx_generic_render,
    "EPX",
 };
@@ -292,6 +294,8 @@ const softfilter_implementation_t epxsmooth_implementation = {
    epx_generic_destroy,
 
    epx_generic_output,
+   NULL,
+   
    epxsmooth_generic_render,
    "EPX Smooth",
 };

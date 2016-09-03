@@ -178,6 +178,8 @@ const softfilter_implementation_t lq2x_implementation = {
    lq2x_generic_destroy,
 
    lq2x_generic_output,
+   NULL,
+   
    lq2x_generic_render,
    "LQ2x",
 };

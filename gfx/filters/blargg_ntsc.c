@@ -24,6 +24,9 @@
 #include "snes_ntsc/snes_ntsc.c"
 #endif
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MAX_LOWRES_WIDTH 340
+
 struct filter_data
 {
    unsigned in_fmt;
@@ -98,7 +101,15 @@ static void *blargg_ntsc_monochrome_create(unsigned in_fmt) { return blargg_ntsc
 static void blargg_ntsc_generic_output(void *data, unsigned *out_width, unsigned *out_height,
       unsigned width, unsigned height)
 {
-   *out_width  = (width > 480) ? SNES_NTSC_OUT_WIDTH(width / 2) : SNES_NTSC_OUT_WIDTH(width);
+   *out_width  = (width > MAX_LOWRES_WIDTH) ? SNES_NTSC_OUT_WIDTH(width / 2) : SNES_NTSC_OUT_WIDTH(width);
+   *out_height = height;
+}
+
+static void blargg_ntsc_generic_maxoutput(void *data, unsigned *out_width, unsigned *out_height,
+      unsigned width, unsigned height)
+{
+   unsigned max_width = (width > MAX_LOWRES_WIDTH) ? MAX(MAX_LOWRES_WIDTH, width / 2) : width;
+   *out_width  = SNES_NTSC_OUT_WIDTH(max_width);
    *out_height = height;
 }
 
@@ -117,7 +128,7 @@ static void blargg_ntsc_rgb565(void *data, int width, int height,
 {
    struct filter_data *filt = (struct filter_data*)data;
 
-   if(width > 480)
+   if(width > MAX_LOWRES_WIDTH)
       snes_ntsc_blit_hires(filt->ntsc, input, pitch, filt->burst, width, height, output, outpitch * 2);
    else
       snes_ntsc_blit(filt->ntsc, input, pitch, filt->burst, width, height, output, outpitch * 2);
@@ -145,6 +156,8 @@ const softfilter_implementation_t blargg_ntsc_rf_implementation = {
    blargg_ntsc_generic_destroy,
 
    blargg_ntsc_generic_output,
+   blargg_ntsc_generic_maxoutput,
+
    blargg_ntsc_generic_render,
    "Blargg NTSC RF",
 };
@@ -157,6 +170,8 @@ const softfilter_implementation_t blargg_ntsc_composite_implementation = {
    blargg_ntsc_generic_destroy,
 
    blargg_ntsc_generic_output,
+   blargg_ntsc_generic_maxoutput,
+
    blargg_ntsc_generic_render,
    "Blargg NTSC Composite",
 };
@@ -170,6 +185,8 @@ const softfilter_implementation_t blargg_ntsc_rgb_implementation = {
    blargg_ntsc_generic_destroy,
 
    blargg_ntsc_generic_output,
+   blargg_ntsc_generic_maxoutput,
+
    blargg_ntsc_generic_render,
    "Blargg NTSC RGB",
 };
@@ -182,6 +199,8 @@ const softfilter_implementation_t blargg_ntsc_svideo_implementation = {
    blargg_ntsc_generic_destroy,
 
    blargg_ntsc_generic_output,
+   blargg_ntsc_generic_maxoutput,
+
    blargg_ntsc_generic_render,
    "Blargg NTSC S-Video",
 };
@@ -194,6 +213,8 @@ const softfilter_implementation_t blargg_ntsc_monochrome_implementation = {
    blargg_ntsc_generic_destroy,
 
    blargg_ntsc_generic_output,
+   blargg_ntsc_generic_maxoutput,
+
    blargg_ntsc_generic_render,
    "Blargg NTSC Monochrome",
 };

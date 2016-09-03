@@ -157,7 +157,10 @@ void rarch_softfilter_free(rarch_softfilter_t *filt)
 void rarch_softfilter_get_max_output_size(rarch_softfilter_t *filt,
       unsigned *width, unsigned *height)
 {
-   rarch_softfilter_get_output_size(filt, width, height, filt->max_width, filt->max_height);
+   if (filt && filt->impl && filt->impl->query_output_maxsize)
+      filt->impl->query_output_maxsize(filt->impl_data, width, height, filt->max_width, filt->max_height);
+   else
+      rarch_softfilter_get_output_size(filt, width, height, filt->max_width, filt->max_height);
 }
 
 void rarch_softfilter_get_output_size(rarch_softfilter_t *filt,

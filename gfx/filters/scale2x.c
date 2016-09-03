@@ -145,6 +145,8 @@ const softfilter_implementation_t scale2x_implementation = {
    scale2x_generic_destroy,
 
    scale2x_generic_output,
+   NULL,
+   
    scale2x_generic_render,
    "Scale2x",
 };

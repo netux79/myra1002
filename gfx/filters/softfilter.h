@@ -45,7 +45,7 @@ typedef void *(*softfilter_create_t)(unsigned in_fmt);
 typedef void (*softfilter_destroy_t)(void *data);
 
 // Given an input size, query the output size of the filter.
-// If width and height == max_width/max_height, no other combination of width/height must return a larger size in any dimension.
+// If a max input size is given, no other combination of width/height must return a larger size in any dimension.
 typedef void (*softfilter_query_output_size_t)(void *data,
       unsigned *out_width, unsigned *out_height,
       unsigned width, unsigned height);
@@ -65,6 +65,7 @@ typedef struct softfilter_implementation
    softfilter_destroy_t destroy;
 
    softfilter_query_output_size_t query_output_size;
+   softfilter_query_output_size_t query_output_maxsize;
    softfilter_render_filter_t render_filter;
 
    const char *ident; // Human readable identifier of implementation.

@@ -240,6 +240,8 @@ const softfilter_implementation_t supertwoxsai_implementation = {
    supertwoxsai_generic_destroy,
 
    supertwoxsai_generic_output,
+   NULL,
+   
    supertwoxsai_generic_render,
    "Super2xSaI",
 };

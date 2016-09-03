@@ -245,6 +245,8 @@ const softfilter_implementation_t supereagle_implementation = {
    supereagle_generic_destroy,
 
    supereagle_generic_output,
+   NULL,
+   
    supereagle_generic_render,
    "SuperEagle",
 };

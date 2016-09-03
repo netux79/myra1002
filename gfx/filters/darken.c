@@ -108,6 +108,8 @@ const softfilter_implementation_t darken_implementation = {
    darken_destroy,
 
    darken_output,
+   NULL,
+   
    darken_render,
    "Darken",
 };

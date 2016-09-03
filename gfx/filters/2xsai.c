@@ -260,6 +260,8 @@ const softfilter_implementation_t twoxsai_implementation = {
    twoxsai_generic_destroy,
 
    twoxsai_generic_output,
+   NULL,
+   
    twoxsai_generic_render,
    "2xSaI",
 };
