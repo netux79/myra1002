@@ -27,6 +27,7 @@ android/phoenix/bin/
 android/phoenix/gen/
 .DS_Store
 */build/*
+*/xcbuild/*
 *.pbxuser
 !default.pbxuser
 *.mode1v3
