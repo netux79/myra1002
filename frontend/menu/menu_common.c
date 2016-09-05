@@ -1900,14 +1900,14 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #if defined(__CELLOS_LV2__)
          file_list_push(rgui->selection_buf, "PAL60 Mode", RGUI_SETTINGS_VIDEO_PAL60, 0);
 #endif
+#ifdef HAVE_SCALERS_BUILTIN
+         file_list_push(rgui->selection_buf, "Soft Scaling", RGUI_SETTINGS_VIDEO_SOFT_SCALER, 0);
+#endif
 #ifndef HAVE_SHADER_MANAGER
          file_list_push(rgui->selection_buf, "Bilinear Filtering", RGUI_SETTINGS_VIDEO_BILINEAR, 0);
 #endif
 #ifdef HW_RVL
          file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_VITRAP_FILTER, 0);
-#endif
-#ifdef HAVE_SCALERS_BUILTIN
-         file_list_push(rgui->selection_buf, "Soft Scaling", RGUI_SETTINGS_VIDEO_SOFT_SCALER, 0);
 #endif
 #if defined(HW_RVL) || defined(_XBOX360)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);
