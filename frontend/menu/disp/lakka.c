@@ -418,7 +418,6 @@ static void lakka_render(void *data, void *video_data)
    else if ((menu_type == RGUI_SETTINGS_INPUT_OPTIONS) ||
          (menu_type == RGUI_SETTINGS_PATH_OPTIONS) ||
          (menu_type == RGUI_SETTINGS_OPTIONS) ||
-         (menu_type == RGUI_SETTINGS_CUSTOM_VIEWPORT || menu_type == RGUI_SETTINGS_CUSTOM_VIEWPORT_2) ||
          menu_type == RGUI_SETTINGS_CUSTOM_BIND ||
          menu_type == RGUI_START_SCREEN ||
          menu_type == RGUI_SETTINGS)

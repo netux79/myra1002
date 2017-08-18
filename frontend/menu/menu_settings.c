@@ -1361,6 +1361,68 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif
          break;
 
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_X:
+         if (action == RGUI_ACTION_START)
+            g_extern.console.screen.viewports.custom_vp.x = 0;
+         else if (action == RGUI_ACTION_LEFT)
+               g_extern.console.screen.viewports.custom_vp.x--;
+         else if (action == RGUI_ACTION_RIGHT)
+               g_extern.console.screen.viewports.custom_vp.x++;
+
+         break;
+
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_Y:
+         if (action == RGUI_ACTION_START)
+            g_extern.console.screen.viewports.custom_vp.y = 0;
+         else if (action == RGUI_ACTION_LEFT)
+               g_extern.console.screen.viewports.custom_vp.y--;
+         else if (action == RGUI_ACTION_RIGHT)
+               g_extern.console.screen.viewports.custom_vp.y++;
+
+         break;
+
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH:
+         if (action == RGUI_ACTION_START)
+         {
+#ifdef GEKKO
+            unsigned w, h;
+            gx_get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
+            g_extern.console.screen.viewports.custom_vp.width = w;
+#else
+            rarch_viewport_t vp;
+            if (video_data && driver.video && driver.video->viewport_info)
+               driver.video->viewport_info(video_data, &vp);
+            g_extern.console.screen.viewports.custom_vp.width = vp.full_width;
+#endif
+         }
+         else if (action == RGUI_ACTION_LEFT)
+               g_extern.console.screen.viewports.custom_vp.width--;
+         else if (action == RGUI_ACTION_RIGHT)
+               g_extern.console.screen.viewports.custom_vp.width++;
+
+         break;
+
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT:
+         if (action == RGUI_ACTION_START)
+         {
+#ifdef GEKKO
+            unsigned w, h;
+            gx_get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
+            g_extern.console.screen.viewports.custom_vp.height = h;
+#else
+            rarch_viewport_t vp;
+            if (video_data && driver.video && driver.video->viewport_info)
+               driver.video->viewport_info(video_data, &vp);
+            g_extern.console.screen.viewports.custom_vp.height = vp.full_height;
+#endif
+         }
+         else if (action == RGUI_ACTION_LEFT)
+               g_extern.console.screen.viewports.custom_vp.height--;
+         else if (action == RGUI_ACTION_RIGHT)
+               g_extern.console.screen.viewports.custom_vp.height++;
+
+         break;
+
       case RGUI_SETTINGS_TOGGLE_FULLSCREEN:
          if (action == RGUI_ACTION_OK)
          {
@@ -2007,6 +2069,18 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_ASPECT_RATIO:
          strlcpy(type_str, aspectratio_lut[g_settings.video.aspect_ratio_idx].name, type_str_size);
          break;
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_X:
+         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.x);
+         break;
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_Y:
+         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.y);
+         break;
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH:
+         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.width);
+         break;
+      case RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT:
+         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.height);
+         break;
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
          strlcpy(type_str, gx_get_resolution(g_extern.console.screen.resolutions.current.id), type_str_size);
@@ -2156,7 +2230,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_OPEN_HISTORY:
       case RGUI_SETTINGS_CORE_OPTIONS:
       case RGUI_SETTINGS_CORE_INFO:
-      case RGUI_SETTINGS_CUSTOM_VIEWPORT:
       case RGUI_SETTINGS_TOGGLE_FULLSCREEN:
       case RGUI_SETTINGS_VIDEO_OPTIONS:
       case RGUI_SETTINGS_AUDIO_OPTIONS:

@@ -52,6 +52,7 @@ static unsigned gx_resolutions[][2] = {
    { 384, 240 },
    { 512, 240 },
    { 530, 240 },
+   { 576, 240 },
    { 640, 240 },
    { 512, 384 },
    { 598, 400 },
@@ -184,13 +185,13 @@ void gx_set_video_mode(void *data, unsigned res_index)
          max_height = VI_MAX_HEIGHT_MPAL;
          break;
       case VI_EURGB60:
-         max_width = VI_MAX_WIDTH_NTSC;
-         max_height = VI_MAX_HEIGHT_NTSC;
+         max_width = VI_MAX_WIDTH_EURGB60;
+         max_height = VI_MAX_HEIGHT_EURGB60;
          break;
       default:
          tvmode = VI_NTSC;
-         max_width = VI_MAX_WIDTH_EURGB60;
-         max_height = VI_MAX_HEIGHT_EURGB60;
+         max_width = VI_MAX_WIDTH_NTSC;
+         max_height = VI_MAX_HEIGHT_NTSC;
          break;
    }
 
@@ -334,6 +335,12 @@ const char *gx_get_resolution(unsigned res_index)
    
    snprintf(format, sizeof(format), "%.3ux%.3u", gx_resolutions[res_index][0], gx_resolutions[res_index][1]);
    return format;
+}
+
+void gx_get_resolution_size(unsigned res_index, unsigned *width, unsigned *height)
+{
+    *width  = gx_resolutions[res_index][0];
+    *height = gx_resolutions[res_index][1];
 }
 
 static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
@@ -557,10 +564,10 @@ static void *gx_init(const video_info_t *video,
    init_vtx(gx);
    build_disp_list();
 
-   gx->vp.full_width = gx_mode.fbWidth;
+   /*gx->vp.full_width = gx_mode.fbWidth;
    gx->vp.full_height = gx_mode.xfbHeight;
    gx->should_resize = true;
-   gx_old_width = gx_old_height = 0;
+   gx_old_width = gx_old_height = 0;*/
 
    return gx;
 }

@@ -46,6 +46,7 @@ typedef struct gx_video
 
 void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay);
 const char *gx_get_resolution(unsigned res_index);
+void gx_get_resolution_size(unsigned res_index, unsigned *width, unsigned *height);
 
 enum
 {
@@ -66,6 +67,7 @@ enum
    GX_RESOLUTIONS_384_240,
    GX_RESOLUTIONS_512_240,
    GX_RESOLUTIONS_530_240,
+   GX_RESOLUTIONS_576_240,
    GX_RESOLUTIONS_640_240,
    GX_RESOLUTIONS_512_384,
    GX_RESOLUTIONS_598_400,
