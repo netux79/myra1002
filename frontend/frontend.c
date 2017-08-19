@@ -189,7 +189,7 @@ int main_entry_iterate(signature(), args_type() args)
       // setup the screen for the current core
 	  gx_update_screen_config(driver.video_data,
 							  g_extern.console.screen.resolutions.current.id,
-							  g_settings.video.aspect_ratio_idx,
+							  g_settings.video.aspect_ratio_idx, g_settings.video.rotation,
 							  true);
 
       g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
@@ -222,7 +222,8 @@ int main_entry_iterate(signature(), args_type() args)
       video_set_nonblock_state_func(false);
 #ifdef GEKKO
       // Change video resolution to the preferred mode
-      gx_update_screen_config(driver.video_data, GX_RESOLUTIONS_AUTO, ASPECT_RATIO_4_3, false);
+      gx_update_screen_config(driver.video_data, GX_RESOLUTIONS_AUTO, ASPECT_RATIO_4_3, 
+                              ORIENTATION_NORMAL, false);
 #endif
       // Stop all rumbling when entering RGUI.
       for (i = 0; i < MAX_PLAYERS; i++)

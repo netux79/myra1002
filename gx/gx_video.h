@@ -44,7 +44,7 @@ typedef struct gx_video
 #endif
 } gx_video_t;
 
-void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay);
+void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, unsigned orientation, bool show_overlay);
 const char *gx_get_resolution(unsigned res_index);
 void gx_get_resolution_size(unsigned res_index, unsigned *width, unsigned *height);
 

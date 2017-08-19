@@ -366,24 +366,32 @@ static void gx_overlay_enable(void *data, bool state)
    gx->overlay_enable = (!driver.overlay) ? false : state;
 }
 
-void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, bool show_overlay)
+static void gx_set_rotation(void *data, unsigned orientation)
 {
-	static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
-	static unsigned actual_aspect_ratio_index = ASPECT_RATIO_4_3;
+   gx_video_t *gx = (gx_video_t*)data;
+   g_orientation = orientation;
+   gx->should_resize = true;
+}
 
-	if (res_index != actual_res_index)
-	{
-		gx_set_video_mode(data, res_index);
-		actual_res_index = res_index;
-	}
+void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, unsigned orientation, bool show_overlay)
+{
+    static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
+    static unsigned actual_aspect_ratio_index = ASPECT_RATIO_4_3;
 
-	if (aspect_idx != actual_aspect_ratio_index)
-	{
-		gx_set_aspect_ratio(data, aspect_idx);
-		actual_aspect_ratio_index = aspect_idx;
-	}
+    if (res_index != actual_res_index)
+    {
+        gx_set_video_mode(data, res_index);
+        actual_res_index = res_index;
+    }
 
-	gx_overlay_enable(data, show_overlay);
+    if (aspect_idx != actual_aspect_ratio_index)
+    {
+        gx_set_aspect_ratio(data, aspect_idx);
+        actual_aspect_ratio_index = aspect_idx;
+    }
+
+    gx_overlay_enable(data, show_overlay);
+    gx_set_rotation(data, orientation);
 }
 
 static void init_video_mode(void *data)
@@ -1180,13 +1188,6 @@ static void gx_free(void *data)
    gx_video_t *gx = (gx_video_t*)driver.video_data;
    gx_free_overlay(gx);
 #endif
-}
-
-static void gx_set_rotation(void *data, unsigned orientation)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   g_orientation = orientation;
-   gx->should_resize = true;
 }
 
 static void gx_set_texture_frame(void *data, const void *frame,

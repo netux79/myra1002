@@ -1211,22 +1211,18 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
       case RGUI_SETTINGS_VIDEO_ROTATION:
          if (action == RGUI_ACTION_START)
-         {
             g_settings.video.rotation = ORIENTATION_NORMAL;
-            video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
-         }
          else if (action == RGUI_ACTION_LEFT)
          {
-            if (g_settings.video.rotation > 0)
-               g_settings.video.rotation--;
-            video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
+            if (g_settings.video.rotation > 0) g_settings.video.rotation--;
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
-            if (g_settings.video.rotation < LAST_ORIENTATION)
-               g_settings.video.rotation++;
-            video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
+            if (g_settings.video.rotation < LAST_ORIENTATION) g_settings.video.rotation++;
          }
+#ifndef GEKKO
+         video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
+#endif
          break;
 
       case RGUI_SETTINGS_VIDEO_BILINEAR:
