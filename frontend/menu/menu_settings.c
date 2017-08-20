@@ -1301,29 +1301,20 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif
       case RGUI_SETTINGS_VIDEO_GAMMA:
          if (action == RGUI_ACTION_START)
-         {
             g_extern.console.screen.gamma_correction = 0;
-            if (driver.video_poke && driver.video_poke->apply_state_changes)
-               driver.video_poke->apply_state_changes(video_data);
-         }
          else if (action == RGUI_ACTION_LEFT)
          {
             if (g_extern.console.screen.gamma_correction > 0)
-            {
                g_extern.console.screen.gamma_correction--;
-               if (driver.video_poke && driver.video_poke->apply_state_changes)
-                  driver.video_poke->apply_state_changes(video_data);
-            }
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
             if (g_extern.console.screen.gamma_correction < MAX_GAMMA_SETTING)
-            {
                g_extern.console.screen.gamma_correction++;
-               if (driver.video_poke && driver.video_poke->apply_state_changes)
-                  driver.video_poke->apply_state_changes(video_data);
-            }
          }
+         
+         if (driver.video_poke && driver.video_poke->apply_state_changes)
+            driver.video_poke->apply_state_changes(video_data);   
          break;
 
       case RGUI_SETTINGS_VIDEO_INTEGER_SCALE:
@@ -1572,42 +1563,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          break;
 
-      case RGUI_SETTINGS_VIDEO_HARD_SYNC:
-         switch (action)
-         {
-            case RGUI_ACTION_START:
-               g_settings.video.hard_sync = false;
-               break;
-
-            case RGUI_ACTION_LEFT:
-            case RGUI_ACTION_RIGHT:
-            case RGUI_ACTION_OK:
-               g_settings.video.hard_sync = !g_settings.video.hard_sync;
-               break;
-
-            default:
-               break;
-         }
-         break;
-
-      case RGUI_SETTINGS_VIDEO_BLACK_FRAME_INSERTION:
-         switch (action)
-         {
-            case RGUI_ACTION_START:
-               g_settings.video.black_frame_insertion = false;
-               break;
-
-            case RGUI_ACTION_LEFT:
-            case RGUI_ACTION_RIGHT:
-            case RGUI_ACTION_OK:
-               g_settings.video.black_frame_insertion = !g_settings.video.black_frame_insertion;
-               break;
-
-            default:
-               break;
-         }
-         break;
-
       case RGUI_SETTINGS_VIDEO_CROP_OVERSCAN:
          switch (action)
          {
@@ -1705,30 +1660,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
          break;
       }
-
-      case RGUI_SETTINGS_VIDEO_HARD_SYNC_FRAMES:
-         switch (action)
-         {
-            case RGUI_ACTION_START:
-               g_settings.video.hard_sync_frames = 0;
-               break;
-
-            case RGUI_ACTION_LEFT:
-               if (g_settings.video.hard_sync_frames > 0)
-                  g_settings.video.hard_sync_frames--;
-               break;
-
-            case RGUI_ACTION_RIGHT:
-            case RGUI_ACTION_OK:
-               if (g_settings.video.hard_sync_frames < 3)
-                  g_settings.video.hard_sync_frames++;
-               break;
-
-            default:
-               break;
-         }
-         break;
-
       case RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO:
          switch (action)
          {
@@ -1994,12 +1925,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_VSYNC:
          strlcpy(type_str, g_settings.video.vsync ? "ON" : "OFF", type_str_size);
          break;
-      case RGUI_SETTINGS_VIDEO_HARD_SYNC:
-         strlcpy(type_str, g_settings.video.hard_sync ? "ON" : "OFF", type_str_size);
-         break;
-      case RGUI_SETTINGS_VIDEO_BLACK_FRAME_INSERTION:
-         strlcpy(type_str, g_settings.video.black_frame_insertion ? "ON" : "OFF", type_str_size);
-         break;
       case RGUI_SETTINGS_VIDEO_SWAP_INTERVAL:
          snprintf(type_str, type_str_size, "%u", g_settings.video.swap_interval);
          break;
@@ -2014,9 +1939,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_VIDEO_CROP_OVERSCAN:
          strlcpy(type_str, g_settings.video.crop_overscan ? "ON" : "OFF", type_str_size);
-         break;
-      case RGUI_SETTINGS_VIDEO_HARD_SYNC_FRAMES:
-         snprintf(type_str, type_str_size, "%u", g_settings.video.hard_sync_frames);
          break;
       case RGUI_SETTINGS_DRIVER_VIDEO:
          strlcpy(type_str, g_settings.video.driver, type_str_size);

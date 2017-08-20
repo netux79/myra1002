@@ -769,13 +769,6 @@ static bool d3d_frame(void *data, const void *frame,
    d3dr->SetViewport(&screen_vp);
    d3dr->Clear(0, 0, D3DCLEAR_TARGET, 0, 1, 0);
 
-   // Insert black frame first, so we can screenshot, etc.
-   if (g_settings.video.black_frame_insertion)
-   {
-      d3dr->Present(NULL, NULL, NULL, NULL);
-      d3dr->Clear(0, 0, D3DCLEAR_TARGET, 0, 1, 0);
-   }
-
    render_pass(d3d, frame, width, height, pitch, d3d->dev_rotation);
 
 #ifdef HAVE_MENU

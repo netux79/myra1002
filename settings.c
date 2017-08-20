@@ -245,9 +245,6 @@ void config_set_defaults(void)
    g_settings.video.fullscreen_y = fullscreen_y;
    g_settings.video.disable_composition = disable_composition;
    g_settings.video.vsync = vsync;
-   g_settings.video.hard_sync = hard_sync;
-   g_settings.video.hard_sync_frames = hard_sync_frames;
-   g_settings.video.black_frame_insertion = black_frame_insertion;
    g_settings.video.swap_interval = swap_interval;
    g_settings.video.threaded = video_threaded;
    g_settings.video.smooth = video_smooth;
@@ -784,13 +781,6 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_INT(video.monitor_index, "video_monitor_index");
    CONFIG_GET_BOOL(video.disable_composition, "video_disable_composition");
    CONFIG_GET_BOOL(video.vsync, "video_vsync");
-   CONFIG_GET_BOOL(video.hard_sync, "video_hard_sync");
-
-   CONFIG_GET_INT(video.hard_sync_frames, "video_hard_sync_frames");
-   if (g_settings.video.hard_sync_frames > 3)
-      g_settings.video.hard_sync_frames = 3;
-
-   CONFIG_GET_BOOL(video.black_frame_insertion, "video_black_frame_insertion");
    CONFIG_GET_INT(video.swap_interval, "video_swap_interval");
    g_settings.video.swap_interval = max(g_settings.video.swap_interval, 1);
    g_settings.video.swap_interval = min(g_settings.video.swap_interval, 4);
@@ -1298,9 +1288,6 @@ bool config_save_file(const char *path)
    config_set_float(conf, "video_refresh_rate", g_settings.video.refresh_rate);
    config_set_string(conf, "video_driver", g_settings.video.driver);
    config_set_bool(conf, "video_vsync", g_settings.video.vsync);
-   config_set_bool(conf, "video_hard_sync", g_settings.video.hard_sync);
-   config_set_int(conf, "video_hard_sync_frames", g_settings.video.hard_sync_frames);
-   config_set_bool(conf, "video_black_frame_insertion", g_settings.video.black_frame_insertion);
    config_set_int(conf, "video_swap_interval", g_settings.video.swap_interval);
    config_set_bool(conf, "video_gpu_screenshot", g_settings.video.gpu_screenshot);
    config_set_int(conf, "video_rotation", g_settings.video.rotation);

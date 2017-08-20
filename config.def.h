@@ -260,22 +260,9 @@ static const bool disable_composition = false;
 // Video VSYNC (recommended)
 static const bool vsync = true;
 
-// Attempts to hard-synchronize CPU and GPU. Can reduce latency at cost of performance.
-static const bool hard_sync = false;
-// Configures how many frames the GPU can run ahead of CPU.
-// 0: Syncs to GPU immediately.
-// 1: Syncs to previous frame.
-// 2: Etc ...
-static const unsigned hard_sync_frames = 0;
-
-// Inserts a black frame inbetween frames.
-// Useful for 120 Hz monitors who want to play 60 Hz material with eliminated ghosting. video_refresh_rate should still be configured as if it is a 60 Hz monitor (divide refresh rate by 2).
-static bool black_frame_insertion = false;
-
 // Uses a custom swap interval for VSync.
 // Set this to effectively halve monitor refresh rate.
 static unsigned swap_interval = 1;
-
 // Threaded video. Will possibly increase performance significantly at cost of worse synchronization and latency.
 static const bool video_threaded = false;
 

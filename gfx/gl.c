@@ -1472,11 +1472,6 @@ static bool gl_frame(void *data, const void *frame, unsigned width, unsigned hei
    memcpy(tex_info.coord, gl->tex_coords, sizeof(gl->tex_coords));
 
    glClear(GL_COLOR_BUFFER_BIT);
-   if (g_settings.video.black_frame_insertion)
-   {
-      context_swap_buffers_func(gl);
-      glClear(GL_COLOR_BUFFER_BIT);
-   }
 
    if (gl->shader)
       gl->shader->set_params(gl, width, height,
@@ -1546,27 +1541,6 @@ static bool gl_frame(void *data, const void *frame, unsigned width, unsigned hei
 
    context_swap_buffers_func(gl);
    g_extern.frame_count++;
-
-#ifdef HAVE_GL_SYNC
-   if (g_settings.video.hard_sync && gl->have_sync)
-   {
-      RARCH_PERFORMANCE_INIT(gl_fence);
-      RARCH_PERFORMANCE_START(gl_fence);
-      glClear(GL_COLOR_BUFFER_BIT);
-      gl->fences[gl->fence_count++] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-
-      while (gl->fence_count > g_settings.video.hard_sync_frames)
-      {
-         glClientWaitSync(gl->fences[0], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000);
-         glDeleteSync(gl->fences[0]);
-
-         gl->fence_count--;
-         memmove(gl->fences, gl->fences + 1, gl->fence_count * sizeof(GLsync));
-      }
-
-      RARCH_PERFORMANCE_STOP(gl_fence);
-   }
-#endif
 
 #ifndef HAVE_OPENGLES
    if (gl->core_context)
@@ -1702,8 +1676,6 @@ static bool resolve_extensions(gl_t *gl)
 
 #ifdef HAVE_GL_SYNC
    gl->have_sync = check_sync_proc(gl);
-   if (gl->have_sync && g_settings.video.hard_sync)
-      RARCH_LOG("[GL]: Using ARB_sync to reduce latency.\n");
 #endif
 
    driver.gfx_use_rgba = false;

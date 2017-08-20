@@ -741,18 +741,6 @@ static bool d3d_frame(void *data, const void *frame,
    d3d->dev->SetViewport(&screen_vp);
    d3d->dev->Clear(0, 0, D3DCLEAR_TARGET, 0, 1, 0);
 
-   // Insert black frame first, so we can screenshot, etc.
-   if (g_settings.video.black_frame_insertion)
-   {
-      if (d3d->dev->Present(NULL, NULL, NULL, NULL) != D3D_OK)
-      {
-         RARCH_ERR("[D3D]: Present() failed.\n");
-         d3d->needs_restore = true;
-         return true;
-      }
-      d3d->dev->Clear(0, 0, D3DCLEAR_TARGET, 0, 1, 0);
-   }
-
    if (!renderchain_render(d3d->chain, frame, width, height, pitch, d3d->dev_rotation))
    {
       RARCH_ERR("[D3D]: Failed to render scene.\n");
