@@ -1529,10 +1529,10 @@ void init_video_input(void)
       custom_vp->height = height;
       driver.video->viewport_info(driver.video_data, custom_vp);
    }
-
+#ifndef GEKKO
    if (driver.video->set_rotation)
       video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
-
+#endif
 #ifdef HAVE_X11
    if (driver.display_type == RARCH_DISPLAY_X11)
    {

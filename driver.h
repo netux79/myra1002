@@ -445,6 +445,11 @@ typedef struct video_poke_interface
 
    void (*show_mouse)(void *data, bool state);
    void (*grab_mouse_toggle)(void *data);
+#ifdef GEKKO
+   void (*update_screen_config)(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation, bool show_overlay);
+   const char *(*get_resolution)(unsigned res_index);
+   void (*get_resolution_size)(unsigned res_index, unsigned *width, unsigned *height);
+#endif
 } video_poke_interface_t;
 
 typedef struct video_driver

@@ -153,7 +153,12 @@ void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned heigh
       // This is sort of contradictory with the goal of integer scale,
       // but it is desirable in some cases.
       // If square pixels are used, base_height will be equal to g_extern.system.av_info.base_height.
-      unsigned base_width = (unsigned)roundf(base_height * aspect_ratio);
+      unsigned base_width;
+      
+      if (aspect_ratio == 0) 
+         base_width = g_extern.system.av_info.geometry.base_width;
+      else
+         base_width = (unsigned)roundf(base_height * aspect_ratio);
 
       // Make sure that we don't get 0x scale ...
       if (width >= base_width && height >= base_height)
@@ -204,7 +209,8 @@ struct aspect_ratio_elem aspectratio_lut[ASPECT_RATIO_END] = {
    { "Config",        0.0f },
    { "Square pixel",  1.0f },
    { "Core provided", 1.0f },
-   { "Custom",        0.0f }
+   { "Custom",        0.0f },
+   { "Original",      0.0f }   
 };
 
 char rotation_lut[4][32] =

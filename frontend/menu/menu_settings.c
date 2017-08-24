@@ -1324,9 +1324,10 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                action == RGUI_ACTION_RIGHT ||
                action == RGUI_ACTION_OK)
             g_settings.video.scale_integer = !g_settings.video.scale_integer;
-
+#ifndef GEKKO
          if (driver.video_poke && driver.video_poke->apply_state_changes)
             driver.video_poke->apply_state_changes(video_data);
+#endif            
          break;
 
       case RGUI_SETTINGS_VIDEO_ASPECT_RATIO:
@@ -1373,7 +1374,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          {
 #ifdef GEKKO
             unsigned w, h;
-            gx_get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
+            if (driver.video_poke && driver.video_poke->get_resolution_size)
+               driver.video_poke->get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
             g_extern.console.screen.viewports.custom_vp.width = w;
 #else
             rarch_viewport_t vp;
@@ -1394,7 +1396,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          {
 #ifdef GEKKO
             unsigned w, h;
-            gx_get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
+            if (driver.video_poke && driver.video_poke->get_resolution_size)
+               driver.video_poke->get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
             g_extern.console.screen.viewports.custom_vp.height = h;
 #else
             rarch_viewport_t vp;
@@ -2001,7 +2004,8 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
-         strlcpy(type_str, gx_get_resolution(g_extern.console.screen.resolutions.current.id), type_str_size);
+         if (driver.video_poke && driver.video_poke->get_resolution)
+            strlcpy(type_str, driver.video_poke->get_resolution(g_extern.console.screen.resolutions.current.id), type_str_size);
          break;
 #elif defined(__CELLOS_LV2__)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:

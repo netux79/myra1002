@@ -37,6 +37,8 @@ typedef struct gx_video
    bool rgui_texture_enable;
    rarch_viewport_t vp;
    unsigned scale;
+   bool scale_integer;
+   unsigned orientation;
 #ifdef HAVE_OVERLAY
    struct gx_overlay_data *overlay;
    unsigned overlays;
@@ -44,31 +46,25 @@ typedef struct gx_video
 #endif
 } gx_video_t;
 
-void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, unsigned orientation, bool show_overlay);
-const char *gx_get_resolution(unsigned res_index);
-void gx_get_resolution_size(unsigned res_index, unsigned *width, unsigned *height);
-
 enum
 {
-   GX_RESOLUTIONS_512_192 = 0,
-   GX_RESOLUTIONS_598_200,
-   GX_RESOLUTIONS_640_200,
-   GX_RESOLUTIONS_340_224,
-   GX_RESOLUTIONS_384_224,
-   GX_RESOLUTIONS_448_224,
-   GX_RESOLUTIONS_480_224,
-   GX_RESOLUTIONS_512_224,
-   GX_RESOLUTIONS_576_224,
-   GX_RESOLUTIONS_608_224,
-   GX_RESOLUTIONS_640_224,
-   GX_RESOLUTIONS_512_232,
-   GX_RESOLUTIONS_512_236,
-   GX_RESOLUTIONS_336_240,
-   GX_RESOLUTIONS_384_240,
-   GX_RESOLUTIONS_512_240,
-   GX_RESOLUTIONS_530_240,
-   GX_RESOLUTIONS_576_240,
-   GX_RESOLUTIONS_640_240,
+   GX_RESOLUTIONS_256_192 = 0,
+   GX_RESOLUTIONS_299_200,
+   GX_RESOLUTIONS_320_200,
+   GX_RESOLUTIONS_170_224,
+   GX_RESOLUTIONS_192_224,
+   GX_RESOLUTIONS_224_224,
+   GX_RESOLUTIONS_240_224,
+   GX_RESOLUTIONS_256_224,
+   GX_RESOLUTIONS_304_224,
+   GX_RESOLUTIONS_320_224,
+   GX_RESOLUTIONS_256_232,
+   GX_RESOLUTIONS_256_236,
+   GX_RESOLUTIONS_192_240,
+   GX_RESOLUTIONS_256_240,
+   GX_RESOLUTIONS_265_240,
+   GX_RESOLUTIONS_288_240,
+   GX_RESOLUTIONS_320_240,
    GX_RESOLUTIONS_512_384,
    GX_RESOLUTIONS_598_400,
    GX_RESOLUTIONS_640_400,
@@ -77,7 +73,6 @@ enum
    GX_RESOLUTIONS_448_448,
    GX_RESOLUTIONS_480_448,
    GX_RESOLUTIONS_512_448,
-   GX_RESOLUTIONS_576_448,
    GX_RESOLUTIONS_608_448,
    GX_RESOLUTIONS_640_448,
    GX_RESOLUTIONS_512_464,
@@ -85,6 +80,7 @@ enum
    GX_RESOLUTIONS_384_480,
    GX_RESOLUTIONS_512_480,
    GX_RESOLUTIONS_530_480,
+   GX_RESOLUTIONS_576_480,
    GX_RESOLUTIONS_640_480,
    GX_RESOLUTIONS_AUTO,
    GX_RESOLUTIONS_LAST = GX_RESOLUTIONS_AUTO,

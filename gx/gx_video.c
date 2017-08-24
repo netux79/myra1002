@@ -35,43 +35,41 @@
 #define SYSMEM1_SIZE 0x01800000
 
 static unsigned gx_resolutions[][2] = {
-   { 512, 192 },
-   { 598, 200 },
-   { 640, 200 },
-   { 340, 224 },
-   { 384, 224 },
-   { 448, 224 },
-   { 480, 224 },
-   { 512, 224 },
-   { 576, 224 },
-   { 608, 224 },
-   { 640, 224 },
-   { 512, 232 },
-   { 512, 236 },
-   { 336, 240 },
-   { 384, 240 },
-   { 512, 240 },
-   { 530, 240 },
-   { 576, 240 },
-   { 640, 240 },
-   { 512, 384 },
-   { 598, 400 },
-   { 640, 400 },
-   { 340, 448 },
-   { 384, 448 },
-   { 448, 448 },
-   { 480, 448 },
-   { 512, 448 },
-   { 576, 448 },
-   { 608, 448 },
-   { 640, 448 },
-   { 512, 464 },
-   { 512, 472 },
-   { 384, 480 },
-   { 512, 480 },
-   { 530, 480 },
-   { 640, 480 },
-   { 0, 0 },
+    { 256, 192 },
+    { 299, 200 },
+    { 320, 200 },
+    { 170, 224 },
+    { 192, 224 },
+    { 224, 224 },
+    { 240, 224 },
+    { 256, 224 },
+    { 304, 224 },
+    { 320, 224 },
+    { 256, 232 },
+    { 256, 236 },
+    { 192, 240 },
+    { 256, 240 },
+    { 265, 240 },
+    { 288, 240 },
+    { 320, 240 },
+    { 512, 384 },
+    { 598, 400 },
+    { 640, 400 },
+    { 340, 448 },
+    { 384, 448 },
+    { 448, 448 },
+    { 480, 448 },
+    { 512, 448 },
+    { 608, 448 },
+    { 640, 448 },
+    { 512, 464 },
+    { 512, 472 },
+    { 384, 480 },
+    { 512, 480 },
+    { 530, 480 },
+    { 576, 448 },
+    { 640, 480 },
+    { 0, 0 },
 };
 
 void *g_framebuf[2];
@@ -80,7 +78,6 @@ unsigned g_current_framebuf;
 bool g_vsync;
 lwpq_t g_video_cond;
 volatile bool g_draw_done;
-uint32_t g_orientation;
 
 static struct
 {
@@ -268,7 +265,6 @@ void gx_set_video_mode(void *data, unsigned res_index)
    gx->vp.full_width = gx_mode.fbWidth;
    gx->vp.full_height = gx_mode.xfbHeight;
    gx->double_strike = (modetype == VI_NON_INTERLACE);
-   gx->should_resize = true;
 
    if (rgui)
    {
@@ -356,7 +352,6 @@ static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
 
    gx->aspect_ratio_idx = aspect_ratio_idx;
    gx->aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
-   gx->should_resize = true;
 }
 
 static void gx_overlay_enable(void *data, bool state)
@@ -369,19 +364,19 @@ static void gx_overlay_enable(void *data, bool state)
 static void gx_set_rotation(void *data, unsigned orientation)
 {
    gx_video_t *gx = (gx_video_t*)data;
-   g_orientation = orientation;
-   gx->should_resize = true;
+   gx->orientation = orientation;
 }
 
-void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx, unsigned orientation, bool show_overlay)
+void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation, bool show_overlay)
 {
+    gx_video_t *gx = (gx_video_t*)data;
     static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
-    static unsigned actual_aspect_ratio_index = ASPECT_RATIO_4_3;
+    static unsigned actual_aspect_ratio_index = ASPECT_RATIO_END;
 
-    if (res_index != actual_res_index)
+    if (res_idx != actual_res_index)
     {
-        gx_set_video_mode(data, res_index);
-        actual_res_index = res_index;
+        gx_set_video_mode(data, res_idx);
+        actual_res_index = res_idx;
     }
 
     if (aspect_idx != actual_aspect_ratio_index)
@@ -392,6 +387,11 @@ void gx_update_screen_config(void *data, unsigned res_index, unsigned aspect_idx
 
     gx_overlay_enable(data, show_overlay);
     gx_set_rotation(data, orientation);
+    
+    gx->scale_integer = scale_integer;
+    
+    // Apply changes...
+    gx->should_resize = true;
 }
 
 static void init_video_mode(void *data)
@@ -399,7 +399,6 @@ static void init_video_mode(void *data)
    for (unsigned i = 0; i < 2; i++)
       g_framebuf[i] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
 
-   g_orientation = ORIENTATION_NORMAL;
    LWP_InitQueue(&g_video_cond);
 
    GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
@@ -526,6 +525,15 @@ static void gx_efb_screenshot(void)
 
 #endif
 
+static void gx_apply_state_changes(void *data)
+{
+   (void)data;
+#ifdef HW_RVL
+   VIDEO_SetTrapFilter(g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE));
+#endif
+   GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
+}
+
 static void gx_restart(void) { }
 
 static void *gx_init(const video_info_t *video,
@@ -552,7 +560,10 @@ static void *gx_init(const video_info_t *video,
 
       gx->rgb32 = video->rgb32;
       gx->scale = video->input_scale;
-      gx->should_resize = true;
+      
+      gx_apply_state_changes(driver.video_data);
+      
+      //gx->should_resize = true;
       return driver.video_data;
    }
 
@@ -571,11 +582,6 @@ static void *gx_init(const video_info_t *video,
    init_video_mode(gx);
    init_vtx(gx);
    build_disp_list();
-
-   /*gx->vp.full_width = gx_mode.fbWidth;
-   gx->vp.full_height = gx_mode.xfbHeight;
-   gx->should_resize = true;
-   gx_old_width = gx_old_height = 0;*/
 
    return gx;
 }
@@ -729,72 +735,67 @@ static void convert_texture32(const uint32_t *_src, uint32_t *_dst,
 static void gx_resize(void *data)
 {
    gx_video_t *gx = (gx_video_t*)data;
+   
+   /* Default to full screen size. */
+   gx->vp.x      = 0;
+   gx->vp.y      = 0;
+   gx->vp.width  = gx->vp.full_width;
+   gx->vp.height = gx->vp.full_height;
 
-   int x = 0, y = 0;
-   unsigned width = gx->vp.full_width, height = gx->vp.full_height;
-
-#ifdef HW_RVL
-   VIDEO_SetTrapFilter(g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE));
-#endif
-   GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
-
-   if (gx_mode.efbHeight > 240 || gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM) /* ignore this for custom resolutions */
+   if (gx->scale_integer)
    {
-      float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f;
+      gfx_scale_integer(&gx->vp, gx->vp.width, gx->vp.height, 
+                       (gx->double_strike ? 0.0f : gx->aspect_ratio), 
+                        true);
+   }
+   else if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
+   {
+      if (!g_extern.console.screen.viewports.custom_vp.width || !g_extern.console.screen.viewports.custom_vp.height)
+      {
+         g_extern.console.screen.viewports.custom_vp.x = 0;
+         g_extern.console.screen.viewports.custom_vp.y = 0;
+         g_extern.console.screen.viewports.custom_vp.width = gx->vp.full_width;
+         g_extern.console.screen.viewports.custom_vp.height = gx->vp.full_height;
+      }
+
+      gx->vp.x      = g_extern.console.screen.viewports.custom_vp.x;
+      gx->vp.y      = g_extern.console.screen.viewports.custom_vp.y;
+      gx->vp.width  = g_extern.console.screen.viewports.custom_vp.width;
+      gx->vp.height = g_extern.console.screen.viewports.custom_vp.height;
+   }
+   else if (!gx->double_strike) /* Apply aspect ratio just to non-240p resolutions */
+   {
+      float delta;
+      float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f; // 4:3
 #ifdef HW_RVL
       float device_aspect = CONF_GetAspectRatio() == CONF_ASPECT_4_3 ? 4.0 / 3.0 : 16.0 / 9.0;
 #else
       float device_aspect = 4.0 / 3.0;
 #endif
-      if (g_orientation == ORIENTATION_VERTICAL || g_orientation == ORIENTATION_FLIPPED_ROTATED)
+      if (gx->orientation == ORIENTATION_VERTICAL || gx->orientation == ORIENTATION_FLIPPED_ROTATED)
          desired_aspect = 1.0 / desired_aspect;
-      float delta;
 
-#ifdef RARCH_CONSOLE
-      if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
+      if (fabs(device_aspect - desired_aspect) < 0.0001)
       {
-         if (!g_extern.console.screen.viewports.custom_vp.width || !g_extern.console.screen.viewports.custom_vp.height)
-         {
-            g_extern.console.screen.viewports.custom_vp.x = 0;
-            g_extern.console.screen.viewports.custom_vp.y = 0;
-            g_extern.console.screen.viewports.custom_vp.width = gx->vp.full_width;
-            g_extern.console.screen.viewports.custom_vp.height = gx->vp.full_height;
-         }
-
-         x      = g_extern.console.screen.viewports.custom_vp.x;
-         y      = g_extern.console.screen.viewports.custom_vp.y;
-         width  = g_extern.console.screen.viewports.custom_vp.width;
-         height = g_extern.console.screen.viewports.custom_vp.height;
+        /* If the aspect ratios of screen and desired aspect ratio are 
+           sufficiently equal (floating point stuff),
+           assume they are actually equal. */
+      }
+      else if (device_aspect > desired_aspect)
+      {
+         delta        = (desired_aspect / device_aspect - 1.0) / 2.0 + 0.5;
+         gx->vp.x     = (unsigned)(gx->vp.width * (0.5 - delta));
+         gx->vp.width = (unsigned)(2.0 * gx->vp.width * delta);
       }
       else
-#endif
       {
-         if (fabs(device_aspect - desired_aspect) < 0.0001)
-         {
-            // If the aspect ratios of screen and desired aspect ratio are sufficiently equal (floating point stuff),
-            // assume they are actually equal.
-         }
-         else if (device_aspect > desired_aspect)
-         {
-            delta = (desired_aspect / device_aspect - 1.0) / 2.0 + 0.5;
-            x     = (unsigned)(width * (0.5 - delta));
-            width = (unsigned)(2.0 * width * delta);
-         }
-         else
-         {
-            delta  = (device_aspect / desired_aspect - 1.0) / 2.0 + 0.5;
-            y      = (unsigned)(height * (0.5 - delta));
-            height = (unsigned)(2.0 * height * delta);
-         }
+         delta         = (device_aspect / desired_aspect - 1.0) / 2.0 + 0.5;
+         gx->vp.y      = (unsigned)(gx->vp.height * (0.5 - delta));
+         gx->vp.height = (unsigned)(2.0 * gx->vp.height * delta);
       }
    }
 
-   gx->vp.x      = x;
-   gx->vp.y      = y;
-   gx->vp.width  = width;
-   gx->vp.height = height;
-
-   GX_SetViewportJitter(x, y, width, height, 0, 1, 1);
+   GX_SetViewportJitter(gx->vp.x, gx->vp.y, gx->vp.width, gx->vp.height, 0, 1, 1);
 
    Mtx44 m1, m2;
    float top = 1, bottom = -1, left = -1, right = 1;
@@ -803,7 +804,7 @@ static void gx_resize(void *data)
    GX_LoadPosMtxImm(m1, GX_PNMTX1);
 
    unsigned degrees;
-   switch(g_orientation)
+   switch(gx->orientation)
    {
       case ORIENTATION_VERTICAL:
          degrees = 90;
@@ -818,6 +819,7 @@ static void gx_resize(void *data)
          degrees = 0;
          break;
    }
+   
    guMtxIdentity(m2);
    guMtxRotDeg(m2, 'Z', degrees);
    guMtxConcat(m1, m2, m1);
@@ -1207,14 +1209,6 @@ static void gx_set_texture_enable(void *data, bool enable, bool full_screen)
    (void)full_screen;
    gx_video_t *gx = (gx_video_t*)data;
    gx->rgui_texture_enable = enable;
-   // need to make sure the game texture is the right pixel format for menu overlay
-   gx->should_resize = true;
-}
-
-static void gx_apply_state_changes(void *data)
-{
-   gx_video_t *gx = (gx_video_t*)data;
-   gx->should_resize = true;
 }
 
 static void gx_viewport_info(void *data, struct rarch_viewport *vp)
@@ -1223,12 +1217,28 @@ static void gx_viewport_info(void *data, struct rarch_viewport *vp)
    *vp = gx->vp;
 }
 
+static void gx_set_filtering(void *data, unsigned index, bool smooth)
+{
+    gx_video_t *gx = (gx_video_t*)data;
+    (void)index;
+    (void)smooth;
+    
+    //It is applied on the resize method, so we just ensure it is called
+    gx->should_resize = true;
+}
+
 static const video_poke_interface_t gx_poke_interface = {
-   NULL,
+   gx_set_filtering,
    gx_set_aspect_ratio,
    gx_apply_state_changes,
    gx_set_texture_frame,
    gx_set_texture_enable,
+   NULL,
+   NULL,
+   NULL,
+   gx_update_screen_config,
+   gx_get_resolution,
+   gx_get_resolution_size
 };
 
 static void gx_get_poke_interface(void *data, const video_poke_interface_t **iface)

@@ -815,7 +815,7 @@ bool config_load_file(const char *path, bool set_defaults)
    /* TODO - will be refactored later to make it more clean - it's more 
     * important that it works for consoles right now */
 
-   CONFIG_GET_BOOL_EXTERN(console.screen.gamma_correction, "gamma_correction");
+   CONFIG_GET_INT_EXTERN(console.screen.gamma_correction, "gamma_correction");
 
    bool triple_buffering_enable = false;
    bool custom_bgm_enable = false;
@@ -1339,7 +1339,7 @@ bool config_save_file(const char *path)
    config_set_int(conf, "input_autodetect_icade_profile_pad4", g_settings.input.icade_profile[3]);
 #endif
 
-   config_set_bool(conf, "gamma_correction", g_extern.console.screen.gamma_correction);
+   config_set_int(conf, "gamma_correction", g_extern.console.screen.gamma_correction);
 #ifdef _XBOX1
    config_set_int(conf, "sound_volume_level", g_extern.console.sound.volume_level);
 #endif
