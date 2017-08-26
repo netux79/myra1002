@@ -271,7 +271,8 @@ void load_menu_game_prepare(void *video_data)
          char str[PATH_MAX];
 
          fill_pathname_base(tmp, g_extern.fullpath, sizeof(tmp));
-         snprintf(str, sizeof(str), "Loading %s ...", tmp);
+         path_remove_extension(tmp);
+         snprintf(str, sizeof(str), "- Starting -\n%s", tmp);
          msg_queue_push(g_extern.msg_queue, str, 1, 1);
       }
 

@@ -177,18 +177,6 @@ static void rgui_render_background(rgui_handle_t *rgui)
 {
    fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
          0, 0, rgui->width, rgui->height, gray_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         5, 5, rgui->width - 10, 5, green_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         5, rgui->height - 10, rgui->width - 10, 5, green_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         5, 5, 5, rgui->height - 10, green_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         rgui->width - 10, 5, 5, rgui->height - 10, green_filler);
 }
 
 static void rgui_render_messagebox(void *data, void *video_data, const char *message)
@@ -233,19 +221,7 @@ static void rgui_render_messagebox(void *data, void *video_data, const char *mes
    int y = (rgui->height - height) / 2;
 
    fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         x + 5, y + 5, width - 10, height - 10, gray_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         x, y, width - 5, 5, green_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         x + width - 5, y, 5, height - 5, green_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         x + 5, y + height - 5, width - 5, 5, green_filler);
-
-   fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         x, y + 5, 5, height - 5, green_filler);
+         x, y, width, height, green_filler);
 
    for (i = 0; i < list->size; i++)
    {
