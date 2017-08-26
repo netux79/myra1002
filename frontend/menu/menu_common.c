@@ -1332,19 +1332,6 @@ bool menu_iterate(void *video_data)
    if (menu_ctx && menu_ctx->input_postprocess)
       ret = menu_ctx->input_postprocess(rgui, rgui->old_input_state);
 
-#if 0
-   if (ret < 0)
-   {
-      unsigned type = 0;
-      file_list_get_last(rgui->menu_stack, NULL, &type);
-      while (type != RGUI_SETTINGS)
-      {
-         file_list_pop(rgui->menu_stack, &rgui->selection_ptr);
-         file_list_get_last(rgui->menu_stack, NULL, &type);
-      }
-   }
-#endif
-
    if (ret || input_entry_ret)
       goto deinit;
 

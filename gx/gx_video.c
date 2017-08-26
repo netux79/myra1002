@@ -135,16 +135,6 @@ void gx_set_video_mode(void *data, unsigned res_index)
    bool progressive;
    gx_video_t *gx = (gx_video_t*)data;
 
-   /* stop vsync callback */
-   VIDEO_SetPostRetraceCallback(NULL);
-   g_draw_done = false;
-   /* wait for next even field, this prevents screen artefacts
-    * when switching between interlaced & non-interlaced modes */
-   do VIDEO_WaitVSync();
-   while (!VIDEO_GetNextField());
-
-   VIDEO_SetBlack(true);
-   VIDEO_Flush();
    viHeightMultiplier = 1;
    viWidth = 640;
 #if defined(HW_RVL)
@@ -294,6 +284,17 @@ void gx_set_video_mode(void *data, unsigned res_index)
    GX_InvalidateTexAll();
    GX_Flush();
 
+   /* stop vsync callback */
+   VIDEO_SetPostRetraceCallback(NULL);
+   g_draw_done = false;
+   /* wait for next even field, this prevents screen artefacts
+    * when switching between interlaced & non-interlaced modes */
+   do VIDEO_WaitVSync();
+   while (!VIDEO_GetNextField());
+
+   VIDEO_SetBlack(true);
+   VIDEO_Flush();
+
    VIDEO_Configure(&gx_mode);
    VIDEO_ClearFrameBuffer(&gx_mode, g_framebuf[0], COLOR_BLACK);
    VIDEO_ClearFrameBuffer(&gx_mode, g_framebuf[1], COLOR_BLACK);
@@ -302,7 +303,8 @@ void gx_set_video_mode(void *data, unsigned res_index)
    VIDEO_SetPostRetraceCallback(retrace_callback);
    VIDEO_SetBlack(false);
    VIDEO_Flush();
-   VIDEO_WaitVSync();
+   do VIDEO_WaitVSync();
+   while (!VIDEO_GetNextField());
 
    if (tvmode == VI_PAL)
    {
@@ -1209,6 +1211,8 @@ static void gx_set_texture_enable(void *data, bool enable, bool full_screen)
    (void)full_screen;
    gx_video_t *gx = (gx_video_t*)data;
    gx->rgui_texture_enable = enable;
+   /* need to make sure the game texture is the right pixel format for menu overlay */
+   gx->should_resize = true;
 }
 
 static void gx_viewport_info(void *data, struct rarch_viewport *vp)
