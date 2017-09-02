@@ -10,6 +10,8 @@ const char *gxpad_label(uint8_t pad_idx, uint8_t b_idx);
 bool gxpad_buttonavail(uint8_t pad_idx, uint8_t b_idx);
 uint8_t gxpad_nanalogs(uint8_t pad_idx);
 int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx);
+void gxpad_rumbleoff(uint8_t pad_idx);
+void gxpad_rumbleon(uint8_t pad_idx);
 #define gxpad_js_lx(a) gxpad_analog(a, 0)
 #define gxpad_js_ly(a) gxpad_analog(a, 1)
 #define gxpad_js_rx(a) gxpad_analog(a, 2)

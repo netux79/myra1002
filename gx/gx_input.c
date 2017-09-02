@@ -355,6 +355,16 @@ static uint64_t gx_input_get_capabilities(void *data)
    return caps;
 }
 
+static bool gx_input_set_rumble(void *data, unsigned port, enum retro_rumble_effect effect, uint16_t strength)
+{
+   if (strength)
+      gxpad_rumbleon(port);
+   else
+      gxpad_rumbleoff(port);
+      
+   return true;
+}
+
 static const rarch_joypad_driver_t *gx_input_get_joypad_driver(void *data)
 {
    return &gx_joypad;
@@ -371,9 +381,8 @@ const input_driver_t input_gx = {
    NULL,
    gx_input_get_capabilities,
    "gx",
-
    NULL,
-   NULL,
+   gx_input_set_rumble,
    gx_input_get_joypad_driver,
 };
 

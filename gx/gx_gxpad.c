@@ -30,6 +30,7 @@ typedef struct _gxpadsetup {
 	uint8_t		num_analogs;
 	uint8_t		type;
 	void 		(*read_pad)(uint8_t pad_idx);
+    void 		(*rumble_pad)(uint8_t pad_idx, uint8_t action);
 } gxpadsetup;
 
 struct gxpad {
@@ -88,10 +89,12 @@ static const char* gx_labels[] = {
 };
 
 static void _gx_read_gc(uint8_t pad_idx);
+static void _gx_rumble_gc(uint8_t pad_idx, uint8_t action);
 #ifdef HW_RVL
 static void _gx_read_wiimote(uint8_t pad_idx);
 static void _gx_read_classic(uint8_t pad_idx);
 static void _gx_read_nunchuk(uint8_t pad_idx);
+static void _gx_rumble_wiimote(uint8_t pad_idx, uint8_t action);
 #endif
 
 /* The order here is the same set in wpad.h as the expansions list,
@@ -105,7 +108,7 @@ static const gxpadsetup _gx_pad_config[] = {
 		GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
 		{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 		GX_A, GX_2, GX_NA, GX_NA, GX_NA, GX_NA, GX_HOME},
-		0, WPAD_EXP_WIIMOTE, _gx_read_wiimote},
+		0, WPAD_EXP_WIIMOTE, _gx_read_wiimote, _gx_rumble_wiimote},
 	{"Wiimote + Nunchuk",
 		{WPAD_BUTTON_B, WPAD_BUTTON_1, WPAD_BUTTON_MINUS, WPAD_BUTTON_PLUS,
 		WPAD_BUTTON_UP, WPAD_BUTTON_DOWN, WPAD_BUTTON_LEFT, WPAD_BUTTON_RIGHT,
@@ -113,7 +116,7 @@ static const gxpadsetup _gx_pad_config[] = {
 		GX_NO_BUTTON, GX_NO_BUTTON, WPAD_BUTTON_HOME},
 		{GX_B, GX_1, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 		GX_A, GX_2, GX_Z, GX_C, GX_NA, GX_NA, GX_HOME},
-		2, WPAD_EXP_NUNCHUK, _gx_read_nunchuk},
+		2, WPAD_EXP_NUNCHUK, _gx_read_nunchuk, _gx_rumble_wiimote},
 	{"Classic",
 		{WPAD_CLASSIC_BUTTON_B, WPAD_CLASSIC_BUTTON_Y, WPAD_CLASSIC_BUTTON_MINUS, WPAD_CLASSIC_BUTTON_PLUS,
 		WPAD_CLASSIC_BUTTON_UP, WPAD_CLASSIC_BUTTON_DOWN, WPAD_CLASSIC_BUTTON_LEFT, WPAD_CLASSIC_BUTTON_RIGHT,
@@ -121,7 +124,7 @@ static const gxpadsetup _gx_pad_config[] = {
 		WPAD_CLASSIC_BUTTON_ZL, WPAD_CLASSIC_BUTTON_ZR, WPAD_CLASSIC_BUTTON_HOME},
 		{GX_B, GX_Y, GX_MINUS, GX_PLUS, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 		GX_A, GX_X, GX_L, GX_R, GX_ZL, GX_ZR, GX_HOME},
-		4, WPAD_EXP_CLASSIC, _gx_read_classic},
+		4, WPAD_EXP_CLASSIC, _gx_read_classic, NULL},
 #endif
 	{"Gamecube Pad",
 		{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
@@ -130,7 +133,7 @@ static const gxpadsetup _gx_pad_config[] = {
 		GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
 		{GX_B, GX_Y, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
 		GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
-		4, WPAD_EXP_GAMECUBE, _gx_read_gc},
+		4, WPAD_EXP_GAMECUBE, _gx_read_gc, _gx_rumble_gc},
 };
 
 static bool _gx_inited = false;
@@ -327,6 +330,12 @@ static void _gx_read_gc(uint8_t pad_idx) {
 	}
 }
 
+static void _gx_rumble_gc(uint8_t pad_idx, uint8_t action) {
+    struct gxpad *p = _gx_list[pad_idx];
+    
+    PAD_ControlMotor(p->p_slot, action);
+}
+
 #ifdef HW_RVL
 static void _gx_read_wiimote(uint8_t pad_idx) {
 	struct gxpad *p = _gx_list[pad_idx];
@@ -364,6 +373,12 @@ static void _gx_read_classic(uint8_t pad_idx) {
 	p->a_state[1] = GX_JS_32_INV(e->classic.ljs.pos.y);
 	p->a_state[2] = GX_JS_16(e->classic.rjs.pos.x);
 	p->a_state[3] = GX_JS_16_INV(e->classic.rjs.pos.y);
+}
+
+static void _gx_rumble_wiimote(uint8_t pad_idx, uint8_t action) {
+    struct gxpad *p = _gx_list[pad_idx];
+    
+    WPAD_Rumble(p->p_slot, action);
 }
 #endif
 
@@ -448,9 +463,9 @@ const char *gxpad_padname(uint8_t pad_idx) {
 
 int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx) {
 	if (pad_idx < GX_MAX_PADS) {
-		struct gxpad *pad = _gx_list[pad_idx];
-		if (pad && a_idx < pad->config->num_analogs) {
-			return pad->a_state[a_idx];
+		struct gxpad *p = _gx_list[pad_idx];
+		if (p && a_idx < p->config->num_analogs) {
+			return p->a_state[a_idx];
 		}
 	}
 
@@ -471,6 +486,22 @@ uint8_t gxpad_nanalogs(uint8_t pad_idx) {
 	}
 
 	return 0;
+}
+
+void gxpad_rumbleoff(uint8_t pad_idx) {
+	if (pad_idx < GX_MAX_PADS) {
+		struct gxpad *p = _gx_list[pad_idx];
+		if (p && p->config->rumble_pad)
+            p->config->rumble_pad(pad_idx, PAD_MOTOR_STOP);
+	}
+}
+
+void gxpad_rumbleon(uint8_t pad_idx) {
+	if (pad_idx < GX_MAX_PADS) {
+		struct gxpad *p = _gx_list[pad_idx];
+		if (p && p->config->rumble_pad)
+            p->config->rumble_pad(pad_idx, PAD_MOTOR_RUMBLE);
+	}
 }
 
 uint8_t gxpad_mlbuttons(void) {
