@@ -423,7 +423,7 @@ static void lakka_render(void *data, void *video_data)
          menu_type == RGUI_SETTINGS)
       snprintf(title, sizeof(title), "MENU %s", dir);
    else if (menu_type == RGUI_SETTINGS_OPEN_HISTORY)
-      strlcpy(title, "LOAD HISTORY", sizeof(title));
+      strlcpy(title, "LOAD RECENT", sizeof(title));
 #ifdef HAVE_OVERLAY
    else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
       snprintf(title, sizeof(title), "OVERLAY %s", dir);
