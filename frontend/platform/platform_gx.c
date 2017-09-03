@@ -96,7 +96,8 @@ static void salamander_init(void)
          {
             config_get_array(conf, "libretro_path", tmp_str, sizeof(tmp_str));
             config_file_free(conf);
-            strlcpy(libretro_path, tmp_str, sizeof(libretro_path));
+            if (path_file_exists(tmp_str))
+                strlcpy(libretro_path, tmp_str, sizeof(libretro_path));
          }
       }
 
