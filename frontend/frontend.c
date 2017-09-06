@@ -95,12 +95,6 @@ static void rarch_get_environment_console(void)
 #define attempt_load_game true
 #endif
 
-#if defined(RARCH_CONSOLE) || defined(HAVE_BB10) || defined(ANDROID)
-#define initial_menu_lifecycle_state (1ULL << MODE_LOAD_GAME)
-#else
-#define initial_menu_lifecycle_state (1ULL << MODE_GAME)
-#endif
-
 #if !defined(RARCH_CONSOLE) && !defined(HAVE_BB10) && !defined(ANDROID)
 #define attempt_load_game_push_history true
 #else
@@ -122,10 +116,6 @@ static void rarch_get_environment_console(void)
 #else
 #define load_dummy_on_core_shutdown true
 #endif
-
-#define frontend_init_enable true
-#define menu_init_enable true
-#define initial_lifecycle_state_preinit false
 
 int main_entry_iterate(signature(), args_type() args)
 {
@@ -327,13 +317,10 @@ returntype main_entry(signature())
    declare_argv();
    args_type() args = (args_type())args_initial_ptr();
 
-   if (frontend_init_enable)
-   {
-      frontend_ctx = (frontend_ctx_driver_t*)frontend_ctx_init_first();
 
-      if (frontend_ctx && frontend_ctx->init)
-         frontend_ctx->init(args);
-   }
+   frontend_ctx = (frontend_ctx_driver_t*)frontend_ctx_init_first();
+   if (frontend_ctx && frontend_ctx->init)
+      frontend_ctx->init(args);
 
    if (!ra_preinited)
    {
@@ -354,14 +341,14 @@ returntype main_entry(signature())
    }
 
 #if defined(HAVE_MENU)
-   if (menu_init_enable)
-      menu_init(driver.video_data);
+   menu_init(driver.video_data);
 
    if (frontend_ctx && frontend_ctx->process_args)
       frontend_ctx->process_args(argc, argv, args);
 
-   if (!initial_lifecycle_state_preinit)
-      g_extern.lifecycle_state |= initial_menu_lifecycle_state;
+   /* Attempt to load a game if a path is provided */
+   if (*g_extern.fullpath)
+      g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
 
    if (attempt_load_game_push_history)
    {
