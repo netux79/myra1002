@@ -329,11 +329,8 @@ static const char *default_libretro_path = NULL;
 static const bool crop_overscan = true;
 
 // Font size for on-screen messages.
-#if defined(HAVE_RMENU)
-static const float font_size = 1.0f;
-#else
 static const float font_size = 48;
-#endif
+
 // Attempt to scale the font size.
 // The scale factor will be window_size / desktop_size.
 static const bool font_scale = true;

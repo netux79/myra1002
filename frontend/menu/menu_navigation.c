@@ -20,59 +20,37 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
-#ifdef HAVE_RMENU_XUI
-#include <xui.h>
-#endif
 #include "menu_common.h"
 #include "menu_navigation.h"
-
-#ifdef HAVE_RMENU_XUI
-extern HXUIOBJ m_menulist;
-#endif
 
 void menu_clear_navigation(void *data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
    rgui->selection_ptr = 0;
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, rgui->selection_ptr);
-#endif
 }
 
 void menu_decrement_navigation(void *data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
    rgui->selection_ptr--;
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, rgui->selection_ptr);
-#endif
 }
 
 void menu_increment_navigation(void *data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
    rgui->selection_ptr++;
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, rgui->selection_ptr);
-#endif
 }
 
 void menu_set_navigation(void *data, size_t i)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
    rgui->selection_ptr = i; 
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, rgui->selection_ptr);
-#endif
 }
 
 void menu_set_navigation_last(void *data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
    rgui->selection_ptr = rgui->selection_buf->size - 1;
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, rgui->selection_ptr);
-#endif
 }
 
 void menu_descend_alphabet(void *data, size_t *ptr_out)
@@ -87,9 +65,6 @@ void menu_descend_alphabet(void *data, size_t *ptr_out)
    while (i && rgui->scroll_indices[i - 1] >= ptr)
       i--;
    *ptr_out = rgui->scroll_indices[i - 1];
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, *ptr_out);
-#endif
 }
 
 void menu_ascend_alphabet(void *data, size_t *ptr_out)
@@ -104,7 +79,4 @@ void menu_ascend_alphabet(void *data, size_t *ptr_out)
    while (i < rgui->scroll_indices_size - 1 && rgui->scroll_indices[i + 1] <= ptr)
       i++;
    *ptr_out = rgui->scroll_indices[i + 1];
-#ifdef HAVE_RMENU_XUI
-   XuiListSetCurSelVisible(m_menulist, *ptr_out);
-#endif
 }

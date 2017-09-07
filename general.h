@@ -337,10 +337,6 @@ struct global
    bool has_set_libretro_device[MAX_PLAYERS];
    bool has_set_libretro;
 
-#ifdef HAVE_RMENU
-   char menu_texture_path[PATH_MAX];
-#endif
-
    // Config associated with global "default" config.
    char config_path[PATH_MAX];
    char append_config_path[PATH_MAX];

@@ -22,10 +22,6 @@
 
 #ifdef _XBOX
 
-#ifdef HAVE_RMENU_XUI
-extern bool menu_iterate_xui(void);
-#endif
-
 #else
 
 #include "../context/win32_common.h"
@@ -779,13 +775,6 @@ static bool d3d_frame(void *data, const void *frame,
 #endif
 
    RARCH_PERFORMANCE_STOP(d3d_frame);
-
-#ifdef HAVE_MENU
-#ifdef HAVE_RMENU_XUI
-   if (g_extern.lifecycle_state & (1ULL << MODE_MENU))
-      menu_iterate_xui();
-#endif
-#endif
 
    if (d3d && d3d->ctx_driver && d3d->ctx_driver->update_window_title)
       d3d->ctx_driver->update_window_title(d3d);

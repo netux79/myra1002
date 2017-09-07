@@ -2407,20 +2407,20 @@ error:
 
 static inline bool check_enter_rgui(void)
 {
-   static bool old_rmenu_toggle = true;
+   static bool old_rgui_toggle = true;
 
    // Always go into menu if dummy core is loaded.
-   bool rmenu_toggle = input_key_pressed_func(RARCH_MENU_TOGGLE) || (g_extern.libretro_dummy && !old_rmenu_toggle);
-   if (rmenu_toggle && !old_rmenu_toggle)
+   bool rgui_toggle = input_key_pressed_func(RARCH_MENU_TOGGLE) || (g_extern.libretro_dummy && !old_rgui_toggle);
+   if (rgui_toggle && !old_rgui_toggle)
    {
       g_extern.lifecycle_state |= (1ULL << MODE_MENU_PREINIT);
-      old_rmenu_toggle = true;
+      old_rgui_toggle = true;
       g_extern.system.frame_time_last = 0;
       return true;
    }
    else
    {
-      old_rmenu_toggle = rmenu_toggle;
+      old_rgui_toggle = rgui_toggle;
       return false;
    }
 }

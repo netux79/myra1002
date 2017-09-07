@@ -1593,9 +1593,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                break;
          }
 
-#ifndef HAVE_RMENU
          rgui->need_refresh = true;
-#endif
+         
          break;
       case RGUI_SETTINGS_SHADER_APPLY:
       {

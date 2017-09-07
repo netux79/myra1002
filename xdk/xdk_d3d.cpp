@@ -504,10 +504,6 @@ static void *d3d_init(const video_info_t *vid, const input_driver_t **input, voi
    return d3d;
 }
 
-#ifdef HAVE_RMENU
-extern struct texture_image *menu_texture;
-#endif
-
 #ifdef _XBOX1
 static bool texture_image_render(void *data, struct texture_image *out_img,
                           int x, int y, int w, int h, bool force_fullscreen)
@@ -579,27 +575,9 @@ static bool texture_image_render(void *data, struct texture_image *out_img,
 
 #ifdef HAVE_MENU
 
-#ifdef HAVE_RMENU_XUI
-extern bool menu_iterate_xui(void);
-#endif
-
 static void d3d_draw_texture(void *data)
 {
-   d3d_video_t *d3d = (d3d_video_t*)data;
-#if defined(HAVE_RMENU)
-   menu_texture->x = 0;
-   menu_texture->y = 0;
-
-   if (d3d->rgui_texture_enable)
-   {
-      d3d->dev->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
-      d3d->dev->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
-      d3d->dev->SetRenderState(D3DRS_ALPHABLENDENABLE, true);
-      texture_image_render(d3d, menu_texture, menu_texture->x, menu_texture->y,
-         d3d->screen_width, d3d->screen_height, true);
-      d3d->dev->SetRenderState(D3DRS_ALPHABLENDENABLE, false);
-   }
-#endif
+   (void)data;
 }
 #endif
 
@@ -772,11 +750,6 @@ static bool d3d_frame(void *data, const void *frame,
    render_pass(d3d, frame, width, height, pitch, d3d->dev_rotation);
 
 #ifdef HAVE_MENU
-#ifdef HAVE_RMENU_XUI
-   if (g_extern.lifecycle_state & (1ULL << MODE_MENU))
-      menu_iterate_xui();
-#endif
-
    if (d3d && d3d->rgui_texture_enable)
       d3d_draw_texture(d3d);
 #endif

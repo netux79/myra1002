@@ -547,20 +547,8 @@ MENU
 #include "../frontend/menu/history.c"
 #include "../frontend/menu/file_list.c"
 
-#ifdef HAVE_RMENU
-#include "../frontend/menu/disp/rmenu.c"
-#endif
-
 #ifdef HAVE_RGUI
 #include "../frontend/menu/disp/rgui.c"
-#endif
-
-#ifdef HAVE_RMENU_XUI
-#include "../frontend/menu/disp/rmenu_xui.cpp"
-#endif
-
-#if defined(HAVE_LAKKA) && defined(HAVE_OPENGL)
-#include "../frontend/menu/disp/lakka.c"
 #endif
 
 #endif

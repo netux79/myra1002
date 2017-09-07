@@ -25,8 +25,6 @@ for f in *_ps3.a ; do
    rm -f ../retroarch_ps3.elf ../retroarch_ps3.self ../CORE.SELF
 done
 
-cp -r ../media/rmenu/*.png ../ps3/pkg/USRDIR/cores/borders/Menu/
-
 make -C ../ -f Makefile.griffin platform=ps3 shaders-deploy
 
 $MAKE_FSELF_NPDRM ../retroarch-salamander_ps3.elf ../ps3/pkg/USRDIR/EBOOT.BIN

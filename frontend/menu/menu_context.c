@@ -23,17 +23,8 @@
 #include "menu_common.h"
 
 static const menu_ctx_driver_t *menu_ctx_drivers[] = {
-#if defined(HAVE_RMENU)
-   &menu_ctx_rmenu,
-#endif
-#if defined(HAVE_RMENU_XUI)
-   &menu_ctx_rmenu_xui,
-#endif
 #if defined(HAVE_RGUI)
    &menu_ctx_rgui,
-#endif
-#if defined(HAVE_LAKKA)
-   &menu_ctx_lakka,
 #endif
    NULL // zero length array is not valid
 };
