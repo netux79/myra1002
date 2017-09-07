@@ -35,8 +35,6 @@ const char *config_get_default_audio(void)
 {
    switch (AUDIO_DEFAULT_DRIVER)
    {
-      case AUDIO_RSOUND:
-         return "rsound";
       case AUDIO_OSS:
          return "oss";
       case AUDIO_ALSA:
@@ -151,84 +149,13 @@ const char *config_get_default_input(void)
    }
 }
 
-#ifdef HAVE_OSK
-const char *config_get_default_osk(void)
-{
-   switch (OSK_DEFAULT_DRIVER)
-   {
-      case OSK_PS3:
-         return "ps3osk";
-      case OSK_NULL:
-         return "null";
-      default:
-         return NULL;
-   }
-}
-#endif
-
-#ifdef HAVE_CAMERA
-const char *config_get_default_camera(void)
-{
-   switch (CAMERA_DEFAULT_DRIVER)
-   {
-      case CAMERA_V4L2:
-         return "video4linux2";
-      case CAMERA_RWEBCAM:
-         return "rwebcam";
-      case CAMERA_NULL:
-         return "null";
-      case CAMERA_ANDROID:
-         return "android";
-      case CAMERA_IOS:
-         return "ios";
-      default:
-         return NULL;
-   }
-}
-#endif
-
-#ifdef HAVE_LOCATION
-const char *config_get_default_location(void)
-{
-   switch (LOCATION_DEFAULT_DRIVER)
-   {
-      case LOCATION_ANDROID:
-         return "android";
-      case LOCATION_APPLE:
-         return "apple";
-      default:
-         return NULL;
-   }
-}
-#endif
-
-
 void config_set_defaults(void)
 {
    unsigned i, j;
    const char *def_video = config_get_default_video();
    const char *def_audio = config_get_default_audio();
    const char *def_input = config_get_default_input();
-#ifdef HAVE_CAMERA
-   const char *def_camera = config_get_default_camera();
 
-   if (def_camera)
-      strlcpy(g_settings.camera.driver, def_camera, sizeof(g_settings.camera.driver));
-#endif
-
-#ifdef HAVE_LOCATION
-   const char *def_location = config_get_default_location();
-
-   if (def_location)
-      strlcpy(g_settings.location.driver, def_location, sizeof(g_settings.location.driver));
-#endif
-
-#ifdef HAVE_OSK
-   const char *def_osk = config_get_default_osk();
-
-   if (def_osk)
-      strlcpy(g_settings.osk.driver, def_osk, sizeof(g_settings.osk.driver));
-#endif
    if (def_video)
       strlcpy(g_settings.video.driver, def_video, sizeof(g_settings.video.driver));
    if (def_audio)
@@ -300,8 +227,6 @@ void config_set_defaults(void)
    g_settings.savestate_auto_index = savestate_auto_index;
    g_settings.savestate_auto_save  = savestate_auto_save;
    g_settings.savestate_auto_load  = savestate_auto_load;
-   g_settings.network_cmd_enable   = network_cmd_enable;
-   g_settings.network_cmd_port     = network_cmd_port;
    g_settings.stdin_cmd_enable     = stdin_cmd_enable;
    g_settings.game_history_size    = game_history_size;
    g_settings.libretro_log_level   = libretro_log_level;
@@ -336,7 +261,6 @@ void config_set_defaults(void)
             rarch_assert(j == g_settings.input.binds[i][j].id);
 
    g_settings.input.axis_threshold = axis_threshold;
-   g_settings.input.netplay_client_swap_input = netplay_client_swap_input;
    g_settings.input.turbo_period = turbo_period;
    g_settings.input.turbo_duty_cycle = turbo_duty_cycle;
    g_settings.input.overlay_opacity = 0.7f;
@@ -891,7 +815,6 @@ bool config_load_file(const char *path, bool set_defaults)
       *g_settings.video.shader_dir = '\0';
 
    CONFIG_GET_FLOAT(input.axis_threshold, "input_axis_threshold");
-   CONFIG_GET_BOOL(input.netplay_client_swap_input, "netplay_client_swap_input");
 
    for (i = 0; i < MAX_PLAYERS; i++)
    {
@@ -922,10 +845,6 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_STRING(audio.resampler, "audio_resampler");
    g_extern.audio_data.volume_db   = g_settings.audio.volume;
    g_extern.audio_data.volume_gain = db_to_gain(g_settings.audio.volume);
-
-#ifdef HAVE_CAMERA
-   CONFIG_GET_STRING(camera.device, "camera_device");
-#endif
 
    CONFIG_GET_STRING(video.driver, "video_driver");
    CONFIG_GET_STRING(video.gl_context, "video_gl_context");
@@ -1003,8 +922,6 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_BOOL(savestate_auto_save, "savestate_auto_save");
    CONFIG_GET_BOOL(savestate_auto_load, "savestate_auto_load");
 
-   CONFIG_GET_BOOL(network_cmd_enable, "network_cmd_enable");
-   CONFIG_GET_INT(network_cmd_port, "network_cmd_port");
    CONFIG_GET_BOOL(stdin_cmd_enable, "stdin_cmd_enable");
 
    CONFIG_GET_PATH(game_history_path, "game_history_path");
@@ -1294,9 +1211,6 @@ bool config_save_file(const char *path)
    config_set_path(conf, "screenshot_directory", *g_settings.screenshot_directory ? g_settings.screenshot_directory : "default");
    config_set_int(conf, "aspect_ratio_index", g_settings.video.aspect_ratio_idx);
    config_set_string(conf, "audio_device", g_settings.audio.device);
-#ifdef HAVE_CAMERA
-   config_set_string(conf, "camera_device", g_settings.camera.device);
-#endif
    config_set_bool(conf, "audio_rate_control", g_settings.audio.rate_control);
    config_set_float(conf, "audio_rate_control_delta", g_settings.audio.rate_control_delta);
    config_set_string(conf, "audio_driver", g_settings.audio.driver);

@@ -412,11 +412,7 @@ const rarch_setting_t* setting_data_get_list()
          CONFIG_STRING(g_settings.audio.driver,             "audio_driver",               "Audio Driver",               config_get_default_audio())
          CONFIG_STRING(g_settings.input.driver,             "input_driver",               "Input Driver",               config_get_default_input())
          CONFIG_STRING(g_settings.input.joypad_driver,      "input_joypad_driver",        "Joypad Driver",              "")
-         CONFIG_STRING(g_settings.input.keyboard_layout,    "input_keyboard_layout",      "Keyboard Layout",            DEFAULT_ME_YO)
-
-         #ifdef HAVE_CAMERA
-         CONFIG_STRING(g_settings.camera.device,            "camera_device",              "Camera Driver",              config_get_default_camera())
-         #endif         
+         CONFIG_STRING(g_settings.input.keyboard_layout,    "input_keyboard_layout",      "Keyboard Layout",            DEFAULT_ME_YO)       
       END_SUB_GROUP()
    END_GROUP()
 
@@ -597,7 +593,6 @@ const rarch_setting_t* setting_data_get_list()
       END_SUB_GROUP()
 
       START_SUB_GROUP("Misc")
-         CONFIG_BOOL(g_settings.input.netplay_client_swap_input, "netplay_client_swap_input", "Swap Netplay Input",     netplay_client_swap_input)
          CONFIG_BOOL(g_settings.input.debug_enable,         "input_debug_enable",         "Enable Input Debugging",     input_debug_enable)
       END_SUB_GROUP()
 
@@ -652,8 +647,6 @@ const rarch_setting_t* setting_data_get_list()
    START_GROUP("Misc")
       START_SUB_GROUP("Misc")
          CONFIG_BOOL(g_extern.config_save_on_exit,          "config_save_on_exit",        "Save Config On Exit",        config_save_on_exit)
-         CONFIG_BOOL(g_settings.network_cmd_enable,         "network_cmd_enable",         "Network Commands",           network_cmd_enable)
-         //CONFIG_INT(g_settings.network_cmd_port,            "network_cmd_port",           "Network Command Port",       network_cmd_port)
          CONFIG_BOOL(g_settings.stdin_cmd_enable,           "stdin_cmd_enable",           "stdin command",              stdin_cmd_enable)
       END_SUB_GROUP()
    END_GROUP()

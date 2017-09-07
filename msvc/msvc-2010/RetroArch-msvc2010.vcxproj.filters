@@ -19,7 +19,6 @@
     <ClCompile Include="..\..\hash.c" />
     <ClCompile Include="..\..\message_queue.c" />
     <ClCompile Include="..\..\movie.c" />
-    <ClCompile Include="..\..\netplay.c" />
     <ClCompile Include="..\..\patch.c" />
     <ClCompile Include="..\..\retroarch.c" />
     <ClCompile Include="..\..\rewind.c" />

@@ -304,7 +304,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-DHAVE_GRIFFIN",
-					"-DHAVE_LOCATION",
 					"-DHAVE_RGUI",
 					"-DHAVE_MENU",
 					"-DOSX",
@@ -321,7 +320,6 @@
 					"-DHAVE_ZLIB",
 					"-DWANT_MINIZ",
 					"-DSINC_LOWER_QUALITY",
-					"-DHAVE_NETPLAY",
 					"-DRARCH_INTERNAL",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -358,7 +356,6 @@
 					"-DNS_BLOCK_ASSERTIONS=1",
 					"-DNDEBUG",
 					"-DHAVE_GRIFFIN",
-					"-DHAVE_LOCATION",
 					"-DHAVE_RGUI",
 					"-DHAVE_MENU",
 					"-DOSX",
@@ -375,7 +372,6 @@
 					"-DHAVE_ZLIB",
 					"-DWANT_MINIZ",
 					"-DSINC_LOWER_QUALITY",
-					"-DHAVE_NETPLAY",
 					"-DRARCH_INTERNAL",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -15,11 +15,6 @@
 
 #include "command.h"
 
-#ifdef HAVE_NETWORK_CMD
-#include "netplay_compat.h"
-#include "netplay.h"
-#endif
-
 #include "driver.h"
 #include "general.h"
 #include "compat/strl.h"
@@ -32,7 +27,6 @@
 #include <unistd.h>
 #endif
 
-#define DEFAULT_NETWORK_CMD_PORT 55355
 #define STDIN_BUF_SIZE 4096
 
 struct rarch_cmd
@@ -41,10 +35,6 @@ struct rarch_cmd
    bool stdin_enable;
    char stdin_buf[STDIN_BUF_SIZE];
    size_t stdin_buf_ptr;
-#endif
-
-#ifdef HAVE_NETWORK_CMD
-   int net_fd;
 #endif
 
    bool state[RARCH_BIND_LIST_END];
@@ -59,55 +49,6 @@ static bool socket_nonblock(int fd)
    return fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) == 0;
 #endif
 }
-
-#ifdef HAVE_NETWORK_CMD
-static bool cmd_init_network(rarch_cmd_t *handle, uint16_t port)
-{
-   if (!netplay_init_network())
-      return false;
-
-   RARCH_LOG("Bringing up command interface on port %hu.\n", (unsigned short)port);
-
-   struct addrinfo hints, *res = NULL;
-   memset(&hints, 0, sizeof(hints));
-#if defined(_WIN32) || defined(HAVE_SOCKET_LEGACY)
-   hints.ai_family   = AF_INET;
-#else
-   hints.ai_family   = AF_UNSPEC;
-#endif
-   hints.ai_socktype = SOCK_DGRAM;
-   hints.ai_flags    = AI_PASSIVE;
-
-   char port_buf[16];
-   int yes = 1;
-
-   snprintf(port_buf, sizeof(port_buf), "%hu", (unsigned short)port);
-   if (getaddrinfo(NULL, port_buf, &hints, &res) < 0)
-      goto error;
-
-   handle->net_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-   if (handle->net_fd < 0)
-      goto error;
-
-   if (!socket_nonblock(handle->net_fd))
-      goto error;
-
-   setsockopt(handle->net_fd, SOL_SOCKET, SO_REUSEADDR, CONST_CAST &yes, sizeof(int));
-   if (bind(handle->net_fd, res->ai_addr, res->ai_addrlen) < 0)
-   {
-      RARCH_ERR("Failed to bind socket.\n");
-      goto error;
-   }
-
-   freeaddrinfo(res);
-   return true;
-
-error:
-   if (res)
-      freeaddrinfo(res);
-   return false;
-}
-#endif
 
 #ifdef HAVE_STDIN_CMD
 static bool cmd_init_stdin(rarch_cmd_t *handle)
@@ -128,14 +69,8 @@ rarch_cmd_t *rarch_cmd_new(bool stdin_enable, bool network_enable, uint16_t port
    if (!handle)
       return NULL;
 
-#ifdef HAVE_NETWORK_CMD
-   handle->net_fd = -1;
-   if (network_enable && !cmd_init_network(handle, port))
-      goto error;
-#else
    (void)network_enable;
    (void)port;
-#endif
 
 #ifdef HAVE_STDIN_CMD
    handle->stdin_enable = stdin_enable;
@@ -154,11 +89,6 @@ error:
 
 void rarch_cmd_free(rarch_cmd_t *handle)
 {
-#ifdef HAVE_NETWORK_CMD
-   if (handle->net_fd >= 0)
-      close(handle->net_fd);
-#endif
-
    free(handle);
 }
 
@@ -321,36 +251,6 @@ bool rarch_cmd_get(rarch_cmd_t *handle, unsigned id)
    return id < RARCH_BIND_LIST_END && handle->state[id];
 }
 
-#ifdef HAVE_NETWORK_CMD
-static void network_cmd_pre_frame(rarch_cmd_t *handle)
-{
-   if (handle->net_fd < 0)
-      return;
-
-   fd_set fds;
-   FD_ZERO(&fds);
-   FD_SET(handle->net_fd, &fds);
-
-   struct timeval tmp_tv = {0};
-   if (select(handle->net_fd + 1, &fds, NULL, NULL, &tmp_tv) <= 0)
-      return;
-
-   if (!FD_ISSET(handle->net_fd, &fds))
-      return;
-
-   for (;;)
-   {
-      char buf[1024];
-      ssize_t ret = recvfrom(handle->net_fd, buf, sizeof(buf) - 1, 0, NULL, NULL);
-      if (ret <= 0)
-         break;
-
-      buf[ret] = '\0';
-      parse_msg(handle, buf);
-   }
-}
-#endif
-
 #ifdef HAVE_STDIN_CMD
 
 #ifdef _WIN32
@@ -493,128 +393,7 @@ void rarch_cmd_pre_frame(rarch_cmd_t *handle)
 {
    memset(handle->state, 0, sizeof(handle->state));
 
-#ifdef HAVE_NETWORK_CMD
-   network_cmd_pre_frame(handle);
-#endif
-
 #ifdef HAVE_STDIN_CMD
    stdin_cmd_pre_frame(handle);
 #endif
 }
-
-#ifdef HAVE_NETWORK_CMD
-static bool send_udp_packet(const char *host, uint16_t port, const char *msg)
-{
-   struct addrinfo hints, *res = NULL;
-   memset(&hints, 0, sizeof(hints));
-#if defined(_WIN32) || defined(HAVE_SOCKET_LEGACY)
-   hints.ai_family   = AF_INET;
-#else
-   hints.ai_family   = AF_UNSPEC;
-#endif
-   hints.ai_socktype = SOCK_DGRAM;
-
-   int fd = -1;
-   bool ret = true;
-   char port_buf[16];
-
-   snprintf(port_buf, sizeof(port_buf), "%hu", (unsigned short)port);
-   if (getaddrinfo(host, port_buf, &hints, &res) < 0)
-      return false;
-
-   // Send to all possible targets.
-   // "localhost" might resolve to several different IPs.
-   const struct addrinfo *tmp = res;
-   while (tmp)
-   {
-      fd = socket(tmp->ai_family, tmp->ai_socktype, tmp->ai_protocol);
-      if (fd < 0)
-      {
-         ret = false;
-         goto end;
-      }
-
-      ssize_t len = strlen(msg);
-      ssize_t ret_len = sendto(fd, msg, len, 0, tmp->ai_addr, tmp->ai_addrlen);
-      if (ret_len < len)
-      {
-         ret = false;
-         goto end;
-      }
-
-      close(fd);
-      fd = -1;
-      tmp = tmp->ai_next;
-   }
-
-end:
-   freeaddrinfo(res);
-   if (fd >= 0)
-      close(fd);
-   return ret;
-}
-
-static bool verify_command(const char *cmd)
-{
-   unsigned i;
-   if (command_get_arg(cmd, NULL, NULL))
-      return true;
-
-   RARCH_ERR("Command \"%s\" is not recognized by RetroArch.\n", cmd);
-   RARCH_ERR("\tValid commands:\n");
-   for (i = 0; i < sizeof(map) / sizeof(map[0]); i++)
-      RARCH_ERR("\t\t%s\n", map[i].str);
-
-   for (i = 0; i < sizeof(action_map) / sizeof(action_map[0]); i++)
-      RARCH_ERR("\t\t%s %s\n", action_map[i].str, action_map[i].arg_desc);
-
-   return false;
-}
-
-bool network_cmd_send(const char *cmd_)
-{
-   if (!netplay_init_network())
-      return NULL;
-
-   char *command = strdup(cmd_);
-   if (!command)
-      return false;
-
-   bool old_verbose = g_extern.verbose;
-   g_extern.verbose = true;
-
-   const char *cmd = NULL;
-   const char *host = NULL;
-   const char *port_ = NULL;
-   uint16_t port = DEFAULT_NETWORK_CMD_PORT;
-
-   char *save;
-   cmd = strtok_r(command, ";", &save);
-   if (cmd)
-      host = strtok_r(NULL, ";", &save);
-   if (host)
-      port_ = strtok_r(NULL, ";", &save);
-
-   if (!host)
-   {
-#ifdef _WIN32
-      host = "127.0.0.1";
-#else
-      host = "localhost";
-#endif
-   }
-
-   if (port_)
-      port = strtoul(port_, NULL, 0);
-
-   RARCH_LOG("Sending command: \"%s\" to %s:%hu\n", cmd, host, (unsigned short)port);
-
-   bool ret = verify_command(cmd) && send_udp_packet(host, port, cmd);
-   free(command);
-
-   g_extern.verbose = old_verbose;
-   return ret;
-}
-#endif
-
-

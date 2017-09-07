@@ -72,7 +72,6 @@ HAVE_OPENGL = 1
 HAVE_FBO = 1
 HAVE_DYLIB = 1
 HAVE_D3D9 = 1
-HAVE_NETPLAY = 1
 HAVE_STDIN_CMD = 1
 HAVE_THREADS = 1
 HAVE_RGUI = 1
@@ -86,16 +85,14 @@ ifeq ($(SLIM),)
    HAVE_LIBXML2 = 1
    HAVE_FREETYPE = 1
    HAVE_ZLIB = 1
-   HAVE_RSOUND = 1
    HAVE_CG = 1
    HAVE_PYTHON = 1
-   HAVE_FFMPEG = 1
 endif
 
 libretro ?= -lretro
 
 LIBS = -lm
-DEFINES = -I. -DHAVE_SCREENSHOTS -DHAVE_BSV_MOVIE -DHAVE_BUILTIN_AUTOCONFIG -DRARCH_INTERNAL
+DEFINES = -I. -DHAVE_SCREENSHOTS -DHAVE_BUILTIN_AUTOCONFIG -DRARCH_INTERNAL
 LDFLAGS = -L. -static-libgcc
 
 ifeq ($(TDM_GCC),)
@@ -167,12 +164,6 @@ ifeq ($(HAVE_DSOUND), 1)
    LIBS += -ldxguid -ldsound
 endif
 
-ifeq ($(HAVE_RSOUND), 1)
-   OBJ += audio/rsound.o
-   DEFINES += -DHAVE_RSOUND
-   LIBS += -lrsound
-endif
-
 ifeq ($(HAVE_ZLIB), 1)
    OBJ += gfx/rpng/rpng.o file_extract.o
    DEFINES += -DHAVE_ZLIB
@@ -200,12 +191,6 @@ endif
 ifeq ($(HAVE_STDIN_CMD), 1)
    DEFINES += -DHAVE_COMMAND -DHAVE_STDIN_CMD
    OBJ += command.o
-endif
-
-ifeq ($(HAVE_NETPLAY), 1)
-   DEFINES += -DHAVE_NETPLAY -DHAVE_NETWORK_CMD
-   OBJ += netplay.o
-   LIBS += -lws2_32
 endif
 
 ifeq ($(HAVE_FREETYPE), 1)
@@ -239,12 +224,6 @@ ifeq ($(HAVE_DINPUT), 1)
    LIBS += -ldinput8 -ldxguid -lole32
    DEFINES += -DHAVE_DINPUT
    OBJ += input/dinput.o
-endif
-
-ifeq ($(HAVE_FFMPEG), 1)
-   LIBS += -lavformat -lavcodec -lavutil -lswscale -lws2_32 -lz
-   DEFINES += -DHAVE_FFMPEG -Iffmpeg
-   OBJ += record/ffemu.o
 endif
 
 ifneq ($(V), 1)

@@ -238,14 +238,6 @@ typedef struct gl
    bool overlay_full_screen;
 #endif
 
-#if !defined(HAVE_OPENGLES) && defined(HAVE_FFMPEG)
-   // PBOs used for asynchronous viewport readbacks.
-   GLuint pbo_readback[4];
-   bool pbo_readback_enable;
-   bool pbo_readback_valid;
-   unsigned pbo_readback_index;
-   struct scaler_ctx pbo_readback_scaler;
-#endif
    void *readback_buffer_screenshot;
 
 #if defined(HAVE_MENU)

@@ -165,8 +165,6 @@ static void rmenu_render(void *data, void *video_data)
       strlcpy(title, "AUDIO OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_OVERLAY_OPTIONS)
       strlcpy(title, "OVERLAY OPTIONS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_NETPLAY_OPTIONS)
-      strlcpy(title, "NETPLAY OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CONFIG_OPTIONS)
       strlcpy(title, "CONFIG OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_SAVE_OPTIONS)

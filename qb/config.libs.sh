@@ -103,27 +103,7 @@ fi
 check_lib THREADS -lpthread pthread_create
 check_lib DYLIB "$DYLIB" dlopen
 
-check_lib NETPLAY -lc socket
-if [ "$HAVE_NETPLAY" = 'yes' ]; then
-   HAVE_GETADDRINFO=auto
-   check_lib GETADDRINFO -lc getaddrinfo
-   if [ "$HAVE_GETADDRINFO" = 'yes' ]; then
-      HAVE_SOCKET_LEGACY='no'
-   else
-      HAVE_SOCKET_LEGACY='yes'
-   fi
-   HAVE_NETWORK_CMD='yes'
-else
-   HAVE_NETWORK_CMD='no'
-fi
-
 check_lib STDIN_CMD -lc fcntl
-
-if [ "$HAVE_NETWORK_CMD" = "yes" ] || [ "$HAVE_STDIN_CMD" = "yes" ]; then
-   HAVE_COMMAND='yes'
-else
-   HAVE_COMMAND='no'
-fi
 
 check_lib GETOPT_LONG -lc getopt_long
 
@@ -144,7 +124,6 @@ else
    check_lib AL -lopenal alcOpenDevice
 fi
 
-check_pkgconf RSOUND rsound 1.1
 check_pkgconf ROAR libroar
 check_pkgconf JACK jack 0.120.1
 check_pkgconf PULSE libpulse
@@ -176,19 +155,6 @@ check_pkgconf ZLIB zlib
 if [ "$HAVE_LIMA" = "yes" ]; then
    check_lib LIMA -llimare limare_init
    LIMA_LIBS="-llimare"
-fi
-
-if [ "$HAVE_THREADS" != 'no' ]; then
-   if [ "$HAVE_FFMPEG" != 'no' ]; then
-      check_pkgconf AVCODEC libavcodec 54
-      check_pkgconf AVFORMAT libavformat 54
-      check_pkgconf AVUTIL libavutil 51
-      check_pkgconf SWSCALE libswscale 2.1
-      ( [ "$HAVE_FFMPEG" = 'auto' ] && ( [ "$HAVE_AVCODEC" = 'no' ] || [ "$HAVE_AVFORMAT" = 'no' ] || [ "$HAVE_AVUTIL" = 'no' ] || [ "$HAVE_SWSCALE" = 'no' ] ) && HAVE_FFMPEG='no' ) || HAVE_FFMPEG='yes'
-   fi
-else
-   echo "Not building with threading support. Will skip FFmpeg."
-   HAVE_FFMPEG='no'
 fi
 
 check_lib DYNAMIC "$DYLIB" dlopen
@@ -273,6 +239,6 @@ add_define_make OS "$OS"
 
 # Creates config.mk and config.h.
 add_define_make GLOBAL_CONFIG_DIR "$GLOBAL_CONFIG_DIR"
-VARS="RGUI ALSA OSS OSS_BSD OSS_LIB AL RSOUND ROAR JACK COREAUDIO PULSE SDL OPENGL LIMA OMAP GLES GLES3 VG EGL KMS GBM DRM DYLIB GETOPT_LONG THREADS CG LIBXML2 SDL_IMAGE ZLIB DYNAMIC FFMPEG AVCODEC AVFORMAT AVUTIL SWSCALE FREETYPE XKBCOMMON XVIDEO X11 XEXT XF86VM XINERAMA NETPLAY NETWORK_CMD STDIN_CMD COMMAND SOCKET_LEGACY FBO STRL STRCASESTR MMAP PYTHON FFMPEG_ALLOC_CONTEXT3 FFMPEG_AVCODEC_OPEN2 FFMPEG_AVIO_OPEN FFMPEG_AVFORMAT_WRITE_HEADER FFMPEG_AVFORMAT_NEW_STREAM FFMPEG_AVCODEC_ENCODE_AUDIO2 FFMPEG_AVCODEC_ENCODE_VIDEO2 BSV_MOVIE VIDEOCORE NEON FLOATHARD FLOATSOFTFP UDEV V4L2 SCALERS_BUILTIN FILE_LOGGER"
+VARS="RGUI ALSA OSS OSS_BSD OSS_LIB AL ROAR JACK COREAUDIO PULSE SDL OPENGL LIMA OMAP GLES GLES3 VG EGL KMS GBM DRM DYLIB GETOPT_LONG THREADS CG LIBXML2 SDL_IMAGE ZLIB DYNAMIC AVCODEC AVFORMAT AVUTIL SWSCALE FREETYPE XKBCOMMON XVIDEO X11 XEXT XF86VM XINERAMA STDIN_CMD COMMAND SOCKET_LEGACY FBO STRL STRCASESTR MMAP PYTHON VIDEOCORE NEON FLOATHARD FLOATSOFTFP UDEV SCALERS_BUILTIN FILE_LOGGER"
 create_config_make config.mk $VARS
 create_config_header config.h $VARS

@@ -61,7 +61,6 @@ unsigned menu_type_is(unsigned type)
       type == RGUI_SETTINGS_DISK_OPTIONS ||
       type == RGUI_SETTINGS_PATH_OPTIONS ||
       type == RGUI_SETTINGS_OVERLAY_OPTIONS ||
-      type == RGUI_SETTINGS_NETPLAY_OPTIONS ||
       type == RGUI_SETTINGS_OPTIONS ||
       type == RGUI_SETTINGS_DRIVERS ||
       (type == RGUI_SETTINGS_INPUT_OPTIONS);
@@ -347,97 +346,6 @@ int menu_settings_toggle_setting(void *data, void *video_data, unsigned setting,
    return menu_set_settings(rgui, video_data, setting, action);
 }
 
-#ifdef HAVE_OSK
-static bool osk_callback_enter_audio_device(void *data)
-{
-   if (g_extern.lifecycle_state & (1ULL << MODE_OSK_ENTRY_SUCCESS)
-         && driver.osk && driver.osk->get_text_buf)
-   {
-      RARCH_LOG("OSK - Applying input data.\n");
-      char tmp_str[256];
-      wchar_t *text_buf = (wchar_t*)driver.osk->get_text_buf(driver.osk_data);
-      int num = wcstombs(tmp_str, text_buf, sizeof(tmp_str));
-      tmp_str[num] = 0;
-      strlcpy(g_settings.audio.device, tmp_str, sizeof(g_settings.audio.device));
-      goto do_exit;
-   }
-   else if (g_extern.lifecycle_state & (1ULL << MODE_OSK_ENTRY_FAIL))
-      goto do_exit;
-
-   return false;
-
-do_exit:
-   g_extern.lifecycle_state &= ~((1ULL << MODE_OSK_ENTRY_SUCCESS) |
-         (1ULL << MODE_OSK_ENTRY_FAIL));
-   return true;
-}
-
-static bool osk_callback_enter_audio_device_init(void *data)
-{
-   if (!driver.osk)
-      return false;
-
-   if (driver.osk->write_initial_msg)
-      driver.osk->write_initial_msg(driver.osk_data, L"192.168.1.1");
-   if (driver.osk->write_msg)
-      driver.osk->write_msg(driver.osk_data, L"Enter Audio Device / IP address for audio driver.");
-   if (driver.osk->start)
-      driver.osk->start(driver.osk_data);
-
-   return true;
-}
-
-static bool osk_callback_enter_filename(void *data)
-{
-   if (!driver.osk)
-      return false;
-
-   if (g_extern.lifecycle_state & (1ULL << MODE_OSK_ENTRY_SUCCESS))
-   {
-      RARCH_LOG("OSK - Applying input data.\n");
-      char tmp_str[256];
-      char filepath[PATH_MAX];
-      int num = wcstombs(tmp_str, driver.osk->get_text_buf(driver.osk_data), sizeof(tmp_str));
-      tmp_str[num] = 0;
-
-      fill_pathname_join(filepath, g_settings.video.shader_dir, tmp_str, sizeof(filepath));
-      strlcat(filepath, ".cgp", sizeof(filepath));
-      RARCH_LOG("[osk_callback_enter_filename]: filepath is: %s.\n", filepath);
-      config_file_t *conf = config_file_new(NULL);
-      if (!conf)
-         return false;
-      gfx_shader_write_conf_cgp(conf, &rgui->shader);
-      config_file_write(conf, filepath);
-      config_file_free(conf);
-      goto do_exit;
-   }
-   else if (g_extern.lifecycle_state & (1ULL << MODE_OSK_ENTRY_FAIL))
-      goto do_exit;
-
-   return false;
-do_exit:
-   g_extern.lifecycle_state &= ~((1ULL << MODE_OSK_ENTRY_SUCCESS) |
-         (1ULL << MODE_OSK_ENTRY_FAIL));
-   return true;
-}
-
-static bool osk_callback_enter_filename_init(void *data)
-{
-   if (!driver.osk)
-      return false;
-
-   if (driver.osk->write_initial_msg)
-      driver.osk->write_initial_msg(driver.osk_data, L"Save Preset");
-   if (driver.osk->write_msg)
-      driver.osk->write_msg(driver.osk_data, L"Enter filename for preset.");
-   if (driver.osk->start)
-      driver.osk->start(driver.osk_data);
-
-   return true;
-}
-
-#endif
-
 void update_config_params()
 {
    config_load();
@@ -625,14 +533,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             else
             {
                // Disallow savestate load when we absoluetely cannot change game state.
-#ifdef HAVE_BSV_MOVIE
-               if (g_extern.bsv.movie)
-                  break;
-#endif
-#ifdef HAVE_NETPLAY
-               if (g_extern.netplay)
-                  break;
-#endif
+
                rarch_load_state();
             }
             g_extern.lifecycle_state |= (1ULL << MODE_GAME);
@@ -1111,7 +1012,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_SCREENSHOT:
       case RGUI_SETTINGS_BIND_DSP_CONFIG:
       case RGUI_SETTINGS_BIND_MUTE:
-      case RGUI_SETTINGS_BIND_NETPLAY_FLIP:
       case RGUI_SETTINGS_BIND_SLOWMOTION:
       case RGUI_SETTINGS_BIND_ENABLE_HOTKEY:
       case RGUI_SETTINGS_BIND_VOLUME_UP:
@@ -1250,14 +1150,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_DRIVER_AUDIO_DEVICE:
          if (action == RGUI_ACTION_OK)
          {
-#ifdef HAVE_OSK
-            if (g_settings.osk.enable)
-            {
-               g_extern.osk.cb_init     = osk_callback_enter_audio_device_init;
-               g_extern.osk.cb_callback = osk_callback_enter_audio_device;
-            }
-            else
-#endif
                menu_key_start_line(rgui, "Audio Device Name / IP: ", audio_device_callback);
          }
          else if (action == RGUI_ACTION_START)
@@ -1275,22 +1167,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else if (action == RGUI_ACTION_RIGHT)
             find_next_input_driver();
          break;
-#ifdef HAVE_CAMERA
-      case RGUI_SETTINGS_DRIVER_CAMERA:
-         if (action == RGUI_ACTION_LEFT)
-            find_prev_camera_driver();
-         else if (action == RGUI_ACTION_RIGHT)
-            find_next_camera_driver();
-         break;
-#endif
-#ifdef HAVE_LOCATION
-      case RGUI_SETTINGS_DRIVER_LOCATION:
-         if (action == RGUI_ACTION_LEFT)
-            find_prev_location_driver();
-         else if (action == RGUI_ACTION_RIGHT)
-            find_next_location_driver();
-         break;
-#endif
 #ifdef HAVE_MENU
       case RGUI_SETTINGS_DRIVER_MENU:
          if (action == RGUI_ACTION_LEFT)
@@ -1750,14 +1626,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_SHADER_PRESET_SAVE:
          if (action == RGUI_ACTION_OK)
          {
-#ifdef HAVE_OSK
-            if (g_settings.osk.enable)
-            {
-               g_extern.osk.cb_init = osk_callback_enter_filename_init;
-               g_extern.osk.cb_callback = osk_callback_enter_filename;
-            }
-            else
-#endif
                menu_key_start_line(rgui, "Preset Filename: ", preset_filename_callback);
          }
          break;
@@ -1837,69 +1705,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             rarch_reset_drivers();
          }
          break;
-#ifdef HAVE_NETPLAY
-      case RGUI_SETTINGS_NETPLAY_ENABLE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
-         {
-            g_extern.netplay_enable = !g_extern.netplay_enable;
-            /* TODO/FIXME - toggle netplay on/off */
-         }
-         else if (action == RGUI_ACTION_START)
-         {
-            g_extern.netplay_enable = false;
-            /* TODO/FIXME - toggle netplay on/off */
-         }
-         break;
-      case RGUI_SETTINGS_NETPLAY_HOST_IP_ADDRESS:
-         if (action == RGUI_ACTION_OK)
-            menu_key_start_line(rgui, "IP Address: ", netplay_ipaddress_callback);
-         else if (action == RGUI_ACTION_START)
-            *g_extern.netplay_server = '\0';
-         break;
-      case RGUI_SETTINGS_NETPLAY_DELAY_FRAMES:
-         if (action == RGUI_ACTION_LEFT)
-         {
-            if (g_extern.netplay_sync_frames >= 0)
-               g_extern.netplay_sync_frames--;
-         }
-         else if (action == RGUI_ACTION_RIGHT)
-            g_extern.netplay_sync_frames++;
-         else if (action == RGUI_ACTION_START)
-            g_extern.netplay_sync_frames = 0;
-         break;
-      case RGUI_SETTINGS_NETPLAY_TCP_UDP_PORT:
-         if (action == RGUI_ACTION_OK)
-            menu_key_start_line(rgui, "TCP/UDP Port: ", netplay_port_callback);
-         else if (action == RGUI_ACTION_START)
-            g_extern.netplay_port = RARCH_DEFAULT_PORT;
-         break;
-      case RGUI_SETTINGS_NETPLAY_NICKNAME:
-         if (action == RGUI_ACTION_OK)
-            menu_key_start_line(rgui, "Nickname: ", netplay_nickname_callback);
-         else if (action == RGUI_ACTION_START)
-            *g_extern.netplay_nick = '\0';
-         break;
-      case RGUI_SETTINGS_NETPLAY_MODE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
-            g_extern.netplay_is_client = !g_extern.netplay_is_client;
-         else if (action == RGUI_ACTION_START)
-            g_extern.netplay_is_client = false;
-         break;
-      case RGUI_SETTINGS_NETPLAY_SPECTATOR_MODE_ENABLE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
-            g_extern.netplay_is_spectate = !g_extern.netplay_is_spectate;
-         else if (action == RGUI_ACTION_START)
-            g_extern.netplay_is_spectate = false;
-         break;
-#endif
-#ifdef HAVE_OSK
-      case RGUI_SETTINGS_ONSCREEN_KEYBOARD_ENABLE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
-            g_settings.osk.enable = !g_settings.osk.enable;
-         else if (action == RGUI_ACTION_START)
-            g_settings.osk.enable = false;
-         break;
-#endif
       default:
          break;
    }
@@ -1958,16 +1763,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_DRIVER_INPUT:
          strlcpy(type_str, g_settings.input.driver, type_str_size);
          break;
-#ifdef HAVE_CAMERA
-      case RGUI_SETTINGS_DRIVER_CAMERA:
-         strlcpy(type_str, g_settings.camera.driver, type_str_size);
-         break;
-#endif
-#ifdef HAVE_LOCATION
-      case RGUI_SETTINGS_DRIVER_LOCATION:
-         strlcpy(type_str, g_settings.location.driver, type_str_size);
-         break;
-#endif
 #ifdef HAVE_MENU
       case RGUI_SETTINGS_DRIVER_MENU:
          strlcpy(type_str, g_settings.menu.driver, type_str_size);
@@ -2168,7 +1963,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_INPUT_OPTIONS:
       case RGUI_SETTINGS_PATH_OPTIONS:
       case RGUI_SETTINGS_OVERLAY_OPTIONS:
-      case RGUI_SETTINGS_NETPLAY_OPTIONS:
       case RGUI_SETTINGS_OPTIONS:
       case RGUI_SETTINGS_DRIVERS:
       case RGUI_SETTINGS_CUSTOM_BIND_ALL:
@@ -2297,7 +2091,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_SCREENSHOT:
       case RGUI_SETTINGS_BIND_DSP_CONFIG:
       case RGUI_SETTINGS_BIND_MUTE:
-      case RGUI_SETTINGS_BIND_NETPLAY_FLIP:
       case RGUI_SETTINGS_BIND_SLOWMOTION:
       case RGUI_SETTINGS_BIND_ENABLE_HOTKEY:
       case RGUI_SETTINGS_BIND_VOLUME_UP:
@@ -2335,34 +2128,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE:
          strlcpy(type_str, g_settings.video.disable_composition ? "OFF" : "ON", type_str_size);
          break;
-#ifdef HAVE_NETPLAY
-      case RGUI_SETTINGS_NETPLAY_ENABLE:
-         strlcpy(type_str, g_extern.netplay_enable ? "ON" : "OFF", type_str_size);
-         break;
-      case RGUI_SETTINGS_NETPLAY_HOST_IP_ADDRESS:
-         strlcpy(type_str, g_extern.netplay_server, type_str_size);
-         break;
-      case RGUI_SETTINGS_NETPLAY_DELAY_FRAMES:
-         snprintf(type_str, type_str_size, "%d", g_extern.netplay_sync_frames);
-         break;
-      case RGUI_SETTINGS_NETPLAY_TCP_UDP_PORT:
-         snprintf(type_str, type_str_size, "%d", g_extern.netplay_port ? g_extern.netplay_port : RARCH_DEFAULT_PORT);
-         break;
-      case RGUI_SETTINGS_NETPLAY_NICKNAME:
-         snprintf(type_str, type_str_size, "%s", g_extern.netplay_nick);
-         break;
-      case RGUI_SETTINGS_NETPLAY_MODE:
-         snprintf(type_str, type_str_size, g_extern.netplay_is_client ? "Client" : "Server");
-         break;
-      case RGUI_SETTINGS_NETPLAY_SPECTATOR_MODE_ENABLE:
-         snprintf(type_str, type_str_size, g_extern.netplay_is_spectate ? "ON" : "OFF");
-         break;
-#endif
-#ifdef HAVE_OSK
-      case RGUI_SETTINGS_ONSCREEN_KEYBOARD_ENABLE:
-         snprintf(type_str, type_str_size, g_settings.osk.enable ? "ON" : "OFF");
-         break;
-#endif
       case RGUI_SETTINGS_WINDOWED_FULLSCREEN:
          strlcpy(type_str, g_settings.video.windowed_fullscreen ? "ON" : "OFF", type_str_size);
          break;

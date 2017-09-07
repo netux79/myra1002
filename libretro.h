@@ -538,24 +538,6 @@ enum retro_mod
                                            // setting state related to sensors such as polling rate, enabling/disable it entirely, etc.
                                            // Reading sensor state is done via the normal input_state_callback API.
                                            //
-#define RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE (26 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           // struct retro_camera_callback * --
-                                           // Gets an interface to a video camera driver.
-                                           // A libretro core can use this interface to get access to a video camera.
-                                           // New video frames are delivered in a callback in same thread as retro_run().
-                                           //
-                                           // GET_CAMERA_INTERFACE should be called in retro_load_game().
-                                           //
-                                           // Depending on the camera implementation used, camera frames will be delivered as a raw framebuffer,
-                                           // or as an OpenGL texture directly.
-                                           //
-                                           // The core has to tell the frontend here which types of buffers can be handled properly.
-                                           // An OpenGL texture can only be handled when using a libretro GL core (SET_HW_RENDER).
-                                           // It is recommended to use a libretro GL core when using camera interface.
-                                           //
-                                           // The camera is not started automatically. The retrieved start/stop functions must be used to explicitly
-                                           // start and stop the camera driver.
-                                           //
 #define RETRO_ENVIRONMENT_GET_LOG_INTERFACE 27
                                            // struct retro_log_callback * --
                                            // Gets an interface for logging. This is useful for logging in a cross-platform way
@@ -566,12 +548,6 @@ enum retro_mod
                                            // struct retro_perf_callback * --
                                            // Gets an interface for performance counters. This is useful for performance logging in a
                                            // cross-platform way and for detecting architecture-specific features, such as SIMD support.
-#define RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE 29
-                                           // struct retro_location_callback * --
-                                           // Gets access to the location interface.
-                                           // The purpose of this interface is to be able to retrieve location-based information from the host device,
-                                           // such as current latitude / longitude.
-                                           //
 #define RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY 30
                                            // const char ** --
                                            // Returns the "content" directory of the frontend.

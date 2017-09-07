@@ -786,7 +786,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
                menu_type == RGUI_SETTINGS_INPUT_OPTIONS
             || menu_type == RGUI_SETTINGS_PATH_OPTIONS
             || menu_type == RGUI_SETTINGS_OVERLAY_OPTIONS
-            || menu_type == RGUI_SETTINGS_NETPLAY_OPTIONS
             || menu_type == RGUI_SETTINGS_OPTIONS
             || menu_type == RGUI_SETTINGS_DRIVERS
             || menu_type == RGUI_SETTINGS_CORE_INFO
@@ -852,22 +851,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
 
    if (video_data && menu_ctx && menu_ctx->set_texture)
       menu_ctx->set_texture(rgui, video_data, false);
-
-#ifdef HAVE_OSK
-   // process pending osk init callback
-   if (g_extern.osk.cb_init)
-   {
-      if (g_extern.osk.cb_init(driver.osk_data))
-         g_extern.osk.cb_init = NULL;
-   }
-
-   // process pending osk callback
-   if (g_extern.osk.cb_callback)
-   {
-      if (g_extern.osk.cb_callback(driver.osk_data))
-         g_extern.osk.cb_callback = NULL;
-   }
-#endif
 
    if (menu_type == RGUI_START_SCREEN)
       return menu_start_screen_iterate(rgui, video_data, action);
@@ -1838,9 +1821,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Overlay", RGUI_SETTINGS_OVERLAY_OPTIONS, 0);
 #endif
          file_list_push(rgui->selection_buf, "Configs", RGUI_SETTINGS_CONFIG_OPTIONS, 0);
-#ifdef HAVE_NETPLAY
-         file_list_push(rgui->selection_buf, "Netplay", RGUI_SETTINGS_NETPLAY_OPTIONS, 0);
-#endif
          file_list_push(rgui->selection_buf, "Save", RGUI_SETTINGS_SAVE_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Paths", RGUI_SETTINGS_PATH_OPTIONS, 0);
          if (g_extern.main_is_init && !g_extern.libretro_dummy)
@@ -1862,18 +1842,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Overlay Opacity", RGUI_SETTINGS_OVERLAY_OPACITY, 0);
          file_list_push(rgui->selection_buf, "Overlay Scale", RGUI_SETTINGS_OVERLAY_SCALE, 0);
          break;
-#ifdef HAVE_NETPLAY
-      case RGUI_SETTINGS_NETPLAY_OPTIONS:
-         file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Netplay Enable", RGUI_SETTINGS_NETPLAY_ENABLE, 0);
-         file_list_push(rgui->selection_buf, "Netplay Mode", RGUI_SETTINGS_NETPLAY_MODE, 0);
-         file_list_push(rgui->selection_buf, "Spectator Mode Enable", RGUI_SETTINGS_NETPLAY_SPECTATOR_MODE_ENABLE, 0);
-         file_list_push(rgui->selection_buf, "Host IP Address", RGUI_SETTINGS_NETPLAY_HOST_IP_ADDRESS, 0);
-         file_list_push(rgui->selection_buf, "TCP/UDP Port", RGUI_SETTINGS_NETPLAY_TCP_UDP_PORT, 0);
-         file_list_push(rgui->selection_buf, "Delay Frames", RGUI_SETTINGS_NETPLAY_DELAY_FRAMES, 0);
-         file_list_push(rgui->selection_buf, "Nickname", RGUI_SETTINGS_NETPLAY_NICKNAME, 0);
-         break;
-#endif
       case RGUI_SETTINGS_PATH_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Content Path", RGUI_BROWSER_DIR_PATH, 0);
@@ -1908,9 +1876,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
 
          file_list_push(rgui->selection_buf, "Bind All Buttons", RGUI_SETTINGS_CUSTOM_BIND_ALL, 0);
          file_list_push(rgui->selection_buf, "Default All Buttons", RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL, 0);
-#ifdef HAVE_OSK
-         file_list_push(rgui->selection_buf, "Onscreen Keyboard Enable", RGUI_SETTINGS_ONSCREEN_KEYBOARD_ENABLE, 0);
-#endif
          last = (driver.input && driver.input->set_keybinds && !driver.input->get_joypad_driver) ? RGUI_SETTINGS_BIND_R3 : RGUI_SETTINGS_BIND_MENU_TOGGLE;
          for (i = RGUI_SETTINGS_BIND_BEGIN; i <= last; i++)
             file_list_push(rgui->selection_buf, input_config_bind_map[i - RGUI_SETTINGS_BIND_BEGIN].desc, i, 0);
@@ -1934,12 +1899,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Audio Device", RGUI_SETTINGS_DRIVER_AUDIO_DEVICE, 0);
          file_list_push(rgui->selection_buf, "Audio Resampler", RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER, 0);
          file_list_push(rgui->selection_buf, "Input Driver", RGUI_SETTINGS_DRIVER_INPUT, 0);
-#ifdef HAVE_CAMERA
-         file_list_push(rgui->selection_buf, "Camera Driver", RGUI_SETTINGS_DRIVER_CAMERA, 0);
-#endif
-#ifdef HAVE_LOCATION
-         file_list_push(rgui->selection_buf, "Location Driver", RGUI_SETTINGS_DRIVER_LOCATION, 0);
-#endif
 #ifdef HAVE_MENU
          file_list_push(rgui->selection_buf, "Menu Driver", RGUI_SETTINGS_DRIVER_MENU, 0);
 #endif

@@ -101,7 +101,6 @@ endif
   HAVE_SCALERS_BUILTIN     := 1
   HAVE_RARCH_EXEC          := 1
   HAVE_THREADS             := 0
-  HAVE_RSOUND              := 0
   HAVE_LIBRETRO_MANAGEMENT := 1
   HAVE_ZLIB                := 1
   HAVE_RPNG                := 1
@@ -167,10 +166,6 @@ CFLAGS += -DHAVE_THREADS
 ifeq ($(platform), psp1)
 LIBS += -lpthread-psp
 endif
-endif
-
-ifeq ($(HAVE_RSOUND), 1)
-CFLAGS += -DHAVE_RSOUND
 endif
 
 ifeq ($(DEBUG), 1)

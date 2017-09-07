@@ -148,15 +148,6 @@ static void callback_sysutil_exit(uint64_t status, uint64_t param, void *userdat
          gl->quitting = true;
          g_extern.lifecycle_state &= ~((1ULL << MODE_MENU_PREINIT) | (1ULL << MODE_GAME));
          break;
-#ifdef HAVE_OSK
-      case CELL_SYSUTIL_OSKDIALOG_LOADED:
-      case CELL_SYSUTIL_OSKDIALOG_INPUT_CANCELED:
-      case CELL_SYSUTIL_OSKDIALOG_FINISHED:
-      case CELL_SYSUTIL_OSKDIALOG_UNLOADED:
-         if (driver.osk && driver.osk_data)
-            driver.osk->lifecycle(driver.osk_data, status);
-         break;
-#endif
    }
 #endif
 }

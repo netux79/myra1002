@@ -51,7 +51,6 @@ enum
    VIDEO_NULL,
    VIDEO_OMAP,
 
-   AUDIO_RSOUND,
    AUDIO_OSS,
    AUDIO_ALSA,
    AUDIO_ALSATHREAD,
@@ -87,18 +86,6 @@ enum
    INPUT_QNX,
    INPUT_RWEBINPUT,
    INPUT_NULL,
-
-   CAMERA_V4L2,
-   CAMERA_RWEBCAM,
-   CAMERA_ANDROID,
-   CAMERA_IOS,
-   CAMERA_NULL,
-
-   LOCATION_ANDROID,
-   LOCATION_APPLE,
-
-   OSK_PS3,
-   OSK_NULL,
 };
 
 #if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(__CELLOS_LV2__)
@@ -159,8 +146,6 @@ enum
 #define AUDIO_DEFAULT_DRIVER AUDIO_SDL
 #elif defined(HAVE_XAUDIO)
 #define AUDIO_DEFAULT_DRIVER AUDIO_XAUDIO
-#elif defined(HAVE_RSOUND)
-#define AUDIO_DEFAULT_DRIVER AUDIO_RSOUND
 #elif defined(HAVE_ROAR)
 #define AUDIO_DEFAULT_DRIVER AUDIO_ROAR
 #elif defined(HAVE_DYLIB) && !defined(ANDROID)
@@ -199,30 +184,6 @@ enum
 #define INPUT_DEFAULT_DRIVER INPUT_SDL
 #else
 #define INPUT_DEFAULT_DRIVER INPUT_NULL
-#endif
-
-#if defined(HAVE_V4L2)
-#define CAMERA_DEFAULT_DRIVER CAMERA_V4L2
-#elif defined(EMSCRIPTEN)
-#define CAMERA_DEFAULT_DRIVER CAMERA_RWEBCAM
-#elif defined(ANDROID)
-#define CAMERA_DEFAULT_DRIVER CAMERA_ANDROID
-#elif defined(IOS)
-#define CAMERA_DEFAULT_DRIVER CAMERA_IOS
-#else
-#define CAMERA_DEFAULT_DRIVER CAMERA_NULL
-#endif
-
-#if defined(ANDROID)
-#define LOCATION_DEFAULT_DRIVER LOCATION_ANDROID
-#elif defined(IOS) || defined(OSX)
-#define LOCATION_DEFAULT_DRIVER LOCATION_APPLE
-#endif
-
-#if defined(__CELLOS_LV2__)
-#define OSK_DEFAULT_DRIVER OSK_PS3
-#else
-#define OSK_DEFAULT_DRIVER OSK_NULL
 #endif
 
 #if defined(XENON) || defined(_XBOX360) || defined(__CELLOS_LV2__)
@@ -477,9 +438,6 @@ static const bool pause_nonactive = false;
 // Saves non-volatile SRAM at a regular interval. It is measured in seconds. A value of 0 disables autosave.
 static const unsigned autosave_interval = 0;
 
-// When being client over netplay, use keybinds for player 1 rather than player 2.
-static const bool netplay_client_swap_input = true;
-
 // On save state load, block SRAM from being overwritten.
 // This could potentially lead to buggy games.
 static const bool block_sram_overwrite = false;
@@ -500,9 +458,7 @@ static const float slowmotion_ratio = 3.0;
 // Maximum fast forward ratio (Negative => no limit).
 static const float fastforward_ratio = -1.0;
 
-// Enable stdin/network command interface
-static const bool network_cmd_enable = false;
-static const uint16_t network_cmd_port = 55355;
+// Enable stdin command interface
 static const bool stdin_cmd_enable = false;
 
 // Number of entries that will be kept in ROM history file.
@@ -643,7 +599,6 @@ static const bool input_autodetect_enable = true;
 #define RETRO_LBL_SCREENSHOT "Screenshot"
 #define RETRO_LBL_DSP_CONFIG "DSP Config"
 #define RETRO_LBL_MUTE "Mute Audio"
-#define RETRO_LBL_NETPLAY_FLIP "Netplay Flip Players"
 #define RETRO_LBL_SLOWMOTION "Slowmotion"
 #define RETRO_LBL_ENABLE_HOTKEY "Enable Hotkey"
 #define RETRO_LBL_VOLUME_UP "Volume Up"
@@ -705,7 +660,6 @@ static const struct retro_keybind retro_keybinds_1[] = {
    { true, RARCH_SCREENSHOT,               RETRO_LBL_SCREENSHOT,           RETROK_F8,      NO_BTN, 0, AXIS_NONE },
    { true, RARCH_DSP_CONFIG,               RETRO_LBL_DSP_CONFIG,           RETROK_c,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_MUTE,                     RETRO_LBL_MUTE,                 RETROK_F9,      NO_BTN, 0, AXIS_NONE },
-   { true, RARCH_NETPLAY_FLIP,             RETRO_LBL_NETPLAY_FLIP,         RETROK_i,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_SLOWMOTION,               RETRO_LBL_SLOWMOTION,           RETROK_e,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_ENABLE_HOTKEY,            RETRO_LBL_ENABLE_HOTKEY,        RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
    { true, RARCH_VOLUME_UP,                RETRO_LBL_VOLUME_UP,            RETROK_KP_PLUS, NO_BTN, 0, AXIS_NONE },
@@ -768,7 +722,6 @@ static const struct retro_keybind retro_keybinds_menu[] = {
    { true, RARCH_SCREENSHOT,               RETRO_LBL_SCREENSHOT,           RETROK_F8,      NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_DSP_CONFIG,               RETRO_LBL_DSP_CONFIG,           RETROK_c,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_MUTE,                     RETRO_LBL_MUTE,                 RETROK_F9,      NO_BTN,                  0, AXIS_NONE },
-   { true, RARCH_NETPLAY_FLIP,             RETRO_LBL_NETPLAY_FLIP,         RETROK_i,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_SLOWMOTION,               RETRO_LBL_SLOWMOTION,           RETROK_e,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_ENABLE_HOTKEY,            RETRO_LBL_ENABLE_HOTKEY,        RETROK_UNKNOWN, NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_VOLUME_UP,                RETRO_LBL_VOLUME_UP,            RETROK_KP_PLUS, NO_BTN,                  0, AXIS_NONE },

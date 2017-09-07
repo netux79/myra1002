@@ -369,9 +369,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
-					"-DHAVE_CAMERA",
 					"-DHAVE_GRIFFIN",
-					"-DHAVE_LOCATION",
 					"-DHAVE_RGUI",
 					"-DHAVE_MENU",
 					"-DIOS",
@@ -420,9 +418,7 @@
 				OTHER_CFLAGS = (
 					"-DNS_BLOCK_ASSERTIONS=1",
 					"-DNDEBUG",
-					"-DHAVE_CAMERA",
 					"-DHAVE_GRIFFIN",
-					"-DHAVE_LOCATION",
 					"-DHAVE_RGUI",
 					"-DHAVE_MENU",
 					"-DIOS",
@@ -464,9 +460,7 @@
 				LD_NO_PIE = YES;
 				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
-					"-DHAVE_CAMERA",
 					"-DHAVE_GRIFFIN",
-					"-DHAVE_LOCATION",
 					"-DHAVE_RGUI",
 					"-DHAVE_MENU",
 					"-DIOS",
@@ -508,9 +502,7 @@
 				OTHER_CFLAGS = (
 					"-DNS_BLOCK_ASSERTIONS=1",
 					"-DNDEBUG",
-					"-DHAVE_CAMERA",
 					"-DHAVE_GRIFFIN",
-					"-DHAVE_LOCATION",
 					"-DHAVE_RGUI",
 					"-DHAVE_MENU",
 					"-DIOS",

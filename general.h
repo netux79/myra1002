@@ -22,10 +22,8 @@
 #include <limits.h>
 #include <setjmp.h>
 #include "driver.h"
-#include "record/ffemu.h"
 #include "message_queue.h"
 #include "rewind.h"
-#include "movie.h"
 #include "autosave.h"
 #include "dynamic.h"
 #include "cheats.h"
@@ -75,10 +73,6 @@
 #endif
 //////////////
 
-#ifdef HAVE_NETPLAY
-#include "netplay.h"
-#endif
-
 #ifdef HAVE_COMMAND
 #include "command.h"
 #endif
@@ -122,9 +116,6 @@ enum menu_enums
 enum sound_mode_enums
 {
    SOUND_MODE_NORMAL = 0,
-#ifdef HAVE_RSOUND
-   SOUND_MODE_RSOUND,
-#endif
 #ifdef HAVE_HEADSET
    SOUND_MODE_HEADSET,
 #endif
@@ -200,33 +191,6 @@ struct settings
    } menu;
 #endif
 
-#ifdef HAVE_CAMERA
-   struct
-   {
-      char driver[32];
-      char device[PATH_MAX];
-      unsigned width;
-      unsigned height;
-   } camera;
-#endif
-
-#ifdef HAVE_LOCATION
-   struct
-   {
-      char driver[32];
-      int update_interval_ms;
-      int update_interval_distance;
-   } location;
-#endif
-
-#ifdef HAVE_OSK
-   struct
-   {
-      char driver[32];
-      bool enable;
-   } osk;
-#endif
-
    struct
    {
       char driver[32];
@@ -274,7 +238,6 @@ struct settings
       unsigned icade_profile[MAX_PLAYERS];
       unsigned icade_count;
 #endif
-      bool netplay_client_swap_input;
 
       unsigned turbo_period;
       unsigned turbo_duty_cycle;
@@ -315,8 +278,6 @@ struct settings
    bool savestate_auto_save;
    bool savestate_auto_load;
 
-   bool network_cmd_enable;
-   uint16_t network_cmd_port;
    bool stdin_cmd_enable;
 
    char content_directory[PATH_MAX];
@@ -361,15 +322,6 @@ struct global
    bool verbose;
    bool audio_active;
    bool video_active;
-#ifdef HAVE_CAMERA
-   bool camera_active;
-#endif
-#ifdef HAVE_LOCATION
-   bool location_active;
-#endif
-#ifdef HAVE_OSK
-   bool osk_active;
-#endif
    bool force_fullscreen;
 
    bool rom_file_temporary;
@@ -450,8 +402,6 @@ struct global
 
       struct retro_disk_control_callback disk_control;
       struct retro_hw_render_callback hw_render_callback;
-      struct retro_camera_callback camera_callback;
-      struct retro_location_callback location_callback;
 
       struct retro_frame_time_callback frame_time;
       retro_usec_t frame_time_last;
@@ -530,30 +480,6 @@ struct global
    size_t state_size;
    bool frame_is_reverse;
 
-#ifdef HAVE_BSV_MOVIE
-   // Movie playback/recording support.
-   struct
-   {
-      bsv_movie_t *movie;
-      char movie_path[PATH_MAX];
-      bool movie_playback;
-
-      // Immediate playback/recording.
-      char movie_start_path[PATH_MAX];
-      bool movie_start_recording;
-      bool movie_start_playback;
-      bool movie_end;
-   } bsv;
-#endif
-
-#ifdef HAVE_OSK
-   struct
-   {
-      bool (*cb_init)(void *data);
-      bool (*cb_callback)(void *data);
-   } osk;
-#endif
-
    bool sram_load_disable;
    bool sram_save_disable;
    bool use_sram;
@@ -570,32 +496,6 @@ struct global
 
    // Autosave support.
    autosave_t *autosave[2];
-
-   // Netplay.
-#ifdef HAVE_NETPLAY
-   netplay_t *netplay;
-   char netplay_server[PATH_MAX];
-   bool netplay_enable;
-   bool netplay_is_client;
-   bool netplay_is_spectate;
-   unsigned netplay_sync_frames;
-   uint16_t netplay_port;
-   char netplay_nick[32];
-#endif
-
-   // FFmpeg record.
-#ifdef HAVE_FFMPEG
-   ffemu_t *rec;
-   char record_path[PATH_MAX];
-   char record_config[PATH_MAX];
-   bool recording;
-   unsigned record_width;
-   unsigned record_height;
-
-   uint8_t *record_gpu_buffer;
-   size_t record_gpu_width;
-   size_t record_gpu_height;
-#endif
 
    struct
    {
@@ -691,15 +591,6 @@ struct rarch_main_wrap
 // Public functions
 void config_load(void);
 void config_set_defaults(void);
-#ifdef HAVE_CAMERA
-const char *config_get_default_camera(void);
-#endif
-#ifdef HAVE_LOCATION
-const char *config_get_default_location(void);
-#endif
-#ifdef HAVE_OSK
-const char *config_get_default_osk(void);
-#endif
 const char *config_get_default_video(void);
 const char *config_get_default_audio(void);
 const char *config_get_default_input(void);
@@ -740,10 +631,6 @@ void rarch_save_state(void);
 void rarch_state_slot_increase(void);
 void rarch_state_slot_decrease(void);
 
-#ifdef HAVE_FFMPEG
-void rarch_init_recording(void);
-void rarch_deinit_recording(void);
-#endif
 /////////
 
 // Public data structures

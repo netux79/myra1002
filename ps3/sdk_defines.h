@@ -138,78 +138,6 @@ extern int audioAddData(uint32_t portNum, float *data, uint32_t frames, float vo
 #endif
 
 /*============================================================
-	OSK PROTOTYPES
-============================================================ */
-
-#ifdef HAVE_OSK
-
-#ifdef __PSL1GHT__
-#include <sysutil/osk.h>
-/* define all the OSK functions */
-#define pOskLoadAsync oskLoadAsync
-#define pOskSetLayoutMode oskSetLayoutMode
-#define pOskSetKeyLayoutOption oskSetKeyLayoutOption
-#define pOskGetSize oskGetSize
-#define pOskDisableDimmer oskDisableDimmer
-#define pOskAbort oskAbort
-#define pOskUnloadAsync oskUnloadAsync
-
-/* define OSK structs / types */
-#define sys_memory_container_t sys_mem_container_t
-#define CellOskDialogPoint oskPoint
-#define CellOskDialogInputFieldInfo oskInputFieldInfo
-#define CellOskDialogCallbackReturnParam oskCallbackReturnParam
-#define CellOskDialogParam oskParam
-
-#define osk_allowed_panels allowedPanels
-#define osk_prohibit_flags prohibitFlags
-
-#define osk_inputfield_message message
-#define osk_inputfield_starttext startText
-#define osk_inputfield_max_length maxLength
-#define osk_callback_return_param res
-#define osk_callback_num_chars len
-#define osk_callback_return_string str
-
-/* define the OSK defines */
-#define CELL_OSKDIALOG_10KEY_PANEL OSK_10KEY_PANEL
-#define CELL_OSKDIALOG_FULLKEY_PANEL OSK_FULLKEY_PANEL
-#define CELL_OSKDIALOG_LAYOUTMODE_X_ALIGN_CENTER OSK_LAYOUTMODE_HORIZONTAL_ALIGN_CENTER
-#define CELL_OSKDIALOG_LAYOUTMODE_Y_ALIGN_TOP OSK_LAYOUTMODE_VERTICAL_ALIGN_TOP
-#define CELL_OSKDIALOG_PANELMODE_NUMERAL OSK_PANEL_TYPE_NUMERAL
-#define CELL_OSKDIALOG_PANELMODE_NUMERAL_FULL_WIDTH OSK_PANEL_TYPE_NUMERAL_FULL_WIDTH
-#define CELL_OSKDIALOG_PANELMODE_ALPHABET OSK_PANEL_TYPE_ALPHABET
-#define CELL_OSKDIALOG_PANELMODE_ENGLISH OSK_PANEL_TYPE_ENGLISH
-#define CELL_OSKDIALOG_INPUT_FIELD_RESULT_OK (0)
-#define CELL_OSKDIALOG_INPUT_FIELD_RESULT_CANCELED (1)
-#define CELL_OSKDIALOG_INPUT_FIELD_RESULT_ABORT (2)
-#define CELL_OSKDIALOG_INPUT_FIELD_RESULT_NO_INPUT_TEXT (3)
-#define CELL_OSKDIALOG_STRING_SIZE (512)
-#else
-#include <sysutil/sysutil_oskdialog.h>
-/* define all the OSK functions */
-#define pOskLoadAsync cellOskDialogLoadAsync
-#define pOskSetLayoutMode cellOskDialogSetLayoutMode
-#define pOskSetKeyLayoutOption cellOskDialogSetKeyLayoutOption
-#define pOskGetSize cellOskDialogGetSize
-#define pOskDisableDimmer cellOskDialogDisableDimmer
-#define pOskAbort cellOskDialogAbort
-#define pOskUnloadAsync cellOskDialogUnloadAsync
-
-/* define OSK structs / types */
-#define osk_allowed_panels allowOskPanelFlg
-#define osk_prohibit_flags prohibitFlgs
-#define osk_inputfield_message message
-#define osk_inputfield_starttext init_text
-#define osk_inputfield_max_length limit_length
-#define osk_callback_return_param result
-#define osk_callback_num_chars numCharsResultString
-#define osk_callback_return_string pResultString
-#endif
-
-#endif
-
-/*============================================================
 	JPEG/PNG DECODING/ENCODING PROTOTYPES
 ============================================================ */
 
@@ -558,25 +486,6 @@ extern int audioAddData(uint32_t portNum, float *data, uint32_t frames, float vo
 #define cellNetCtlTerm netCtlTerm
 
 #define CELL_NET_CTL_STATE_IPObtained NET_CTL_STATE_IPObtained
-#endif
-
-/*============================================================
-	NET PROTOTYPES
-============================================================ */
-
-#if defined(HAVE_NETPLAY)
-#ifdef __PSL1GHT__
-#include <net/net.h>
-
-#define socketselect select
-#define socketclose close
-
-#define sys_net_initialize_network netInitialize
-#else
-#include <netex/net.h>
-#include <np.h>
-#include <np/drm.h>
-#endif
 #endif
 
 /*============================================================

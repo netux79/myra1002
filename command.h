@@ -36,10 +36,6 @@ void rarch_cmd_pre_frame(rarch_cmd_t *handle);
 void rarch_cmd_set(rarch_cmd_t *handle, unsigned id);
 bool rarch_cmd_get(rarch_cmd_t *handle, unsigned id);
 
-#ifdef HAVE_NETWORK_CMD
-bool network_cmd_send(const char *cmd);
-#endif
-
 #ifdef __cplusplus
 }
 #endif

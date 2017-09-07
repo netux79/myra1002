@@ -74,12 +74,6 @@ static const bool _al_supp = true;
 static const bool _al_supp = false;
 #endif
 
-#ifdef HAVE_RSOUND
-static const bool _rsound_supp = true;
-#else
-static const bool _rsound_supp = false;
-#endif
-
 #ifdef HAVE_ROAR
 static const bool _roar_supp = true;
 #else
@@ -152,22 +146,10 @@ static const bool _dynamic_supp = true;
 static const bool _dynamic_supp = false;
 #endif
 
-#ifdef HAVE_FFMPEG
-static const bool _ffmpeg_supp = true;
-#else
-static const bool _ffmpeg_supp = false;
-#endif
-
 #ifdef HAVE_FREETYPE
 static const bool _freetype_supp = true;
 #else
 static const bool _freetype_supp = false;
-#endif
-
-#ifdef HAVE_NETPLAY
-static const bool _netplay_supp = true;
-#else
-static const bool _netplay_supp = false;
 #endif
 
 #ifdef HAVE_PYTHON

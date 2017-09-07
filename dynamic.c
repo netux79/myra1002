@@ -431,12 +431,6 @@ void uninit_libretro_sym(void)
    // No longer valid.
    free(g_extern.system.ports);
    memset(&g_extern.system, 0, sizeof(g_extern.system));
-#ifdef HAVE_CAMERA
-   g_extern.camera_active = false;
-#endif
-#ifdef HAVE_LOCATION
-   g_extern.location_active = false;
-#endif
 
    // Performance counters no longer valid.
    retro_perf_clear();
@@ -799,16 +793,6 @@ bool rarch_environment_cb(unsigned cmd, void *data)
          RARCH_LOG("Environ SET_AUDIO_CALLBACK.\n");
          const struct retro_audio_callback *info = (const struct retro_audio_callback*)data;
 
-#ifdef HAVE_FFMPEG
-         if (g_extern.recording) // A/V sync is a must.
-            return false;
-#endif
-
-#ifdef HAVE_NETPLAY
-         if (g_extern.netplay_enable)
-            return false;
-#endif
-
          g_extern.system.audio_callback = *info;
          break;
       }
@@ -817,11 +801,6 @@ bool rarch_environment_cb(unsigned cmd, void *data)
       case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
       {
          RARCH_LOG("Environ SET_FRAME_TIME_CALLBACK.\n");
-
-#ifdef HAVE_NETPLAY
-         if (g_extern.netplay_enable) // retro_run() will be called in very strange and mysterious ways, have to disable it.
-            return false;
-#endif
 
          const struct retro_frame_time_callback *info = (const struct retro_frame_time_callback*)data;
          g_extern.system.frame_time = *info;
@@ -855,33 +834,6 @@ bool rarch_environment_cb(unsigned cmd, void *data)
          iface->get_sensor_input = driver_sensor_get_input;
          break;
       }
-
-#ifdef HAVE_CAMERA
-      case RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE:
-      {
-         RARCH_LOG("Environ GET_CAMERA_INTERFACE.\n");
-         struct retro_camera_callback *cb = (struct retro_camera_callback*)data;
-         cb->start = driver_camera_start;
-         cb->stop = driver_camera_stop;
-         g_extern.system.camera_callback = *cb;
-         g_extern.camera_active = cb->caps != 0;
-         break;
-      }
-#endif
-#ifdef HAVE_LOCATION
-      case RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE:
-      {
-         RARCH_LOG("Environ GET_LOCATION_INTERFACE.\n");
-         struct retro_location_callback *cb = (struct retro_location_callback*)data;
-         cb->start = driver_location_start;
-         cb->stop = driver_location_stop;
-         cb->get_position = driver_location_get_position;
-         cb->set_interval = driver_location_set_interval;
-         g_extern.system.location_callback = *cb;
-         g_extern.location_active = true;
-         break;
-      }
-#endif
 
       case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
       {

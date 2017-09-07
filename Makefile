@@ -110,14 +110,6 @@ ifeq ($(HAVE_THREADS), 1)
    endif
 endif
 
-ifeq ($(HAVE_BSV_MOVIE), 1)
-   OBJ += movie.o
-endif
-
-ifeq ($(HAVE_NETPLAY), 1)
-   OBJ += netplay.o
-endif
-
 ifeq ($(HAVE_COMMAND), 1)
    OBJ += command.o
 endif
@@ -132,12 +124,6 @@ endif
 
 ifeq ($(HAVE_OSS_LIB), 1)
    LIBS += -lossaudio
-endif
-
-ifeq ($(HAVE_RSOUND), 1)
-   OBJ += audio/rsound.o
-   DEFINES += $(RSOUND_CFLAGS)
-   LIBS += $(RSOUND_LIBS)
 endif
 
 ifeq ($(HAVE_ALSA), 1)
@@ -163,11 +149,6 @@ ifeq ($(HAVE_AL), 1)
    else
       LIBS += -lopenal
    endif
-endif
-
-ifeq ($(HAVE_V4L2),1)
-   OBJ += camera/video4linux2.o
-   DEFINES += -DHAVE_CAMERA -DHAVE_V4L2
 endif
 
 ifeq ($(HAVE_JACK),1)
@@ -320,12 +301,6 @@ ifeq ($(HAVE_ZLIB), 1)
    OBJ += gfx/rpng/rpng.o file_extract.o
    LIBS += $(ZLIB_LIBS)
    DEFINES += $(ZLIB_CFLAGS) -DHAVE_ZLIB_DEFLATE
-endif
-
-ifeq ($(HAVE_FFMPEG), 1)
-   OBJ += record/ffemu.o
-   LIBS += $(AVCODEC_LIBS) $(AVFORMAT_LIBS) $(AVUTIL_LIBS) $(SWSCALE_LIBS)
-   DEFINES += $(AVCODEC_CFLAGS) $(AVFORMAT_CFLAGS) $(AVUTIL_CFLAGS) $(SWSCALE_CFLAGS)
 endif
 
 ifeq ($(HAVE_DYNAMIC), 1)

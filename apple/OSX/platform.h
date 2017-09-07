@@ -18,14 +18,8 @@
 #define __RARCH_OSX_PLATFORM_H
 
 #include <AppKit/AppKit.h>
-#ifdef HAVE_LOCATION
-#include <CoreLocation/CoreLocation.h>
-#endif
 
 @interface RAGameView : NSView
-#ifdef HAVE_LOCATION
-<CLLocationManagerDelegate>
-#endif
 
 + (RAGameView*)get;
 - (void)display;

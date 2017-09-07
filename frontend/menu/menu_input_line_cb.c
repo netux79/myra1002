@@ -51,35 +51,6 @@ static void menu_search_callback(void *userdata, const char *str)
    menu_key_end_line(rgui);
 }
 
-#ifdef HAVE_NETPLAY
-void netplay_port_callback(void *userdata, const char *str)
-{
-   rgui_handle_t *rgui = (rgui_handle_t*)userdata;
-
-   if (str && *str)
-      g_extern.netplay_port = strtoul(str, NULL, 0);
-   menu_key_end_line(rgui);
-}
-
-void netplay_ipaddress_callback(void *userdata, const char *str)
-{
-   rgui_handle_t *rgui = (rgui_handle_t*)userdata;
-
-   if (str && *str)
-      strlcpy(g_extern.netplay_server, str, sizeof(g_extern.netplay_server));
-   menu_key_end_line(rgui);
-}
-
-void netplay_nickname_callback(void *userdata, const char *str)
-{
-   rgui_handle_t *rgui = (rgui_handle_t*)userdata;
-
-   if (str && *str)
-      strlcpy(g_extern.netplay_nick, str, sizeof(g_extern.netplay_nick));
-   menu_key_end_line(rgui);
-}
-#endif
-
 void audio_device_callback(void *userdata, const char *str)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)userdata;

@@ -98,7 +98,6 @@ enum // RetroArch specific bind IDs.
    RARCH_SCREENSHOT,
    RARCH_DSP_CONFIG,
    RARCH_MUTE,
-   RARCH_NETPLAY_FLIP,
    RARCH_SLOWMOTION,
    RARCH_ENABLE_HOTKEY,
    RARCH_VOLUME_UP,
@@ -365,53 +364,6 @@ typedef struct input_driver
    const rarch_joypad_driver_t *(*get_joypad_driver)(void *data);
 } input_driver_t;
 
-typedef struct input_osk_driver
-{
-   void *(*init)(size_t size);
-   void (*free)(void *data);
-   bool (*enable_key_layout)(void *data);
-   void (*oskutil_create_activation_parameters)(void *data);
-   void (*write_msg)(void *data, const void *msg);
-   void (*write_initial_msg)(void *data, const void *msg);
-   bool (*start)(void *data);
-   void (*lifecycle)(void *data, uint64_t status);
-   void *(*get_text_buf)(void *data);
-   const char *ident;
-} input_osk_driver_t;
-
-typedef struct camera_driver
-{
-   // FIXME: params for init - queries for resolution, framerate, color format
-   // which might or might not be honored
-   void *(*init)(const char *device, uint64_t buffer_types, unsigned width, unsigned height);
-   void (*free)(void *data);
-
-   bool (*start)(void *data);
-   void (*stop)(void *data);
-
-   // Polls the camera driver.
-   // Will call the appropriate callback if a new frame is ready.
-   // Returns true if a new frame was handled.
-   bool (*poll)(void *data,
-         retro_camera_frame_raw_framebuffer_t frame_raw_cb,
-         retro_camera_frame_opengl_texture_t frame_gl_cb);
-
-   const char *ident;
-} camera_driver_t;
-
-typedef struct location_driver
-{
-   void *(*init)(void);
-   void (*free)(void *data);
-
-   bool (*start)(void *data);
-   void (*stop)(void *data);
-
-   bool (*get_position)(void *data, double *lat, double *lon, double *horiz_accuracy, double *vert_accuracy);
-   void (*set_interval)(void *data, unsigned interval_msecs, unsigned interval_distance);
-   const char *ident;
-} location_driver_t;
-
 struct rarch_viewport;
 
 #ifdef HAVE_OVERLAY
@@ -495,18 +447,6 @@ typedef struct driver
    const audio_driver_t *audio;
    const video_driver_t *video;
    const input_driver_t *input;
-#ifdef HAVE_OSK
-   const input_osk_driver_t *osk;
-   void *osk_data;
-#endif
-#ifdef HAVE_CAMERA
-   const camera_driver_t *camera;
-   void *camera_data;
-#endif
-#ifdef HAVE_LOCATION
-   const location_driver_t *location;
-   void *location_data;
-#endif
    void *audio_data;
    void *video_data;
    void *input_data;
@@ -528,15 +468,6 @@ typedef struct driver
    bool video_data_own;
    bool audio_data_own;
    bool input_data_own;
-#ifdef HAVE_CAMERA
-   bool camera_data_own;
-#endif
-#ifdef HAVE_LOCATION
-   bool location_data_own;
-#endif
-#ifdef HAVE_OSK
-   bool osk_data_own;
-#endif
 
 #ifdef HAVE_COMMAND
    rarch_cmd_t *command;
@@ -597,20 +528,6 @@ void find_next_audio_driver(void);
 void find_next_input_driver(void);
 void find_next_resampler_driver(void);
 
-#ifdef HAVE_CAMERA
-void init_camera(void);
-void uninit_camera(void);
-void find_prev_camera_driver(void);
-void find_next_camera_driver(void);
-#endif
-
-#ifdef HAVE_LOCATION
-void init_location(void);
-void uninit_location(void);
-void find_prev_location_driver(void);
-void find_next_location_driver(void);
-#endif
-
 void driver_set_monitor_refresh_rate(float hz);
 bool driver_monitor_fps_statistics(double *refresh_rate, double *deviation, unsigned *sample_points);
 void driver_set_nonblock_state(bool nonblock);
@@ -625,28 +542,12 @@ bool driver_set_rumble_state(unsigned port, enum retro_rumble_effect effect, uin
 bool driver_set_sensor_state(unsigned port, enum retro_sensor_action action, unsigned rate);
 float driver_sensor_get_input(unsigned port, unsigned action);
 
-// Used by RETRO_ENVIRONMENT_GET_CAMERA_INTERFACE
-#ifdef HAVE_CAMERA
-bool driver_camera_start(void);
-void driver_camera_stop(void);
-void driver_camera_poll(void);
-#endif
-
-// Used by RETRO_ENVIRONMENT_GET_LOCATION_INTERFACE
-#ifdef HAVE_LOCATION
-bool driver_location_start(void);
-void driver_location_stop(void);
-bool driver_location_get_position(double *lat, double *lon, double *horiz_accuracy, double *vert_accuracy);
-void driver_location_set_interval(unsigned interval_msecs, unsigned interval_distance);
-#endif
-
 // Used by RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO
 bool driver_update_system_av_info(const struct retro_system_av_info *info);
 
 extern driver_t driver;
 
 //////////////////////////////////////////////// Backends
-extern const audio_driver_t audio_rsound;
 extern const audio_driver_t audio_oss;
 extern const audio_driver_t audio_alsa;
 extern const audio_driver_t audio_alsathread;
@@ -693,13 +594,6 @@ extern const input_driver_t input_apple;
 extern const input_driver_t input_qnx;
 extern const input_driver_t input_rwebinput;
 extern const input_driver_t input_null;
-extern const camera_driver_t camera_v4l2;
-extern const camera_driver_t camera_android;
-extern const camera_driver_t camera_rwebcam;
-extern const camera_driver_t camera_ios;
-extern const location_driver_t location_apple;
-extern const location_driver_t location_android;
-extern const input_osk_driver_t input_ps3_osk;
 
 #ifdef HAVE_SCALERS_BUILTIN
 extern const softfilter_implementation_t blargg_ntsc_rf_implementation;

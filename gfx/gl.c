@@ -1310,32 +1310,6 @@ static inline void gl_set_shader_viewport(void *data, unsigned shader)
    gl_set_viewport(gl, gl->win_width, gl->win_height, false, true);
 }
 
-#if !defined(HAVE_OPENGLES) && defined(HAVE_FFMPEG)
-static void gl_pbo_async_readback(void *data)
-{
-   gl_t *gl = (gl_t*)data;
-   glBindBuffer(GL_PIXEL_PACK_BUFFER, gl->pbo_readback[gl->pbo_readback_index++]);
-   gl->pbo_readback_index &= 3;
-
-   // If set, we 3 rendered frames already buffered up.
-   gl->pbo_readback_valid |= gl->pbo_readback_index == 0;
-
-   glPixelStorei(GL_PACK_ROW_LENGTH, 0);
-   glPixelStorei(GL_PACK_ALIGNMENT, get_alignment(gl->vp.width * sizeof(uint32_t)));
-
-   // Read asynchronously into PBO buffer.
-   RARCH_PERFORMANCE_INIT(async_readback);
-   RARCH_PERFORMANCE_START(async_readback);
-   glReadBuffer(GL_BACK);
-   glReadPixels(gl->vp.x, gl->vp.y,
-         gl->vp.width, gl->vp.height,
-         GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, NULL);
-   RARCH_PERFORMANCE_STOP(async_readback);
-
-   glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-}
-#endif
-
 #if defined(HAVE_MENU)
 static inline void gl_draw_texture(void *data)
 {
@@ -1533,10 +1507,6 @@ static bool gl_frame(void *data, const void *frame, unsigned width, unsigned hei
             gl->vp.width, gl->vp.height,
             GL_RGBA, GL_UNSIGNED_BYTE, gl->readback_buffer_screenshot);
    }
-#if !defined(HAVE_OPENGLES) && defined(HAVE_FFMPEG)
-   else if (gl->pbo_readback_enable)
-      gl_pbo_async_readback(gl);
-#endif
 #endif
 
    context_swap_buffers_func(gl);
@@ -1611,14 +1581,6 @@ static void gl_free(void *data)
 #endif
 
    scaler_ctx_gen_reset(&gl->scaler);
-
-#if !defined(HAVE_OPENGLES) && defined(HAVE_FFMPEG)
-   if (gl->pbo_readback_enable)
-   {
-      glDeleteBuffers(4, gl->pbo_readback);
-      scaler_ctx_gen_reset(&gl->pbo_readback_scaler);
-   }
-#endif
 
 #ifdef HAVE_FBO
    gl_deinit_fbo(gl);
@@ -1806,47 +1768,6 @@ static inline void gl_reinit_textures(void *data, const video_info_t *video)
 
    if (!gl_check_error())
       RARCH_ERR("GL error reported while reinitializing textures. This should not happen ...\n");
-}
-#endif
-
-#if !defined(HAVE_OPENGLES) && defined(HAVE_FFMPEG)
-static void gl_init_pbo_readback(void *data)
-{
-   unsigned i;
-   gl_t *gl = (gl_t*)data;
-   // Only bother with this if we're doing FFmpeg GPU recording.
-   gl->pbo_readback_enable = g_settings.video.gpu_record && g_extern.recording;
-   if (!gl->pbo_readback_enable)
-      return;
-
-   RARCH_LOG("Async PBO readback enabled.\n");
-
-   glGenBuffers(4, gl->pbo_readback);
-   for (i = 0; i < 4; i++)
-   {
-      glBindBuffer(GL_PIXEL_PACK_BUFFER, gl->pbo_readback[i]);
-      glBufferData(GL_PIXEL_PACK_BUFFER, gl->vp.width * gl->vp.height * sizeof(uint32_t),
-            NULL, GL_STREAM_COPY);
-   }
-   glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-
-   struct scaler_ctx *scaler = &gl->pbo_readback_scaler;
-   scaler->in_width    = gl->vp.width;
-   scaler->in_height   = gl->vp.height;
-   scaler->out_width   = gl->vp.width;
-   scaler->out_height  = gl->vp.height;
-   scaler->in_stride   = gl->vp.width * sizeof(uint32_t);
-   scaler->out_stride  = gl->vp.width * 3;
-   scaler->in_fmt      = SCALER_FMT_ARGB8888;
-   scaler->out_fmt     = SCALER_FMT_BGR24;
-   scaler->scaler_type = SCALER_TYPE_POINT;
-
-   if (!scaler_ctx_gen_filter(scaler))
-   {
-      gl->pbo_readback_enable = false;
-      RARCH_ERR("Failed to init pixel conversion for PBO.\n");
-      glDeleteBuffers(4, gl->pbo_readback);
-   }
 }
 #endif
 
@@ -2183,10 +2104,6 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
             gl->win_width, gl->win_height);
    }
 
-#if !defined(HAVE_OPENGLES) && defined(HAVE_FFMPEG)
-   gl_init_pbo_readback(gl);
-#endif
-
    if (!gl_check_error())
    {
       context_destroy_func(gl);
@@ -2361,26 +2278,6 @@ static bool gl_read_viewport(void *data, uint8_t *buffer)
    RARCH_PERFORMANCE_INIT(read_viewport);
    RARCH_PERFORMANCE_START(read_viewport);
 
-#if defined(HAVE_FFMPEG) && !defined(HAVE_OPENGLES)
-   if (gl->pbo_readback_enable)
-   {
-      if (!gl->pbo_readback_valid) // We haven't buffered up enough frames yet, come back later.
-         return false;
-
-      glBindBuffer(GL_PIXEL_PACK_BUFFER, gl->pbo_readback[gl->pbo_readback_index]);
-      const void *ptr = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
-      if (!ptr)
-      {
-         RARCH_ERR("Failed to map pixel unpack buffer.\n");
-         return false;
-      }
-
-      scaler_ctx_scale(&gl->pbo_readback_scaler, buffer, ptr);
-      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-   }
-   else // Use slow synchronous readbacks. Use this with plain screenshots as we don't really care about performance in this case.
-#endif
    {
       // GLES2 only guarantees GL_RGBA/GL_UNSIGNED_BYTE readbacks so do just that ...
       // GLES2 also doesn't support reading back data from front buffer, so render

@@ -310,12 +310,6 @@ INPUT
 #include "../input/rwebinput_input.c"
 #endif
 
-#ifdef HAVE_OSK
-#if defined(__CELLOS_LV2__)
-#include "../ps3/ps3_input_osk.c"
-#endif
-#endif
-
 #if defined(__linux__) && !defined(ANDROID)
 #include "../input/linuxraw_input.c"
 #include "../input/linuxraw_joypad.c"
@@ -354,41 +348,6 @@ AUDIO RESAMPLER
 ============================================================ */
 #include "../audio/resampler.c"
 #include "../audio/sinc.c"
-
-/*============================================================
-CAMERA
-============================================================ */
-#ifdef HAVE_CAMERA
-#if defined(ANDROID)
-#include "../camera/android.c"
-#elif defined(EMSCRIPTEN)
-#include "../camera/rwebcam.c"
-#endif
-
-#ifdef HAVE_V4L2
-#include "../camera/video4linux2.c"
-#endif
-
-#endif
-
-/*============================================================
-LOCATION
-============================================================ */
-#ifdef HAVE_LOCATION
-
-#if defined(ANDROID)
-#include "../location/android.c"
-#endif
-
-#endif
-
-/*============================================================
-RSOUND
-============================================================ */
-#ifdef HAVE_RSOUND
-#include "../audio/librsound.c"
-#include "../audio/rsound.c"
-#endif
 
 /*============================================================
 AUDIO UTILS
@@ -565,14 +524,6 @@ THREAD
 #include "../gfx/video_thread_wrapper.c"
 #include "../audio/thread_wrapper.c"
 #include "../autosave.c"
-#endif
-
-
-/*============================================================
-NETPLAY
-============================================================ */
-#ifdef HAVE_NETPLAY
-#include "../netplay.c"
 #endif
 
 /*============================================================

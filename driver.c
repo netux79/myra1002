@@ -46,9 +46,6 @@ static const audio_driver_t *audio_drivers[] = {
 #if defined(HAVE_OSS) || defined(HAVE_OSS_BSD)
    &audio_oss,
 #endif
-#ifdef HAVE_RSOUND
-   &audio_rsound,
-#endif
 #ifdef HAVE_COREAUDIO
    &audio_coreaudio,
 #endif
@@ -188,177 +185,6 @@ static const input_driver_t *input_drivers[] = {
 #endif
    NULL,
 };
-
-#ifdef HAVE_OSK
-static const input_osk_driver_t *osk_drivers[] = {
-#ifdef __CELLOS_LV2__
-   &input_ps3_osk,
-#endif
-   NULL,
-};
-
-static int find_osk_driver_index(const char *driver)
-{
-   unsigned i;
-   for (i = 0; osk_drivers[i]; i++)
-      if (strcasecmp(driver, osk_drivers[i]->ident) == 0)
-         return i;
-   return -1;
-}
-
-static void find_osk_driver(void)
-{
-   int i = find_osk_driver_index(g_settings.osk.driver);
-   if (i >= 0)
-      driver.osk = osk_drivers[i];
-   else
-   {
-      unsigned d;
-      RARCH_ERR("Couldn't find any OSK driver named \"%s\"\n", g_settings.osk.driver);
-      RARCH_LOG_OUTPUT("Available OSK drivers are:\n");
-      for (d = 0; osk_drivers[d]; d++)
-         RARCH_LOG_OUTPUT("\t%s\n", osk_drivers[d]->ident);
-
-      rarch_fail(1, "find_osk_driver()");
-   }
-}
-
-void find_prev_osk_driver(void)
-{
-   int i = find_osk_driver_index(g_settings.osk.driver);
-   if (i > 0)
-      strlcpy(g_settings.osk.driver, osk_drivers[i - 1]->ident, sizeof(g_settings.osk.driver));
-   else
-      RARCH_WARN("Couldn't find any previous osk driver (current one: \"%s\").\n", g_settings.osk.driver);
-}
-
-void find_next_osk_driver(void)
-{
-   int i = find_osk_driver_index(g_settings.osk.driver);
-   if (i >= 0 && osk_drivers[i + 1])
-      strlcpy(g_settings.osk.driver, osk_drivers[i + 1]->ident, sizeof(g_settings.osk.driver));
-   else
-      RARCH_WARN("Couldn't find any next osk driver (current one: \"%s\").\n", g_settings.osk.driver);
-}
-#endif
-
-#ifdef HAVE_CAMERA
-static const camera_driver_t *camera_drivers[] = {
-#ifdef HAVE_V4L2
-   &camera_v4l2,
-#endif
-#ifdef EMSCRIPTEN
-   &camera_rwebcam,
-#endif
-#ifdef ANDROID
-   &camera_android,
-#endif
-#ifdef IOS
-   &camera_ios,
-#endif
-   NULL,
-};
-
-static int find_camera_driver_index(const char *driver)
-{
-   unsigned i;
-   for (i = 0; camera_drivers[i]; i++)
-      if (strcasecmp(driver, camera_drivers[i]->ident) == 0)
-         return i;
-   return -1;
-}
-
-static void find_camera_driver(void)
-{
-   int i = find_camera_driver_index(g_settings.camera.driver);
-   if (i >= 0)
-      driver.camera = camera_drivers[i];
-   else
-   {
-      unsigned d;
-      RARCH_ERR("Couldn't find any camera driver named \"%s\"\n", g_settings.camera.driver);
-      RARCH_LOG_OUTPUT("Available camera drivers are:\n");
-      for (d = 0; camera_drivers[d]; d++)
-         RARCH_LOG_OUTPUT("\t%s\n", camera_drivers[d]->ident);
-
-      rarch_fail(1, "find_camera_driver()");
-   }
-}
-
-void find_prev_camera_driver(void)
-{
-   int i = find_camera_driver_index(g_settings.camera.driver);
-   if (i > 0)
-      strlcpy(g_settings.camera.driver, camera_drivers[i - 1]->ident, sizeof(g_settings.camera.driver));
-   else
-      RARCH_WARN("Couldn't find any previous camera driver (current one: \"%s\").\n", g_settings.camera.driver);
-}
-
-void find_next_camera_driver(void)
-{
-   int i = find_camera_driver_index(g_settings.camera.driver);
-   if (i >= 0 && camera_drivers[i + 1])
-      strlcpy(g_settings.camera.driver, camera_drivers[i + 1]->ident, sizeof(g_settings.camera.driver));
-   else
-      RARCH_WARN("Couldn't find any next camera driver (current one: \"%s\").\n", g_settings.camera.driver);
-}
-#endif
-
-#ifdef HAVE_LOCATION
-static const location_driver_t *location_drivers[] = {
-#ifdef ANDROID
-   &location_android,
-#endif
-#if defined(IOS) || defined(OSX)
-   &location_apple,
-#endif
-   NULL,
-};
-
-static int find_location_driver_index(const char *driver)
-{
-   unsigned i;
-   for (i = 0; location_drivers[i]; i++)
-      if (strcasecmp(driver, location_drivers[i]->ident) == 0)
-         return i;
-   return -1;
-}
-
-static void find_location_driver(void)
-{
-   int i = find_location_driver_index(g_settings.location.driver);
-   if (i >= 0)
-      driver.location = location_drivers[i];
-   else
-   {
-      unsigned d;
-      RARCH_ERR("Couldn't find any location driver named \"%s\"\n", g_settings.location.driver);
-      RARCH_LOG_OUTPUT("Available location drivers are:\n");
-      for (d = 0; location_drivers[d]; d++)
-         RARCH_LOG_OUTPUT("\t%s\n", location_drivers[d]->ident);
-
-      rarch_fail(1, "find_location_driver()");
-   }
-}
-
-void find_prev_location_driver(void)
-{
-   int i = find_location_driver_index(g_settings.location.driver);
-   if (i > 0)
-      strlcpy(g_settings.location.driver, location_drivers[i - 1]->ident, sizeof(g_settings.location.driver));
-   else
-      RARCH_WARN("Couldn't find any previous location driver (current one: \"%s\").\n", g_settings.location.driver);
-}
-
-void find_next_location_driver(void)
-{
-   int i = find_location_driver_index(g_settings.location.driver);
-   if (i >= 0 && location_drivers[i + 1])
-      strlcpy(g_settings.location.driver, location_drivers[i + 1]->ident, sizeof(g_settings.location.driver));
-   else
-      RARCH_WARN("Couldn't find any next location driver (current one: \"%s\").\n", g_settings.location.driver);
-}
-#endif
 
 static int find_audio_driver_index(const char *driver)
 {
@@ -508,15 +334,6 @@ void init_drivers_pre(void)
    find_audio_driver();
    find_video_driver();
    find_input_driver();
-#ifdef HAVE_CAMERA
-   find_camera_driver();
-#endif
-#ifdef HAVE_LOCATION
-   find_location_driver();
-#endif
-#ifdef HAVE_OSK
-   find_osk_driver();
-#endif
 }
 
 static void adjust_system_rates(void)
@@ -616,67 +433,6 @@ float driver_sensor_get_input(unsigned port, unsigned id)
       return 0.0f;
 }
 
-#ifdef HAVE_CAMERA
-bool driver_camera_start(void)
-{
-   if (driver.camera && driver.camera_data)
-      return driver.camera->start(driver.camera_data);
-   else
-      return false;
-}
-
-void driver_camera_stop(void)
-{
-   if (driver.camera && driver.camera_data)
-      driver.camera->stop(driver.camera_data);
-}
-
-void driver_camera_poll(void)
-{
-   if (driver.camera && driver.camera_data)
-   {
-      driver.camera->poll(driver.camera_data,
-            g_extern.system.camera_callback.frame_raw_framebuffer,
-            g_extern.system.camera_callback.frame_opengl_texture);
-   }
-}
-#endif
-
-#ifdef HAVE_LOCATION
-bool driver_location_start(void)
-{
-   if (driver.location && driver.location_data)
-      return driver.location->start(driver.location_data);
-   else
-      return false;
-}
-
-void driver_location_stop(void)
-{
-   if (driver.location && driver.location_data)
-      driver.location->stop(driver.location_data);
-}
-
-void driver_location_set_interval(unsigned interval_msecs, unsigned interval_distance)
-{
-   if (driver.location && driver.location_data)
-      driver.location->set_interval(driver.location_data, interval_msecs, interval_distance);
-}
-
-bool driver_location_get_position(double *lat, double *lon, double *horiz_accuracy,
-      double *vert_accuracy)
-{
-   if (driver.location && driver.location_data)
-      return driver.location->get_position(driver.location_data, lat, lon, horiz_accuracy, vert_accuracy);
-
-   *lat = 0.0;
-   *lon = 0.0;
-   *horiz_accuracy = 0.0;
-   *vert_accuracy = 0.0;
-   return false;
-}
-#endif
-
 uintptr_t driver_get_current_framebuffer(void)
 {
 #ifdef HAVE_FBO
@@ -701,18 +457,7 @@ bool driver_update_system_av_info(const struct retro_system_av_info *info)
 {
    g_extern.system.av_info = *info;
    rarch_reset_drivers();
-   // Cannot continue recording with different parameters.
-   // Take the easiest route out and just restart the recording.
-#ifdef HAVE_FFMPEG
-   if (g_extern.recording)
-   {
-      static const char *msg = "Restarting FFmpeg recording due to driver reinit.";
-      msg_queue_push(g_extern.msg_queue, msg, 2, 180);
-      RARCH_WARN("%s\n", msg);
-      rarch_deinit_recording();
-      rarch_init_recording();
-   }
-#endif
+
    return true;
 }
 
@@ -741,118 +486,13 @@ void global_uninit_drivers(void)
       driver.input->free(driver.input_data);
       driver.input_data = NULL;
    }
-
-#ifdef HAVE_CAMERA
-   if (driver.camera && driver.camera_data)
-   {
-      if (g_extern.system.camera_callback.deinitialized)
-         g_extern.system.camera_callback.deinitialized();
-      driver.camera->free(driver.camera_data);
-      driver.camera_data = NULL;
-   }
-#endif
-
-#ifdef HAVE_LOCATION
-   if (driver.location && driver.location_data)
-   {
-      if (g_extern.system.location_callback.deinitialized)
-         g_extern.system.location_callback.deinitialized();
-      driver.location->free(driver.location_data);
-      driver.location_data = NULL;
-   }
-#endif
-
-#ifdef HAVE_OSK
-   if (driver.osk && driver.osk_data)
-   {
-      driver.osk->free(driver.osk_data);
-      driver.osk_data = NULL;
-   }
-#endif
 }
-
-#ifdef HAVE_CAMERA
-void init_camera(void)
-{
-   // Resource leaks will follow if camera is initialized twice.
-   if (driver.camera_data)
-      return;
-
-   find_camera_driver();
-
-   driver.camera_data = camera_init_func(
-         *g_settings.camera.device ? g_settings.camera.device : NULL,
-         g_extern.system.camera_callback.caps,
-         g_settings.camera.width ? g_settings.camera.width : g_extern.system.camera_callback.width,
-         g_settings.camera.height ? g_settings.camera.height : g_extern.system.camera_callback.height);
-
-   if (!driver.camera_data)
-   {
-      RARCH_ERR("Failed to initialize camera driver. Will continue without camera.\n");
-      g_extern.camera_active = false;
-   }
-
-   if (g_extern.system.camera_callback.initialized)
-      g_extern.system.camera_callback.initialized();
-}
-#endif
-
-#ifdef HAVE_LOCATION
-void init_location(void)
-{
-   // Resource leaks will follow if location interface is initialized twice.
-   if (driver.location_data)
-      return;
-
-   find_location_driver();
-
-   driver.location_data = location_init_func();
-
-   if (!driver.location_data)
-   {
-      RARCH_ERR("Failed to initialize location driver. Will continue without location.\n");
-      g_extern.location_active = false;
-   }
-
-   if (g_extern.system.location_callback.initialized)
-      g_extern.system.location_callback.initialized();
-}
-#endif
-
-#ifdef HAVE_OSK
-void init_osk(void)
-{
-   // Resource leaks will follow if osk is initialized twice.
-   if (driver.osk_data)
-      return;
-
-   find_osk_driver();
-
-   //FIXME - refactor params later based on semantics
-   driver.osk_data = osk_init_func(0);
-
-   if (!driver.osk_data)
-   {
-      RARCH_ERR("Failed to initialize OSK driver. Will continue without OSK.\n");
-      g_extern.osk_active = false;
-   }
-}
-#endif
 
 void init_drivers(void)
 {
    driver.video_data_own = !driver.video_data;
    driver.audio_data_own = !driver.audio_data;
    driver.input_data_own = !driver.input_data;
-#ifdef HAVE_CAMERA
-   driver.camera_data_own = !driver.camera_data;
-#endif
-#ifdef HAVE_LOCATION
-   driver.location_data_own = !driver.location_data;
-#endif
-#ifdef HAVE_OSK
-   driver.osk_data_own = !driver.osk_data;
-#endif
 
    adjust_system_rates();
 
@@ -865,60 +505,12 @@ void init_drivers(void)
 
    init_audio();
 
-#ifdef HAVE_CAMERA
-   // Only init camera driver if we're ever going to use it.
-   if (g_extern.camera_active)
-      init_camera();
-#endif
-
-#ifdef HAVE_LOCATION
-   // Only init location driver if we're ever going to use it.
-   if (g_extern.location_active)
-      init_location();
-#endif
-
-#ifdef HAVE_OSK
-   init_osk();
-#endif
-
    // Keep non-throttled state as good as possible.
    if (driver.nonblock_state)
       driver_set_nonblock_state(driver.nonblock_state);
 
    g_extern.system.frame_time_last = 0;
 }
-
-#ifdef HAVE_CAMERA
-void uninit_camera(void)
-{
-   if (driver.camera_data && driver.camera)
-   {
-      if (g_extern.system.camera_callback.deinitialized)
-         g_extern.system.camera_callback.deinitialized();
-      driver.camera->free(driver.camera_data);
-   }
-}
-#endif
-
-#ifdef HAVE_LOCATION
-void uninit_location(void)
-{
-   if (driver.location_data && driver.location)
-   {
-      if (g_extern.system.location_callback.deinitialized)
-         g_extern.system.location_callback.deinitialized();
-      driver.location->free(driver.location_data);
-   }
-}
-#endif
-
-#ifdef HAVE_OSK
-void uninit_osk(void)
-{
-   if (driver.osk_data && driver.osk)
-      driver.osk->free(driver.osk_data);
-}
-#endif
 
 void uninit_drivers(void)
 {
@@ -929,26 +521,6 @@ void uninit_drivers(void)
 
    uninit_video_input();
 
-#ifdef HAVE_CAMERA
-   uninit_camera();
-
-   if (driver.camera_data_own)
-      driver.camera_data = NULL;
-#endif
-
-#ifdef HAVE_LOCATION
-   uninit_location();
-
-   if (driver.location_data_own)
-      driver.location_data = NULL;
-#endif
-
-#ifdef HAVE_OSK
-   uninit_osk();
-
-   if (driver.osk_data_own)
-      driver.osk_data = NULL;
-#endif
    if (driver.video_data_own)
       driver.video_data = NULL;
    if (driver.audio_data_own)
@@ -956,15 +528,6 @@ void uninit_drivers(void)
    if (driver.input_data_own)
       driver.input_data = NULL;
 
-#ifdef HAVE_CAMERA
-   driver.camera_data_own = false;
-#endif
-#ifdef HAVE_LOCATION
-   driver.location_data_own = false;
-#endif
-#ifdef HAVE_OSK
-   driver.osk_data_own    = false;
-#endif
    driver.video_data_own  = false;
    driver.audio_data_own  = false;
    driver.input_data_own  = false;
