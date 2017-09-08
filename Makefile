@@ -92,8 +92,8 @@ ifneq ($(findstring Linux,$(OS)),)
    JOYCONFIG_OBJ += tools/linuxraw_joypad.o
 endif
 
-ifeq ($(HAVE_RGUI), 1)
-   OBJ += frontend/menu/menu_input_line_cb.o frontend/menu/menu_common.o frontend/menu/menu_navigation.o frontend/menu/menu_settings.o frontend/menu/menu_context.o frontend/menu/file_list.o frontend/menu/disp/rgui.o frontend/menu/history.o
+ifeq ($(HAVE_MENU), 1)
+   OBJ += frontend/menu/menu_input_line_cb.o frontend/menu/menu_common.o frontend/menu/menu_navigation.o frontend/menu/menu_settings.o frontend/menu/menu_display.o frontend/menu/file_list.o frontend/menu/history.o
    DEFINES += -DHAVE_MENU
 endif
 

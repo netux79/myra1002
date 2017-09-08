@@ -369,9 +369,9 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
    switch (setting)
    {
-      case RGUI_START_SCREEN:
+      case RGUI_HELP_SCREEN:
          if (action == RGUI_ACTION_OK)
-            file_list_push(rgui->menu_stack, "", RGUI_START_SCREEN, 0);
+            file_list_push(rgui->menu_stack, "", RGUI_HELP_SCREEN, 0);
          break;
       case RGUI_SETTINGS_REWIND_ENABLE:
          if (action == RGUI_ACTION_OK ||
@@ -808,7 +808,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (rgui->current_pad < MAX_PLAYERS - 1)
                rgui->current_pad++;
          }
-#ifdef HAVE_RGUI
+#ifdef HAVE_MENU
          if (port != rgui->current_pad)
             rgui->need_refresh = true;
 #endif
@@ -1167,14 +1167,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else if (action == RGUI_ACTION_RIGHT)
             find_next_input_driver();
          break;
-#ifdef HAVE_MENU
-      case RGUI_SETTINGS_DRIVER_MENU:
-         if (action == RGUI_ACTION_LEFT)
-            find_prev_menu_driver();
-         else if (action == RGUI_ACTION_RIGHT)
-            find_next_menu_driver();
-         break;
-#endif
+
       case RGUI_SETTINGS_VIDEO_GAMMA:
          if (action == RGUI_ACTION_START)
             g_extern.console.screen.gamma_correction = 0;
@@ -1369,10 +1362,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
             if (driver.video && driver.video->restart)
                driver.video->restart();
-            if (menu_ctx && menu_ctx->free_assets)
-               menu_ctx->free_assets(rgui);
-            if (menu_ctx && menu_ctx->init_assets)
-               menu_ctx->init_assets(rgui, video_data);
          }
          break;
       case RGUI_SETTINGS_VIDEO_PAL60:
@@ -1390,10 +1379,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
                   if (driver.video && driver.video->restart)
                      driver.video->restart();
-                  if (menu_ctx && menu_ctx->free_assets)
-                     menu_ctx->free_assets(rgui);
-                  if (menu_ctx && menu_ctx->init_assets)
-                     menu_ctx->init_assets(rgui, video_data);
                }
                break;
             case RGUI_ACTION_START:
@@ -1403,10 +1388,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
                   if (driver.video && driver.video->restart)
                      driver.video->restart();
-                  if (menu_ctx && menu_ctx->free_assets)
-                     menu_ctx->free_assets(rgui);
-                  if (menu_ctx && menu_ctx->init_assets)
-                     menu_ctx->init_assets(rgui, video_data);
                }
                break;
          }
@@ -1762,11 +1743,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_DRIVER_INPUT:
          strlcpy(type_str, g_settings.input.driver, type_str_size);
          break;
-#ifdef HAVE_MENU
-      case RGUI_SETTINGS_DRIVER_MENU:
-         strlcpy(type_str, g_settings.menu.driver, type_str_size);
-         break;
-#endif
       case RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO:
          {
             double refresh_rate = 0.0;

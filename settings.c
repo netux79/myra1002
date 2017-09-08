@@ -231,10 +231,6 @@ void config_set_defaults(void)
    g_settings.game_history_size    = game_history_size;
    g_settings.libretro_log_level   = libretro_log_level;
 
-#ifdef HAVE_MENU
-   g_settings.rgui_show_start_screen = rgui_show_start_screen;
-#endif
-
    rarch_assert(sizeof(g_settings.input.binds[0]) >= sizeof(retro_keybinds_1));
    rarch_assert(sizeof(g_settings.input.binds[1]) >= sizeof(retro_keybinds_rest));
    memcpy(g_settings.input.binds[0], retro_keybinds_1, sizeof(retro_keybinds_1));
@@ -879,7 +875,6 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_PATH(rgui_config_directory, "rgui_config_directory");
    if (!strcmp(g_settings.rgui_config_directory, "default"))
       *g_settings.rgui_config_directory = '\0';
-   CONFIG_GET_BOOL(rgui_show_start_screen, "rgui_show_start_screen");
 #endif
    CONFIG_GET_INT(libretro_log_level, "libretro_log_level");
 
@@ -1223,7 +1218,6 @@ bool config_save_file(const char *path)
 #ifdef HAVE_MENU
    config_set_path(conf, "rgui_browser_directory", *g_settings.rgui_content_directory ? g_settings.rgui_content_directory : "default");
    config_set_path(conf, "rgui_config_directory", *g_settings.rgui_config_directory ? g_settings.rgui_config_directory : "default");
-   config_set_bool(conf, "rgui_show_start_screen", g_settings.rgui_show_start_screen);
 #endif
 
    config_set_path(conf, "game_history_path", g_settings.game_history_path);

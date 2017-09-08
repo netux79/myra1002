@@ -1,7 +1,5 @@
 /*  RetroArch - A frontend for libretro.
  *  Copyright (C) 2010-2014 - Hans-Kristian Arntzen
- *  Copyright (C) 2011-2014 - Daniel De Matteis
- *  Copyright (C) 2012-2014 - Michael Lelli
  *
  *  RetroArch is free software: you can redistribute it and/or modify it under the terms
  *  of the GNU General Public License as published by the Free Software Found-
@@ -21,21 +19,21 @@
 #include <string.h>
 #include <limits.h>
 
-#include "../menu_common.h"
-#include "../menu_context.h"
-#include "../file_list.h"
-#include "../../../general.h"
-#include "../../../gfx/gfx_common.h"
-#include "../../../config.def.h"
-#include "../../../file.h"
-#include "../../../dynamic.h"
-#include "../../../compat/posix_string.h"
-#include "../../../gfx/shader_parse.h"
-#include "../../../performance.h"
-#include "../../../input/input_common.h"
+#include "menu_common.h"
+#include "menu_display.h"
+#include "file_list.h"
+#include "../../general.h"
+#include "../../gfx/gfx_common.h"
+#include "../../config.def.h"
+#include "../../file.h"
+#include "../../dynamic.h"
+#include "../../compat/posix_string.h"
+#include "../../gfx/shader_parse.h"
+#include "../../performance.h"
+#include "../../input/input_common.h"
 
-#include "../../../screenshot.h"
-#include "../../../gfx/fonts/bitmap.h"
+#include "../../screenshot.h"
+#include "../../gfx/fonts/bitmap.h"
 
 #if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_HLSL)
 #define HAVE_SHADER_MANAGER
@@ -306,7 +304,7 @@ static void rgui_render(void *data, void *video_data)
          (menu_type == RGUI_SETTINGS_PATH_OPTIONS) ||
          (menu_type == RGUI_SETTINGS_OPTIONS) ||
          menu_type == RGUI_SETTINGS_CUSTOM_BIND ||
-         menu_type == RGUI_START_SCREEN ||
+         menu_type == RGUI_HELP_SCREEN ||
          menu_type == RGUI_SETTINGS)
       snprintf(title, sizeof(title), "MENU %s", dir);
    else if (menu_type == RGUI_SETTINGS_OPEN_HISTORY)
@@ -580,16 +578,12 @@ void rgui_set_texture(void *data, void *video_data, bool enable)
             enable, rgui->width, rgui->height, 1.0f);
 }
 
-const menu_ctx_driver_t menu_ctx_rgui = {
+const menu_driver_t menu_driver_rgui = {
    rgui_set_texture,
    rgui_render_messagebox,
    rgui_render,
    rgui_init,
    rgui_free,
-   NULL,
-   NULL,
-   NULL,
-   NULL,
    rgui_input_postprocess,
    "rgui",
 };

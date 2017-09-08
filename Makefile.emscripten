@@ -44,7 +44,7 @@ OBJ = frontend/platform/platform_emscripten.o \
 		camera/rwebcam.o
 
 HAVE_OPENGL = 1
-HAVE_RGUI = 1
+HAVE_MENU = 1
 HAVE_SDL = 0
 HAVE_ZLIB = 1
 HAVE_FBO = 1
@@ -68,9 +68,9 @@ ifeq ($(PERF_TEST), 1)
    DEFINES += -DPERF_TEST
 endif
 
-ifeq ($(HAVE_RGUI), 1)
-   DEFINES += -DHAVE_MENU -DHAVE_RGUI
-   OBJ += frontend/menu/menu_input_line_cb.o frontend/menu/menu_common.o frontend/menu/menu_settings.o frontend/menu/menu_navigation.o frontend/menu/menu_context.o frontend/menu/file_list.o frontend/menu/disp/rgui.o frontend/menu/history.o
+ifeq ($(HAVE_MENU), 1)
+   DEFINES += -DHAVE_MENU
+   OBJ += frontend/menu/menu_input_line_cb.o frontend/menu/menu_common.o frontend/menu/menu_settings.o frontend/menu/menu_navigation.o frontend/menu/menu_display.o frontend/menu/file_list.o frontend/menu/history.o
 endif
 
 ifeq ($(HAVE_SDL), 1)
@@ -138,7 +138,6 @@ clean:
 	rm -f deps/miniz/*.o
 	rm -f frontend/*.o
 	rm -f frontend/menu/*.o
-	rm -f frontend/menu/disp/*.o
 	rm -f audio/*.o
 	rm -f audio/xaudio-c/*.o
 	rm -f compat/*.o

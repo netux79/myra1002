@@ -184,13 +184,6 @@ struct settings
       bool allow_rotate;
    } video;
 
-#ifdef HAVE_MENU
-   struct
-   {
-      char driver[32];
-   } menu;
-#endif
-
    struct
    {
       char driver[32];
@@ -284,7 +277,6 @@ struct settings
 #if defined(HAVE_MENU)
    char rgui_content_directory[PATH_MAX];
    char rgui_config_directory[PATH_MAX];
-   bool rgui_show_start_screen;
 #endif
    bool fps_show;
 

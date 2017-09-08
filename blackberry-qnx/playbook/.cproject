@@ -31,7 +31,6 @@
 								<option id="com.qnx.qcc.option.compiler.security.209097800" name="Enhanced Security (-fstack-protector-all)" superClass="com.qnx.qcc.option.compiler.security" value="false" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.defines.1775248205" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
-									<listOptionValue builtIn="false" value="HAVE_RGUI"/>
 									<listOptionValue builtIn="false" value="HAVE_MENU"/>
 									<listOptionValue builtIn="false" value="HAVE_NEON"/>
 									<listOptionValue builtIn="false" value="RARCH_INTERNAL"/>
@@ -153,7 +152,6 @@
 								<option id="com.qnx.qcc.option.compiler.security.421937377" name="Enhanced Security (-fstack-protector-all)" superClass="com.qnx.qcc.option.compiler.security" value="false" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.defines.426935293" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
-									<listOptionValue builtIn="false" value="HAVE_RGUI"/>
 									<listOptionValue builtIn="false" value="HAVE_MENU"/>
 									<listOptionValue builtIn="false" value="HAVE_NEON"/>
 									<listOptionValue builtIn="false" value="RARCH_MOBILE"/>
@@ -269,7 +267,6 @@
 								<option id="com.qnx.qcc.option.compiler.security.1305803908" name="Enhanced Security (-fstack-protector-all)" superClass="com.qnx.qcc.option.compiler.security" value="true" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.defines.213513124" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
-									<listOptionValue builtIn="false" value="HAVE_RGUI"/>
 									<listOptionValue builtIn="false" value="HAVE_MENU"/>
 									<listOptionValue builtIn="false" value="HAVE_NEON"/>
 									<listOptionValue builtIn="false" value="RARCH_MOBILE"/>
@@ -386,7 +383,6 @@
 								<option id="com.qnx.qcc.option.compiler.security.521807592" name="Enhanced Security (-fstack-protector-all)" superClass="com.qnx.qcc.option.compiler.security" value="true" valueType="boolean"/>
 								<option id="com.qnx.qcc.option.compiler.defines.1725725626" name="Defines (-D)" superClass="com.qnx.qcc.option.compiler.defines" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_FORTIFY_SOURCE=2"/>
-									<listOptionValue builtIn="false" value="HAVE_RGUI"/>
 									<listOptionValue builtIn="false" value="HAVE_MENU"/>
 									<listOptionValue builtIn="false" value="HAVE_NEON"/>
 									<listOptionValue builtIn="false" value="RARCH_MOBILE"/>

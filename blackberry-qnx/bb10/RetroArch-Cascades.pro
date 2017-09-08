@@ -5,7 +5,7 @@ CONFIG += qt warn_on cascades10
 LIBS += -lscreen -lbps -lOpenAL -lpng -lEGL -lGLESv2
 LIBS += -lbbcascadespickers -lbbdata -lbbdevice
 
-DEFINES += HAVE_RGUI HAVE_MENU HAVE_NEON RARCH_MOBILE \
+DEFINES += HAVE_MENU HAVE_NEON RARCH_MOBILE \
            SINC_LOWER_QUALITY \
            HAVE_FBO HAVE_GRIFFIN __LIBRETRO__ \
            HAVE_DYNAMIC HAVE_ZLIB __BLACKBERRY_QNX__ HAVE_OPENGLES \

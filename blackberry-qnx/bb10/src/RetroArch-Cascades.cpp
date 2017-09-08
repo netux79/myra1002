@@ -18,8 +18,8 @@
 #include "file.h"
 #include "core_info.h"
 
-#ifdef HAVE_RGUI
-#include "frontend/menu/rgui.h"
+#ifdef HAVE_MENU
+#include "frontend/menu/menu_display.h"
 #endif
 
 #include "../../frontend_qnx.h"

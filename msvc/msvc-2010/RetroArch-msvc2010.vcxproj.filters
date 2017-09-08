@@ -37,14 +37,11 @@
     <ClCompile Include="..\..\frontend\menu\menu_common.c">
       <Filter>frontend\menu</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\frontend\menu\menu_context.c">
+    <ClCompile Include="..\..\frontend\menu\menu_display.c">
       <Filter>frontend\menu</Filter>
     </ClCompile>
     <ClCompile Include="..\..\frontend\menu\menu_settings.c">
       <Filter>frontend\menu</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\frontend\menu\disp\rgui.c">
-      <Filter>frontend\menu\disp</Filter>
     </ClCompile>
     <ClCompile Include="..\..\gfx\glsym\rglgen.c">
       <Filter>gfx\glsym</Filter>

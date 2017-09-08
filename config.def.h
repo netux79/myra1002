@@ -461,9 +461,6 @@ static const bool stdin_cmd_enable = false;
 // Number of entries that will be kept in ROM history file.
 static const unsigned game_history_size = 100;
 
-// Show RGUI start-up screen on boot.
-static const bool rgui_show_start_screen = true;
-
 // Log level for libretro cores (GET_LOG_INTERFACE).
 static const unsigned libretro_log_level = 0;
 
@@ -665,7 +662,7 @@ static const struct retro_keybind retro_keybinds_1[] = {
    { true, RARCH_DISK_EJECT_TOGGLE,        RETRO_LBL_DISK_EJECT_TOGGLE,    RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
    { true, RARCH_DISK_NEXT,                RETRO_LBL_DISK_NEXT,            RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
    { true, RARCH_GRAB_MOUSE_TOGGLE,        RETRO_LBL_GRAB_MOUSE_TOGGLE,    RETROK_F11,     NO_BTN, 0, AXIS_NONE },
-#ifdef HAVE_RGUI
+#ifdef HAVE_MENU
    { true, RARCH_MENU_TOGGLE,              RETRO_LBL_MENU_TOGGLE,          RETROK_F1,      NO_BTN, 0, AXIS_NONE },
 #endif
 };

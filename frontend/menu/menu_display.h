@@ -14,8 +14,8 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MENU_CONTEXT_H
-#define __MENU_CONTEXT_H
+#ifndef __MENU_DISPLAY_H
+#define __MENU_DISPLAY_H
 
 #include "../../boolean.h"
 #include "../../driver.h"
@@ -24,28 +24,19 @@
 #include "../../config.h"
 #endif
 
-typedef struct menu_ctx_driver
+typedef struct menu_driver
 {
    void  (*set_texture)(void*, void*, bool);
    void  (*render_messagebox)(void*, void*, const char*);
    void  (*render)(void*, void*);
    void* (*init)(void*);
    void  (*free)(void*);
-   void  (*init_assets)(void*, void*);
-   void  (*free_assets)(void*);
-   void  (*populate_entries)(void*, unsigned);
-   void  (*iterate)(void*, unsigned);
    int   (*input_postprocess)(void *, uint64_t);
 
    // Human readable string.
    const char *ident;
-} menu_ctx_driver_t;
+} menu_driver_t;
 
-extern const menu_ctx_driver_t menu_ctx_rgui;
-
-const menu_ctx_driver_t *menu_ctx_find_driver(const char *ident); // Finds driver with ident. Does not initialize.
-bool menu_ctx_init_first(const menu_ctx_driver_t **driver, void **handle, void *video_data); // Finds first suitable driver and initializes.
-void find_prev_menu_driver(void);
-void find_next_menu_driver(void);
+extern const menu_driver_t menu_driver_rgui;
 
 #endif

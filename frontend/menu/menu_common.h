@@ -25,12 +25,10 @@
 
 #include "../../performance.h"
 #include "../info/core_info.h"
-#include "menu_context.h"
+#include "menu_display.h"
 
-#ifdef HAVE_RGUI
+#ifdef HAVE_MENU
 #define MENU_TEXTURE_FULLSCREEN false
-#else
-#define MENU_TEXTURE_FULLSCREEN true
 #endif
 
 #include "../../boolean.h"
@@ -57,7 +55,7 @@ typedef enum
    RGUI_FILE_DEVICE,
    RGUI_FILE_USE_DIRECTORY,
    RGUI_SETTINGS,
-   RGUI_START_SCREEN,
+   RGUI_HELP_SCREEN,
 
    // Shader stuff
    RGUI_SETTINGS_CONFIG_OPTIONS,
@@ -132,7 +130,6 @@ typedef enum
    RGUI_SETTINGS_DRIVER_AUDIO_DEVICE,
    RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER,
    RGUI_SETTINGS_DRIVER_INPUT,
-   RGUI_SETTINGS_DRIVER_MENU,
    RGUI_SETTINGS_SCREENSHOT,
    RGUI_SETTINGS_GPU_SCREENSHOT,
    RGUI_SETTINGS_SAVESTATE_AUTO_SAVE,
@@ -314,7 +311,6 @@ typedef struct
    size_t selection_ptr;
    bool need_refresh;
    bool msg_force;
-   bool push_start_screen;
 
    core_info_list_t *core_info;
    core_info_t core_info_current;
@@ -395,7 +391,7 @@ unsigned menu_type_is(unsigned type);
 
 uint64_t menu_input(void);
 
-extern const menu_ctx_driver_t *menu_ctx;
+extern const menu_driver_t *menugui_driver;
 
 #ifdef __cplusplus
 }
