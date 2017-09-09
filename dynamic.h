@@ -90,9 +90,6 @@ extern size_t (*pretro_serialize_size)(void);
 extern bool (*pretro_serialize)(void*, size_t);
 extern bool (*pretro_unserialize)(const void*, size_t);
 
-extern void (*pretro_cheat_reset)(void);
-extern void (*pretro_cheat_set)(unsigned, bool, const char*);
-
 extern bool (*pretro_load_game)(const struct retro_game_info*);
 extern bool (*pretro_load_game_special)(unsigned, const struct retro_game_info*, size_t);
 

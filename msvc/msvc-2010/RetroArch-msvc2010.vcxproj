@@ -195,7 +195,6 @@
     </ClCompile>
     <ClCompile Include="..\..\autosave.c">
     </ClCompile>
-    <ClCompile Include="..\..\cheats.c" />
     <ClCompile Include="..\..\compat\rxml\rxml.c" />
     <ClCompile Include="..\..\core_options.c" />
     <ClCompile Include="..\..\deps\rzlib\adler32.c" />

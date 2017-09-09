@@ -289,8 +289,6 @@ void config_set_defaults(void)
    *g_settings.libretro_info_path = '\0';
    *g_settings.core_options_path = '\0';
    *g_settings.game_history_path = '\0';
-   *g_settings.cheat_database = '\0';
-   *g_settings.cheat_settings_path = '\0';
    *g_settings.screenshot_directory = '\0';
    *g_settings.system_directory = '\0';
 #ifndef RARCH_CONSOLE
@@ -904,9 +902,6 @@ bool config_load_file(const char *path, bool set_defaults)
    CONFIG_GET_BOOL(pause_nonactive, "pause_nonactive");
    CONFIG_GET_INT(autosave_interval, "autosave_interval");
 
-   CONFIG_GET_PATH(cheat_database, "cheat_database_path");
-   CONFIG_GET_PATH(cheat_settings_path, "cheat_settings_path");
-
    CONFIG_GET_BOOL(block_sram_overwrite, "block_sram_overwrite");
    CONFIG_GET_BOOL(savestate_auto_index, "savestate_auto_index");
    CONFIG_GET_BOOL(savestate_auto_save, "savestate_auto_save");
@@ -1174,7 +1169,6 @@ bool config_save_file(const char *path)
    config_set_bool(conf, "fps_show", g_settings.fps_show);
    config_set_path(conf, "libretro_path", g_settings.libretro);
    config_set_path(conf, "libretro_info_path", g_settings.libretro_info_path);
-   config_set_path(conf, "cheat_database_path", g_settings.cheat_database);
    config_set_bool(conf, "rewind_enable", g_settings.rewind_enable);
 #ifdef HAVE_SCALERS_BUILTIN
    config_set_int(conf,   "filter_index",  g_settings.video.filter_idx);

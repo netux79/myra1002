@@ -587,9 +587,6 @@ static const bool input_autodetect_enable = true;
 #define RETRO_LBL_RESET "Reset"
 #define RETRO_LBL_SHADER_NEXT "Next Shader"
 #define RETRO_LBL_SHADER_PREV "Previous Shader"
-#define RETRO_LBL_CHEAT_INDEX_PLUS "Cheat Index Plus"
-#define RETRO_LBL_CHEAT_INDEX_MINUS "Cheat Index Minus"
-#define RETRO_LBL_CHEAT_TOGGLE "Cheat Toggle"
 #define RETRO_LBL_SCREENSHOT "Screenshot"
 #define RETRO_LBL_DSP_CONFIG "DSP Config"
 #define RETRO_LBL_MUTE "Mute Audio"
@@ -648,9 +645,6 @@ static const struct retro_keybind retro_keybinds_1[] = {
    { true, RARCH_RESET,                    RETRO_LBL_RESET,                RETROK_h,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_SHADER_NEXT,              RETRO_LBL_SHADER_NEXT,          RETROK_m,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_SHADER_PREV,              RETRO_LBL_SHADER_PREV,          RETROK_n,       NO_BTN, 0, AXIS_NONE },
-   { true, RARCH_CHEAT_INDEX_PLUS,         RETRO_LBL_CHEAT_INDEX_PLUS,     RETROK_y,       NO_BTN, 0, AXIS_NONE },
-   { true, RARCH_CHEAT_INDEX_MINUS,        RETRO_LBL_CHEAT_INDEX_MINUS,    RETROK_t,       NO_BTN, 0, AXIS_NONE },
-   { true, RARCH_CHEAT_TOGGLE,             RETRO_LBL_CHEAT_TOGGLE,         RETROK_u,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_SCREENSHOT,               RETRO_LBL_SCREENSHOT,           RETROK_F8,      NO_BTN, 0, AXIS_NONE },
    { true, RARCH_DSP_CONFIG,               RETRO_LBL_DSP_CONFIG,           RETROK_c,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_MUTE,                     RETRO_LBL_MUTE,                 RETROK_F9,      NO_BTN, 0, AXIS_NONE },
@@ -710,9 +704,6 @@ static const struct retro_keybind retro_keybinds_menu[] = {
    { true, RARCH_RESET,                    RETRO_LBL_RESET,                RETROK_h,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_SHADER_NEXT,              RETRO_LBL_SHADER_NEXT,          RETROK_m,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_SHADER_PREV,              RETRO_LBL_SHADER_PREV,          RETROK_n,       NO_BTN,                  0, AXIS_NONE },
-   { true, RARCH_CHEAT_INDEX_PLUS,         RETRO_LBL_CHEAT_INDEX_PLUS,     RETROK_y,       NO_BTN,                  0, AXIS_NONE },
-   { true, RARCH_CHEAT_INDEX_MINUS,        RETRO_LBL_CHEAT_INDEX_MINUS,    RETROK_t,       NO_BTN,                  0, AXIS_NONE },
-   { true, RARCH_CHEAT_TOGGLE,             RETRO_LBL_CHEAT_TOGGLE,         RETROK_u,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_SCREENSHOT,               RETRO_LBL_SCREENSHOT,           RETROK_F8,      NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_DSP_CONFIG,               RETRO_LBL_DSP_CONFIG,           RETROK_c,       NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_MUTE,                     RETRO_LBL_MUTE,                 RETROK_F9,      NO_BTN,                  0, AXIS_NONE },

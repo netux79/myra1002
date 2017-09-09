@@ -24,7 +24,6 @@ OBJ = frontend/frontend.o \
 		fifo_buffer.o \
 		core_options.o \
 		compat/compat.o \
-		cheats.o \
 		frontend/info/core_info.o \
 		conf/config_file.o \
 		screenshot.o \

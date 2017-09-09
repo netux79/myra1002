@@ -425,8 +425,6 @@ const rarch_setting_t* setting_data_get_list()
          CONFIG_PATH(g_settings.libretro_info_path,         "libretro_info_path",         "Info Path",                  default_libretro_info_path)   WITH_FLAGS(SD_FLAG_ALLOW_EMPTY | SD_FLAG_PATH_DIR)
          CONFIG_PATH(g_settings.core_options_path,          "core_options_path",          "Core Options Path",          DEFAULT_ME_YO)                WITH_FLAGS(SD_FLAG_ALLOW_EMPTY)
          CONFIG_PATH(g_settings.screenshot_directory,       "screenshot_directory",       "Screenshot Directory",       DEFAULT_ME_YO)                WITH_FLAGS(SD_FLAG_ALLOW_EMPTY | SD_FLAG_PATH_DIR)
-         CONFIG_PATH(g_settings.cheat_database,             "cheat_database_path",        "Cheat Database",             DEFAULT_ME_YO)                WITH_FLAGS(SD_FLAG_ALLOW_EMPTY)
-         CONFIG_PATH(g_settings.cheat_settings_path,        "cheat_settings_path",        "Cheat Settings",             DEFAULT_ME_YO)                WITH_FLAGS(SD_FLAG_ALLOW_EMPTY)
          CONFIG_PATH(g_settings.game_history_path,          "game_history_path",          "Content History Path",       DEFAULT_ME_YO)                WITH_FLAGS(SD_FLAG_ALLOW_EMPTY)
          CONFIG_UINT(g_settings.game_history_size,          "game_history_size",          "Content History Size",       game_history_size)
 

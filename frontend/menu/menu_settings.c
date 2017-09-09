@@ -358,10 +358,6 @@ void update_config_params()
 #endif
 }
 
-#ifndef RARCH_DEFAULT_PORT
-#define RARCH_DEFAULT_PORT 55435
-#endif
-
 int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned action)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
@@ -1006,9 +1002,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_RESET:
       case RGUI_SETTINGS_BIND_SHADER_NEXT:
       case RGUI_SETTINGS_BIND_SHADER_PREV:
-      case RGUI_SETTINGS_BIND_CHEAT_INDEX_PLUS:
-      case RGUI_SETTINGS_BIND_CHEAT_INDEX_MINUS:
-      case RGUI_SETTINGS_BIND_CHEAT_TOGGLE:
       case RGUI_SETTINGS_BIND_SCREENSHOT:
       case RGUI_SETTINGS_BIND_DSP_CONFIG:
       case RGUI_SETTINGS_BIND_MUTE:
@@ -2060,9 +2053,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_RESET:
       case RGUI_SETTINGS_BIND_SHADER_NEXT:
       case RGUI_SETTINGS_BIND_SHADER_PREV:
-      case RGUI_SETTINGS_BIND_CHEAT_INDEX_PLUS:
-      case RGUI_SETTINGS_BIND_CHEAT_INDEX_MINUS:
-      case RGUI_SETTINGS_BIND_CHEAT_TOGGLE:
       case RGUI_SETTINGS_BIND_SCREENSHOT:
       case RGUI_SETTINGS_BIND_DSP_CONFIG:
       case RGUI_SETTINGS_BIND_MUTE:

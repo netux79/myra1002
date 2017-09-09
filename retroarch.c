@@ -31,7 +31,6 @@
 #include "rewind.h"
 #include "compat/strl.h"
 #include "screenshot.h"
-#include "cheats.h"
 #include "compat/getopt_rarch.h"
 #include "compat/posix_string.h"
 #include "input/keyboard_line.h"
@@ -1082,18 +1081,6 @@ void rarch_deinit_msg_queue(void)
    }
 }
 
-static void init_cheats(void)
-{
-   if (*g_settings.cheat_database)
-      g_extern.cheat = cheat_manager_new(g_settings.cheat_database);
-}
-
-static void deinit_cheats(void)
-{
-   if (g_extern.cheat)
-      cheat_manager_free(g_extern.cheat);
-}
-
 void rarch_init_rewind(void)
 {
    if (!g_settings.rewind_enable || g_extern.state_manager)
@@ -1837,31 +1824,6 @@ static void check_shader_dir(void)
    old_pressed_prev = pressed_prev;
 }
 
-static void check_cheats(void)
-{
-   if (!g_extern.cheat)
-      return;
-
-   static bool old_pressed_prev;
-   static bool old_pressed_next;
-   static bool old_pressed_toggle;
-
-   bool pressed_next = input_key_pressed_func(RARCH_CHEAT_INDEX_PLUS);
-   bool pressed_prev = input_key_pressed_func(RARCH_CHEAT_INDEX_MINUS);
-   bool pressed_toggle = input_key_pressed_func(RARCH_CHEAT_TOGGLE);
-
-   if (pressed_next && !old_pressed_next)
-      cheat_manager_index_next(g_extern.cheat);
-   else if (pressed_prev && !old_pressed_prev)
-      cheat_manager_index_prev(g_extern.cheat);
-   else if (pressed_toggle && !old_pressed_toggle)
-      cheat_manager_toggle(g_extern.cheat);
-
-   old_pressed_prev = pressed_prev;
-   old_pressed_next = pressed_next;
-   old_pressed_toggle = pressed_toggle;
-}
-
 void rarch_disk_control_append_image(const char *path)
 {
    const struct retro_disk_control_callback *control = &g_extern.system.disk_control;
@@ -2189,7 +2151,6 @@ static void do_state_checks(void)
    check_slowmotion();
 
    check_shader_dir();
-   check_cheats();
    check_disk();
 
 #ifdef HAVE_DYLIB
@@ -2341,7 +2302,6 @@ int rarch_main_init(int argc, char *argv[])
    pretro_init();
 
    g_extern.use_sram = !g_extern.libretro_dummy && !g_extern.libretro_no_rom;
-   bool allow_cheats = true;
 
    if (g_extern.libretro_no_rom && !g_extern.libretro_dummy)
    {
@@ -2387,9 +2347,6 @@ int rarch_main_init(int argc, char *argv[])
    if (g_extern.use_sram)
       rarch_init_autosave();
 #endif
-
-   if (allow_cheats)
-      init_cheats();
 
    g_extern.error_in_init = false;
    g_extern.main_is_init  = true;
@@ -2544,8 +2501,6 @@ void rarch_main_deinit(void)
       save_files();
 
    rarch_deinit_rewind();
-
-   deinit_cheats();
 
    if (!g_extern.libretro_dummy && !g_extern.libretro_no_rom)
       save_auto_state();

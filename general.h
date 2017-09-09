@@ -26,7 +26,6 @@
 #include "rewind.h"
 #include "autosave.h"
 #include "dynamic.h"
-#include "cheats.h"
 #include "audio/ext/rarch_dsp.h"
 #include "compat/strl.h"
 #include "performance.h"
@@ -250,8 +249,6 @@ struct settings
    char libretro[PATH_MAX];
    unsigned libretro_log_level;
    char libretro_info_path[PATH_MAX];
-   char cheat_database[PATH_MAX];
-   char cheat_settings_path[PATH_MAX];
 
    char screenshot_directory[PATH_MAX];
    char system_directory[PATH_MAX];
@@ -503,8 +500,6 @@ struct global
    } shader_dir;
 
    char sha256[64 + 1];
-
-   cheat_manager_t *cheat;
 
    bool block_config_read;
 

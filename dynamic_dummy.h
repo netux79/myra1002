@@ -43,9 +43,6 @@ size_t libretro_dummy_retro_serialize_size(void);
 bool libretro_dummy_retro_serialize(void *data, size_t size);
 bool libretro_dummy_retro_unserialize(const void *data, size_t size);
 
-void libretro_dummy_retro_cheat_reset(void);
-void libretro_dummy_retro_cheat_set(unsigned index, bool enabled, const char *code);
-
 bool libretro_dummy_retro_load_game(const struct retro_game_info *game);
 bool libretro_dummy_retro_load_game_special(unsigned game_type,
       const struct retro_game_info *info, size_t num_info);

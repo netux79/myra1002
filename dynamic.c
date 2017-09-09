@@ -82,9 +82,6 @@ size_t (*pretro_serialize_size)(void);
 bool (*pretro_serialize)(void*, size_t);
 bool (*pretro_unserialize)(const void*, size_t);
 
-void (*pretro_cheat_reset)(void);
-void (*pretro_cheat_set)(unsigned, bool, const char*);
-
 bool (*pretro_load_game)(const struct retro_game_info*);
 bool (*pretro_load_game_special)(unsigned, const struct retro_game_info*, size_t);
 
@@ -277,9 +274,6 @@ static void load_symbols(bool is_dummy)
       SYM_DUMMY(retro_serialize);
       SYM_DUMMY(retro_unserialize);
 
-      SYM_DUMMY(retro_cheat_reset);
-      SYM_DUMMY(retro_cheat_set);
-
       SYM_DUMMY(retro_load_game);
       SYM_DUMMY(retro_load_game_special);
 
@@ -339,9 +333,6 @@ static void load_symbols(bool is_dummy)
       SYM(retro_serialize_size);
       SYM(retro_serialize);
       SYM(retro_unserialize);
-
-      SYM(retro_cheat_reset);
-      SYM(retro_cheat_set);
 
       SYM(retro_load_game);
       SYM(retro_load_game_special);

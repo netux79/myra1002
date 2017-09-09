@@ -22,7 +22,6 @@ OBJ = frontend/platform/platform_emscripten.o \
 		compat/compat.o \
 		compat/rxml/rxml.o \
 		screenshot.o \
-		cheats.o \
 		audio/utils.o \
 		audio/rwebaudio.o \
 		input/overlay.o \
