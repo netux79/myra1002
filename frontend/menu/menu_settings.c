@@ -566,6 +566,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else
             g_extern.audio_data.mute = !g_extern.audio_data.mute;
          break;
+      case RGUI_SETTINGS_AUDIO_SYNC:
+         if (action == RGUI_ACTION_START)
+            g_settings.audio.sync = false;
+         else
+            g_settings.audio.sync = !g_settings.audio.sync;
+         break;
       case RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA:
          if (action == RGUI_ACTION_START)
          {
@@ -1847,6 +1853,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_AUDIO_MUTE:
          strlcpy(type_str, g_extern.audio_data.mute ? "ON" : "OFF", type_str_size);
+         break;
+      case RGUI_SETTINGS_AUDIO_SYNC:
+         strlcpy(type_str, g_settings.audio.sync ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA:
          snprintf(type_str, type_str_size, "%.3f", g_settings.audio.rate_control_delta);

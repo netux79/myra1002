@@ -877,11 +877,9 @@ void rarch_init_filter(enum retro_pixel_format colfmt)
    }
 
    struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
-   unsigned width   = geom->max_width;
-   unsigned height  = geom->max_height;
-   unsigned pow2_x  = 0;
-   unsigned pow2_y  = 0;
-   unsigned maxsize = 0;
+   unsigned width   = geom->base_width;
+   unsigned height  = geom->base_height;
+   unsigned max_dim = 0;
 
    g_extern.filter.filter = rarch_softfilter_new(colfmt, width, height);
 
@@ -892,10 +890,9 @@ void rarch_init_filter(enum retro_pixel_format colfmt)
    }
 
    rarch_softfilter_get_max_output_size(g_extern.filter.filter, &width, &height);
-   pow2_x  = next_pow2(width);
-   pow2_y  = next_pow2(height);
-   maxsize = max(pow2_x, pow2_y); 
-   g_extern.filter.scale = maxsize / RARCH_SCALE_BASE;
+      
+   max_dim = max(width, height);
+   g_extern.filter.scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
 
    g_extern.filter.out_rgb32 = rarch_softfilter_get_output_format(g_extern.filter.filter) == RETRO_PIXEL_FORMAT_XRGB8888;
    g_extern.filter.out_bpp = g_extern.filter.out_rgb32 ? sizeof(uint32_t) : sizeof(uint16_t);
@@ -913,6 +910,7 @@ error:
 }
 #endif
 
+#ifdef HAVE_SHADERS
 static void deinit_shader_dir(void)
 {
    // It handles NULL, no worries :D
@@ -940,6 +938,7 @@ static void init_shader_dir(void)
    for (i = 0; i < g_extern.shader_dir.list->size; i++)
       RARCH_LOG("Found shader \"%s\"\n", g_extern.shader_dir.list->elems[i].data);
 }
+#endif
 
 static void deinit_pixel_converter(void)
 {
@@ -975,20 +974,26 @@ static bool init_video_pixel_converter(unsigned size)
 
 void init_video_input(void)
 {
+   const struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
+   unsigned scale;
+   
+#ifdef HAVE_SHADERS
+   init_shader_dir();
+#endif
 #ifdef HAVE_SCALERS_BUILTIN
    rarch_init_filter(g_extern.system.pix_fmt);
-#endif
-   init_shader_dir();
 
-   const struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
-   unsigned max_dim = max(geom->max_width, geom->max_height);
-   unsigned scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
-   scale = max(scale, 1);
-
-#ifdef HAVE_SCALERS_BUILTIN
    if (g_extern.filter.filter)
       scale = g_extern.filter.scale;
+   else
 #endif
+   {
+      unsigned max_dim = max(geom->base_width, geom->base_height);
+      scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
+   }
+
+   scale = max(scale, 1);
+   
    // Update core-dependent aspect ratio values.
    gfx_set_square_pixel_viewport(geom->base_width, geom->base_height);
    gfx_set_core_viewport();
@@ -1165,7 +1170,9 @@ void uninit_video_input(void)
 #ifdef HAVE_SCALERS_BUILTIN
    rarch_deinit_filter();
 #endif
+#ifdef HAVE_SHADERS
    deinit_shader_dir();
+#endif
    compute_monitor_fps_statistics();
 }
 

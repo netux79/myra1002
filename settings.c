@@ -1194,16 +1194,18 @@ bool config_save_file(const char *path)
    config_set_int(conf, "video_rotation", g_settings.video.rotation);
    config_set_path(conf, "screenshot_directory", *g_settings.screenshot_directory ? g_settings.screenshot_directory : "default");
    config_set_int(conf, "aspect_ratio_index", g_settings.video.aspect_ratio_idx);
+
    config_set_string(conf, "audio_device", g_settings.audio.device);
    config_set_bool(conf, "audio_rate_control", g_settings.audio.rate_control);
    config_set_float(conf, "audio_rate_control_delta", g_settings.audio.rate_control_delta);
    config_set_string(conf, "audio_driver", g_settings.audio.driver);
    config_set_int(conf, "audio_out_rate", g_settings.audio.out_rate);
-
-   config_set_path(conf, "system_directory", *g_settings.system_directory ? g_settings.system_directory : "default");
    g_settings.audio.volume = g_extern.audio_data.volume_db;
    config_set_float(conf, "audio_volume", g_settings.audio.volume);
    config_set_string(conf, "audio_resampler", g_settings.audio.resampler);
+   config_set_bool(conf, "audio_sync", g_settings.audio.sync);
+   
+   config_set_path(conf, "system_directory", *g_settings.system_directory ? g_settings.system_directory : "default");
    config_set_path(conf, "savefile_directory", *g_extern.savefile_dir ? g_extern.savefile_dir : "default");
    config_set_path(conf, "savestate_directory", *g_extern.savestate_dir ? g_extern.savestate_dir : "default");
    config_set_path(conf, "video_shader_dir", *g_settings.video.shader_dir ? g_settings.video.shader_dir : "default");
