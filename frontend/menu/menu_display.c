@@ -368,24 +368,18 @@ static void rgui_render(void *data, void *video_data)
    if (!core_name)
       core_name = "No Core";
 
-   const char *core_version = rgui->info.library_version;
-   if (!core_version)
-      core_version = g_extern.system.info.library_version;
-   if (!core_version)
-      core_version = "";
-
-   snprintf(title_msg, sizeof(title_msg), "%s - %s %s", PACKAGE_VERSION, core_name, core_version);
+   snprintf(title_msg, sizeof(title_msg), "%s - %s", PACKAGE_VERSION, core_name);
    blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, title_msg, true);
 
    /* get the time */
    time_t _time;
    time(&_time);
-   char time_display[8];
+   char time_display[9];
    /* Time (hours-minutes-seconds) */
-   strftime(time_display, 8, "%H:%M:%S", localtime(&_time));
-   blit_line(rgui, RGUI_TERM_WIDTH * FONT_HEIGHT_STRIDE + RGUI_TERM_START_X, 
+   strftime(time_display, sizeof(time_display), "%H:%M:%S", localtime(&_time));
+   blit_line(rgui, RGUI_TERM_WIDTH * FONT_WIDTH_STRIDE + RGUI_TERM_START_X - (FONT_WIDTH_STRIDE*8),
                    RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE + RGUI_TERM_START_Y + 2, 
-                   time_display, true);  
+                   time_display, true);
 
    unsigned x, y;
    size_t i;
