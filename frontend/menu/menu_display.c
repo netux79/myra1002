@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 
 #include "menu_common.h"
 #include "menu_display.h"
@@ -375,6 +376,16 @@ static void rgui_render(void *data, void *video_data)
 
    snprintf(title_msg, sizeof(title_msg), "%s - %s %s", PACKAGE_VERSION, core_name, core_version);
    blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, title_msg, true);
+
+   /* get the time */
+   time_t _time;
+   time(&_time);
+   char time_display[8];
+   /* Time (hours-minutes-seconds) */
+   strftime(time_display, 8, "%H:%M:%S", localtime(&_time));
+   blit_line(rgui, RGUI_TERM_WIDTH * FONT_HEIGHT_STRIDE + RGUI_TERM_START_X, 
+                   RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE + RGUI_TERM_START_Y + 2, 
+                   time_display, true);  
 
    unsigned x, y;
    size_t i;
