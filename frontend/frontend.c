@@ -35,12 +35,16 @@ frontend_ctx_driver_t *frontend_ctx;
 
 default_paths_t default_paths;
 
-static void rarch_get_environment_console(void)
+static void rarch_get_environment_console(char *path)
 {
    path_mkdir(default_paths.port_dir);
    path_mkdir(default_paths.system_dir);
    path_mkdir(default_paths.savestate_dir);
    path_mkdir(default_paths.sram_dir);
+
+   /* Initially set the libretro path to correctly
+    * load the configutation. */
+   strlcpy(g_settings.libretro, path, sizeof(g_settings.libretro));
 
    config_load();
 
@@ -331,7 +335,7 @@ returntype main_entry(signature())
    if (frontend_ctx && frontend_ctx->environment_get)
    {
       frontend_ctx->environment_get(argc, argv, args);
-      rarch_get_environment_console();
+      rarch_get_environment_console(argv[0]);
    }
 
    if (attempt_load_game)

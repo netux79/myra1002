@@ -1331,8 +1331,7 @@ bool menu_replace_config(const char *path)
       config_save_file(g_extern.config_path);
 
    strlcpy(g_extern.config_path, path, sizeof(g_extern.config_path));
-   g_extern.block_config_read = false;
-
+   
    // Load dummy core.
    *g_extern.fullpath = '\0';
    *g_settings.libretro = '\0'; // Load core in new config.

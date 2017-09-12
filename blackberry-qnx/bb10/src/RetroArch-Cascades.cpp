@@ -71,9 +71,6 @@ RetroArch::RetroArch()
    strlcpy(g_settings.libretro, "app/native/lib", sizeof(g_settings.libretro));
    coreSelectedIndex = -1;
 
-   //Stop config overwritting values
-   g_extern.block_config_read = true;
-
    QmlDocument *qml = QmlDocument::create("asset:///main.qml");
 
    if (!qml->hasErrors())

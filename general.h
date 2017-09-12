@@ -496,8 +496,6 @@ struct global
 
    char sha256[64 + 1];
 
-   bool block_config_read;
-
    // Settings and/or global state that is specific to a console-style implementation.
    struct
    {

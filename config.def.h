@@ -289,12 +289,6 @@ static const char *default_config_path = "app/native/retroarch.cfg";
 static const char *default_config_path = NULL;
 #endif
 
-#ifdef HAVE_MENU
-static bool default_block_config_read = true;
-#else
-static bool default_block_config_read = false;
-#endif
-
 #ifdef RARCH_CONSOLE
 static unsigned char default_config_type = CONFIG_PER_CORE;
 #else

@@ -50,7 +50,6 @@ void apple_event_basic_command(enum basic_event_t action)
 void apple_refresh_config(void)
 {
    // Little nudge to prevent stale values when reloading the confg file
-   g_extern.block_config_read = false;
    memset(g_settings.input.overlay, 0, sizeof(g_settings.input.overlay));
    memset(g_settings.video.shader_path, 0, sizeof(g_settings.video.shader_path));
 

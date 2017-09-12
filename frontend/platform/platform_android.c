@@ -442,9 +442,7 @@ static void get_environment_settings(int argc, char *argv[], void *data)
 
    if (valschanged)
    {
-      g_extern.block_config_read = false;
       config_load();
-      g_extern.block_config_read = true;
    }
 
    //LIBRETRO
@@ -521,9 +519,7 @@ static void process_pending_intent(void *data)
 
    if (valschanged)
    {
-      g_extern.block_config_read = false;
       config_load();
-      g_extern.block_config_read = true;
    }
 
    //LIBRETRO
