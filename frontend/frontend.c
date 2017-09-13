@@ -42,8 +42,8 @@ static void rarch_get_environment_console(char *path)
    path_mkdir(default_paths.savestate_dir);
    path_mkdir(default_paths.sram_dir);
 
-   /* Initially set the libretro path to correctly
-    * load the configutation. */
+   /* Initially set the libretro path to load
+    * the correct configuration. */
    strlcpy(g_settings.libretro, path, sizeof(g_settings.libretro));
 
    config_load();

@@ -307,18 +307,6 @@ static const char *default_libretro_info_path = "game:";
 static const char *default_libretro_info_path = NULL;
 #endif
 
-#if defined(ANDROID)
-static const char *default_libretro_path = "/data/data/com.retroarch/cores/";
-#elif defined(__QNX__)
-static const char *default_libretro_path = "/app/native/lib/";
-#elif defined(_XBOX1)
-static const char *default_libretro_path = "D:";
-#elif defined(_XBOX360)
-static const char *default_libretro_path = "game:";
-#else
-static const char *default_libretro_path = NULL;
-#endif
-
 // Crop overscanned frames.
 static const bool crop_overscan = true;
 
