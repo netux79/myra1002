@@ -691,8 +691,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
       label = ""; // Shouldn't happen ...
 #endif
    }
-   else if (type == RGUI_SETTINGS_CONFIG)
-      label = g_settings.rgui_config_directory;
    else if (type == RGUI_SETTINGS_DISK_APPEND)
       label = g_settings.rgui_content_directory;
 
@@ -745,7 +743,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             menu_clear_navigation(rgui);
             rgui->need_refresh = true;
          }
-         else if ((menu_type_is(type) == RGUI_SETTINGS || type == RGUI_SETTINGS_CORE || type == RGUI_SETTINGS_CONFIG || type == RGUI_SETTINGS_DISK_APPEND) && action == RGUI_ACTION_OK)
+         else if ((menu_type_is(type) == RGUI_SETTINGS || type == RGUI_SETTINGS_CORE || type == RGUI_SETTINGS_DISK_APPEND) && action == RGUI_ACTION_OK)
          {
             file_list_push(rgui->menu_stack, label, type, rgui->selection_ptr);
             menu_clear_navigation(rgui);
@@ -779,7 +777,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_CORE ||
-            menu_type == RGUI_SETTINGS_CONFIG ||
             menu_type == RGUI_SETTINGS_DISK_APPEND ||
             menu_type == RGUI_SETTINGS_OPEN_HISTORY))
    {
@@ -919,7 +916,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                menu_type_is(type) == RGUI_FILE_DIRECTORY ||
                type == RGUI_SETTINGS_OVERLAY_PRESET ||
                type == RGUI_SETTINGS_CORE ||
-               type == RGUI_SETTINGS_CONFIG ||
                type == RGUI_SETTINGS_DISK_APPEND ||
                type == RGUI_FILE_DIRECTORY)
          {
@@ -996,18 +992,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
 #endif
 
                menu_flush_stack_type(rgui, RGUI_SETTINGS);
-            }
-            else if (menu_type == RGUI_SETTINGS_CONFIG)
-            {
-               char config[PATH_MAX];
-               fill_pathname_join(config, dir, path, sizeof(config));
-               menu_flush_stack_type(rgui, RGUI_SETTINGS);
-               rgui->msg_force = true;
-               if (menu_replace_config(config))
-               {
-                  menu_clear_navigation(rgui);
-                  ret = -1;
-               }
             }
 #ifdef HAVE_OVERLAY
             else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
@@ -1177,7 +1161,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_DEFERRED_CORE ||
             menu_type == RGUI_SETTINGS_CORE ||
-            menu_type == RGUI_SETTINGS_CONFIG ||
             menu_type == RGUI_SETTINGS_OPEN_HISTORY ||
             menu_type == RGUI_SETTINGS_DISK_APPEND))
    {
@@ -1317,107 +1300,6 @@ deinit:
    return false;
 }
 #endif
-
-// Quite intrusive and error prone.
-// Likely to have lots of small bugs.
-// Cleanly exit the main loop to ensure that all the tiny details get set properly.
-// This should mitigate most of the smaller bugs.
-bool menu_replace_config(const char *path)
-{
-   if (strcmp(path, g_extern.config_path) == 0)
-      return false;
-
-   if (g_extern.config_save_on_exit && *g_extern.config_path)
-      config_save_file(g_extern.config_path);
-
-   strlcpy(g_extern.config_path, path, sizeof(g_extern.config_path));
-   
-   // Load dummy core.
-   *g_extern.fullpath = '\0';
-   *g_settings.libretro = '\0'; // Load core in new config.
-   g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
-   rgui->load_no_rom = false;
-
-   return true;
-}
-
-// Save a new config to a file. Filename is based on heuristics to avoid typing.
-bool menu_save_new_config(void)
-{
-   char config_dir[PATH_MAX];
-   *config_dir = '\0';
-
-   if (*g_settings.rgui_config_directory)
-      strlcpy(config_dir, g_settings.rgui_config_directory, sizeof(config_dir));
-   else if (*g_extern.config_path) // Fallback
-      fill_pathname_basedir(config_dir, g_extern.config_path, sizeof(config_dir));
-   else
-   {
-      const char *msg = "Config directory not set. Cannot save new config.";
-      msg_queue_clear(g_extern.msg_queue);
-      msg_queue_push(g_extern.msg_queue, msg, 1, 180);
-      RARCH_ERR("%s\n", msg);
-      return false;
-   }
-
-   bool found_path = false;
-   char config_name[PATH_MAX];
-   char config_path[PATH_MAX];
-   if (*g_settings.libretro && !path_is_directory(g_settings.libretro) && path_file_exists(g_settings.libretro)) // Infer file name based on libretro core.
-   {
-      unsigned i;
-      // In case of collision, find an alternative name.
-      for (i = 0; i < 16; i++)
-      {
-         fill_pathname_base(config_name, g_settings.libretro, sizeof(config_name));
-         path_remove_extension(config_name);
-         fill_pathname_join(config_path, config_dir, config_name, sizeof(config_path));
-
-         char tmp[64];
-         *tmp = '\0';
-         if (i)
-            snprintf(tmp, sizeof(tmp), "-%u.cfg", i);
-         else
-            strlcpy(tmp, ".cfg", sizeof(tmp));
-
-         strlcat(config_path, tmp, sizeof(config_path));
-
-         if (!path_file_exists(config_path))
-         {
-            found_path = true;
-            break;
-         }
-      }
-   }
-
-   // Fallback to system time ...
-   if (!found_path)
-   {
-      RARCH_WARN("Cannot infer new config path. Use current time.\n");
-      fill_dated_filename(config_name, "cfg", sizeof(config_name));
-      fill_pathname_join(config_path, config_dir, config_name, sizeof(config_path));
-   }
-
-   char msg[512];
-   bool ret;
-   if (config_save_file(config_path))
-   {
-      strlcpy(g_extern.config_path, config_path, sizeof(g_extern.config_path));
-      snprintf(msg, sizeof(msg), "Saved new config to \"%s\".", config_path);
-      RARCH_LOG("%s\n", msg);
-      ret = true;
-   }
-   else
-   {
-      snprintf(msg, sizeof(msg), "Failed saving config to \"%s\".", config_path);
-      RARCH_ERR("%s\n", msg);
-      ret = false;
-   }
-
-   msg_queue_clear(g_extern.msg_queue);
-   msg_queue_push(g_extern.msg_queue, msg, 1, 180);
-   return ret;
-}
 
 void menu_poll_bind_state(struct rgui_bind_state *state)
 {
@@ -1646,8 +1528,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Config Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
          if (g_extern.main_is_init && !g_extern.libretro_dummy && g_settings.config_type == CONFIG_PER_GAME)
             file_list_push(rgui->selection_buf, "Per-Game Config Status", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
-         file_list_push(rgui->selection_buf, "Select Active Config", RGUI_SETTINGS_CONFIG, 0);
-         file_list_push(rgui->selection_buf, "Save As New Config", RGUI_SETTINGS_SAVE_CONFIG, 0);
          break;
       case RGUI_SETTINGS_SAVE_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -2049,8 +1929,6 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
             char ext_buf[1024];
             if (menu_type == RGUI_SETTINGS_CORE)
                exts = EXT_EXECUTABLES;
-            else if (menu_type == RGUI_SETTINGS_CONFIG)
-               exts = "cfg";
             else if (menu_type == RGUI_SETTINGS_SHADER_PRESET)
                exts = "cgp|glslp";
             else if (menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)

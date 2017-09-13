@@ -675,10 +675,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             return -1;
          }
          break;
-      case RGUI_SETTINGS_SAVE_CONFIG:
-         if (action == RGUI_ACTION_OK)
-            menu_save_new_config();
-         break;
 #ifdef HAVE_OVERLAY
       case RGUI_SETTINGS_OVERLAY_PRESET:
          switch (action)
@@ -1913,12 +1909,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
                snprintf(type_str, type_str_size, "%u", current + 1);
             break;
          }
-      case RGUI_SETTINGS_CONFIG:
-         if (*g_extern.config_path)
-            fill_pathname_base(type_str, g_extern.config_path, type_str_size);
-         else
-            strlcpy(type_str, "<default>", type_str_size);
-         break;
       case RGUI_SETTINGS_OPEN_FILEBROWSER:
       case RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE:
       case RGUI_SETTINGS_OPEN_HISTORY:

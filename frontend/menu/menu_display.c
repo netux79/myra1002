@@ -265,8 +265,6 @@ static void rgui_render(void *data, void *video_data)
       snprintf(title, sizeof(title), "CORE SELECTION %s", dir);
    else if (menu_type == RGUI_SETTINGS_DEFERRED_CORE)
       snprintf(title, sizeof(title), "DETECTED CORES %s", dir);
-   else if (menu_type == RGUI_SETTINGS_CONFIG)
-      snprintf(title, sizeof(title), "CONFIG %s", dir);
    else if (menu_type == RGUI_SETTINGS_DISK_APPEND)
       snprintf(title, sizeof(title), "DISK APPEND %s", dir);
    else if (menu_type == RGUI_SETTINGS_VIDEO_OPTIONS)
@@ -439,7 +437,7 @@ static void rgui_render(void *data, void *video_data)
             w = 5;
          }
       }
-      else if (menu_type == RGUI_SETTINGS_CONFIG ||
+      else if (
 #ifdef HAVE_OVERLAY
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
 #endif

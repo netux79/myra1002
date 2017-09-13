@@ -107,8 +107,6 @@ typedef enum
    RGUI_SETTINGS_CORE,
    RGUI_SETTINGS_CORE_INFO,
    RGUI_SETTINGS_DEFERRED_CORE,
-   RGUI_SETTINGS_CONFIG,
-   RGUI_SETTINGS_SAVE_CONFIG,
    RGUI_SETTINGS_CORE_OPTIONS,
    RGUI_SETTINGS_AUDIO_OPTIONS,
    RGUI_SETTINGS_INPUT_OPTIONS,
@@ -378,10 +376,6 @@ extern void load_menu_game_new_core(void);
 void menu_rom_history_push(const char *path, const char *core_path,
       const char *core_name);
 void menu_rom_history_push_current(void);
-
-bool menu_replace_config(const char *path);
-
-bool menu_save_new_config(void);
 
 int menu_settings_toggle_setting(void *data, void *video_data, unsigned setting, unsigned action, unsigned menu_type);
 int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned action);
