@@ -170,11 +170,7 @@ struct settings
       float msg_color_b;
 
       bool disable_composition;
-
-      bool post_filter_record;
-      bool gpu_record;
       bool gpu_screenshot;
-
       bool allow_rotate;
    } video;
 
@@ -322,7 +318,6 @@ struct global
 
    // Config associated with global "default" config.
    char config_path[PATH_MAX];
-   char append_config_path[PATH_MAX];
    char input_config_path[PATH_MAX];
    char basename[PATH_MAX];
    char fullpath[PATH_MAX];

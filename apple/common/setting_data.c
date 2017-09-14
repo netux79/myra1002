@@ -520,8 +520,6 @@ const rarch_setting_t* setting_data_get_list()
       END_SUB_GROUP()
 
       START_SUB_GROUP("Misc")
-         CONFIG_BOOL(g_settings.video.post_filter_record,   "video_post_filter_record",   "Post filter record",         post_filter_record)
-         CONFIG_BOOL(g_settings.video.gpu_record,           "video_gpu_record",           "GPU Record",                 gpu_record)
          CONFIG_BOOL(g_settings.video.gpu_screenshot,       "video_gpu_screenshot",       "GPU Screenshot",             gpu_screenshot)
          CONFIG_BOOL(g_settings.video.allow_rotate,         "video_allow_rotate",         "Allow rotation",             allow_rotate)
          CONFIG_BOOL(g_settings.video.crop_overscan,        "video_crop_overscan",        "Crop Overscan (reload)",     crop_overscan)

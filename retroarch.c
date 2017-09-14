@@ -898,10 +898,6 @@ static void parse_input(int argc, char *argv[])
                   g_extern.libretro_dummy = true;
                   break;
 
-               case 'C':
-                  strlcpy(g_extern.append_config_path, optarg, sizeof(g_extern.append_config_path));
-                  break;
-
                case 'B':
                   strlcpy(g_extern.bps_name, optarg, sizeof(g_extern.bps_name));
                   g_extern.bps_pref = true;

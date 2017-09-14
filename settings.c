@@ -195,8 +195,6 @@ void config_set_defaults(void)
    g_settings.video.msg_color_b = ((message_color >>  0) & 0xff) / 255.0f;
 
    g_settings.video.refresh_rate = refresh_rate;
-   g_settings.video.post_filter_record = post_filter_record;
-   g_settings.video.gpu_record = gpu_record;
    g_settings.video.gpu_screenshot = gpu_screenshot;
    g_settings.video.rotation = ORIENTATION_NORMAL;
 
@@ -664,19 +662,6 @@ bool config_load_file(const char *path, bool set_defaults)
    if (set_defaults)
       config_set_defaults();
 
-   char *save;
-   char tmp_append_path[PATH_MAX]; // Don't destroy append_config_path.
-   strlcpy(tmp_append_path, g_extern.append_config_path, sizeof(tmp_append_path));
-   const char *extra_path = strtok_r(tmp_append_path, ",", &save);
-   while (extra_path)
-   {
-      RARCH_LOG("Appending config \"%s\"\n", extra_path);
-      bool ret = config_append_file(conf, extra_path);
-      if (!ret)
-         RARCH_ERR("Failed to append config \"%s\"\n", extra_path);
-      extra_path = strtok_r(NULL, ";", &save);
-   }
-
    if (g_extern.verbose)
    {
       RARCH_LOG_OUTPUT("=== Config ===\n");
@@ -794,8 +779,6 @@ bool config_load_file(const char *path, bool set_defaults)
       g_settings.video.msg_color_b = ((msg_color >>  0) & 0xff) / 255.0f;
    }
 
-   CONFIG_GET_BOOL(video.post_filter_record, "video_post_filter_record");
-   CONFIG_GET_BOOL(video.gpu_record, "video_gpu_record");
    CONFIG_GET_BOOL(video.gpu_screenshot, "video_gpu_screenshot");
 
    CONFIG_GET_PATH(video.shader_dir, "video_shader_dir");
