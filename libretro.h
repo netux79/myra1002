@@ -550,7 +550,7 @@ enum retro_mod
                                            // cross-platform way and for detecting architecture-specific features, such as SIMD support.
 #define RETRO_ENVIRONMENT_GET_CONTENT_DIRECTORY 30
                                            // const char ** --
-                                           // Returns the "content" directory of the frontend.
+                                           // Returns the "game" directory of the frontend.
                                            // This directory can be used to store specific assets that the core relies upon, such as art assets,
                                            // input data, etc etc.
                                            // The returned value can be NULL.

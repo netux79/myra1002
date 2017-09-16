@@ -282,14 +282,13 @@ void main_exit(args_type() args)
 
    if (g_extern.config_save_on_exit)
    {
-      // Flush out the specific config.
+      /* Flush out the specific config. */
       if (*g_extern.specific_config_path)
          config_save_file(g_extern.specific_config_path);
 
-      // save last specific config to the default config location, needed on
-      // consoles for core switching and reusing last good config for new cores.
+      /* save the global configurations aswell */
       if(*g_extern.config_path)
-         config_save_file(g_extern.config_path);
+         global_config_save_file(g_extern.config_path);
    }
 #endif
 

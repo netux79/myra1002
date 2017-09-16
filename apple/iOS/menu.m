@@ -514,19 +514,19 @@ static void RunActionSheet(const char* title, const struct string_list* items, U
    
    if (!apple_is_running)
    {
-      [self.sections addObject:[NSArray arrayWithObjects:@"Content",
+      [self.sections addObject:[NSArray arrayWithObjects:@"Game",
                                  [RAMenuItemBasic itemWithDescription:@"Choose Core"
                                     action:^{ [weakSelf chooseCoreWithPath:nil]; }
                                     detail:^{ return weakSelf.core ? apple_get_core_display_name(weakSelf.core) : @"Auto Detect"; }],
-                                 [RAMenuItemBasic itemWithDescription:@"Load Content"                 action:^{ [weakSelf loadGame]; }],
-                                 [RAMenuItemBasic itemWithDescription:@"Load Content (History)"       action:^{ [weakSelf loadHistory]; }],
+                                 [RAMenuItemBasic itemWithDescription:@"Load Game"                 action:^{ [weakSelf loadGame]; }],
+                                 [RAMenuItemBasic itemWithDescription:@"Load Game (History)"       action:^{ [weakSelf loadHistory]; }],
                                  nil]];
    }
    else
    {
       [self.sections addObject:[NSArray arrayWithObjects:@"Actions",
-                                 [RAMenuItemBasic itemWithDescription:@"Reset Content" action:^{ [weakSelf performBasicAction:RESET]; }],
-                                 [RAMenuItemBasic itemWithDescription:@"Close Content" action:^{ [weakSelf performBasicAction:QUIT]; }],
+                                 [RAMenuItemBasic itemWithDescription:@"Reset Game" action:^{ [weakSelf performBasicAction:RESET]; }],
+                                 [RAMenuItemBasic itemWithDescription:@"Close Game" action:^{ [weakSelf performBasicAction:QUIT]; }],
                                  nil]];
       
       [self.sections addObject:[NSArray arrayWithObjects:@"States",
@@ -537,7 +537,7 @@ static void RunActionSheet(const char* title, const struct string_list* items, U
       
       [settings addObject:[RAMenuItemBasic itemWithDescription:@"Core"
                               action:^{ [weakSelf.navigationController pushViewController:[[RACoreSettingsMenu alloc] initWithCore:apple_core] animated:YES]; }]];
-      [settings addObject:[RAMenuItemBasic itemWithDescription:@"Core Options"
+      [settings addObject:[RAMenuItemBasic itemWithDescription:@"Core Setup"
                               action:^{ [weakSelf.navigationController pushViewController:[RACoreOptionsMenu new] animated:YES]; }]];
    }
    

@@ -310,7 +310,7 @@ void config_set_defaults(void)
    g_settings.video.msg_pos_y = 0.90f;
    g_settings.video.aspect_ratio = -1.0f;
 
-   g_settings.config_type = default_config_type;
+   g_extern.config_type = CONFIG_PER_CORE;
 
    // g_extern
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
@@ -357,31 +357,6 @@ void config_set_defaults(void)
    rarch_init_msg_queue();
 }
 
-static void parse_global_config(void)
-{
-   bool ret;
-   if (*g_extern.config_path)
-   {
-      RARCH_LOG("Loading config from: %s.\n", g_extern.config_path);
-      ret = config_load_file(g_extern.config_path, false);
-   }
-   else
-   {
-      RARCH_LOG("Loading default config.\n");
-      ret = config_load_file(NULL, false);
-      if (*g_extern.config_path)
-         RARCH_LOG("Found default config: %s.\n", g_extern.config_path);
-   }
-
-   if (!ret)
-   {
-      RARCH_ERR("Couldn't find config at path: \"%s\"\n", g_extern.config_path);
-#ifndef RARCH_CONSOLE
-      rarch_fail(1, "parse_global_config()");
-#endif
-   }
-}
-
 static void calculate_specific_config_path(const char *in_basename)
 {
 #ifdef HAVE_MENU
@@ -400,87 +375,58 @@ static void calculate_specific_config_path(const char *in_basename)
    fill_pathname_dir(g_extern.specific_config_path, in_basename, ".cfg", sizeof(g_extern.specific_config_path));
 }
 
-static void load_config_by_type(void)
-{
-   char tmp_path[PATH_MAX];
-   unsigned char config_t = CONFIG_GLOBAL;
-   static bool first_time = true;
-   
-   /* Clear the specific config vars */
-   *g_extern.specific_config_path = '\0';
-   g_extern.using_per_game_config = false;
-
-   if (first_time)
-       config_set_defaults();
-   else
-   {
-       /* Save some parameters which we need to keep between configs.
-          But only after we succesfully read these from the first config file */
-       strlcpy(tmp_path, g_settings.libretro, sizeof(tmp_path));
-       config_t = g_settings.config_type;
-   }
-
-   switch (g_settings.config_type)
-   {
-      case CONFIG_PER_GAME:
-         /* Only try it if the game is already loaded */
-         if (*g_extern.basename)
-         {
-            calculate_specific_config_path(g_extern.basename);
-            RARCH_LOG("Loading game-specific config from: %s.\n", g_extern.specific_config_path);
-            if (config_load_file(g_extern.specific_config_path, false))
-            {
-               /* We were successful loading per-game so we let the system know */
-               g_extern.using_per_game_config = true;
-               break;
-            }
-            else
-               RARCH_WARN("Game-specific config not found, trying per-core config.\n");
-         }
-         /* if we reach this point we failed, so we try to load per-core config */   
-      case CONFIG_PER_CORE:
-         if (*g_settings.libretro
-#ifdef HAVE_DYNAMIC
-               || g_extern.libretro_dummy
-#endif
-         )
-         {
-            calculate_specific_config_path(g_settings.libretro);
-            RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
-            if (config_load_file(g_extern.specific_config_path, false))
-               break;
-            else
-               RARCH_WARN("Core-specific config not found, using global config.\n");
-         }
-      default:
-      case CONFIG_GLOBAL:
-         parse_global_config();
-   }
-
-   if (first_time)
-       first_time = false;
-   else
-   {
-       /* Restore saved params to the current config.
-          Again only once we already read them once. */
-       strlcpy(g_settings.libretro, tmp_path, sizeof(g_settings.libretro));
-       g_settings.config_type = config_t;
-   }
-}
-
 void config_load(void)
 {
-   /* Flush out configs before loading a new config. */
-   if (g_extern.config_save_on_exit)
+   static bool first_time = true;
+       
+   if (first_time)
    {
+       config_set_defaults();
+       
+       /* try loading the global configuration */
+       RARCH_LOG("Loading config from: %s.\n", g_extern.config_path);
+       if (!global_config_load_file(g_extern.config_path))
+          RARCH_ERR("Couldn't find config at path: \"%s\"\n", g_extern.config_path);
+       
+       first_time = false;
+   }
+   else if (g_extern.config_save_on_exit)
+   {
+      /* Flush out configs before loading a new one. */
       if (*g_extern.specific_config_path)
          config_save_file(g_extern.specific_config_path);
-      else if (*g_extern.config_path)
-         config_save_file(g_extern.config_path);
+      
+      /* save global config aswell */
+      if (*g_extern.config_path)
+         global_config_save_file(g_extern.config_path);
    }
 
-   /* Per-core/game/global config handling. */
-   load_config_by_type();
+   /* Reset to default values */
+   *g_extern.specific_config_path = '\0';
+    g_extern.config_type = CONFIG_PER_CORE;
+   
+   /* First try per-game config (requires game already loaded) */
+   if (*g_extern.basename)
+   {
+      calculate_specific_config_path(g_extern.basename);
+      RARCH_LOG("Loading game-specific config from: %s.\n", g_extern.specific_config_path);
+      if (config_load_file(g_extern.specific_config_path))
+         g_extern.config_type = CONFIG_PER_GAME;
+      else
+         RARCH_WARN("Game-specific config not found, trying per-core config.\n");
+   }
+   
+   /* Try the per-core config if the per-game was unsuccessful */
+   if (*g_settings.libretro && g_extern.config_type != CONFIG_PER_GAME)
+   {
+      calculate_specific_config_path(g_settings.libretro);
+      RARCH_LOG("Loading core-specific config from: %s.\n", g_extern.specific_config_path);
+      if (!config_load_file(g_extern.specific_config_path))
+         RARCH_WARN("Core-specific config not found, using defaults config.\n");
+   }
+   
+   /* if reached this point and no config was loaded, defaults are used. 
+    * also the per-core setup is left so next time it gets saved as is */
 }
 
 static config_file_t *open_default_config_file(void)
@@ -644,10 +590,10 @@ static void config_read_keybinds_conf(config_file_t *conf);
 
 bool global_config_load_file(const char *path)
 {
-   unsigned i;
+   char tmp_str[PATH_MAX];
    config_file_t *conf = NULL;
 
-   if (path)
+   if (*path)
    {
       conf = config_file_new(path);
       if (!conf)
@@ -656,15 +602,15 @@ bool global_config_load_file(const char *path)
    else
       conf = open_default_config_file();
 
-   if (conf == NULL)
-      return true;
+   if (!conf)
+      return false;
 
-   if (g_extern.verbose)
+   /*if (g_extern.verbose)
    {
       RARCH_LOG_OUTPUT("=== Global Config ===\n");
       config_file_dump_all(conf, LOG_FILE);
       RARCH_LOG_OUTPUT("=== Global Config end ===\n");
-   }
+   }*/
 
    CONFIG_GET_STRING(video.driver, "video_driver");
    CONFIG_GET_STRING(video.gl_context, "video_gl_context");
@@ -678,7 +624,6 @@ bool global_config_load_file(const char *path)
 
    CONFIG_GET_INT(libretro_log_level, "libretro_log_level");
    CONFIG_GET_BOOL_EXTERN(config_save_on_exit, "config_save_on_exit");
-   CONFIG_GET_INT(config_type, "config_type");
    CONFIG_GET_BOOL(video.gpu_screenshot, "video_gpu_screenshot");
    CONFIG_GET_BOOL(input.autodetect_enable, "input_autodetect_enable");
    CONFIG_GET_BOOL(input.debug_enable, "input_debug_enable");
@@ -736,8 +681,6 @@ bool global_config_load_file(const char *path)
    CONFIG_GET_PATH(input.autoconfig_dir, "joypad_autoconfig_dir");
 #endif
 
-   char tmp_str[PATH_MAX];
-
    if (!g_extern.has_set_save_path && config_get_path(conf, "savefile_directory", tmp_str, sizeof(tmp_str)))
    {
       if (!strcmp(tmp_str, "default"))
@@ -784,14 +727,14 @@ bool config_load_file(const char *path)
    unsigned i;
    config_file_t *conf = NULL;
 
-   if (path)
+   if (*path)
    {
       conf = config_file_new(path);
       if (!conf)
          return false;
    }
    else
-      return true;
+      return false;
 
    if (g_extern.verbose)
    {
@@ -1136,7 +1079,6 @@ static void save_keybinds_player(config_file_t *conf, unsigned player)
 
 bool global_config_save_file(const char *path)
 {
-   unsigned i = 0;
    config_file_t *conf = config_file_new(path);
    if (!conf)
       conf = config_file_new(NULL);
@@ -1148,7 +1090,6 @@ bool global_config_save_file(const char *path)
    config_set_path(conf, "libretro_path", g_settings.libretro);
    config_set_path(conf, "libretro_info_path", g_settings.libretro_info_path);
    config_set_bool(conf, "config_save_on_exit", g_extern.config_save_on_exit);
-   config_set_int(conf, "config_type", g_settings.config_type);
    config_set_int(conf, "libretro_log_level", g_settings.libretro_log_level);
    config_set_bool(conf, "fps_show", g_settings.fps_show);
    config_set_bool(conf, "video_threaded", g_settings.video.threaded);

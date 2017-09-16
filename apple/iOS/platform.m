@@ -255,7 +255,7 @@ static void handle_touch_event(NSArray* touches)
    const core_info_list_t* core_list = apple_core_info_list_get();
    
    if (!core_list || core_list->count == 0)
-      apple_display_alert(@"No libretro cores were found. You will not be able to run any content.", 0);
+      apple_display_alert(@"No libretro cores were found. You will not be able to run any game.", 0);
    
    apple_gamecontroller_init();
    

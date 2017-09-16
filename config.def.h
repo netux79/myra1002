@@ -289,12 +289,6 @@ static const char *default_config_path = "app/native/retroarch.cfg";
 static const char *default_config_path = NULL;
 #endif
 
-#ifdef RARCH_CONSOLE
-static unsigned char default_config_type = CONFIG_PER_CORE;
-#else
-static unsigned char default_config_type = CONFIG_GLOBAL;
-#endif
-
 #if defined(ANDROID)
 static const char *default_libretro_info_path = "/data/data/com.retroarch/info/";
 #elif defined(__QNX__)

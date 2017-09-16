@@ -118,8 +118,7 @@ enum sound_mode_enums
 
 enum config_type_enums
 {
-   CONFIG_GLOBAL = 0,
-   CONFIG_PER_CORE,
+   CONFIG_PER_CORE = 0,
    CONFIG_PER_GAME,
 };
 
@@ -267,8 +266,6 @@ struct settings
    char rgui_config_directory[PATH_MAX];
 #endif
    bool fps_show;
-
-   unsigned char config_type;
 };
 
 enum rarch_game_type
@@ -315,9 +312,11 @@ struct global
    bool has_set_save_path;
    bool has_set_state_path;
    bool has_set_libretro_device[MAX_PLAYERS];
+   enum config_type_enums config_type;
 
-   // Config associated with global "default" config.
+   // Config associated with global and specific config.
    char config_path[PATH_MAX];
+   char specific_config_path[PATH_MAX];   
    char input_config_path[PATH_MAX];
    char basename[PATH_MAX];
    char fullpath[PATH_MAX];
@@ -541,10 +540,6 @@ struct global
 
    bool libretro_no_rom;
    bool libretro_dummy;
-
-   // Config file associated with per-core and per-game configs.
-   bool using_per_game_config;
-   char specific_config_path[PATH_MAX];
 };
 
 struct rarch_main_wrap

@@ -652,9 +652,9 @@ static int menu_start_screen_iterate(void *data, void *video_data, unsigned acti
          " Exit RetroArch: %-20s\n"
          " \n"
 
-         "To run content:\n"
+         "To run game:\n"
          "Load a libretro core (Core).\n"
-         "Load a content file (Load Content).     \n"
+         "Load a game file (Load Game).     \n"
          " \n"
 
          "See Path Options to set directories\n"
@@ -1524,10 +1524,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #endif
       case RGUI_SETTINGS_CONFIG_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Save Config On Exit", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
-         file_list_push(rgui->selection_buf, "Config Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
-         if (g_extern.main_is_init && !g_extern.libretro_dummy && g_settings.config_type == CONFIG_PER_GAME)
-            file_list_push(rgui->selection_buf, "Per-Game Config Status", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
+         file_list_push(rgui->selection_buf, "Save Config On Exit [G]", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
+         file_list_push(rgui->selection_buf, "Active Config Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
+         file_list_push(rgui->selection_buf, "Per-Game Config", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
          break;
       case RGUI_SETTINGS_SAVE_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -1545,7 +1544,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #if defined(GEKKO) || defined(__CELLOS_LV2__)
          file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Show Framerate", RGUI_SETTINGS_DEBUG_TEXT, 0);
+         file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_DEBUG_TEXT, 0);
 #if defined(__CELLOS_LV2__)
          file_list_push(rgui->selection_buf, "PAL60 Mode", RGUI_SETTINGS_VIDEO_PAL60, 0);
 #endif
@@ -1577,22 +1576,22 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifndef GEKKO
          file_list_push(rgui->selection_buf, "VSync Swap Interval", RGUI_SETTINGS_VIDEO_SWAP_INTERVAL, 0);
 #if defined(HAVE_THREADS)
-         file_list_push(rgui->selection_buf, "Threaded Driver", RGUI_SETTINGS_VIDEO_THREADED, 0);
+         file_list_push(rgui->selection_buf, "Threaded Driver [G]", RGUI_SETTINGS_VIDEO_THREADED, 0);
 #endif
 #endif
 #if !defined(RARCH_CONSOLE) && !defined(RARCH_MOBILE)
-         file_list_push(rgui->selection_buf, "Toggle Fullscreen", RGUI_SETTINGS_TOGGLE_FULLSCREEN, 0);
-         file_list_push(rgui->selection_buf, "Use Windowed Fullscreen", RGUI_SETTINGS_WINDOWED_FULLSCREEN, 0);
+         file_list_push(rgui->selection_buf, "Toggle Fullscreen [G]", RGUI_SETTINGS_TOGGLE_FULLSCREEN, 0);
+         file_list_push(rgui->selection_buf, "Use Windowed Fullscreen [G]", RGUI_SETTINGS_WINDOWED_FULLSCREEN, 0);
          file_list_push(rgui->selection_buf, "Windowed Scale (X)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_X, 0);
          file_list_push(rgui->selection_buf, "Windowed Scale (Y)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_Y, 0);
 #endif
          file_list_push(rgui->selection_buf, "Estimated Monitor FPS", RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO, 0);
 #ifndef RARCH_CONSOLE
-         file_list_push(rgui->selection_buf, "Window Compositing", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
-         file_list_push(rgui->selection_buf, "Window Unfocus Pause", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);
+         file_list_push(rgui->selection_buf, "Window Compositing [G]", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "Window Unfocus Pause [G]", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);
 #endif
 #if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
-         file_list_push(rgui->selection_buf, "GPU Screenshots", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
+         file_list_push(rgui->selection_buf, "GPU Screenshots [G]", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
 #endif
          break;
       case RGUI_SETTINGS_CORE_OPTIONS:
@@ -1608,7 +1607,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
                      core_option_get_desc(g_extern.system.core_options, i), RGUI_SETTINGS_CORE_OPTION_START + i, 0);
          }
          else
-            file_list_push(rgui->selection_buf, "No options available.", RGUI_SETTINGS_CORE_OPTION_NONE, 0);
+            file_list_push(rgui->selection_buf, "Load a game first.", RGUI_SETTINGS_CORE_OPTION_NONE, 0);
          break;
       case RGUI_SETTINGS_CORE_INFO:
          file_list_clear(rgui->selection_buf);
@@ -1684,7 +1683,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Video", RGUI_SETTINGS_VIDEO_OPTIONS, 0);
 #ifdef HAVE_SHADER_MANAGER
-         file_list_push(rgui->selection_buf, "Shader", RGUI_SETTINGS_SHADER_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Shaders", RGUI_SETTINGS_SHADER_OPTIONS, 0);
 #endif
          file_list_push(rgui->selection_buf, "Input", RGUI_SETTINGS_INPUT_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Audio", RGUI_SETTINGS_AUDIO_OPTIONS, 0);
@@ -1692,12 +1691,12 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Overlay", RGUI_SETTINGS_OVERLAY_OPTIONS, 0);
 #endif
          file_list_push(rgui->selection_buf, "Configs", RGUI_SETTINGS_CONFIG_OPTIONS, 0);
-         file_list_push(rgui->selection_buf, "Save", RGUI_SETTINGS_SAVE_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Saves", RGUI_SETTINGS_SAVE_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Paths", RGUI_SETTINGS_PATH_OPTIONS, 0);
          if (g_extern.main_is_init && !g_extern.libretro_dummy)
          {
             if (g_extern.system.disk_control.get_num_images)
-               file_list_push(rgui->selection_buf, "Disk", RGUI_SETTINGS_DISK_OPTIONS, 0);
+               file_list_push(rgui->selection_buf, "Disks", RGUI_SETTINGS_DISK_OPTIONS, 0);
          }
          file_list_push(rgui->selection_buf, "Drivers", RGUI_SETTINGS_DRIVERS, 0);
          file_list_push(rgui->selection_buf, "Help", RGUI_HELP_SCREEN, 0);
@@ -1715,26 +1714,26 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_PATH_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Content Path", RGUI_BROWSER_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Games Path [G]", RGUI_BROWSER_DIR_PATH, 0);
 #ifdef HAVE_DYNAMIC
-         file_list_push(rgui->selection_buf, "Config Path", RGUI_CONFIG_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Config Path [G]", RGUI_CONFIG_DIR_PATH, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Core Path", RGUI_LIBRETRO_DIR_PATH, 0);
-         file_list_push(rgui->selection_buf, "Core Info Path", RGUI_LIBRETRO_INFO_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Core Path [G]", RGUI_LIBRETRO_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Core Info Path [G]", RGUI_LIBRETRO_INFO_DIR_PATH, 0);
 #ifdef HAVE_SHADER_MANAGER
-         file_list_push(rgui->selection_buf, "Shader Path", RGUI_SHADER_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Shader Path [G]", RGUI_SHADER_DIR_PATH, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Savestate Path", RGUI_SAVESTATE_DIR_PATH, 0);
-         file_list_push(rgui->selection_buf, "Savefile Path", RGUI_SAVEFILE_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Savestate Path [G]", RGUI_SAVESTATE_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Savefile Path [G]", RGUI_SAVEFILE_DIR_PATH, 0);
 #ifdef HAVE_OVERLAY
-         file_list_push(rgui->selection_buf, "Overlay Path", RGUI_OVERLAY_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Overlay Path [G]", RGUI_OVERLAY_DIR_PATH, 0);
 #endif
 #ifndef RARCH_CONSOLE
-         file_list_push(rgui->selection_buf, "Autoconfig Path", RGUI_AUTOCONF_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Autoconfig Path [G]", RGUI_AUTOCONF_DIR_PATH, 0);
 #endif
-         file_list_push(rgui->selection_buf, "System Path", RGUI_SYSTEM_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "System Path [G]", RGUI_SYSTEM_DIR_PATH, 0);
 #ifdef HAVE_SCREENSHOTS
-         file_list_push(rgui->selection_buf, "Screenshot Path", RGUI_SCREENSHOT_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Screenshot Path [G]", RGUI_SCREENSHOT_DIR_PATH, 0);
 #endif
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
@@ -1743,7 +1742,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Device", RGUI_SETTINGS_BIND_DEVICE, 0);
          file_list_push(rgui->selection_buf, "Device Type", RGUI_SETTINGS_BIND_DEVICE_TYPE, 0);
          file_list_push(rgui->selection_buf, "Analog D-pad Mode", RGUI_SETTINGS_BIND_ANALOG_MODE, 0);
-         file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "Autoconfig Buttons [G]", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
 
          file_list_push(rgui->selection_buf, "Bind All Buttons", RGUI_SETTINGS_CUSTOM_BIND_ALL, 0);
          file_list_push(rgui->selection_buf, "Default All Buttons", RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL, 0);
@@ -1766,20 +1765,20 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_DRIVERS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Video Driver", RGUI_SETTINGS_DRIVER_VIDEO, 0);
-         file_list_push(rgui->selection_buf, "Audio Driver", RGUI_SETTINGS_DRIVER_AUDIO, 0);
-         file_list_push(rgui->selection_buf, "Audio Device", RGUI_SETTINGS_DRIVER_AUDIO_DEVICE, 0);
-         file_list_push(rgui->selection_buf, "Audio Resampler", RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER, 0);
-         file_list_push(rgui->selection_buf, "Input Driver", RGUI_SETTINGS_DRIVER_INPUT, 0);
+         file_list_push(rgui->selection_buf, "Video Driver [G]", RGUI_SETTINGS_DRIVER_VIDEO, 0);
+         file_list_push(rgui->selection_buf, "Audio Driver [G]", RGUI_SETTINGS_DRIVER_AUDIO, 0);
+         file_list_push(rgui->selection_buf, "Audio Device [G]", RGUI_SETTINGS_DRIVER_AUDIO_DEVICE, 0);
+         file_list_push(rgui->selection_buf, "Audio Resampler [G]", RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER, 0);
+         file_list_push(rgui->selection_buf, "Input Driver [G]", RGUI_SETTINGS_DRIVER_INPUT, 0);
          break;
       case RGUI_SETTINGS:
          file_list_clear(rgui->selection_buf);
 
          if (g_extern.main_is_init && !g_extern.libretro_dummy)
          {
-            file_list_push(rgui->selection_buf, "Resume Content", RGUI_SETTINGS_RESUME_GAME, 0);
-            file_list_push(rgui->selection_buf, "Restart Content", RGUI_SETTINGS_RESTART_GAME, 0);
-            file_list_push(rgui->selection_buf, "Core Options", RGUI_SETTINGS_CORE_OPTIONS, 0);
+            file_list_push(rgui->selection_buf, "Resume Game", RGUI_SETTINGS_RESUME_GAME, 0);
+            file_list_push(rgui->selection_buf, "Restart Game", RGUI_SETTINGS_RESTART_GAME, 0);
+            file_list_push(rgui->selection_buf, "Core Setup", RGUI_SETTINGS_CORE_OPTIONS, 0);
             file_list_push(rgui->selection_buf, "Save State", RGUI_SETTINGS_SAVESTATE_SAVE, 0);
             file_list_push(rgui->selection_buf, "Load State", RGUI_SETTINGS_SAVESTATE_LOAD, 0);
 #ifdef HAVE_SCREENSHOTS
@@ -1792,12 +1791,12 @@ void menu_populate_entries(void *data, unsigned menu_type)
             file_list_push(rgui->selection_buf, "Load Recent", RGUI_SETTINGS_OPEN_HISTORY, 0);
 
          if (rgui->core_info && core_info_list_num_info_files(rgui->core_info))
-            file_list_push(rgui->selection_buf, "Detect Content", RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE, 0);
+            file_list_push(rgui->selection_buf, "Detect Game", RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE, 0);
 
          if (rgui->info.library_name || g_extern.system.info.library_name)
          {
             char load_game_core_msg[64];
-            snprintf(load_game_core_msg, sizeof(load_game_core_msg), "Load Content (%s)",
+            snprintf(load_game_core_msg, sizeof(load_game_core_msg), "Load Game (%s)",
                   rgui->info.library_name ? rgui->info.library_name : g_extern.system.info.library_name);
             file_list_push(rgui->selection_buf, load_game_core_msg, RGUI_SETTINGS_OPEN_FILEBROWSER, 0);
          }

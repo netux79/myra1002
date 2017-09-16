@@ -435,39 +435,10 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else if (action == RGUI_ACTION_START)
             g_settings.block_sram_overwrite = false;
          break;
-      case RGUI_SETTINGS_CONFIG_TYPE:
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT)
-         {
-            if (g_settings.config_type < CONFIG_PER_GAME)
-            {
-               g_settings.config_type++;
-               update_config_params();
-            }
-         }
-         else if (action == RGUI_ACTION_LEFT)
-         {
-            if (g_settings.config_type > CONFIG_GLOBAL)
-            {
-               g_settings.config_type--;
-               update_config_params();
-            }
-         }
-         else if (action == RGUI_ACTION_START)
-         {
-            if (g_settings.config_type != default_config_type)
-            {
-               g_settings.config_type = default_config_type;
-               update_config_params();
-            }
-         }
-         break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
-         if (g_settings.config_type != CONFIG_PER_GAME)
-            break;
-            
          if (action == RGUI_ACTION_OK) 
          {
-            if (*g_extern.basename)
+            if (*g_extern.basename && g_extern.config_type != CONFIG_PER_GAME)
             {
                /* Calculate the game specific config path */
                path_basedir(g_extern.specific_config_path);
@@ -475,15 +446,16 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                RARCH_LOG("Saving game-specific config from: %s.\n", g_extern.specific_config_path);            
                if (config_save_file(g_extern.specific_config_path))
                {
-                  g_extern.using_per_game_config = true;
+                  g_extern.config_type = CONFIG_PER_GAME;
                   char msg[64];
-                  snprintf(msg, sizeof(msg), "Game-specific config succesfully saved.\n");
+                  snprintf(msg, sizeof(msg), "Game-specific config successfully created.\n");
                   msg_queue_push(g_extern.msg_queue, msg, 0, 80);
                }
             }
-         } else if (action == RGUI_ACTION_START)
+         }
+         else if (action == RGUI_ACTION_START)
          {
-            if (g_extern.using_per_game_config)
+            if (g_extern.config_type == CONFIG_PER_GAME)
             {
                /* Remove game specific config file, */
                RARCH_LOG("Removing game-specific config from: %s.\n", g_extern.specific_config_path);            
@@ -1819,20 +1791,18 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          strlcpy(type_str, g_settings.block_sram_overwrite ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_CONFIG_TYPE:
-         if (g_settings.config_type == CONFIG_PER_GAME)
-            strlcpy(type_str, "Per Game", type_str_size);
-         else if (g_settings.config_type == CONFIG_PER_CORE)
-            strlcpy(type_str, "Per Core", type_str_size);
+         if (g_extern.config_type == CONFIG_PER_GAME)
+            strlcpy(type_str, "GAME", type_str_size);
          else
-            strlcpy(type_str, "Global", type_str_size);
+            strlcpy(type_str, "CORE", type_str_size);
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
-         if (g_settings.config_type != CONFIG_PER_GAME)
-            strlcpy(type_str, "Disabled", type_str_size);
-         else if (g_extern.using_per_game_config)
-            strlcpy(type_str, "Active", type_str_size);
+         if (g_extern.config_type == CONFIG_PER_GAME)
+            strlcpy(type_str, "<START> to Remove", type_str_size);
+         else if (*g_extern.basename)
+            strlcpy(type_str, "<OK> to Create", type_str_size);
          else
-            strlcpy(type_str, "Press OK to Add", type_str_size);
+            strlcpy(type_str, "Load Game First...", type_str_size);
          break;
       case RGUI_SETTINGS_SRAM_AUTOSAVE:
          if (g_settings.autosave_interval)

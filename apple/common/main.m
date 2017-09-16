@@ -134,7 +134,7 @@ void apple_run_core(NSString* core, const char* file)
         if (file && access(basedir, R_OK | W_OK | X_OK))
             apple_display_alert(BOXSTRING("The directory containing the selected file must have write premissions. This will prevent zipped content from loading, and will cause some cores to not function."), 0);
         else
-            apple_display_alert(BOXSTRING("Failed to load content."), 0);
+            apple_display_alert(BOXSTRING("Failed to load game."), 0);
         
         apple_rarch_exited();
     }

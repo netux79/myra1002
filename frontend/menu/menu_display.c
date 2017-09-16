@@ -292,7 +292,7 @@ static void rgui_render(void *data, void *video_data)
    else if (menu_type == RGUI_SETTINGS_DISK_OPTIONS)
       strlcpy(title, "DISK OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CORE_OPTIONS)
-      strlcpy(title, "CORE OPTIONS", sizeof(title));
+      strlcpy(title, "CORE SETUP", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CORE_INFO)
       strlcpy(title, "CORE INFO", sizeof(title));
 #ifdef HAVE_SHADER_MANAGER
@@ -343,7 +343,7 @@ static void rgui_render(void *data, void *video_data)
    else
    {
       if (rgui->defer_core)
-         snprintf(title, sizeof(title), "CONTENT %s", dir);
+         snprintf(title, sizeof(title), "GAME %s", dir);
       else
       {
          const char *core_name = rgui->info.library_name;
@@ -351,7 +351,7 @@ static void rgui_render(void *data, void *video_data)
             core_name = g_extern.system.info.library_name;
          if (!core_name)
             core_name = "No Core";
-         snprintf(title, sizeof(title), "CONTENT (%s) %s", core_name, dir);
+         snprintf(title, sizeof(title), "GAME (%s) %s", core_name, dir);
       }
    }
 

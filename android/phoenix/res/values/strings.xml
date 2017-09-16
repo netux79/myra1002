@@ -11,11 +11,11 @@
 
     <!-- Main Menu Strings -->
     <string name="mainmenu_title">RetroArch - Main Menu</string>
-    <string name="resume_content">Resume Content</string>
+    <string name="resume_content">Resume Game</string>
     <string name="load_core">Load Core</string>
-    <string name="load_content">Load Content</string>
-    <string name="load_content_auto">Load Content (Detect Core)</string>
-    <string name="load_content_history">Load Content (History)</string>
+    <string name="load_content">Load Game</string>
+    <string name="load_content_auto">Load Game (Detect Core)</string>
+    <string name="load_content_history">Load Game (History)</string>
     <string name="settings">Settings</string>
     <string name="about">About</string>
     <string name="quit_retroarch">Quit RetroArch</string>

@@ -12,17 +12,17 @@
         android:key="loadCorePref"
         android:title="@string/load_core"/>
 
-    <!-- Load Content -->
+    <!-- Load Game -->
     <Preference
         android:key="loadContentPref"
         android:title="@string/load_content"/>
 
-    <!-- Load Content (Auto) -->
+    <!-- Load Game (Auto) -->
     <Preference
         android:key="loadContentAutoPref"
         android:title="@string/load_content_auto"/>
 
-    <!-- Load Content (History) -->
+    <!-- Load Game (History) -->
     <Preference
         android:key="loadContentHistoryPref"
         android:title="@string/load_content_history"/>

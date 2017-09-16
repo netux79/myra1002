@@ -353,15 +353,11 @@ static config_file_t *config_file_new_internal(const char *path, unsigned depth)
          if (parse_line(conf, list, line))
          {
             if (conf->entries)
-            {
                conf->tail->next = list;
-               conf->tail = list;
-            }
             else
-            {
                conf->entries = list;
-               conf->tail = list;
-            }
+               
+            conf->tail = list;
          }
 
          free(line);
