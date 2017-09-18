@@ -731,7 +731,7 @@ static int64_t rsnd_get_time_usec(void)
    clock_get_time(cclock, &mts);
    mach_port_deallocate(mach_task_self(), cclock);
    return mts.tv_sec * INT64_C(1000000) + (mts.tv_nsec + 500) / 1000;
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__QNX__) || defined(ANDROID)
+#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(ANDROID)
    struct timespec tv;
    if (clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
       return 0;
@@ -749,7 +749,7 @@ static void rsnd_sleep(int msec)
    Sleep(msec);
 #elif defined(XENON)
    udelay(1000 * msec);
-#elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
+#elif defined(GEKKO) || defined(__PSL1GHT__)
    usleep(1000 * msec);
 #else
    struct timespec tv = {0};

@@ -91,8 +91,6 @@ VIDEO CONTEXT
 #include "../gfx/context/d3d_ctx.cpp"
 #elif defined(ANDROID)
 #include "../gfx/context/androidegl_ctx.c"
-#elif defined(__BLACKBERRY_QNX__)
-#include "../gfx/context/bbqnx_ctx.c"
 #elif defined(IOS) || defined(OSX)
 #include "../gfx/context/apple_gl_ctx.c"
 #endif
@@ -292,8 +290,6 @@ INPUT
 #elif defined(IOS) || defined(OSX)
 #include "../apple/common/apple_input.c"
 #include "../apple/common/apple_joypad.c"
-#elif defined(__BLACKBERRY_QNX__)
-#include "../blackberry-qnx/qnx_input.c"
 #endif
 
 #if defined(__linux__) && !defined(ANDROID)
@@ -365,12 +361,8 @@ AUDIO
 #endif
 
 #ifdef HAVE_ALSA
-#ifdef __QNX__
-#include "../blackberry-qnx/alsa_qsa.c"
-#else
 #include "../audio/alsa.c"
 #include "../audio/alsathread.c"
-#endif
 #endif
 
 #ifdef HAVE_AL
@@ -471,8 +463,6 @@ FRONTEND
 #endif
 #elif defined(_XBOX)
 #include "../frontend/platform/platform_xdk.c"
-#elif defined(__QNX__)
-#include "../frontend/platform/platform_qnx.c"
 #elif defined(OSX) || defined(IOS)
 #include "../frontend/platform/platform_apple.c"
 #elif defined(ANDROID)

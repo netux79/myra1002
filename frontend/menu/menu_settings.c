@@ -657,14 +657,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                rgui->need_refresh = true;
                break;
 
-#ifndef __QNX__ // FIXME: Why ifndef QNX?
             case RGUI_ACTION_START:
                if (driver.overlay)
                   input_overlay_free(driver.overlay);
                driver.overlay = NULL;
                *g_settings.input.overlay = '\0';
                break;
-#endif
 
             default:
                break;

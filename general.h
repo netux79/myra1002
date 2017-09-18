@@ -57,7 +57,7 @@
 #endif
 
 // Wii and PSL1GHT - for usleep (among others)
-#if defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
+#if defined(GEKKO) || defined(__PSL1GHT__)
 #include <unistd.h>
 #endif
 

@@ -23,7 +23,7 @@
 #include "compat/posix_string.h"
 #include "general.h"
 
-#if (defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)) || defined(__BLACKBERRY_QNX__)
+#if (defined(__CELLOS_LV2__) && !defined(__PSL1GHT__))
 #include <unistd.h> //stat() is defined here
 #endif
 

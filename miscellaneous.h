@@ -21,7 +21,7 @@
 #include <sys/timer.h>
 #elif defined(XENON)
 #include <time/time.h>
-#elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
+#elif defined(GEKKO) || defined(__PSL1GHT__)
 #include <unistd.h>
 #else
 #include <time.h>
@@ -67,7 +67,7 @@ static inline void rarch_sleep(unsigned msec)
    Sleep(msec);
 #elif defined(XENON)
    udelay(1000 * msec);
-#elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
+#elif defined(GEKKO) || defined(__PSL1GHT__)
    usleep(1000 * msec);
 #else
    struct timespec tv = {0};

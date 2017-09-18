@@ -128,8 +128,6 @@ const char *config_get_default_input(void)
          return "udev";
       case INPUT_APPLE:
          return "apple_input";
-      case INPUT_QNX:
-      	 return "qnx_input";
       case INPUT_NULL:
          return "null";
       default:
@@ -325,7 +323,7 @@ void config_set_defaults(void)
    if (default_overlay_dir)
    {
       fill_pathname_expand_special(g_extern.overlay_dir, default_overlay_dir, sizeof(g_extern.overlay_dir));
-#if defined(__QNX__) || defined(IOS)
+#ifdef IOS
       fill_pathname_join(g_settings.input.overlay, g_extern.overlay_dir, "gamepads/snes/snes.cfg", sizeof(g_settings.input.overlay));
 #endif
    }

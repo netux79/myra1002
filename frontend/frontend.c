@@ -107,7 +107,7 @@ static void rarch_get_environment_console(char *path)
 #define rarch_get_environment_console() (void)0
 #endif
 
-#if defined(RARCH_CONSOLE) || defined(__QNX__) || defined(ANDROID)
+#if defined(RARCH_CONSOLE) || defined(ANDROID)
 #define attempt_load_game_fails (1ULL << MODE_MENU_PREINIT)
 #else
 #define attempt_load_game_fails (1ULL << MODE_EXIT)

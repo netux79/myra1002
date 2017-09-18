@@ -301,13 +301,6 @@ enum input_devices
    DEVICE_XBOX_PAD = 0,
 #elif defined(__CELLOS_LV2__)
    DEVICE_SIXAXIS = 0,
-#elif defined(__BLACKBERRY_QNX__)
-   DEVICE_NONE,
-   DEVICE_WIIMOTE,
-   DEVICE_KEYBOARD,
-   DEVICE_IPEGA,
-   DEVICE_KEYPAD,
-   DEVICE_UNKNOWN,
 #elif defined(IOS)
    DEVICE_NONE,
    DEVICE_WIIMOTE,
@@ -581,7 +574,6 @@ extern const input_driver_t input_xinput;
 extern const input_driver_t input_linuxraw;
 extern const input_driver_t input_udev;
 extern const input_driver_t input_apple;
-extern const input_driver_t input_qnx;
 extern const input_driver_t input_null;
 
 #ifdef HAVE_SCALERS_BUILTIN

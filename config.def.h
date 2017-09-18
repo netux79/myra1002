@@ -78,7 +78,6 @@ enum
    INPUT_UDEV,
    INPUT_LINUXRAW,
    INPUT_APPLE,
-   INPUT_QNX,
    INPUT_NULL,
 };
 
@@ -160,8 +159,6 @@ enum
 #define INPUT_DEFAULT_DRIVER INPUT_X
 #elif defined(IOS) || defined(OSX)
 #define INPUT_DEFAULT_DRIVER INPUT_APPLE
-#elif defined(__BLACKBERRY_QNX__)
-#define INPUT_DEFAULT_DRIVER INPUT_QNX
 #elif defined(HAVE_SDL)
 #define INPUT_DEFAULT_DRIVER INPUT_SDL
 #else
@@ -170,7 +167,7 @@ enum
 
 #if defined(XENON) || defined(_XBOX360) || defined(__CELLOS_LV2__)
 #define DEFAULT_ASPECT_RATIO 1.7778f
-#elif defined(_XBOX1) || defined(GEKKO) || defined(ANDROID) || defined(__BLACKBERRY_QNX__)
+#elif defined(_XBOX1) || defined(GEKKO) || defined(ANDROID)
 #define DEFAULT_ASPECT_RATIO 1.3333f
 #else
 #define DEFAULT_ASPECT_RATIO -1.0f
@@ -244,9 +241,7 @@ static bool config_save_on_exit = true;
 
 #ifdef HAVE_OVERLAY
 // Default overlay directory
-#if defined(__QNX__)
-static const char *default_overlay_dir = "app/native/overlays/";
-#elif defined(ANDROID)
+#if defined(ANDROID)
 static const char *default_overlay_dir = "/data/data/com.retroarch/overlays/";
 #elif defined(IOS)
 static const char *default_overlay_dir = ":/overlays";
@@ -255,9 +250,7 @@ static const char *default_overlay_dir = NULL;
 #endif
 #endif
 
-#if defined(__QNX__)
-static const char *default_shader_dir = "/app/native/shaders_glsl/";
-#elif defined(ANDROID)
+#if defined(ANDROID)
 static const char *default_shader_dir = "/data/data/com.retroarch/shaders_glsl/";
 #elif defined(IOS)
 static const char *default_shader_dir = ":/shaders_glsl/";
@@ -265,16 +258,10 @@ static const char *default_shader_dir = ":/shaders_glsl/";
 static const char *default_shader_dir = NULL;
 #endif
 
-#if defined(__QNX__)
-static const char *default_config_path = "app/native/retroarch.cfg";
-#else
 static const char *default_config_path = NULL;
-#endif
 
 #if defined(ANDROID)
 static const char *default_libretro_info_path = "/data/data/com.retroarch/info/";
-#elif defined(__QNX__)
-static const char *default_libretro_info_path = "/app/native/info/";
 #elif defined(_XBOX1)
 static const char *default_libretro_info_path = "D:";
 #elif defined(_XBOX360)
@@ -313,9 +300,7 @@ static const bool font_enable = true;
 // This value should stay close to 60Hz to avoid large pitch changes.
 // If your monitor does not run at 60Hz, or something close to it, disable VSync,
 // and leave this at its default.
-#if defined(__QNX__)
-static const float refresh_rate = 59.98;
-#elif defined(RARCH_CONSOLE)
+#if defined(RARCH_CONSOLE)
 static const float refresh_rate = 60/1.001;
 #else
 static const float refresh_rate = 59.95;
@@ -359,11 +344,7 @@ static const bool rate_control = false;
 #endif
 
 // Rate control delta. Defines how much rate_control is allowed to adjust input rate.
-#if defined(__QNX__)
-static const float rate_control_delta = 0.000;
-#else
 static const float rate_control_delta = 0.005;
-#endif
 
 // Default audio volume in dB. (0.0 dB == unity gain).
 static const float audio_volume = 0.0;

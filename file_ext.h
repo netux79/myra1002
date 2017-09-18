@@ -50,8 +50,6 @@
 #define PLATFORM_NAME   "android"
 #elif defined(IOS)
 #define PLATFORM_NAME   "ios"
-#elif defined(__QNX__)
-#define PLATFORM_NAME   "qnx"
 #endif
 #endif
 
