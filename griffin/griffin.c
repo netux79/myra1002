@@ -95,8 +95,6 @@ VIDEO CONTEXT
 #include "../gfx/context/bbqnx_ctx.c"
 #elif defined(IOS) || defined(OSX)
 #include "../gfx/context/apple_gl_ctx.c"
-#elif defined(EMSCRIPTEN)
-#include "../gfx/context/emscriptenegl_ctx.c"
 #endif
 
 
@@ -300,8 +298,6 @@ INPUT
 #include "../apple/common/apple_joypad.c"
 #elif defined(__BLACKBERRY_QNX__)
 #include "../blackberry-qnx/qnx_input.c"
-#elif defined(EMSCRIPTEN)
-#include "../input/rwebinput_input.c"
 #endif
 
 #if defined(__linux__) && !defined(ANDROID)
@@ -357,8 +353,6 @@ AUDIO
 #include "../xenon/xenon360_audio.c"
 #elif defined(GEKKO)
 #include "../gx/gx_audio.c"
-#elif defined(EMSCRIPTEN)
-#include "../audio/rwebaudio.c"
 #elif defined(PSP)
 #include "../psp1/psp1_audio.c"
 #endif

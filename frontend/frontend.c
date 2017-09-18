@@ -70,8 +70,6 @@ static void rarch_get_environment_console(char *path)
 
 #if defined(__APPLE__) || defined(HAVE_BB10)
 #define main_entry rarch_main
-#elif defined(EMSCRIPTEN)
-#define main_entry _fakemain
 #else
 #define main_entry main
 #endif

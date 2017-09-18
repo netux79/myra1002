@@ -56,8 +56,6 @@
 #define PLATFORM_NAME   "ios"
 #elif defined(__QNX__)
 #define PLATFORM_NAME   "qnx"
-#elif defined(EMSCRIPTEN)
-#define EXT_EXECUTABLES ""
 #endif
 #endif
 

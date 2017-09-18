@@ -69,10 +69,6 @@
 #include <mach/mach.h>
 #endif
 
-#ifdef EMSCRIPTEN
-#include <emscripten.h>
-#endif
-
 #include <string.h>
 
 #define MAX_COUNTERS 64
@@ -206,8 +202,6 @@ retro_time_t rarch_get_time_usec(void)
    if (clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
       return 0;
    return tv.tv_sec * INT64_C(1000000) + (tv.tv_nsec + 500) / 1000;
-#elif defined(EMSCRIPTEN)
-   return emscripten_get_now() * 1000;
 #elif defined(__mips__)
    struct timeval tv;
    gettimeofday(&tv,NULL);

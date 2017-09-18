@@ -4,10 +4,6 @@ PERF_TEST		            = 0
 WHOLE_ARCHIVE_LINK         = 0
 BIG_STACK		            = 0
 
-ifneq ($(EMSCRIPTEN),)
-   platform = emscripten
-endif
-
 ifeq ($(platform),)
 platform = unix
 ifeq ($(shell uname -a),)

@@ -116,7 +116,6 @@ struct rarch_key_map
 extern const struct rarch_key_map rarch_key_map_x11[];
 extern const struct rarch_key_map rarch_key_map_sdl[];
 extern const struct rarch_key_map rarch_key_map_dinput[];
-extern const struct rarch_key_map rarch_key_map_rwebinput[];
 extern const struct rarch_key_map rarch_key_map_linux[];
 
 void input_init_keyboard_lut(const struct rarch_key_map *map);

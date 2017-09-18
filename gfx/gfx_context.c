@@ -53,9 +53,6 @@ static const gfx_ctx_driver_t *gfx_ctx_drivers[] = {
 #if defined(IOS) || defined(OSX) //< Don't use __APPLE__ as it breaks basic SDL builds
    &gfx_ctx_apple,
 #endif
-#ifdef EMSCRIPTEN
-   &gfx_ctx_emscripten,
-#endif
    NULL
 };
 
