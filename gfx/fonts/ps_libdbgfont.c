@@ -17,13 +17,7 @@
 #include "fonts.h"
 #include "../gfx_common.h"
 
-#if defined(SN_TARGET_PSP2)
-#include <libdbgfont.h>
-#define DbgFontPrint(x, y, scale, color, msg) sceDbgFontPrint(x, y, color, msg)
-#define DbgFontConfig SceDbgFontConfig
-#define DbgFontInit sceDbgFontInit
-#define DbgFontExit sceDbgFontExit
-#elif defined(__CELLOS_LV2__)
+#ifdef __CELLOS_LV2__
 #include <cell/dbgfont.h>
 #define SCE_DBGFONT_BUFSIZE_LARGE 1024
 #define DbgFontPrint(x, y, scale, color, msg) cellDbgFontPrintf(x, y, scale, color, msg)
@@ -43,9 +37,7 @@ static bool gl_init_font(void *data, const char *font_path, float font_size,
       return NULL;
 
    DbgFontConfig cfg;
-#if defined(SN_TARGET_PSP2)
-   cfg.fontSize     = SCE_DBGFONT_FONTSIZE_LARGE;
-#elif defined(__CELLOS_LV2__)
+#ifdef __CELLOS_LV2__
    cfg.bufSize      = SCE_DBGFONT_BUFSIZE_LARGE;
    cfg.screenWidth  = win_width;
    cfg.screenHeight = win_height;
@@ -90,11 +82,6 @@ static void gl_render_msg(void *data, const char *msg, void *parms)
 
    if (!params)
       DbgFontPrint(x, y, scale - 0.01f, WHITE, msg);
-
-#ifdef SN_TARGET_PSP2
-   /* FIXME - if we ever get around to this port, move this out to some better place */
-   sceDbgFontFlush();
-#endif
 }
 
 const gl_font_renderer_t libdbg_font = {

@@ -745,8 +745,6 @@ static void rsnd_sleep(int msec)
 {
 #if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
    sys_timer_usleep(1000 * msec);
-#elif defined(PSP)
-   sceKernelDelayThread(1000 * msec);
 #elif defined(_WIN32)
    Sleep(msec);
 #elif defined(XENON)

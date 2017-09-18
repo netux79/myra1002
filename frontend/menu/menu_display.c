@@ -40,11 +40,7 @@
 #define HAVE_SHADER_MANAGER
 #endif
 
-#if defined(PSP)
-static uint16_t __attribute((aligned(64))) menu_framebuf[400 * 240];
-#else
 static uint16_t menu_framebuf[400 * 240];
-#endif
 
 #define RGUI_TERM_START_X 15
 #define RGUI_TERM_START_Y 27
@@ -77,7 +73,7 @@ static uint16_t gray_filler(unsigned x, unsigned y)
    x >>= 1;
    y >>= 1;
    unsigned col = ((x + y) & 1) + 1;
-#if defined(GEKKO) || defined(PSP)
+#ifdef GEKKO
    return (7 << 12) | (col << 8) | (col << 4) | (col << 0);
 #else
    return (col << 13) | (col << 9) | (col << 5) | (12 << 0);
@@ -89,7 +85,7 @@ static uint16_t green_filler(unsigned x, unsigned y)
    x >>= 1;
    y >>= 1;
    unsigned col = ((x + y) & 1) + 1;
-#if defined(GEKKO) || defined(PSP)
+#ifdef GEKKO
    return (7 << 12) | (col << 8) | (col << 5) | (col << 0);
 #else
    return (col << 13) | (col << 10) | (col << 5) | (12 << 0);
@@ -124,7 +120,7 @@ static void blit_line(rgui_handle_t *rgui,
             if (col)
             {
                rgui->frame_buf[(y + j) * (rgui->frame_buf_pitch >> 1) + (x + i)] = green ?
-#if defined(GEKKO)|| defined(PSP)
+#ifdef GEKKO
                (3 << 0) | (10 << 4) | (3 << 8) | (7 << 12) : 0x7FFF;
 #else
                (15 << 0) | (7 << 4) | (15 << 8) | (7 << 12) : 0xFFFF;

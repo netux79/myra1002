@@ -30,10 +30,6 @@
 #define EXT_EXECUTABLES "self|SELF|bin|BIN"
 #define SALAMANDER_FILE "EBOOT.BIN"
 #define PLATFORM_NAME   "ps3"
-#elif defined(PSP)
-#define EXT_EXECUTABLES "pbp|PBP"
-#define SALAMANDER_FILE "EBOOT.PBP"
-#define PLATFORM_NAME   "psp"
 #elif defined(_XBOX1)
 #define EXT_EXECUTABLES "xbe|XBE"
 #define SALAMANDER_FILE "default.xbe"

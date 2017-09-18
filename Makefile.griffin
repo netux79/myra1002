@@ -102,17 +102,6 @@ endif
   HAVE_RPNG                := 1
   HAVE_OVERLAY             := 1
   HAVE_WIIUSBPAD           := 1
-else ifeq ($(platform), psp1)
-  CC = psp-gcc$(EXE_EXT)
-  CXX = psp-g++$(EXE_EXT)
-  LD = psp-ld$(EXE_EXT)
-  INCLUDE += -I$(PSPSDK)/psp/sdk/include
-  EXT_TARGET := $(TARGET_NAME)_psp1.elf
-  EXT_INTER_TARGET := $(TARGET_NAME)_psp1.elf
-  PLATCFLAGS := -DPSP -D_PSP_FW_VERSION=150 -G0
-
-  HAVE_LIBRETRO_MANAGEMENT := 1
-  HAVE_RPNG                := 1
 endif
 
 CFLAGS += -Wall -std=gnu99 $(MACHDEP) $(INCLUDE)
@@ -159,15 +148,10 @@ endif
 
 ifeq ($(HAVE_THREADS), 1)
 CFLAGS += -DHAVE_THREADS
-ifeq ($(platform), psp1)
-LIBS += -lpthread-psp
-endif
 endif
 
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g -DDEBUG
-else ifeq ($(platform), psp1)
-   CFLAGS += -O2
 else
    CFLAGS += -O3
 endif
@@ -197,8 +181,6 @@ ifeq ($(platform), wii)
 	cp -r $(EXT_TARGET) wii/pkg/CORE.dol
 else ifeq ($(platform), ngc)
 	cp -r $(EXT_TARGET) ngc/pkg/CORE.dol
-else ifeq ($(platform), psp1)
-	psp-fixup-imports$(EXT) $(EXT_TARGET)
 endif
 
 shaders-checkout:

@@ -33,8 +33,6 @@
 #endif
 #elif defined(_XBOX)
 #include "platform/platform_xdk.c"
-#elif defined(PSP)
-#include "platform/platform_psp.c"
 #endif
 
 default_paths_t default_paths;

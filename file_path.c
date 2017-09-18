@@ -23,7 +23,7 @@
 #include "compat/posix_string.h"
 #include "general.h"
 
-#if (defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)) || defined(__BLACKBERRY_QNX__) || defined(PSP)
+#if (defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)) || defined(__BLACKBERRY_QNX__)
 #include <unistd.h> //stat() is defined here
 #endif
 
@@ -407,9 +407,7 @@ error:
 #else
 static bool dirent_is_directory(const char *path, const struct dirent *entry)
 {
-#if defined(PSP)
-   return (entry->d_stat.st_attr & FIO_SO_IFDIR) == FIO_SO_IFDIR;
-#elif defined(DT_DIR)
+#ifdef DT_DIR
    if (entry->d_type == DT_DIR)
       return true;
    else if (entry->d_type == DT_UNKNOWN // This can happen on certain file systems.

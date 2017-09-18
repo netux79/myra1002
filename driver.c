@@ -82,9 +82,6 @@ static const audio_driver_t *audio_drivers[] = {
 #ifdef GEKKO
    &audio_gx,
 #endif
-#ifdef PSP
-   &audio_psp1,
-#endif
 #ifdef HAVE_NULLAUDIO
    &audio_null,
 #endif
@@ -100,12 +97,6 @@ static const video_driver_t *video_drivers[] = {
 #endif
 #if defined(_XBOX) && (defined(HAVE_D3D8) || defined(HAVE_D3D9)) || defined(HAVE_WIN32_D3D9)
    &video_d3d,
-#endif
-#ifdef SN_TARGET_PSP2
-   &video_vita,
-#endif
-#ifdef PSP
-   &video_psp1,
 #endif
 #ifdef HAVE_SDL
    &video_sdl,
@@ -134,9 +125,6 @@ static const video_driver_t *video_drivers[] = {
 static const input_driver_t *input_drivers[] = {
 #ifdef __CELLOS_LV2__
    &input_ps3,
-#endif
-#if defined(SN_TARGET_PSP2) || defined(PSP)
-   &input_psp,
 #endif
 #ifdef HAVE_SDL
    &input_sdl,

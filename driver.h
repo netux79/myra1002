@@ -301,8 +301,6 @@ enum input_devices
    DEVICE_XBOX_PAD = 0,
 #elif defined(__CELLOS_LV2__)
    DEVICE_SIXAXIS = 0,
-#elif defined(PSP)
-   DEVICE_PSP = 0,
 #elif defined(__BLACKBERRY_QNX__)
    DEVICE_NONE,
    DEVICE_WIIMOTE,
@@ -560,11 +558,8 @@ extern const audio_driver_t audio_coreaudio;
 extern const audio_driver_t audio_xenon360;
 extern const audio_driver_t audio_ps3;
 extern const audio_driver_t audio_gx;
-extern const audio_driver_t audio_psp1;
 extern const audio_driver_t audio_null;
 extern const video_driver_t video_gl;
-extern const video_driver_t video_psp1;
-extern const video_driver_t video_vita;
 extern const video_driver_t video_d3d;
 extern const video_driver_t video_gx;
 extern const video_driver_t video_xenon360;
@@ -580,7 +575,6 @@ extern const input_driver_t input_sdl;
 extern const input_driver_t input_dinput;
 extern const input_driver_t input_x;
 extern const input_driver_t input_ps3;
-extern const input_driver_t input_psp;
 extern const input_driver_t input_xenon360;
 extern const input_driver_t input_gx;
 extern const input_driver_t input_xinput;

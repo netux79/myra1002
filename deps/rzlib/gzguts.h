@@ -164,7 +164,7 @@
 #define MODE_COPY 1      /* copy input directly */
 #define MODE_GZIP 2      /* decompress a gzip stream */
 
-#if defined(__APPLE__) || defined(PSP)
+#ifdef __APPLE__
 struct gzFile_s
 {
     unsigned have;

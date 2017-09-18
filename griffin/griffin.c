@@ -212,8 +212,6 @@ VIDEO DRIVER
 
 #if defined(GEKKO)
 #include "../gx/gx_video.c"
-#elif defined(PSP)
-#include "../psp1/psp1_video.c"
 #elif defined(XENON)
 #include "../xenon/xenon360_video.c"
 #endif
@@ -277,8 +275,6 @@ INPUT
 
 #if defined(__CELLOS_LV2__)
 #include "../ps3/ps3_input.c"
-#elif defined(SN_TARGET_PSP2) || defined(PSP)
-#include "../psp/psp_input.c"
 #elif defined(GEKKO)
 #include "../gx/gx_gxpad.c"
 #include "../gx/gx_input.c"
@@ -353,8 +349,6 @@ AUDIO
 #include "../xenon/xenon360_audio.c"
 #elif defined(GEKKO)
 #include "../gx/gx_audio.c"
-#elif defined(PSP)
-#include "../psp1/psp1_audio.c"
 #endif
 
 #ifdef HAVE_XAUDIO
@@ -477,8 +471,6 @@ FRONTEND
 #endif
 #elif defined(_XBOX)
 #include "../frontend/platform/platform_xdk.c"
-#elif defined(PSP)
-#include "../frontend/platform/platform_psp.c"
 #elif defined(__QNX__)
 #include "../frontend/platform/platform_qnx.c"
 #elif defined(OSX) || defined(IOS)

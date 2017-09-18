@@ -65,8 +65,6 @@ const char *config_get_default_audio(void)
          return "ps3";
       case AUDIO_WII:
          return "gx";
-      case AUDIO_PSP1:
-         return "psp1";
       case AUDIO_NULL:
          return "null";
       default:
@@ -87,10 +85,6 @@ const char *config_get_default_video(void)
       case VIDEO_XDK_D3D:
       case VIDEO_D3D9:
          return "d3d";
-      case VIDEO_PSP1:
-         return "psp1";
-      case VIDEO_VITA:
-         return "vita";
       case VIDEO_XVIDEO:
          return "xvideo";
       case VIDEO_SDL:
@@ -116,8 +110,6 @@ const char *config_get_default_input(void)
          return "android_input";
       case INPUT_PS3:
          return "ps3";
-      case INPUT_PSP:
-         return "psp";
       case INPUT_SDL:
          return "sdl";
       case INPUT_DINPUT:

@@ -23,8 +23,6 @@
 #include <time/time.h>
 #elif defined(GEKKO) || defined(__PSL1GHT__) || defined(__QNX__)
 #include <unistd.h>
-#elif defined(PSP)
-#include <pspthreadman.h>
 #else
 #include <time.h>
 #endif
@@ -65,8 +63,6 @@ static inline void rarch_sleep(unsigned msec)
 {
 #if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
    sys_timer_usleep(1000 * msec);
-#elif defined(PSP)
-   sceKernelDelayThread(1000 * msec);
 #elif defined(_WIN32)
    Sleep(msec);
 #elif defined(XENON)

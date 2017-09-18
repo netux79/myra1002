@@ -61,12 +61,6 @@
 #include <unistd.h>
 #endif
 
-// PSP
-#if defined(PSP)
-#include <pspthreadman.h>
-#endif
-//////////////
-
 #ifdef HAVE_COMMAND
 #include "command.h"
 #endif
