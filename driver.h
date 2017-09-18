@@ -171,10 +171,6 @@ enum rarch_shader_type
 
 #if defined(_XBOX360)
 #define DEFAULT_SHADER_TYPE RARCH_SHADER_HLSL
-#elif defined(__PSL1GHT__)
-#define DEFAULT_SHADER_TYPE RARCH_SHADER_GLSL
-#elif defined(__CELLOS_LV2__)
-#define DEFAULT_SHADER_TYPE RARCH_SHADER_CG
 #elif defined(HAVE_OPENGLES2)
 #define DEFAULT_SHADER_TYPE RARCH_SHADER_GLSL
 #else
@@ -299,8 +295,6 @@ enum input_devices
    DEVICE_GXPAD = 0,
 #elif defined(_XBOX)
    DEVICE_XBOX_PAD = 0,
-#elif defined(__CELLOS_LV2__)
-   DEVICE_SIXAXIS = 0,
 #elif defined(IOS)
    DEVICE_NONE,
    DEVICE_WIIMOTE,
@@ -549,7 +543,6 @@ extern const audio_driver_t audio_pulse;
 extern const audio_driver_t audio_dsound;
 extern const audio_driver_t audio_coreaudio;
 extern const audio_driver_t audio_xenon360;
-extern const audio_driver_t audio_ps3;
 extern const audio_driver_t audio_gx;
 extern const audio_driver_t audio_null;
 extern const video_driver_t video_gl;
@@ -567,7 +560,6 @@ extern const input_driver_t input_android;
 extern const input_driver_t input_sdl;
 extern const input_driver_t input_dinput;
 extern const input_driver_t input_x;
-extern const input_driver_t input_ps3;
 extern const input_driver_t input_xenon360;
 extern const input_driver_t input_gx;
 extern const input_driver_t input_xinput;

@@ -71,9 +71,6 @@ static const audio_driver_t *audio_drivers[] = {
 #ifdef HAVE_PULSE
    &audio_pulse,
 #endif
-#ifdef __CELLOS_LV2__
-   &audio_ps3,
-#endif
 #ifdef XENON
    &audio_xenon360,
 #endif
@@ -121,9 +118,6 @@ static const video_driver_t *video_drivers[] = {
 };
 
 static const input_driver_t *input_drivers[] = {
-#ifdef __CELLOS_LV2__
-   &input_ps3,
-#endif
 #ifdef HAVE_SDL
    &input_sdl,
 #endif

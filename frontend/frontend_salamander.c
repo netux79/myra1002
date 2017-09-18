@@ -24,9 +24,7 @@
 #include "frontend_context.h"
 
 
-#if defined(__CELLOS_LV2__)
-#include "platform/platform_ps3.c"
-#elif defined(GEKKO)
+#if defined(GEKKO)
 #include "platform/platform_gx.c"
 #ifdef HW_RVL
 #include "platform/platform_wii.c"

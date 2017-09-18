@@ -26,11 +26,7 @@
 #define EXT_EXECUTABLES "so"
 #endif
 #else
-#if defined(__CELLOS_LV2__)
-#define EXT_EXECUTABLES "self|SELF|bin|BIN"
-#define SALAMANDER_FILE "EBOOT.BIN"
-#define PLATFORM_NAME   "ps3"
-#elif defined(_XBOX1)
+#if defined(_XBOX1)
 #define EXT_EXECUTABLES "xbe|XBE"
 #define SALAMANDER_FILE "default.xbe"
 #define PLATFORM_NAME   "xdk1"

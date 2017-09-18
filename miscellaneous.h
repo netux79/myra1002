@@ -17,11 +17,9 @@
 #ifndef __RARCH_MISCELLANEOUS_H
 #define __RARCH_MISCELLANEOUS_H
 
-#if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
-#include <sys/timer.h>
-#elif defined(XENON)
+#if defined(XENON)
 #include <time/time.h>
-#elif defined(GEKKO) || defined(__PSL1GHT__)
+#elif defined(GEKKO)
 #include <unistd.h>
 #else
 #include <time.h>
@@ -61,13 +59,11 @@
 
 static inline void rarch_sleep(unsigned msec)
 {
-#if defined(__CELLOS_LV2__) && !defined(__PSL1GHT__)
-   sys_timer_usleep(1000 * msec);
-#elif defined(_WIN32)
+#if defined(_WIN32)
    Sleep(msec);
 #elif defined(XENON)
    udelay(1000 * msec);
-#elif defined(GEKKO) || defined(__PSL1GHT__)
+#elif defined(GEKKO)
    usleep(1000 * msec);
 #else
    struct timespec tv = {0};

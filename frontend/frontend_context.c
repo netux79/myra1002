@@ -21,9 +21,6 @@
 #endif
 
 static const frontend_ctx_driver_t *frontend_ctx_drivers[] = {
-#if defined(__CELLOS_LV2__)
-   &frontend_ctx_ps3,
-#endif
 #if defined(_XBOX)
    &frontend_ctx_xdk,
 #endif

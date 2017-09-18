@@ -1541,13 +1541,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
       break;
       case RGUI_SETTINGS_VIDEO_OPTIONS:
          file_list_clear(rgui->selection_buf);
-#if defined(GEKKO) || defined(__CELLOS_LV2__)
+#ifdef GEKKO
          file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
 #endif
          file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_DEBUG_TEXT, 0);
-#if defined(__CELLOS_LV2__)
-         file_list_push(rgui->selection_buf, "PAL60 Mode", RGUI_SETTINGS_VIDEO_PAL60, 0);
-#endif
 #ifdef HAVE_SCALERS_BUILTIN
          file_list_push(rgui->selection_buf, "Soft Scaling", RGUI_SETTINGS_VIDEO_SOFT_SCALER, 0);
 #endif
@@ -1755,9 +1752,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Mute Audio", RGUI_SETTINGS_AUDIO_MUTE, 0);
          file_list_push(rgui->selection_buf, "Audio Sync", RGUI_SETTINGS_AUDIO_SYNC, 0);
          file_list_push(rgui->selection_buf, "Rate Control Delta", RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA, 0);
-#ifdef __CELLOS_LV2__
-         file_list_push(rgui->selection_buf, "System BGM Control", RGUI_SETTINGS_CUSTOM_BGM_CONTROL_ENABLE, 0);
-#endif
 #ifdef _XBOX1
          file_list_push(rgui->selection_buf, "Volume Effect", RGUI_SETTINGS_AUDIO_DSP_EFFECT, 0);
 #endif
@@ -1893,18 +1887,6 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
                   if (drives & (1 << i))
                      file_list_push(rgui->selection_buf, drive, menu_type, 0);
                }
-#elif defined(__CELLOS_LV2__)
-               file_list_push(rgui->selection_buf, "/app_home/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_hdd0/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_hdd1/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/host_root/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb000/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb001/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb002/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb003/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb004/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb005/", menu_type, 0);
-               file_list_push(rgui->selection_buf, "/dev_usb006/", menu_type, 0);
 #else
                file_list_push(rgui->selection_buf, "/", menu_type, 0);
 #endif

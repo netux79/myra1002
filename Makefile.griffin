@@ -69,12 +69,6 @@ endif
   HAVE_ZLIB                := 1
   HAVE_RPNG                := 1
   HAVE_OVERLAY             := 1
-else ifeq ($(platform), ps3)
-	#TODO
-  MEDIA_SHADER_DIR := ps3/pkg/USRDIR/cores/shaders
-else ifeq ($(platform), ps3-cobra)
-	#TODO
-  MEDIA_SHADER_DIR := ps3/iso/PS3_GAME/USRDIR/cores/shaders
 else ifeq ($(platform), wii)
   CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
   CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
@@ -195,23 +189,6 @@ shaders-checkout:
 	fi
 
 shaders-deploy:
-ifeq ($(platform), ps3)
-	@if test -d $(MEDIA_SHADER_DIR); then \
-		cp -r $(SHADER_DIR)/* $(MEDIA_SHADER_DIR); \
-	else \
-	echo "[DEPLOY PS3::] Creating PS3 shader directory first..."; \
-		mkdir -p $(MEDIA_SHADER_DIR) || bin/true; \
-	fi
-	@echo "[DEPLOY PS3::] Copied shaders to PS3 shaders directory."
-else ifeq ($(platform), ps3-cobra)
-	@if test -d $(MEDIA_SHADER_DIR); then \
-		cp -r $(SHADER_DIR)/* $(MEDIA_SHADER_DIR); \
-	else \
-	echo "[DEPLOY PS3::] Creating PS3 shader directory first..."; \
-		mkdir -p $(MEDIA_SHADER_DIR) || bin/true; \
-	fi
-	@echo "[DEPLOY PS3::] Copied shaders to PS3 shaders directory."
-endif
 
 shaders-convert-glsl:
 	$(PYTHON3) tools/cg2glsl.py $(SHADER_DIR) $(SHADER_GLSL_DIR)

@@ -62,7 +62,6 @@ enum
    AUDIO_EXT,
    AUDIO_DSOUND,
    AUDIO_COREAUDIO,
-   AUDIO_PS3,
    AUDIO_XENON360,
    AUDIO_WII,
    AUDIO_NULL,
@@ -71,7 +70,6 @@ enum
    INPUT_SDL,
    INPUT_X,
    INPUT_DINPUT,
-   INPUT_PS3,
    INPUT_XENON360,
    INPUT_WII,
    INPUT_XINPUT,
@@ -81,7 +79,7 @@ enum
    INPUT_NULL,
 };
 
-#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES) || defined(__CELLOS_LV2__)
+#if defined(HAVE_OPENGL) || defined(HAVE_OPENGLES)
 #define VIDEO_DEFAULT_DRIVER VIDEO_GL
 #elif defined(GEKKO)
 #define VIDEO_DEFAULT_DRIVER VIDEO_WII
@@ -103,9 +101,7 @@ enum
 #define VIDEO_DEFAULT_DRIVER VIDEO_NULL
 #endif
 
-#if defined(__CELLOS_LV2__)
-#define AUDIO_DEFAULT_DRIVER AUDIO_PS3
-#elif defined(XENON)
+#if defined(XENON)
 #define AUDIO_DEFAULT_DRIVER AUDIO_XENON360
 #elif defined(GEKKO)
 #define AUDIO_DEFAULT_DRIVER AUDIO_WII
@@ -147,8 +143,6 @@ enum
 #define INPUT_DEFAULT_DRIVER INPUT_ANDROID
 #elif defined(_WIN32)
 #define INPUT_DEFAULT_DRIVER INPUT_DINPUT
-#elif defined(__CELLOS_LV2__)
-#define INPUT_DEFAULT_DRIVER INPUT_PS3
 #elif defined(GEKKO)
 #define INPUT_DEFAULT_DRIVER INPUT_WII
 #elif defined(HAVE_UDEV)
@@ -165,7 +159,7 @@ enum
 #define INPUT_DEFAULT_DRIVER INPUT_NULL
 #endif
 
-#if defined(XENON) || defined(_XBOX360) || defined(__CELLOS_LV2__)
+#if defined(XENON) || defined(_XBOX360)
 #define DEFAULT_ASPECT_RATIO 1.7778f
 #elif defined(_XBOX1) || defined(GEKKO) || defined(ANDROID)
 #define DEFAULT_ASPECT_RATIO 1.3333f
@@ -228,7 +222,7 @@ static const bool scale_integer = false;
 static const float aspect_ratio = DEFAULT_ASPECT_RATIO; // Automatic
 static const bool aspect_ratio_auto = false; // 1:1 PAR
 
-#if defined(__CELLOS_LV2) || defined(_XBOX360)
+#if defined(_XBOX360)
 static unsigned aspect_ratio_idx = ASPECT_RATIO_16_9;
 #elif defined(RARCH_CONSOLE)
 static unsigned aspect_ratio_idx = ASPECT_RATIO_4_3;
@@ -419,24 +413,6 @@ static const bool input_autodetect_enable = true;
 
 #ifndef IS_SALAMANDER
 
-#if defined(__CELLOS_LV2__)
-#define RETRO_DEF_JOYPAD_B RETRO_DEVICE_ID_JOYPAD_B
-#define RETRO_DEF_JOYPAD_Y RETRO_DEVICE_ID_JOYPAD_Y
-#define RETRO_DEF_JOYPAD_SELECT RETRO_DEVICE_ID_JOYPAD_SELECT
-#define RETRO_DEF_JOYPAD_START RETRO_DEVICE_ID_JOYPAD_START
-#define RETRO_DEF_JOYPAD_UP RETRO_DEVICE_ID_JOYPAD_UP
-#define RETRO_DEF_JOYPAD_DOWN RETRO_DEVICE_ID_JOYPAD_DOWN
-#define RETRO_DEF_JOYPAD_LEFT RETRO_DEVICE_ID_JOYPAD_LEFT
-#define RETRO_DEF_JOYPAD_RIGHT RETRO_DEVICE_ID_JOYPAD_RIGHT
-#define RETRO_DEF_JOYPAD_A RETRO_DEVICE_ID_JOYPAD_A
-#define RETRO_DEF_JOYPAD_X RETRO_DEVICE_ID_JOYPAD_X
-#define RETRO_DEF_JOYPAD_L RETRO_DEVICE_ID_JOYPAD_L
-#define RETRO_DEF_JOYPAD_R RETRO_DEVICE_ID_JOYPAD_R
-#define RETRO_DEF_JOYPAD_L2 RETRO_DEVICE_ID_JOYPAD_L2
-#define RETRO_DEF_JOYPAD_R2 RETRO_DEVICE_ID_JOYPAD_R2
-#define RETRO_DEF_JOYPAD_L3 RETRO_DEVICE_ID_JOYPAD_L3
-#define RETRO_DEF_JOYPAD_R3 RETRO_DEVICE_ID_JOYPAD_R3
-#else
 #define RETRO_DEF_JOYPAD_B NO_BTN
 #define RETRO_DEF_JOYPAD_Y NO_BTN
 #define RETRO_DEF_JOYPAD_SELECT NO_BTN
@@ -461,7 +437,6 @@ static const bool input_autodetect_enable = true;
 #define RETRO_DEF_ANALOGR_DPAD_RIGHT NO_BTN
 #define RETRO_DEF_ANALOGR_DPAD_UP NO_BTN
 #define RETRO_DEF_ANALOGR_DPAD_DOWN NO_BTN
-#endif
 
 #define RETRO_LBL_JOYPAD_B "RetroPad B Button"
 #define RETRO_LBL_JOYPAD_Y "RetroPad Y Button"

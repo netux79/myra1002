@@ -30,14 +30,6 @@
 #include "../../config.h"
 #endif
 
-#if defined(__CELLOS_LV2__)
-#include <sdk_version.h>
-
-#if (CELL_SDK_VERSION > 0x340000)
-#include <sysutil/sysutil_bgmplayback.h>
-#endif
-#endif
-
 #ifdef GEKKO
 #define MAX_GAMMA_SETTING 2
 #else
@@ -1291,72 +1283,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             msg_queue_push(g_extern.msg_queue, msg, 0, 80);
          }
          break;
-#elif defined(__CELLOS_LV2__)
-      case RGUI_SETTINGS_VIDEO_RESOLUTION:
-         if (action == RGUI_ACTION_LEFT)
-         {
-            if (g_extern.console.screen.resolutions.current.idx)
-            {
-               g_extern.console.screen.resolutions.current.idx--;
-               g_extern.console.screen.resolutions.current.id =
-                  g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx];
-            }
-         }
-         else if (action == RGUI_ACTION_RIGHT)
-         {
-            if (g_extern.console.screen.resolutions.current.idx + 1 <
-                  g_extern.console.screen.resolutions.count)
-            {
-               g_extern.console.screen.resolutions.current.idx++;
-               g_extern.console.screen.resolutions.current.id =
-                  g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx];
-            }
-         }
-         else if (action == RGUI_ACTION_OK)
-         {
-            if (g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx] == CELL_VIDEO_OUT_RESOLUTION_576)
-            {
-               if (g_extern.console.screen.pal_enable)
-                  g_extern.lifecycle_state |= (1ULL<< MODE_VIDEO_PAL_ENABLE);
-            }
-            else
-            {
-               g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_PAL_ENABLE);
-               g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_PAL_TEMPORAL_ENABLE);
-            }
-
-            if (driver.video && driver.video->restart)
-               driver.video->restart();
-         }
-         break;
-      case RGUI_SETTINGS_VIDEO_PAL60:
-         switch (action)
-         {
-            case RGUI_ACTION_LEFT:
-            case RGUI_ACTION_RIGHT:
-            case RGUI_ACTION_OK:
-               if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_PAL_ENABLE))
-               {
-                  if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_PAL_TEMPORAL_ENABLE))
-                     g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_PAL_TEMPORAL_ENABLE);
-                  else
-                     g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_PAL_TEMPORAL_ENABLE);
-
-                  if (driver.video && driver.video->restart)
-                     driver.video->restart();
-               }
-               break;
-            case RGUI_ACTION_START:
-               if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_PAL_ENABLE))
-               {
-                  g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_PAL_TEMPORAL_ENABLE);
-
-                  if (driver.video && driver.video->restart)
-                     driver.video->restart();
-               }
-               break;
-         }
-         break;
 #endif
 #ifdef HW_RVL
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
@@ -1609,29 +1535,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          break;
 #endif
-      case RGUI_SETTINGS_CUSTOM_BGM_CONTROL_ENABLE:
-         switch (action)
-         {
-            case RGUI_ACTION_OK:
-#if (CELL_SDK_VERSION > 0x340000)
-               if (g_extern.lifecycle_state & (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE))
-                  g_extern.lifecycle_state &= ~(1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
-               else
-                  g_extern.lifecycle_state |= (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
-               if (g_extern.lifecycle_state & (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE))
-                  cellSysutilEnableBgmPlayback();
-               else
-                  cellSysutilDisableBgmPlayback();
-
-#endif
-               break;
-            case RGUI_ACTION_START:
-#if (CELL_SDK_VERSION > 0x340000)
-               g_extern.lifecycle_state |= (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
-#endif
-               break;
-         }
-         break;
       case RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
             g_settings.pause_nonactive = !g_settings.pause_nonactive;
@@ -1741,20 +1644,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
          if (driver.video_poke && driver.video_poke->get_resolution)
             strlcpy(type_str, driver.video_poke->get_resolution(g_extern.console.screen.resolutions.current.id), type_str_size);
-         break;
-#elif defined(__CELLOS_LV2__)
-      case RGUI_SETTINGS_VIDEO_RESOLUTION:
-         {
-               unsigned width = gfx_ctx_get_resolution_width(g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx]);
-               unsigned height = gfx_ctx_get_resolution_height(g_extern.console.screen.resolutions.list[g_extern.console.screen.resolutions.current.idx]);
-               snprintf(type_str, type_str_size, "%dx%d", width, height);
-         }
-         break;
-      case RGUI_SETTINGS_VIDEO_PAL60:
-         if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_PAL_TEMPORAL_ENABLE))
-            strlcpy(type_str, "ON", type_str_size);
-         else
-            strlcpy(type_str, "OFF", type_str_size);
          break;
 #endif
       case RGUI_FILE_PLAIN:
@@ -2051,9 +1940,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
                (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE)) ? "ON" : "OFF");
          break;
 #endif
-      case RGUI_SETTINGS_CUSTOM_BGM_CONTROL_ENABLE:
-         strlcpy(type_str, (g_extern.lifecycle_state & (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE)) ? "ON" : "OFF", type_str_size);
-         break;
       case RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST:
          strlcpy(type_str, g_settings.pause_nonactive ? "ON" : "OFF", type_str_size);
          break;

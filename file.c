@@ -177,7 +177,7 @@ static void dump_to_file_desperate(const void *data, size_t size, int type)
 {
 #if defined(_WIN32) && !defined(_XBOX)
    const char *base = getenv("APPDATA");
-#elif defined(__CELLOS_LV2__) || defined(_XBOX)
+#elif defined(_XBOX)
    const char *base = NULL;
 #else
    const char *base = getenv("HOME");

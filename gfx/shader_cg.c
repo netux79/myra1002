@@ -385,15 +385,12 @@ static void gl_cg_deinit_state(void)
 // Final deinit.
 static void gl_cg_deinit_context_state(void)
 {
-   // Destroying context breaks on PS3 for some unknown reason.
-#ifndef __CELLOS_LV2__
    if (cgCtx)
    {
       RARCH_LOG("CG: Destroying context.\n");
       cgDestroyContext(cgCtx);
       cgCtx = NULL;
    }
-#endif
 }
 
 // Full deinit.

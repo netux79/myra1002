@@ -56,8 +56,8 @@
 #include "msvc/msvc_compat.h"
 #endif
 
-// Wii and PSL1GHT - for usleep (among others)
-#if defined(GEKKO) || defined(__PSL1GHT__)
+// Wii - for usleep (among others)
+#ifdef GEKKO
 #include <unistd.h>
 #endif
 
@@ -93,9 +93,6 @@ enum menu_enums
    MODE_VIDEO_TRIPLE_BUFFERING_ENABLE,
    MODE_VIDEO_FLICKER_FILTER_ENABLE,
    MODE_VIDEO_SOFT_FILTER_ENABLE,
-   MODE_VIDEO_PAL_ENABLE,
-   MODE_VIDEO_PAL_TEMPORAL_ENABLE,
-   MODE_AUDIO_CUSTOM_BGM_ENABLE,
    MODE_OSK_ENTRY_SUCCESS,
    MODE_OSK_ENTRY_FAIL,
    MODE_CLEAR_INPUT,

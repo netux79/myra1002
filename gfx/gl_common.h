@@ -299,21 +299,6 @@ typedef struct gl
 #define RARCH_GL_FORMAT16_565 GL_UNSIGNED_SHORT_5_6_5
 #endif
 
-// Platform specific workarounds/hacks.
-#if defined(__CELLOS_LV2__)
-#define NO_GL_READ_PIXELS
-
-// Performance hacks
-#ifdef HAVE_GCMGL
-extern GLvoid* glMapBufferTextureReferenceRA( GLenum target, GLenum access );
-extern GLboolean glUnmapBufferTextureReferenceRA( GLenum target );
-extern void glBufferSubDataTextureReferenceRA( GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid *data );
-#define glMapBuffer(target, access) glMapBufferTextureReferenceRA(target, access)
-#define glUnmapBuffer(target) glUnmapBufferTextureReferenceRA(target)
-#define glBufferSubData(target, offset, size, data) glBufferSubDataTextureReferenceRA(target, offset, size, data)
-#endif
-#endif
-
 #if defined(HAVE_OPENGL_MODERN) || defined(HAVE_OPENGLES2) || defined(HAVE_PSGL)
 #define NO_GL_FF_VERTEX
 #endif

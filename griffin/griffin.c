@@ -18,11 +18,6 @@
 #include "../msvc/msvc_compat.h"
 #endif
 
-#ifdef __CELLOS_LV2__
-#include "../ps3/altivec_mem.c"
-#endif
-
-
 /*============================================================
 CONSOLE EXTENSIONS
 ============================================================ */
@@ -85,9 +80,7 @@ VIDEO CONTEXT
 
 #include "../gfx/gfx_context.c"
 
-#if defined(__CELLOS_LV2__)
-#include "../gfx/context/ps3_ctx.c"
-#elif defined(_XBOX)
+#if defined(_XBOX)
 #include "../gfx/context/d3d_ctx.cpp"
 #elif defined(ANDROID)
 #include "../gfx/context/androidegl_ctx.c"
@@ -141,9 +134,7 @@ VIDEO SHADERS
 VIDEO IMAGE
 ============================================================ */
 
-#if defined(__CELLOS_LV2__)
-#include "../gfx/image/image_ps3.c"
-#elif defined(_XBOX1)
+#if defined(_XBOX1)
 #include "../gfx/image/image_xdk1.c"
 #else
 #include "../gfx/image/image.c"
@@ -271,9 +262,7 @@ INPUT
 #include "../input/overlay.c"
 #endif
 
-#if defined(__CELLOS_LV2__)
-#include "../ps3/ps3_input.c"
-#elif defined(GEKKO)
+#if defined(GEKKO)
 #include "../gx/gx_gxpad.c"
 #include "../gx/gx_input.c"
 #if defined (HW_RVL) && defined(HAVE_WIIUSBPAD)
@@ -339,9 +328,7 @@ AUDIO UTILS
 /*============================================================
 AUDIO
 ============================================================ */
-#if defined(__CELLOS_LV2__)
-#include "../ps3/ps3_audio.c"
-#elif defined(XENON)
+#if defined(XENON)
 #include "../xenon/xenon360_audio.c"
 #elif defined(GEKKO)
 #include "../gx/gx_audio.c"
@@ -454,9 +441,7 @@ FRONTEND
 
 #include "../frontend/frontend_context.c"
 
-#if defined(__CELLOS_LV2__)
-#include "../frontend/platform/platform_ps3.c"
-#elif defined(GEKKO)
+#if defined(GEKKO)
 #include "../frontend/platform/platform_gx.c"
 #ifdef HW_RVL
 #include "../frontend/platform/platform_wii.c"

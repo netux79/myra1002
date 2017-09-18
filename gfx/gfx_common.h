@@ -49,11 +49,7 @@ typedef struct
 
 #define MIN_SCALING_FACTOR (1.0f)
 
-#if defined(__CELLOS_LV2__)
-#define MAX_SCALING_FACTOR (5.0f)
-#else
 #define MAX_SCALING_FACTOR (2.0f)
-#endif
 
 enum aspect_ratio
 {

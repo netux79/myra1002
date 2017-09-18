@@ -32,11 +32,7 @@
 #include <intrin.h>
 #endif
 
-#if defined(__CELLOS_LV2__)
-#ifndef _PPU_INTRINSICS_H
-#include <ppu_intrinsics.h>
-#endif
-#elif defined(GEKKO)
+#if defined(GEKKO)
 #define __mftb gettime
 #elif defined(_XBOX360)
 #include <PPCIntrinsics.h>
@@ -47,12 +43,6 @@
 
 #if defined(__mips__)
 #include <sys/time.h>
-#endif
-
-#if defined(__PSL1GHT__)
-#include <sys/time.h>
-#elif defined(__CELLOS_LV2__)
-#include <sys/sys_time.h>
 #endif
 
 #ifdef GEKKO
@@ -160,7 +150,7 @@ retro_perf_tick_t rarch_get_perf_counter(void)
 
 #elif defined(__ARM_ARCH_6__)
    asm volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"(time) );
-#elif defined(__CELLOS_LV2__) || defined(GEKKO) || defined(_XBOX360) || defined(__powerpc__) || defined(__ppc__) || defined(__POWERPC__)
+#elif defined(GEKKO) || defined(_XBOX360) || defined(__powerpc__) || defined(__ppc__) || defined(__POWERPC__)
    time = __mftb();
 #elif defined(__mips__)
    struct timeval tv;
@@ -182,8 +172,6 @@ retro_time_t rarch_get_time_usec(void)
    if (!QueryPerformanceCounter(&count))
       return 0;
    return count.QuadPart * 1000000 / freq.QuadPart;
-#elif defined(__CELLOS_LV2__)
-   return sys_time_get_system_time();
 #elif defined(GEKKO)
    return ticks_to_microsecs(gettime());
 #elif defined(__MACH__) // OSX doesn't have clock_gettime ...

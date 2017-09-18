@@ -61,8 +61,6 @@ const char *config_get_default_audio(void)
          return "ext";
       case AUDIO_XENON360:
          return "xenon360";
-      case AUDIO_PS3:
-         return "ps3";
       case AUDIO_WII:
          return "gx";
       case AUDIO_NULL:
@@ -108,8 +106,6 @@ const char *config_get_default_input(void)
    {
       case INPUT_ANDROID:
          return "android_input";
-      case INPUT_PS3:
-         return "ps3";
       case INPUT_SDL:
          return "sdl";
       case INPUT_DINPUT:
@@ -301,7 +297,6 @@ void config_set_defaults(void)
    // g_extern
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
    g_extern.console.screen.gamma_correction = DEFAULT_GAMMA;
-   g_extern.lifecycle_state |= (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_FLICKER_FILTER_ENABLE);
@@ -497,7 +492,7 @@ static config_file_t *open_default_config_file(void)
    if (conf)
       strlcpy(g_extern.config_path, conf_path, sizeof(g_extern.config_path));
 
-#elif !defined(__CELLOS_LV2__) && !defined(_XBOX)
+#elif !defined(_XBOX)
    char conf_path[PATH_MAX];
    const char *xdg  = getenv("XDG_CONFIG_HOME");
    const char *home = getenv("HOME");
@@ -761,7 +756,6 @@ bool config_load_file(const char *path)
    CONFIG_GET_INT_EXTERN(console.screen.gamma_correction, "gamma_correction");
 
    bool triple_buffering_enable = false;
-   bool custom_bgm_enable = false;
    bool flicker_filter_enable = false;
    bool soft_filter_enable = false;
 
@@ -771,14 +765,6 @@ bool config_load_file(const char *path)
          g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
       else
          g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
-   }
-
-   if (config_get_bool(conf, "custom_bgm_enable", &custom_bgm_enable))
-   {
-      if (custom_bgm_enable)
-         g_extern.lifecycle_state |= (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
-      else
-         g_extern.lifecycle_state &= ~(1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
    }
 
    if (config_get_bool(conf, "flicker_filter_enable", &flicker_filter_enable))
@@ -1188,8 +1174,7 @@ bool config_save_file(const char *path)
    config_set_bool(conf, "savestate_auto_load", g_settings.savestate_auto_load);
    config_set_int(conf, "sound_mode", g_extern.console.sound.mode);
    config_set_int(conf, "state_slot", g_extern.state_slot);
-   bool custom_bgm_enable_val = g_extern.lifecycle_state & (1ULL << MODE_AUDIO_CUSTOM_BGM_ENABLE);
-   config_set_bool(conf, "custom_bgm_enable", custom_bgm_enable_val);
+   
    for (i = 0; i < MAX_PLAYERS; i++)
    {
       char cfg[64];

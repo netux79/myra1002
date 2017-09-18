@@ -17,15 +17,6 @@
 #include "fonts.h"
 #include "../gfx_common.h"
 
-#ifdef __CELLOS_LV2__
-#include <cell/dbgfont.h>
-#define SCE_DBGFONT_BUFSIZE_LARGE 1024
-#define DbgFontPrint(x, y, scale, color, msg) cellDbgFontPrintf(x, y, scale, color, msg)
-#define DbgFontConfig CellDbgFontConfig
-#define DbgFontInit cellDbgFontInit
-#define DbgFontExit cellDbgFontExit
-#endif
-
 static bool gl_init_font(void *data, const char *font_path, float font_size,
       unsigned win_width, unsigned win_height)
 {
@@ -37,11 +28,6 @@ static bool gl_init_font(void *data, const char *font_path, float font_size,
       return NULL;
 
    DbgFontConfig cfg;
-#ifdef __CELLOS_LV2__
-   cfg.bufSize      = SCE_DBGFONT_BUFSIZE_LARGE;
-   cfg.screenWidth  = win_width;
-   cfg.screenHeight = win_height;
-#endif
 
    DbgFontInit(&cfg);
    free(handle);
