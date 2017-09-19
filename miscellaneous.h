@@ -17,19 +17,15 @@
 #ifndef __RARCH_MISCELLANEOUS_H
 #define __RARCH_MISCELLANEOUS_H
 
-#if defined(XENON)
-#include <time/time.h>
-#elif defined(GEKKO)
+#ifdef GEKKO
 #include <unistd.h>
 #else
 #include <time.h>
 #endif
 
-#if defined(_WIN32) && !defined(_XBOX)
+#if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#elif defined(_WIN32) && defined(_XBOX)
-#include <Xtl.h>
 #endif
 
 #include "retroarch_logger.h"
@@ -61,8 +57,6 @@ static inline void rarch_sleep(unsigned msec)
 {
 #if defined(_WIN32)
    Sleep(msec);
-#elif defined(XENON)
-   udelay(1000 * msec);
 #elif defined(GEKKO)
    usleep(1000 * msec);
 #else

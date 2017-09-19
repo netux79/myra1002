@@ -20,14 +20,9 @@
 #include "../../file.h"
 #include "../gfx_common.h"
 
-#ifdef _XBOX
-
-#else
-
 #include "../context/win32_common.h"
 #define HAVE_MONITOR
 #define HAVE_WINDOW
-#endif
 
 #include "../../compat/posix_string.h"
 #include "../../performance.h"
@@ -288,7 +283,6 @@ bool d3d_init_multipass(void *data)
 
 void d3d_set_font_rect(void *data, font_params_t *params)
 {
-#ifndef _XBOX
    d3d_video_t *d3d = (d3d_video_t*)data;
    float pos_x = g_settings.video.msg_pos_x;
    float pos_y = g_settings.video.msg_pos_y;
@@ -311,7 +305,6 @@ void d3d_set_font_rect(void *data, font_params_t *params)
    d3d->font_rect_shifted.right -= 2;
    d3d->font_rect_shifted.top += 2;
    d3d->font_rect_shifted.bottom += 2;
-#endif
 }
 
 bool d3d_init_singlepass(void *data)
@@ -489,9 +482,6 @@ static bool d3d_initialize(void *data, const video_info_t *info)
       return false;
    }
 
-#if defined(_XBOX360)
-   strlcpy(g_settings.video.font_path, "game:\\media\\Arial_12.xpr", sizeof(g_settings.video.font_path));
-#endif
    d3d->font_ctx = d3d_font_init_first(d3d, g_settings.video.font_path, g_settings.video.font_size);
    if (!d3d->font_ctx)
    {
@@ -533,11 +523,7 @@ static void d3d_overlay_render(void *data, overlay_t *overlay)
    {
       d3d->dev->CreateVertexBuffer(
             sizeof(vert),
-#ifdef _XBOX
-            0,
-#else
             d3d->dev->GetSoftwareVertexProcessing() ? D3DUSAGE_SOFTWAREPROCESSING : 0,
-#endif
             0,
             D3DPOOL_MANAGED,
             &overlay->vert_buf,
@@ -746,18 +732,6 @@ static bool d3d_frame(void *data, const void *frame,
    if (d3d->font_ctx && d3d->font_ctx->render_msg)
    {
       font_params_t font_parms = {0};
-#ifdef _XBOX
-#if defined(_XBOX1)
-      float msg_width  = 60;
-      float msg_height = 365;
-#elif defined(_XBOX360)
-      float msg_width  = (g_extern.lifecycle_state & (1ULL << MODE_MENU_HD)) ? 160 : 100;
-      float msg_height = 120;
-#endif
-      font_parms.x = msg_width;
-      font_parms.y = msg_height;
-      font_parms.scale = 21;
-#endif
       d3d->font_ctx->render_msg(d3d, msg, &font_parms);
    }
 
@@ -792,9 +766,7 @@ static void d3d_set_nonblock_state(void *data, bool state)
 
    if (d3d->ctx_driver && d3d->ctx_driver->swap_interval)
       d3d->ctx_driver->swap_interval(d3d, state ? 0 : 1);
-#ifndef _XBOX
    d3d_restore(d3d);
-#endif
 }
 
 static bool d3d_alive(void *data)
@@ -867,10 +839,8 @@ static void d3d_free(void *data)
 
    if (d3d)
       free(d3d);
-
-#ifndef _XBOX
+      
    UnregisterClass("RetroArch", GetModuleHandle(NULL));
-#endif
 }
 
 static void d3d_viewport_info(void *data, struct rarch_viewport *vp)
@@ -1254,9 +1224,7 @@ static bool d3d_construct(void *data, const video_info_t *info, const input_driv
 {
    d3d_video_t *d3d = (d3d_video_t*)data;
    d3d->should_resize = false;
-#ifndef _XBOX
    gfx_set_dwm();
-#endif
 
 #ifdef HAVE_MENU
    if (d3d->rgui)
@@ -1385,13 +1353,8 @@ static const gfx_ctx_driver_t *d3d_get_context(void)
    // TODO: GL core contexts through ANGLE?
    enum gfx_ctx_api api;
    unsigned major, minor;
-#if defined(_XBOX1)
-   api = GFX_CTX_DIRECT3D8_API;
-   major = 8;
-#else
    api = GFX_CTX_DIRECT3D9_API;
    major = 9;
-#endif
    minor = 0;
    return gfx_ctx_init_first(driver.video_data, api, major, minor);
 }
@@ -1436,26 +1399,6 @@ static void *d3d_init(const video_info_t *info, const input_driver_t **input,
 
 static void d3d_restart(void)
 {
-#ifdef _XBOX
-   d3d_video_t *d3d = (d3d_video_t*)driver.video_data;
-   LPDIRECT3DDEVICE d3dr = d3d->dev;
-
-   if (!d3d)
-      return;
-
-   D3DPRESENT_PARAMETERS d3dpp;
-   video_info_t video_info = {0};
-
-   video_info.vsync = g_settings.video.vsync;
-   video_info.force_aspect = false;
-   video_info.smooth = g_settings.video.smooth;
-   video_info.input_scale = 2;
-   video_info.fullscreen = true;
-   video_info.rgb32 = (d3d->base_size == sizeof(uint32_t)) ? true : false;
-   d3d_make_d3dpp(d3d, &video_info, &d3dpp);
-
-   d3dr->Reset(&d3dpp);
-#endif
 }
 
 const video_driver_t video_d3d = {

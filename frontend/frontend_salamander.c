@@ -24,13 +24,11 @@
 #include "frontend_context.h"
 
 
-#if defined(GEKKO)
+#ifdef GEKKO
 #include "platform/platform_gx.c"
 #ifdef HW_RVL
 #include "platform/platform_wii.c"
 #endif
-#elif defined(_XBOX)
-#include "platform/platform_xdk.c"
 #endif
 
 default_paths_t default_paths;

@@ -14,10 +14,6 @@
 * If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(_XBOX)
-#include "../msvc/msvc_compat.h"
-#endif
-
 /*============================================================
 CONSOLE EXTENSIONS
 ============================================================ */
@@ -65,12 +61,6 @@ COMPATIBILITY
 /*============================================================
 CONFIG FILE
 ============================================================ */
-#ifdef _XBOX
-#undef __RARCH_POSIX_STRING_H
-#undef __RARCH_MSVC_COMPAT_H
-#undef strcasecmp
-#endif
-
 #include "../conf/config_file.c"
 #include "../core_options.c"
 
@@ -80,9 +70,7 @@ VIDEO CONTEXT
 
 #include "../gfx/gfx_context.c"
 
-#if defined(_XBOX)
-#include "../gfx/context/d3d_ctx.cpp"
-#elif defined(ANDROID)
+#if defined(ANDROID)
 #include "../gfx/context/androidegl_ctx.c"
 #elif defined(IOS) || defined(OSX)
 #include "../gfx/context/apple_gl_ctx.c"
@@ -133,12 +121,7 @@ VIDEO SHADERS
 /*============================================================
 VIDEO IMAGE
 ============================================================ */
-
-#if defined(_XBOX1)
-#include "../gfx/image/image_xdk1.c"
-#else
 #include "../gfx/image/image.c"
-#endif
 
 #if defined(WANT_RPNG) || defined(RARCH_MOBILE)
 #include "../gfx/rpng/rpng.c"
@@ -173,10 +156,6 @@ VIDEO DRIVER
 
 #include "../gfx/gfx_common.c"
 
-#ifdef _XBOX
-#include "../xdk/xdk_resources.cpp"
-#endif
-
 #ifdef HAVE_OPENGL
 #include "../gfx/gl.c"
 
@@ -195,14 +174,8 @@ VIDEO DRIVER
 #include "../gfx/xvideo.c"
 #endif
 
-#ifdef _XBOX
-#include "../xdk/xdk_d3d.cpp"
-#endif
-
 #if defined(GEKKO)
 #include "../gx/gx_video.c"
-#elif defined(XENON)
-#include "../xenon/xenon360_video.c"
 #endif
 
 #if defined(HAVE_NULLVIDEO)
@@ -212,11 +185,6 @@ VIDEO DRIVER
 /*============================================================
 FONTS
 ============================================================ */
-
-#ifdef _XBOX
-#define DONT_HAVE_BITMAPFONTS
-#endif
-
 #if defined(HAVE_OPENGL) || defined(HAVE_D3D8) || defined(HAVE_D3D9)
 
 #if defined(HAVE_FREETYPE) || !defined(DONT_HAVE_BITMAPFONTS)
@@ -236,18 +204,10 @@ FONTS
 #include "../gfx/fonts/gl_font.c"
 #endif
 
-#ifdef _XBOX
-#include "../gfx/fonts/d3d_font.c"
-#endif
-
 #if defined(HAVE_LIBDBGFONT)
 #include "../gfx/fonts/ps_libdbgfont.c"
 #elif defined(HAVE_OPENGL)
 #include "../gfx/fonts/gl_raster_font.c"
-#elif defined(_XBOX1)
-#include "../gfx/fonts/xdk1_xfonts.c"
-#elif defined(_XBOX360)
-#include "../gfx/fonts/xdk360_fonts.cpp"
 #endif
 
 #endif
@@ -269,10 +229,6 @@ INPUT
 #include "../gx/gx_usbpad.c"
 #include "../gx/gx_hid_input.c"
 #endif
-#elif defined(_XBOX)
-#include "../xdk/xdk_xinput_input.c"
-#elif defined(XENON)
-#include "../xenon/xenon360_input.c"
 #elif defined(ANDROID)
 #include "../android/native/jni/input_autodetect.c"
 #include "../android/native/jni/input_android.c"
@@ -297,10 +253,6 @@ INPUT
 /*============================================================
 STATE TRACKER
 ============================================================ */
-#ifdef _XBOX
-#define DONT_HAVE_STATE_TRACKER
-#endif
-
 #ifndef DONT_HAVE_STATE_TRACKER
 #include "../gfx/state_tracker.c"
 #endif
@@ -328,9 +280,7 @@ AUDIO UTILS
 /*============================================================
 AUDIO
 ============================================================ */
-#if defined(XENON)
-#include "../xenon/xenon360_audio.c"
-#elif defined(GEKKO)
+#ifdef GEKKO
 #include "../gx/gx_audio.c"
 #endif
 
@@ -446,8 +396,6 @@ FRONTEND
 #ifdef HW_RVL
 #include "../frontend/platform/platform_wii.c"
 #endif
-#elif defined(_XBOX)
-#include "../frontend/platform/platform_xdk.c"
 #elif defined(OSX) || defined(IOS)
 #include "../frontend/platform/platform_apple.c"
 #elif defined(ANDROID)
@@ -459,11 +407,7 @@ FRONTEND
 /*============================================================
 MAIN
 ============================================================ */
-#if defined(XENON)
-#include "../frontend/frontend_xenon.c"
-#else
 #include "../frontend/frontend.c"
-#endif
 
 /*============================================================
 RETROARCH
@@ -473,9 +417,7 @@ RETROARCH
 /*============================================================
 THREAD
 ============================================================ */
-#if defined(HAVE_THREADS) && defined(XENON)
-#include "../thread/xenon_sdl_threads.c"
-#elif defined(HAVE_THREADS)
+#ifdef HAVE_THREADS
 #include "../thread.c"
 #include "../gfx/video_thread_wrapper.c"
 #include "../audio/thread_wrapper.c"
@@ -485,9 +427,7 @@ THREAD
 /*============================================================
 SCREENSHOTS
 ============================================================ */
-#if defined(_XBOX1)
-#include "../xdk/screenshot_xdk1.c"
-#elif defined(HAVE_SCREENSHOTS)
+#if defined(HAVE_SCREENSHOTS)
 #include "../screenshot.c"
 #endif
 

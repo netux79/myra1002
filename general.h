@@ -47,13 +47,8 @@
 // Platform-specific headers
 // Windows
 #ifdef _WIN32
-#ifdef _XBOX
-#include <xtl.h>
-#else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif
-#include "msvc/msvc_compat.h"
 #endif
 
 // Wii - for usleep (among others)
@@ -91,7 +86,6 @@ enum menu_enums
    MODE_EXITSPAWN_MULTIMAN,
    MODE_INPUT_XPERIA_PLAY_HACK,
    MODE_VIDEO_TRIPLE_BUFFERING_ENABLE,
-   MODE_VIDEO_FLICKER_FILTER_ENABLE,
    MODE_VIDEO_SOFT_FILTER_ENABLE,
    MODE_OSK_ENTRY_SUCCESS,
    MODE_OSK_ENTRY_FAIL,
@@ -501,18 +495,9 @@ struct global
          } viewports;
 
          unsigned gamma_correction;
-         unsigned char flicker_filter_index;
-         unsigned char soft_filter_index;
          bool pal_enable;
       } screen;
-
-      struct
-      {
-         unsigned mode;
-#ifdef RARCH_CONSOLE
-         unsigned volume_level;
-#endif
-      } sound;
+      
    } console;
 
    uint64_t lifecycle_state;

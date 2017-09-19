@@ -22,7 +22,6 @@
 #include "libretro_private.h"
 #include <stdlib.h>
 #include <stdint.h>
-#include "msvc/msvc_compat.h"
 #include "gfx/scaler/scaler.h"
 #include "gfx/image/image.h"
 #include "input/overlay.h"
@@ -169,9 +168,7 @@ enum rarch_shader_type
    RARCH_SHADER_NONE
 };
 
-#if defined(_XBOX360)
-#define DEFAULT_SHADER_TYPE RARCH_SHADER_HLSL
-#elif defined(HAVE_OPENGLES2)
+#if defined(HAVE_OPENGLES2)
 #define DEFAULT_SHADER_TYPE RARCH_SHADER_GLSL
 #else
 #define DEFAULT_SHADER_TYPE RARCH_SHADER_NONE
@@ -293,8 +290,6 @@ enum input_devices
    DEVICE_FC30_GAMEPAD,
 #elif defined(GEKKO)
    DEVICE_GXPAD = 0,
-#elif defined(_XBOX)
-   DEVICE_XBOX_PAD = 0,
 #elif defined(IOS)
    DEVICE_NONE,
    DEVICE_WIIMOTE,
@@ -542,15 +537,12 @@ extern const audio_driver_t audio_xa;
 extern const audio_driver_t audio_pulse;
 extern const audio_driver_t audio_dsound;
 extern const audio_driver_t audio_coreaudio;
-extern const audio_driver_t audio_xenon360;
 extern const audio_driver_t audio_gx;
 extern const audio_driver_t audio_null;
 extern const video_driver_t video_gl;
 extern const video_driver_t video_d3d;
 extern const video_driver_t video_gx;
-extern const video_driver_t video_xenon360;
 extern const video_driver_t video_xvideo;
-extern const video_driver_t video_xdk_d3d;
 extern const video_driver_t video_sdl;
 extern const video_driver_t video_vg;
 extern const video_driver_t video_null;
@@ -560,7 +552,6 @@ extern const input_driver_t input_android;
 extern const input_driver_t input_sdl;
 extern const input_driver_t input_dinput;
 extern const input_driver_t input_x;
-extern const input_driver_t input_xenon360;
 extern const input_driver_t input_gx;
 extern const input_driver_t input_xinput;
 extern const input_driver_t input_linuxraw;

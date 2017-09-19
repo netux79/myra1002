@@ -21,18 +21,10 @@
 #include "../../config.h"
 #endif
 
-#ifndef _XBOX
 #define HAVE_WINDOW
-#endif
 
-#if defined(_XBOX1)
-#ifndef HAVE_D3D8
-#define HAVE_D3D8
-#endif
-#else
 #ifndef HAVE_D3D9
 #define HAVE_D3D9
-#endif
 #endif
 
 #include "../../general.h"
@@ -98,9 +90,7 @@ typedef struct d3d_video
       HWND hWnd;
       LPDIRECT3D g_pD3D;
       LPDIRECT3DDEVICE dev;
-#ifndef _XBOX
       LPD3DXFONT font;
-#endif
       HRESULT d3d_err;
       unsigned cur_mon_id;
 
@@ -135,9 +125,7 @@ typedef struct d3d_video
       void *chain;
 } d3d_video_t;
 
-#ifndef _XBOX
 extern "C" bool dinput_handle_message(void *dinput, UINT message, WPARAM wParam, LPARAM lParam);
-#endif
 
 #endif
 

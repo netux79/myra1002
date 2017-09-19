@@ -1501,40 +1501,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          break;
 #endif
-#ifdef _XBOX1
-      case RGUI_SETTINGS_FLICKER_FILTER:
-         switch (action)
-         {
-            case RGUI_ACTION_LEFT:
-               if (g_extern.console.screen.flicker_filter_index > 0)
-                  g_extern.console.screen.flicker_filter_index--;
-               break;
-            case RGUI_ACTION_RIGHT:
-               if (g_extern.console.screen.flicker_filter_index < 5)
-                  g_extern.console.screen.flicker_filter_index++;
-               break;
-            case RGUI_ACTION_START:
-               g_extern.console.screen.flicker_filter_index = 0;
-               break;
-         }
-         break;
-      case RGUI_SETTINGS_SOFT_DISPLAY_FILTER:
-         switch (action)
-         {
-            case RGUI_ACTION_LEFT:
-            case RGUI_ACTION_RIGHT:
-            case RGUI_ACTION_OK:
-               if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE))
-                  g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-               else
-                  g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-               break;
-            case RGUI_ACTION_START:
-               g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-               break;
-         }
-         break;
-#endif
       case RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
             g_settings.pause_nonactive = !g_settings.pause_nonactive;
@@ -1923,23 +1889,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_MENU_TOGGLE:
          input_get_bind_string(type_str, &g_settings.input.binds[rgui->current_pad][type - RGUI_SETTINGS_BIND_BEGIN], type_str_size);
          break;
-      case RGUI_SETTINGS_AUDIO_DSP_EFFECT:
-#ifdef RARCH_CONSOLE
-         strlcpy(type_str, (g_extern.console.sound.volume_level) ? "Loud" : "Normal", type_str_size);
-         break;
-#endif
       case RGUI_SETTINGS_AUDIO_VOLUME:
          snprintf(type_str, type_str_size, "%.1f dB", g_extern.audio_data.volume_db);
          break;
-#ifdef _XBOX1
-      case RGUI_SETTINGS_FLICKER_FILTER:
-         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.flicker_filter_index);
-         break;
-      case RGUI_SETTINGS_SOFT_DISPLAY_FILTER:
-         snprintf(type_str, type_str_size,
-               (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE)) ? "ON" : "OFF");
-         break;
-#endif
       case RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST:
          strlcpy(type_str, g_settings.pause_nonactive ? "ON" : "OFF", type_str_size);
          break;

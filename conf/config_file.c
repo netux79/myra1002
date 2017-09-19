@@ -22,16 +22,13 @@
 #include <errno.h>
 #include "../compat/strl.h"
 #include "../compat/posix_string.h"
-#include "../msvc/msvc_compat.h"
 #include "../file.h"
 
-#if !defined(_WIN32) && !defined(_XBOX)
+#if !defined(_WIN32)
 #include <sys/param.h> // PATH_MAX
-#elif defined(_WIN32) && !defined(_XBOX)
+#elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#elif defined(_XBOX)
-#include <xtl.h>
 #endif
 
 #ifndef PATH_MAX

@@ -14,29 +14,9 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(_MSC_VER) && !defined(_XBOX)
+#if defined(_MSC_VER)
 #pragma comment(lib, "dsound")
 #pragma comment(lib, "dxguid")
-#endif
-
-#ifdef _XBOX
-#define DSERR_BUFFERLOST                MAKE_DSHRESULT(150)
-#define DSERR_INVALIDPARAM              E_INVALIDARG
-#define DSERR_PRIOLEVELNEEDED           MAKE_DSHRESULT(70)
-
-// Send the audio signal (stereo, without attenuation) to all existing speakers
-static DSMIXBINVOLUMEPAIR dsmbvp[8] = {
-   { DSMIXBIN_FRONT_LEFT,    DSBVOLUME_MAX },
-   { DSMIXBIN_FRONT_RIGHT,   DSBVOLUME_MAX },
-   { DSMIXBIN_FRONT_CENTER,  DSBVOLUME_MAX },
-   { DSMIXBIN_FRONT_CENTER,  DSBVOLUME_MAX },
-   { DSMIXBIN_BACK_LEFT,     DSBVOLUME_MAX },
-   { DSMIXBIN_BACK_RIGHT,    DSBVOLUME_MAX },
-   { DSMIXBIN_LOW_FREQUENCY, DSBVOLUME_MAX },
-   { DSMIXBIN_LOW_FREQUENCY, DSBVOLUME_MAX },
-};
-   
-static DSMIXBINS dsmb;
 #endif
 
 #include "../driver.h"
@@ -308,17 +288,13 @@ static void *dsound_init(const char *device, unsigned rate, unsigned latency)
       dev.device = strtoul(device, NULL, 0);
 
    RARCH_LOG("DirectSound devices:\n");
-#ifndef _XBOX
    DirectSoundEnumerate(enumerate_cb, &dev);
-#endif
 
    if (DirectSoundCreate(dev.guid, &ds->ds, NULL) != DS_OK)
       goto error;
 
-#ifndef _XBOX
    if (IDirectSound_SetCooperativeLevel(ds->ds, GetDesktopWindow(), DSSCL_PRIORITY) != DS_OK)
       goto error;
-#endif
 
    wfx.wFormatTag = WAVE_FORMAT_PCM;
    wfx.nChannels = 2;
@@ -337,11 +313,7 @@ static void *dsound_init(const char *device, unsigned rate, unsigned latency)
    RARCH_LOG("[DirectSound]: Latency = %u ms\n", (unsigned)((1000 * ds->buffer_size) / wfx.nAvgBytesPerSec));
 
    bufdesc.dwSize = sizeof(DSBUFFERDESC);
-#ifdef _XBOX
-   bufdesc.dwFlags = 0;
-#else
    bufdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_GLOBALFOCUS;
-#endif
    bufdesc.dwBufferBytes = ds->buffer_size;
    bufdesc.lpwfxFormat = &wfx;
 
@@ -357,17 +329,6 @@ static void *dsound_init(const char *device, unsigned rate, unsigned latency)
       goto error;
 
    IDirectSoundBuffer_SetVolume(ds->dsb, DSBVOLUME_MAX);
-
-#ifdef _XBOX
-   if(g_extern.console.sound.volume_level == 1)
-   {
-      dsmb.dwMixBinCount = 8;
-      dsmb.lpMixBinVolumePairs = dsmbvp;
-      
-      IDirectSoundBuffer_SetHeadroom(ds->dsb, DSBHEADROOM_MIN);
-      IDirectSoundBuffer_SetMixBins(ds->dsb, &dsmb);
-   }
-#endif
 
    IDirectSoundBuffer_SetCurrentPosition(ds->dsb, 0);
 

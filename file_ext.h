@@ -26,15 +26,7 @@
 #define EXT_EXECUTABLES "so"
 #endif
 #else
-#if defined(_XBOX1)
-#define EXT_EXECUTABLES "xbe|XBE"
-#define SALAMANDER_FILE "default.xbe"
-#define PLATFORM_NAME   "xdk1"
-#elif defined(_XBOX360)
-#define EXT_EXECUTABLES "xex|XEX"
-#define SALAMANDER_FILE "default.xex"
-#define PLATFORM_NAME   "xdk360"
-#elif defined(GEKKO)
+#if defined(GEKKO)
 #define EXT_EXECUTABLES "dol|DOL"
 #define SALAMANDER_FILE "boot.dol"
 #ifdef HW_RVL

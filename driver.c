@@ -71,9 +71,6 @@ static const audio_driver_t *audio_drivers[] = {
 #ifdef HAVE_PULSE
    &audio_pulse,
 #endif
-#ifdef XENON
-   &audio_xenon360,
-#endif
 #ifdef GEKKO
    &audio_gx,
 #endif
@@ -87,10 +84,7 @@ static const video_driver_t *video_drivers[] = {
 #ifdef HAVE_OPENGL
    &video_gl,
 #endif
-#ifdef XENON
-   &video_xenon360,
-#endif
-#if defined(_XBOX) && (defined(HAVE_D3D8) || defined(HAVE_D3D9)) || defined(HAVE_WIN32_D3D9)
+#if defined(HAVE_WIN32_D3D9)
    &video_d3d,
 #endif
 #ifdef HAVE_SDL
@@ -126,9 +120,6 @@ static const input_driver_t *input_drivers[] = {
 #endif
 #ifdef HAVE_X11
    &input_x,
-#endif
-#ifdef XENON
-   &input_xenon360,
 #endif
 #if defined(HAVE_XINPUT2) || defined(HAVE_XINPUT_XBOX1)
    &input_xinput,

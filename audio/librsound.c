@@ -720,8 +720,6 @@ static void rsnd_sleep(int msec)
 {
 #if defined(_WIN32)
    Sleep(msec);
-#elif defined(XENON)
-   udelay(1000 * msec);
 #elif defined(GEKKO)
    usleep(1000 * msec);
 #else

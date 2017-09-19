@@ -1554,12 +1554,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #ifdef HW_RVL
          file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_VITRAP_FILTER, 0);
 #endif
-#if defined(HW_RVL) || defined(_XBOX360)
+#if defined(HW_RVL)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);
-#endif
-#ifdef _XBOX1
-         file_list_push(rgui->selection_buf, "Soft filtering", RGUI_SETTINGS_SOFT_DISPLAY_FILTER, 0);
-         file_list_push(rgui->selection_buf, "Flicker filtering", RGUI_SETTINGS_FLICKER_FILTER, 0);
 #endif
          file_list_push(rgui->selection_buf, "Crop Overscan", RGUI_SETTINGS_VIDEO_CROP_OVERSCAN, 0);
          file_list_push(rgui->selection_buf, "Aspect Ratio", RGUI_SETTINGS_VIDEO_ASPECT_RATIO, 0);
@@ -1752,9 +1748,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Mute Audio", RGUI_SETTINGS_AUDIO_MUTE, 0);
          file_list_push(rgui->selection_buf, "Audio Sync", RGUI_SETTINGS_AUDIO_SYNC, 0);
          file_list_push(rgui->selection_buf, "Rate Control Delta", RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA, 0);
-#ifdef _XBOX1
-         file_list_push(rgui->selection_buf, "Volume Effect", RGUI_SETTINGS_AUDIO_DSP_EFFECT, 0);
-#endif
          file_list_push(rgui->selection_buf, "Volume Level", RGUI_SETTINGS_AUDIO_VOLUME, 0);
          break;
       case RGUI_SETTINGS_DRIVERS:
@@ -1870,14 +1863,6 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
 #endif
                file_list_push(rgui->selection_buf, "carda:/", menu_type, 0);
                file_list_push(rgui->selection_buf, "cardb:/", menu_type, 0);
-#elif defined(_XBOX1)
-               file_list_push(rgui->selection_buf, "C:", menu_type, 0);
-               file_list_push(rgui->selection_buf, "D:", menu_type, 0);
-               file_list_push(rgui->selection_buf, "E:", menu_type, 0);
-               file_list_push(rgui->selection_buf, "F:", menu_type, 0);
-               file_list_push(rgui->selection_buf, "G:", menu_type, 0);
-#elif defined(_XBOX360)
-               file_list_push(rgui->selection_buf, "game:", menu_type, 0);
 #elif defined(_WIN32)
                unsigned drives = GetLogicalDrives();
                char drive[] = " :\\";

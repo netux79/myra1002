@@ -17,9 +17,6 @@
 #define __RARCH_POSIX_STRING_H
 
 #ifdef _WIN32
-
-#include "../msvc/msvc_compat.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -27,15 +27,9 @@
 #include "file_extract.h"
 
 #ifdef _WIN32
-#ifdef _XBOX
-#include <xtl.h>
-#define setmode _setmode
-#define INVALID_FILE_ATTRIBUTES -1
-#else
 #include <io.h>
 #include <fcntl.h>
 #include <windows.h>
-#endif
 #endif
 
 static void patch_rom(uint8_t **buf, ssize_t *size)
@@ -175,10 +169,8 @@ static const char *ramtype2str(int type)
 // Attempt to save valuable RAM data somewhere ...
 static void dump_to_file_desperate(const void *data, size_t size, int type)
 {
-#if defined(_WIN32) && !defined(_XBOX)
+#if defined(_WIN32)
    const char *base = getenv("APPDATA");
-#elif defined(_XBOX)
-   const char *base = NULL;
 #else
    const char *base = getenv("HOME");
 #endif

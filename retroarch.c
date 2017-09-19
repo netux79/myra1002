@@ -38,13 +38,8 @@
 #include "git_version.h"
 
 #ifdef _WIN32
-#ifdef _XBOX
-#include <xtl.h>
-#else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#endif
-#include "msvc/msvc_compat.h"
 #endif
 
 // To avoid continous switching if we hold the button down, we require that the button must go from pressed,
@@ -71,7 +66,7 @@ static void check_fast_forward_button(void)
    old_hold_button_state = new_hold_button_state;
 }
 
-#if defined(HAVE_SCREENSHOTS) && !defined(_XBOX1)
+#if defined(HAVE_SCREENSHOTS)
 static bool take_screenshot_viewport(void)
 {
    struct rarch_viewport vp = {0};
@@ -886,7 +881,7 @@ static void parse_input(int argc, char *argv[])
             break;
 
          case 'D':
-#if defined(_WIN32) && !defined(_XBOX)
+#if defined(_WIN32)
             FreeConsole();
 #endif
             break;
@@ -1967,7 +1962,7 @@ static void check_disk(void)
    old_pressed_next  = pressed_next;
 }
 
-#if defined(HAVE_SCREENSHOTS) && !defined(_XBOX)
+#if defined(HAVE_SCREENSHOTS)
 static void check_screenshot(void)
 {
    static bool old_pressed;
@@ -2110,7 +2105,7 @@ static void do_state_checks(void)
 {
    rarch_check_block_hotkey();
 
-#if defined(HAVE_SCREENSHOTS) && !defined(_XBOX)
+#if defined(HAVE_SCREENSHOTS)
    check_screenshot();
 #endif
    check_mute();

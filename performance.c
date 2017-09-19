@@ -27,15 +27,13 @@
 #include <unistd.h>
 #endif
 
-#if defined(_WIN32) && !defined(_XBOX)
+#if defined(_WIN32)
 #include <windows.h>
 #include <intrin.h>
 #endif
 
 #if defined(GEKKO)
 #define __mftb gettime
-#elif defined(_XBOX360)
-#include <PPCIntrinsics.h>
 #elif defined(_POSIX_MONOTONIC_CLOCK) || defined(ANDROID)
 // POSIX_MONOTONIC_CLOCK is not being defined in Android headers despite support being present.
 #include <time.h>
@@ -122,16 +120,7 @@ void retro_perf_log(void)
 retro_perf_tick_t rarch_get_perf_counter(void)
 {
    retro_perf_tick_t time = 0;
-#ifdef _XBOX1
-
-#define rdtsc	__asm __emit 0fh __asm __emit 031h
-   LARGE_INTEGER time_tmp;
-   rdtsc;
-   __asm	mov	time_tmp.LowPart, eax;
-   __asm	mov	time_tmp.HighPart, edx;
-   time = time_tmp.QuadPart;
-
-#elif defined(__linux__)
+#ifdef __linux__
    struct timespec tv;
    if (clock_gettime(CLOCK_MONOTONIC, &tv) == 0)
       time = (retro_perf_tick_t)tv.tv_sec * 1000000000 + (retro_perf_tick_t)tv.tv_nsec;
@@ -150,7 +139,7 @@ retro_perf_tick_t rarch_get_perf_counter(void)
 
 #elif defined(__ARM_ARCH_6__)
    asm volatile( "mrc p15, 0, %0, c9, c13, 0" : "=r"(time) );
-#elif defined(GEKKO) || defined(_XBOX360) || defined(__powerpc__) || defined(__ppc__) || defined(__POWERPC__)
+#elif defined(GEKKO) || defined(__powerpc__) || defined(__ppc__) || defined(__POWERPC__)
    time = __mftb();
 #elif defined(__mips__)
    struct timeval tv;
@@ -199,7 +188,7 @@ retro_time_t rarch_get_time_usec(void)
 #define CPU_X86
 #endif
 
-#if defined(_MSC_VER) && !defined(_XBOX)
+#if defined(_MSC_VER)
 #include <intrin.h>
 #endif
 
@@ -366,9 +355,6 @@ uint64_t rarch_get_cpu_features(void)
 #elif defined(__ALTIVEC__)
    cpu |= RETRO_SIMD_VMX;
    RARCH_LOG("[CPUID]: VMX: %u\n", !!(cpu & RETRO_SIMD_VMX));
-#elif defined(XBOX360)
-   cpu |= RETRO_SIMD_VMX128;
-   RARCH_LOG("[CPUID]: VMX128: %u\n", !!(cpu & RETRO_SIMD_VMX128));
 #elif defined(GEKKO)
    cpu |= RETRO_SIMD_PS;
    RARCH_LOG("[CPUID]: PS: %u\n", !!(cpu & RETRO_SIMD_PS));

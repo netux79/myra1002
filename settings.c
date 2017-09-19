@@ -59,8 +59,6 @@ const char *config_get_default_audio(void)
          return "pulse";
       case AUDIO_EXT:
          return "ext";
-      case AUDIO_XENON360:
-         return "xenon360";
       case AUDIO_WII:
          return "gx";
       case AUDIO_NULL:
@@ -78,9 +76,6 @@ const char *config_get_default_video(void)
          return "gl";
       case VIDEO_WII:
          return "gx";
-      case VIDEO_XENON360:
-         return "xenon360";
-      case VIDEO_XDK_D3D:
       case VIDEO_D3D9:
          return "d3d";
       case VIDEO_XVIDEO:
@@ -112,8 +107,6 @@ const char *config_get_default_input(void)
          return "dinput";
       case INPUT_X:
          return "x";
-      case INPUT_XENON360:
-         return "xenon360";
       case INPUT_XINPUT:
          return "xinput";
       case INPUT_WII:
@@ -299,7 +292,6 @@ void config_set_defaults(void)
    g_extern.console.screen.gamma_correction = DEFAULT_GAMMA;
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-   g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_FLICKER_FILTER_ENABLE);
 
    g_extern.console.screen.resolutions.current.id = GX_RESOLUTIONS_AUTO;
    strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
@@ -307,11 +299,6 @@ void config_set_defaults(void)
    g_extern.state_slot = 0;
    g_extern.audio_data.mute = 0;
    g_extern.verbose = true;
-
-   g_extern.console.sound.mode = SOUND_MODE_NORMAL;
-#ifdef _XBOX1
-   g_extern.console.sound.volume_level = 0;
-#endif
 #endif
    
 #ifdef HAVE_OVERLAY
@@ -414,7 +401,7 @@ static config_file_t *open_default_config_file(void)
 {
    config_file_t *conf = NULL;
 
-#if defined(_WIN32) && !defined(_XBOX)
+#if defined(_WIN32)
    char conf_path[PATH_MAX];
 
    char app_path[PATH_MAX];
@@ -492,7 +479,7 @@ static config_file_t *open_default_config_file(void)
    if (conf)
       strlcpy(g_extern.config_path, conf_path, sizeof(g_extern.config_path));
 
-#elif !defined(_XBOX)
+#else
    char conf_path[PATH_MAX];
    const char *xdg  = getenv("XDG_CONFIG_HOME");
    const char *home = getenv("HOME");
@@ -756,7 +743,6 @@ bool config_load_file(const char *path)
    CONFIG_GET_INT_EXTERN(console.screen.gamma_correction, "gamma_correction");
 
    bool triple_buffering_enable = false;
-   bool flicker_filter_enable = false;
    bool soft_filter_enable = false;
 
    if (config_get_bool(conf, "triple_buffering_enable", &triple_buffering_enable))
@@ -766,15 +752,6 @@ bool config_load_file(const char *path)
       else
          g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
    }
-
-   if (config_get_bool(conf, "flicker_filter_enable", &flicker_filter_enable))
-   {
-      if (flicker_filter_enable)
-         g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_FLICKER_FILTER_ENABLE);
-      else 
-         g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_FLICKER_FILTER_ENABLE);
-   }
-
    if (config_get_bool(conf, "soft_filter_enable", &soft_filter_enable))
    {
       if (soft_filter_enable)
@@ -782,14 +759,7 @@ bool config_load_file(const char *path)
       else 
          g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
    }
-
-   CONFIG_GET_INT_EXTERN(console.screen.flicker_filter_index, "flicker_filter_index");
-   CONFIG_GET_INT_EXTERN(console.screen.soft_filter_index, "soft_filter_index");
-#ifdef _XBOX1
-   CONFIG_GET_INT_EXTERN(console.sound.volume_level, "sound_volume_level");
-#endif
    CONFIG_GET_INT_EXTERN(console.screen.resolutions.current.id, "current_resolution_id");
-   CONFIG_GET_INT_EXTERN(console.sound.mode, "sound_mode");
 #endif
    CONFIG_GET_INT_EXTERN(state_slot, "state_slot");
 
@@ -1152,17 +1122,10 @@ bool config_save_file(const char *path)
    config_set_int(conf, "input_autodetect_icade_profile_pad4", g_settings.input.icade_profile[3]);
 #endif
    config_set_int(conf, "gamma_correction", g_extern.console.screen.gamma_correction);
-#ifdef _XBOX1
-   config_set_int(conf, "sound_volume_level", g_extern.console.sound.volume_level);
-#endif
    bool triple_buffering_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
    bool soft_filter_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-   bool flicker_filter_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_FLICKER_FILTER_ENABLE);
    config_set_bool(conf, "triple_buffering_enable", triple_buffering_enable_val);
    config_set_bool(conf, "soft_filter_enable", soft_filter_enable_val);
-   config_set_bool(conf, "flicker_filter_enable", flicker_filter_enable_val);
-   config_set_int(conf, "flicker_filter_index", g_extern.console.screen.flicker_filter_index);
-   config_set_int(conf, "soft_filter_index", g_extern.console.screen.soft_filter_index);
    config_set_int(conf, "current_resolution_id", g_extern.console.screen.resolutions.current.id);
    config_set_int(conf, "custom_viewport_width", g_extern.console.screen.viewports.custom_vp.width);
    config_set_int(conf, "custom_viewport_height", g_extern.console.screen.viewports.custom_vp.height);
@@ -1172,7 +1135,6 @@ bool config_save_file(const char *path)
    config_set_bool(conf, "savestate_auto_index", g_settings.savestate_auto_index);
    config_set_bool(conf, "savestate_auto_save", g_settings.savestate_auto_save);
    config_set_bool(conf, "savestate_auto_load", g_settings.savestate_auto_load);
-   config_set_int(conf, "sound_mode", g_extern.console.sound.mode);
    config_set_int(conf, "state_slot", g_extern.state_slot);
    
    for (i = 0; i < MAX_PLAYERS; i++)

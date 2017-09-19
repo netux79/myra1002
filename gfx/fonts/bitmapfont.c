@@ -18,7 +18,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#include "../../msvc/msvc_compat.h"
 #include "../../boolean.h"
 
 struct font_renderer
