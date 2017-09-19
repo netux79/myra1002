@@ -389,8 +389,7 @@ typedef struct video_driver
    // The video init might preinitialize an input driver to override the settings in case the video driver relies on input driver for event handling, e.g.
    bool (*frame)(void *data, const void *frame, unsigned width, unsigned height, unsigned pitch, const char *msg); // msg is for showing a message on the screen along with the video frame.
    void (*set_nonblock_state)(void *data, bool toggle); // Should we care about syncing to vblank? Fast forwarding.
-   // Is the window still active?
-   bool (*alive)(void *data);
+   bool (*alive)(void *data); // Is the window still active?
    bool (*focus)(void *data); // Does the window have focus?
    bool (*set_shader)(void *data, enum rarch_shader_type type, const char *path); // Sets shader. Might not be implemented. Will be moved to poke_interface later.
    void (*free)(void *data);
@@ -543,8 +542,6 @@ extern const video_driver_t video_xvideo;
 extern const video_driver_t video_sdl;
 extern const video_driver_t video_vg;
 extern const video_driver_t video_null;
-extern const video_driver_t video_lima;
-extern const video_driver_t video_omap;
 extern const input_driver_t input_android;
 extern const input_driver_t input_sdl;
 extern const input_driver_t input_dinput;

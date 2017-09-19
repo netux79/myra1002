@@ -145,11 +145,6 @@ VIDEO DRIVER
 #include "../gfx/math/matrix_3x3.c"
 #endif
 
-#ifdef HAVE_OMAP
-#include "../gfx/omap_gfx.c"
-#include "../gfx/fbdev.c"
-#endif
-
 #ifdef HAVE_DYLIB
 #include "../gfx/ext_gfx.c"
 #endif
