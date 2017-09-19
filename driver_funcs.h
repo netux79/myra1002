@@ -28,10 +28,8 @@
 #define audio_write_avail_func()                driver.audio->write_avail(driver.audio_data)
 #define audio_buffer_size_func()                driver.audio->buffer_size(driver.audio_data)
 
-#define video_init_func(video_info, input, input_data) \
-   driver.video->init(video_info, input, input_data)
-#define video_frame_func(data, width, height, pitch, msg) \
-   driver.video->frame(driver.video_data, data, width, height, pitch, msg)
+#define video_init_func(video_info, input, input_data) driver.video->init(video_info, input, input_data)
+#define video_frame_func(data, width, height, pitch, msg) driver.video->frame(driver.video_data, data, width, height, pitch, msg)
 #define video_set_nonblock_state_func(state) driver.video->set_nonblock_state(driver.video_data, state)
 #define video_alive_func() driver.video->alive(driver.video_data)
 #define video_focus_func() driver.video->focus(driver.video_data)
@@ -43,8 +41,7 @@
 #define video_free_func() driver.video->free(driver.video_data)
 #define input_init_func() driver.input->init()
 #define input_poll_func() driver.input->poll(driver.input_data)
-#define input_input_state_func(retro_keybinds, port, device, index, id) \
-   driver.input->input_state(driver.input_data, retro_keybinds, port, device, index, id)
+#define input_input_state_func(retro_keybinds, port, device, index, id) driver.input->input_state(driver.input_data, retro_keybinds, port, device, index, id)
 #define input_free_func() driver.input->free(driver.input_data)
 
 static inline bool input_key_pressed_func(int key)

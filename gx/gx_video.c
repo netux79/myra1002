@@ -77,7 +77,7 @@ void *g_framebuf[2];
 unsigned g_current_framebuf;
 
 bool g_vsync;
-lwpq_t g_video_cond;
+//lwpq_t g_video_cond;
 volatile bool g_draw_done;
 
 static struct
@@ -124,7 +124,7 @@ static void retrace_callback(u32 retrace_count)
 {
    (void)retrace_count;
    g_draw_done = true;
-   LWP_ThreadSignal(g_video_cond);
+//   LWP_ThreadSignal(g_video_cond);
 }
 
 extern rgui_handle_t *rgui;
@@ -402,7 +402,7 @@ static void init_video_mode(void *data)
    for (unsigned i = 0; i < 2; i++)
       g_framebuf[i] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
 
-   LWP_InitQueue(&g_video_cond);
+//   LWP_InitQueue(&g_video_cond);
 
    GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
    gx_set_video_mode(data, GX_RESOLUTIONS_AUTO);
@@ -537,20 +537,17 @@ static void gx_apply_state_changes(void *data)
    GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
 }
 
-static void gx_restart(void) { }
-
 static void *gx_init(const video_info_t *video,
       const input_driver_t **input, void **input_data)
 {
-   g_vsync = video->vsync;
+   //g_vsync = video->vsync;
 
    if (driver.video_data)
    {
       gx_video_t *gx = (gx_video_t*)driver.video_data;
 
 	  if (gx->scale != video->input_scale || gx->rgb32 != video->rgb32)
-      {
-         RARCH_LOG("[GX] reallocate texture\n");
+      {                
          free(g_tex.data);
          g_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * video->input_scale * video->input_scale * (video->rgb32 ? 4 : 2));
 
@@ -566,7 +563,6 @@ static void *gx_init(const video_info_t *video,
       
       gx_apply_state_changes(driver.video_data);
       
-      //gx->should_resize = true;
       return driver.video_data;
    }
 
@@ -953,31 +949,36 @@ static void gx_overlay_vertex_geom(void *data, unsigned image, float x, float y,
    o->vertex_coord[6] = x + w; o->vertex_coord[7] = y + h;
 }
 
-static void gx_free_overlay(gx_video_t *gx)
+static void gx_overlay_free(void *data)
 {
-   free(gx->overlay);
-   gx->overlay = NULL;
+   gx_video_t *gx = (gx_video_t*)data;
+   if (gx->overlay)
+   { 
+      free(gx->overlay);
+      gx->overlay = NULL;
+   }
    gx->overlays = 0;
    GX_InvalidateTexAll();
 }
 
 static bool gx_overlay_load(void *data, const struct texture_image *images, unsigned num_images)
 {
-   unsigned i;
+   unsigned i, g_filter;
    gx_video_t *gx = (gx_video_t*)data;
 
-   gx_free_overlay(gx);
+   gx_overlay_free(data);
    gx->overlay = (struct gx_overlay_data*)calloc(num_images, sizeof(*gx->overlay));
    if (!gx->overlay)
       return false;
 
    gx->overlays = num_images;
+   g_filter = g_settings.video.smooth ? GX_LINEAR : GX_NEAR;
 
    for (i = 0; i < num_images; i++)
    {
       struct gx_overlay_data *o = &gx->overlay[i];
       GX_InitTexObj(&o->tex, images[i].pixels, images[i].width, images[i].height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-      GX_InitTexObjFilterMode(&g_tex.obj, GX_LINEAR, GX_LINEAR);
+      GX_InitTexObjFilterMode(&o->tex, g_filter, g_filter);
       DCFlushRange(images[i].pixels, images[i].width * images[i].height * sizeof(uint32_t));
       gx_overlay_tex_geom(gx, i, 0, 0, 1, 1); // Default. Stretch to whole screen.
       gx_overlay_vertex_geom(gx, i, 0, 0, 1, 1);
@@ -1047,6 +1048,7 @@ static const video_overlay_interface_t gx_overlay_interface = {
    gx_overlay_vertex_geom,
    gx_overlay_full_screen,
    gx_overlay_set_alpha,
+   gx_overlay_free
 };
 
 static void gx_get_overlay_interface(void *data, const video_overlay_interface_t **iface)
@@ -1077,7 +1079,7 @@ static bool gx_frame(void *data, const void *frame,
 
    while (((g_vsync || gx->rgui_texture_enable)) && !g_draw_done)
    {
-      LWP_ThreadSleep(g_video_cond);
+      //LWP_ThreadSleep(g_video_cond);
    }
 
    if (width != gx_old_width || height != gx_old_height)
@@ -1189,10 +1191,6 @@ static bool gx_focus(void *data)
 static void gx_free(void *data)
 {
    (void)data;
-#ifdef HAVE_OVERLAY
-   gx_video_t *gx = (gx_video_t*)driver.video_data;
-   gx_free_overlay(gx);
-#endif
 }
 
 static void gx_set_texture_frame(void *data, const void *frame,
@@ -1262,7 +1260,6 @@ const video_driver_t video_gx = {
    .ident = "gx",
    .set_rotation = gx_set_rotation,
    .viewport_info = gx_viewport_info,
-   .restart = gx_restart,
 #ifdef HAVE_OVERLAY
    .overlay_interface = gx_get_overlay_interface,
 #endif

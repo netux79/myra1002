@@ -103,10 +103,6 @@ static void rarch_get_environment_console(char *path)
 #define attempt_load_game_push_history false
 #endif
 
-#ifndef RARCH_CONSOLE
-#define rarch_get_environment_console() (void)0
-#endif
-
 #if defined(RARCH_CONSOLE) || defined(ANDROID)
 #define attempt_load_game_fails (1ULL << MODE_MENU_PREINIT)
 #else
@@ -332,7 +328,9 @@ returntype main_entry(signature())
    if (frontend_ctx && frontend_ctx->environment_get)
    {
       frontend_ctx->environment_get(argc, argv, args);
+#ifdef RARCH_CONSOLE
       rarch_get_environment_console(argv[0]);
+#endif
    }
 
    if (attempt_load_game)

@@ -2314,24 +2314,6 @@ static bool gl_read_viewport(void *data, uint8_t *buffer)
 }
 #endif
 
-#if defined(HAVE_MENU)
-static void gl_restart(void)
-{
-   gl_t *gl = (gl_t*)driver.video_data;
-
-   if (!gl)
-	   return;
-
-   void *data = driver.video_data;
-   driver.video_data = NULL;
-   gl_free(data);
-#ifdef HAVE_CG
-   gl_cg_invalidate_context();
-#endif
-   init_video_input();
-}
-#endif
-
 #ifdef HAVE_OVERLAY
 static void gl_free_overlay(gl_t *gl);
 static bool gl_overlay_load(void *data, const struct texture_image *images, unsigned num_images)
@@ -2469,6 +2451,7 @@ static const video_overlay_interface_t gl_overlay_interface = {
    gl_overlay_vertex_geom,
    gl_overlay_full_screen,
    gl_overlay_set_alpha,
+   NULL
 };
 
 static void gl_get_overlay_interface(void *data, const video_overlay_interface_t **iface)
@@ -2630,9 +2613,6 @@ const video_driver_t video_gl = {
    gl_free,
    "gl",
 
-#if defined(HAVE_MENU)
-   gl_restart,
-#endif
    gl_set_rotation,
 
    gl_viewport_info,

@@ -62,10 +62,6 @@ static void null_gfx_free(void *data)
    (void)data;
 }
 
-#ifdef HAVE_MENU
-static void null_gfx_restart(void) {}
-#endif
-
 const video_driver_t video_null = {
    null_gfx_init,
    null_gfx_frame,
@@ -75,9 +71,5 @@ const video_driver_t video_null = {
    NULL,
    null_gfx_free,
    "null",
-
-#ifdef HAVE_MENU
-   null_gfx_restart,
-#endif
 };
 

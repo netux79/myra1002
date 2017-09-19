@@ -362,11 +362,6 @@ const video_driver_t video_sdl = {
    NULL,
    sdl_gfx_free,
    "sdl",
-
-#ifdef HAVE_MENU
-   NULL,
-#endif
-
    NULL,
    sdl_gfx_viewport_info,
 };

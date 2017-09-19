@@ -889,11 +889,6 @@ const video_driver_t video_omap = {
   NULL, /* set_shader */
   omap_gfx_free,
   "omap",
-
-#ifdef HAVE_MENU
-  NULL, /* restart */
-#endif
-
   NULL, /* set_rotation */
   omap_gfx_viewport_info,
   NULL, /* read_viewport */

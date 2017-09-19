@@ -352,6 +352,7 @@ typedef struct video_overlay_interface
    void (*vertex_geom)(void *data, unsigned image, float x, float y, float w, float h);
    void (*full_screen)(void *data, bool enable);
    void (*set_alpha)(void *data, unsigned image, float mod);
+   void (*free)(void *data);
 } video_overlay_interface_t;
 #endif
 
@@ -394,10 +395,6 @@ typedef struct video_driver
    bool (*set_shader)(void *data, enum rarch_shader_type type, const char *path); // Sets shader. Might not be implemented. Will be moved to poke_interface later.
    void (*free)(void *data);
    const char *ident;
-
-#ifdef HAVE_MENU
-   void (*restart)(void);
-#endif
 
    void (*set_rotation)(void *data, unsigned rotation);
    void (*viewport_info)(void *data, struct rarch_viewport *vp);

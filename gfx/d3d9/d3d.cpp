@@ -1054,6 +1054,7 @@ static const video_overlay_interface_t d3d_overlay_interface = {
    d3d_overlay_vertex_geom,
    d3d_overlay_full_screen,
    d3d_overlay_set_alpha,
+   NULL
 };
 
 static void d3d_get_overlay_interface(void *data, const video_overlay_interface_t **iface)
@@ -1397,10 +1398,6 @@ static void *d3d_init(const video_info_t *info, const input_driver_t **input,
    return vid;
 }
 
-static void d3d_restart(void)
-{
-}
-
 const video_driver_t video_d3d = {
    d3d_init,
    d3d_frame,
@@ -1410,9 +1407,6 @@ const video_driver_t video_d3d = {
    d3d_set_shader,
    d3d_free,
    "d3d",
-#ifdef HAVE_MENU
-   d3d_restart,
-#endif
    d3d_set_rotation,
    d3d_viewport_info,
    d3d_read_viewport,

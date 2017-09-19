@@ -814,6 +814,9 @@ void input_overlay_free(input_overlay_t *ol)
    if (ol->iface)
       ol->iface->enable(ol->iface_data, false);
 
+   if (ol->iface->free)
+      ol->iface->free(ol->iface_data);  
+
    free(ol->overlay_path);
    free(ol);
 }
