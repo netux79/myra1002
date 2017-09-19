@@ -1034,7 +1034,7 @@ void init_video_input(void)
    }
    else
 #endif
-      driver.video_data = video_init_func(&video, &driver.input, &driver.input_data);
+   video_init_func(&driver.video_data, &video, &driver.input, &driver.input_data);
 
    if (driver.video_data == NULL)
    {

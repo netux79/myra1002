@@ -380,11 +380,14 @@ static void calc_out_rect(bool keep_aspect, struct rarch_viewport *vp, unsigned 
    }
 }
 
-static void *xv_init(const video_info_t *video, const input_driver_t **input, void **input_data)
+static bool xv_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
    xv_t *xv = (xv_t*)calloc(1, sizeof(*xv));
    if (!xv)
-      return NULL;
+   {
+      *data = NULL;
+      return false;
+   }
 
    XInitThreads();
 
@@ -547,11 +550,13 @@ static void *xv_init(const video_info_t *video, const input_driver_t **input, vo
    xv->vp.full_width = target.width;
    xv->vp.full_height = target.height;
 
-   return xv;
+   *data = (void*)xv;
+   return true;
 
 error:
    free(xv);
-   return NULL;
+   *data = NULL;
+   return false;
 }
 
 static bool check_resize(xv_t *xv, unsigned width, unsigned height)

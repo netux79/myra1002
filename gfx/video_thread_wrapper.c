@@ -226,7 +226,7 @@ static void thread_loop(void *data)
       switch (send_cmd)
       {
          case CMD_INIT:
-            thr->driver_data = thr->driver->init(&thr->info, thr->input, thr->input_data);
+            thr->driver->init(&thr->driver_data, &thr->info, thr->input, thr->input_data);
             thr->cmd_data.b = thr->driver_data;
             thr->driver->viewport_info(thr->driver_data, &thr->vp);
             thread_reply(thr, CMD_INIT);

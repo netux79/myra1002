@@ -190,7 +190,7 @@ static void sdl_gfx_set_handles(void)
 #endif
 }
 
-static void *sdl_gfx_init(const video_info_t *video, const input_driver_t **input, void **input_data)
+static bool sdl_gfx_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
 #ifdef _WIN32
    gfx_set_dwm();
@@ -204,7 +204,10 @@ static void *sdl_gfx_init(const video_info_t *video, const input_driver_t **inpu
 
    sdl_video_t *vid = (sdl_video_t*)calloc(1, sizeof(*vid));
    if (!vid)
-      return NULL;
+   {
+      *data = NULL;
+      return false;
+   }
 
    const SDL_VideoInfo *video_info = SDL_GetVideoInfo();
    rarch_assert(video_info);
@@ -255,11 +258,13 @@ static void *sdl_gfx_init(const video_info_t *video, const input_driver_t **inpu
    vid->scaler.in_fmt  = video->rgb32 ? SCALER_FMT_ARGB8888 : SCALER_FMT_RGB565;
    vid->scaler.out_fmt = SCALER_FMT_ARGB8888;
 
-   return vid;
+   *data = (void*)vid;
+   return true;
 
 error:
    sdl_gfx_free(vid);
-   return NULL;
+   *data = NULL;
+   return false;
 }
 
 static void check_window(sdl_video_t *vid)

@@ -81,18 +81,22 @@ static inline bool vg_query_extension(const char *ext)
    return ret;
 }
 
-static void *vg_init(const video_info_t *video, const input_driver_t **input, void **input_data)
+static bool vg_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
    vg_t *vg = (vg_t*)calloc(1, sizeof(vg_t));
    if (!vg)
-      return NULL;
+   {
+      *data = NULL;
+      return false;
+   }
 
    vg->driver = gfx_ctx_init_first(GFX_CTX_OPENVG_API, 0, 0);
 
    if (!vg->driver)
    {
       free(vg);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
    vg->driver->get_video_size(&vg->mScreenWidth, &vg->mScreenHeight);
@@ -115,7 +119,8 @@ static void *vg_init(const video_info_t *video, const input_driver_t **input, vo
    if (!vg->driver->set_video_mode(win_width, win_height, video->fullscreen))
    {
       free(vg);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
    vg->driver->get_video_size(&vg->mScreenWidth, &vg->mScreenHeight);
@@ -177,7 +182,8 @@ static void *vg_init(const video_info_t *video, const input_driver_t **input, vo
       RARCH_LOG("[VG] Supported extensions: %s\n", ext);
 #endif
 
-   return vg;
+   *data = (void*)vg;
+   return true;
 }
 
 static void vg_free(void *data)

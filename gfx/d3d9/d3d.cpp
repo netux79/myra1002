@@ -1360,18 +1360,22 @@ static const gfx_ctx_driver_t *d3d_get_context(void)
    return gfx_ctx_init_first(driver.video_data, api, major, minor);
 }
 
-static void *d3d_init(const video_info_t *info, const input_driver_t **input,
+static bool d3d_init(void **data, const video_info_t *info, const input_driver_t **input,
       void **input_data)
 {
    d3d_video_t *vid = (d3d_video_t*)calloc(1, sizeof(d3d_video_t));
    if (!vid)
-      return NULL;
+   {
+      *data = NULL
+      return false;
+   }
 
    vid->ctx_driver = d3d_get_context();
    if (!vid->ctx_driver)
    {
       free(vid);
-      return NULL;
+      *data = NULL
+      return false;
    }
 
    //default values
@@ -1392,10 +1396,12 @@ static void *d3d_init(const video_info_t *info, const input_driver_t **input,
    {
       RARCH_ERR("[D3D]: Failed to init D3D.\n");
       free(vid);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
-   return vid;
+   *data = (void*)vid;
+   return true;
 }
 
 const video_driver_t video_d3d = {

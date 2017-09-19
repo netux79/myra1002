@@ -1899,31 +1899,35 @@ static void gl_begin_debug(gl_t *gl)
 }
 #endif
 
-static void *gl_init(const video_info_t *video, const input_driver_t **input, void **input_data)
+static bool gl_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
 #ifdef _WIN32
    gfx_set_dwm();
 #endif
 
 #ifdef RARCH_CONSOLE
-   if (driver.video_data)
+   if (*data)
    {
-      gl_t *gl = (gl_t*)driver.video_data;
+      gl_t *gl = (gl_t*)*data;
       // Reinitialize textures as we might have changed pixel formats.
-      gl_reinit_textures(gl, video); 
-      return driver.video_data;
+      gl_reinit_textures(gl, video);
+      return true;
    }
 #endif
 
    gl_t *gl = (gl_t*)calloc(1, sizeof(gl_t));
    if (!gl)
-      return NULL;
+   {
+      *data = NULL;
+      return false;
+   }
 
    gl->ctx_driver = gl_get_context(gl);
    if (!gl->ctx_driver)
    {
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;   
    }
 
    gl->video_info = *video;
@@ -1946,7 +1950,8 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
    if (!context_set_video_mode_func(gl, win_width, win_height, video->fullscreen))
    {
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
    glGetError(); // Clear out potential error flags incase we use cached context.
@@ -1968,7 +1973,8 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
    {
       context_destroy_func(gl);
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
 #ifdef GL_DEBUG
@@ -2018,7 +2024,8 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
       RARCH_ERR("[GL]: Shader init failed.\n");
       context_destroy_func(gl);
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
    if (gl->shader)
@@ -2072,7 +2079,8 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
    {
       context_destroy_func(gl);
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 #endif
 
@@ -2088,7 +2096,8 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
    {
       context_destroy_func(gl);
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 #endif
 #endif
@@ -2108,10 +2117,12 @@ static void *gl_init(const video_info_t *video, const input_driver_t **input, vo
    {
       context_destroy_func(gl);
       free(gl);
-      return NULL;
+      *data = NULL;
+      return false;
    }
 
-   return gl;
+   *data = (void*)gl;
+   return true;
 }
 
 static bool gl_alive(void *data)

@@ -537,14 +537,13 @@ static void gx_apply_state_changes(void *data)
    GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
 }
 
-static void *gx_init(const video_info_t *video,
-      const input_driver_t **input, void **input_data)
+static bool gx_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
    //g_vsync = video->vsync;
 
-   if (driver.video_data)
+   if (*data)
    {
-      gx_video_t *gx = (gx_video_t*)driver.video_data;
+      gx_video_t *gx = (gx_video_t*)*data;
 
 	  if (gx->scale != video->input_scale || gx->rgb32 != video->rgb32)
       {                
@@ -563,12 +562,15 @@ static void *gx_init(const video_info_t *video,
       
       gx_apply_state_changes(driver.video_data);
       
-      return driver.video_data;
+      return true;
    }
 
    gx_video_t *gx = (gx_video_t*)calloc(1, sizeof(gx_video_t));
    if (!gx)
-      return NULL;
+   {
+      *data = NULL;
+      return false;
+   }
 
    /* Instead of setting up the input driver here we set it to null
     * so retroarch can set it up separately allowing different drivers */
@@ -582,7 +584,8 @@ static void *gx_init(const video_info_t *video,
    init_vtx(gx);
    build_disp_list();
 
-   return gx;
+   *data = (void*)gx;
+   return true;
 }
 
 static void update_texture_asm(const uint32_t *src, const uint32_t *dst,

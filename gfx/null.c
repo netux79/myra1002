@@ -16,14 +16,15 @@
 #include "../general.h"
 #include "../driver.h"
 
-static void *null_gfx_init(const video_info_t *video,
+static bool null_gfx_init(void **data, const video_info_t *video,
       const input_driver_t **input, void **input_data)
 {
    *input = NULL;
    *input_data = NULL;
    (void)video;
 
-   return (void*)-1;
+   *data = (void*)-1;
+   return true;
 }
 
 static bool null_gfx_frame(void *data, const void *frame,
