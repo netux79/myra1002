@@ -285,11 +285,18 @@ void find_next_input_driver(void)
       RARCH_ERR("Couldn't find any next input driver (current one: \"%s\").\n", g_settings.input.driver);
 }
 
-void init_drivers_pre(void)
+void find_drivers(void)
 {
-   find_audio_driver();
-   find_video_driver();
-   find_input_driver();
+   static bool found = false;
+   
+   /* Do not look for them twice in the same session */
+   if (!found)
+   {
+      find_audio_driver();
+      find_video_driver();
+      find_input_driver();
+      found = true;
+   }
 }
 
 static void adjust_system_rates(void)
@@ -417,6 +424,95 @@ bool driver_update_system_av_info(const struct retro_system_av_info *info)
    return true;
 }
 
+#ifdef HAVE_SCALERS_BUILTIN
+void deinit_filter(void)
+{
+   rarch_softfilter_free(g_extern.filter.filter);
+   free(g_extern.filter.buffer);
+   memset(&g_extern.filter, 0, sizeof(g_extern.filter));
+}
+
+void init_filter(enum retro_pixel_format colfmt)
+{
+   deinit_filter();
+
+   if (!g_settings.video.filter_idx)
+      return;
+
+   // Deprecated format. Gets pre-converted.
+   if (colfmt == RETRO_PIXEL_FORMAT_0RGB1555)
+      colfmt = RETRO_PIXEL_FORMAT_RGB565;
+
+   if (g_extern.system.hw_render_callback.context_type)
+   {
+      RARCH_WARN("Cannot use CPU filters when hardware rendering is used.\n");
+      return;
+   }
+
+   struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
+   unsigned width   = geom->base_width;
+   unsigned height  = geom->base_height;
+   unsigned max_dim = 0;
+
+   g_extern.filter.filter = rarch_softfilter_new(colfmt, width, height);
+
+   if (!g_extern.filter.filter)
+   {
+      RARCH_ERR("Failed to load filter.\n");
+      return;
+   }
+
+   rarch_softfilter_get_max_output_size(g_extern.filter.filter, &width, &height);
+      
+   max_dim = max(width, height);
+   g_extern.filter.scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
+
+   g_extern.filter.out_rgb32 = rarch_softfilter_get_output_format(g_extern.filter.filter) == RETRO_PIXEL_FORMAT_XRGB8888;
+   g_extern.filter.out_bpp = g_extern.filter.out_rgb32 ? sizeof(uint32_t) : sizeof(uint16_t);
+
+   // TODO: Aligned output.
+   g_extern.filter.buffer = malloc(width * height * g_extern.filter.out_bpp);
+   if (!g_extern.filter.buffer)
+      goto error;
+
+   return;
+
+error:
+   RARCH_ERR("Softfilter initialization failed.\n");
+   deinit_filter();
+}
+#endif
+
+#ifdef HAVE_SHADERS
+static void deinit_shader_dir(void)
+{
+   // It handles NULL, no worries :D
+   dir_list_free(g_extern.shader_dir.list);
+   g_extern.shader_dir.list = NULL;
+   g_extern.shader_dir.ptr  = 0;
+}
+
+static void init_shader_dir(void)
+{
+   unsigned i;
+   if (!*g_settings.video.shader_dir)
+      return;
+
+   g_extern.shader_dir.list = dir_list_new(g_settings.video.shader_dir, "shader|cg|cgp|glsl|glslp", false);
+   if (!g_extern.shader_dir.list || g_extern.shader_dir.list->size == 0)
+   {
+      deinit_shader_dir();
+      return;
+   }
+
+   g_extern.shader_dir.ptr  = 0;
+   dir_list_sort(g_extern.shader_dir.list, false);
+
+   for (i = 0; i < g_extern.shader_dir.list->size; i++)
+      RARCH_LOG("Found shader \"%s\"\n", g_extern.shader_dir.list->elems[i].data);
+}
+#endif
+
 // Only called once on init and deinit.
 // Video and input drivers need to be active (owned)
 // before retroarch core starts.
@@ -424,69 +520,87 @@ bool driver_update_system_av_info(const struct retro_system_av_info *info)
 
 void global_init_drivers(void)
 {
-   find_audio_driver();
-   find_input_driver();
+   find_drivers();
    init_video_input();
+   /* let the system know video and input were started globally. */
+   driver.video_input_global = true;
 }
 
 void global_uninit_drivers(void)
 {
-   if (driver.video && driver.video_data)
-   {
-      driver.video->free(driver.video_data);
-      driver.video_data = NULL;
-   }
+   if (driver.input_data != driver.video_data && driver.input)
+      input_free_func();
 
-   if (driver.input && driver.input_data)
-   {
-      driver.input->free(driver.input_data);
-      driver.input_data = NULL;
-   }
+   if (driver.video_data && driver.video)
+      video_free_func();
 }
 
 void init_drivers(void)
 {
-   driver.video_data_own = !driver.video_data;
-   driver.audio_data_own = !driver.audio_data;
-   driver.input_data_own = !driver.input_data;
+   adjust_system_rates();   
+   
+#ifdef HAVE_SHADERS
+   init_shader_dir();
+#endif
+#ifdef HAVE_SCALERS_BUILTIN
+   init_filter(g_extern.system.pix_fmt);
+#endif
 
-   adjust_system_rates();
-
-   g_extern.frame_count = 0;
    init_video_input();
+   
+#ifdef HAVE_OVERLAY
+   if (driver.overlay)
+   {
+      input_overlay_free(driver.overlay);
+      driver.overlay = NULL;
+   }
+
+   if (*g_settings.input.overlay)
+   {
+      driver.overlay = input_overlay_new(g_settings.input.overlay);
+      if (!driver.overlay)
+         RARCH_ERR("Failed to load overlay.\n");
+   }
+#endif
+
+   init_audio();
 
    if (!driver.video_cache_context_ack && g_extern.system.hw_render_callback.context_reset)
       g_extern.system.hw_render_callback.context_reset();
    driver.video_cache_context_ack = false;
 
-   init_audio();
-
-   // Keep non-throttled state as good as possible.
+   /* Keep non-throttled state as good as possible.*/
    if (driver.nonblock_state)
       driver_set_nonblock_state(driver.nonblock_state);
 
    g_extern.system.frame_time_last = 0;
+   g_extern.frame_count = 0;
 }
 
 void uninit_drivers(void)
 {
-   uninit_audio();
-
    if (g_extern.system.hw_render_callback.context_destroy && !driver.video_cache_context)
       g_extern.system.hw_render_callback.context_destroy();
 
+   uninit_audio();
+
+#ifdef HAVE_OVERLAY
+   if (driver.overlay)
+   {
+      input_overlay_free(driver.overlay);
+      driver.overlay = NULL;
+      memset(&driver.overlay_state, 0, sizeof(driver.overlay_state));
+   }
+#endif
+   
    uninit_video_input();
-
-   if (driver.video_data_own)
-      driver.video_data = NULL;
-   if (driver.audio_data_own)
-      driver.audio_data = NULL;
-   if (driver.input_data_own)
-      driver.input_data = NULL;
-
-   driver.video_data_own  = false;
-   driver.audio_data_own  = false;
-   driver.input_data_own  = false;
+      
+#ifdef HAVE_SCALERS_BUILTIN
+   deinit_filter();
+#endif
+#ifdef HAVE_SHADERS
+   deinit_shader_dir();
+#endif   
 }
 
 #ifdef HAVE_DYLIB
@@ -586,7 +700,6 @@ void init_audio(void)
    }
 
 #ifdef HAVE_THREADS
-   find_audio_driver();
    if (g_extern.system.audio_callback.callback)
    {
       RARCH_LOG("Starting threaded audio driver ...\n");
@@ -807,95 +920,6 @@ void uninit_audio(void)
    compute_audio_buffer_statistics();
 }
 
-#ifdef HAVE_SCALERS_BUILTIN
-void rarch_deinit_filter(void)
-{
-   rarch_softfilter_free(g_extern.filter.filter);
-   free(g_extern.filter.buffer);
-   memset(&g_extern.filter, 0, sizeof(g_extern.filter));
-}
-
-void rarch_init_filter(enum retro_pixel_format colfmt)
-{
-   rarch_deinit_filter();
-
-   if (!g_settings.video.filter_idx)
-      return;
-
-   // Deprecated format. Gets pre-converted.
-   if (colfmt == RETRO_PIXEL_FORMAT_0RGB1555)
-      colfmt = RETRO_PIXEL_FORMAT_RGB565;
-
-   if (g_extern.system.hw_render_callback.context_type)
-   {
-      RARCH_WARN("Cannot use CPU filters when hardware rendering is used.\n");
-      return;
-   }
-
-   struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
-   unsigned width   = geom->base_width;
-   unsigned height  = geom->base_height;
-   unsigned max_dim = 0;
-
-   g_extern.filter.filter = rarch_softfilter_new(colfmt, width, height);
-
-   if (!g_extern.filter.filter)
-   {
-      RARCH_ERR("Failed to load filter.\n");
-      return;
-   }
-
-   rarch_softfilter_get_max_output_size(g_extern.filter.filter, &width, &height);
-      
-   max_dim = max(width, height);
-   g_extern.filter.scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
-
-   g_extern.filter.out_rgb32 = rarch_softfilter_get_output_format(g_extern.filter.filter) == RETRO_PIXEL_FORMAT_XRGB8888;
-   g_extern.filter.out_bpp = g_extern.filter.out_rgb32 ? sizeof(uint32_t) : sizeof(uint16_t);
-
-   // TODO: Aligned output.
-   g_extern.filter.buffer = malloc(width * height * g_extern.filter.out_bpp);
-   if (!g_extern.filter.buffer)
-      goto error;
-
-   return;
-
-error:
-   RARCH_ERR("Softfilter initialization failed.\n");
-   rarch_deinit_filter();
-}
-#endif
-
-#ifdef HAVE_SHADERS
-static void deinit_shader_dir(void)
-{
-   // It handles NULL, no worries :D
-   dir_list_free(g_extern.shader_dir.list);
-   g_extern.shader_dir.list = NULL;
-   g_extern.shader_dir.ptr  = 0;
-}
-
-static void init_shader_dir(void)
-{
-   unsigned i;
-   if (!*g_settings.video.shader_dir)
-      return;
-
-   g_extern.shader_dir.list = dir_list_new(g_settings.video.shader_dir, "shader|cg|cgp|glsl|glslp", false);
-   if (!g_extern.shader_dir.list || g_extern.shader_dir.list->size == 0)
-   {
-      deinit_shader_dir();
-      return;
-   }
-
-   g_extern.shader_dir.ptr  = 0;
-   dir_list_sort(g_extern.shader_dir.list, false);
-
-   for (i = 0; i < g_extern.shader_dir.list->size; i++)
-      RARCH_LOG("Found shader \"%s\"\n", g_extern.shader_dir.list->elems[i].data);
-}
-#endif
-
 static void deinit_pixel_converter(void)
 {
    scaler_ctx_gen_reset(&driver.scaler);
@@ -933,12 +957,7 @@ void init_video_input(void)
    const struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
    unsigned scale;
    
-#ifdef HAVE_SHADERS
-   init_shader_dir();
-#endif
 #ifdef HAVE_SCALERS_BUILTIN
-   rarch_init_filter(g_extern.system.pix_fmt);
-
    if (g_extern.filter.filter)
       scale = g_extern.filter.scale;
    else
@@ -1018,14 +1037,14 @@ void init_video_input(void)
    video.rgb32 = (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
 #endif
 
-   const input_driver_t *tmp = driver.input;
-   find_video_driver(); // Need to grab the "real" video driver interface on a reinit.
+   const input_driver_t *input_tmp = driver.input;
+   void *inputdata_tmp = driver.input_data;
 #ifdef HAVE_THREADS
    if (g_settings.video.threaded && !g_extern.system.hw_render_callback.context_type) // Can't do hardware rendering with threaded driver currently.
    {
       RARCH_LOG("Starting threaded video driver ...\n");
       if (!rarch_threaded_video_init(&driver.video, &driver.video_data,
-               &driver.input, &driver.input_data,
+               &input_tmp, &inputdata_tmp,
                driver.video, &video))
       {
          RARCH_ERR("Cannot open threaded video driver ... Exiting ...\n");
@@ -1034,15 +1053,22 @@ void init_video_input(void)
    }
    else
 #endif
-   video_init_func(&driver.video_data, &video, &driver.input, &driver.input_data);
+   video_init_func(&driver.video_data, &video, &input_tmp, &inputdata_tmp);
 
-   if (driver.video_data == NULL)
+   if (!driver.video_data)
    {
       RARCH_ERR("Cannot open video driver ... Exiting ...\n");
       rarch_fail(1, "init_video_input()");
    }
+   else if (input_tmp && input_tmp!=driver.input)
+   {
+      RARCH_LOG("Graphics driver initialized an input driver. Use it.\n");
+      driver.input = input_tmp;
+      driver.input_data = inputdata_tmp;
+      /* TODO: For non console, we must ensure the previous one is freed */
+   }
 
-   driver.video_poke = NULL;
+   //driver.video_poke = NULL;
    if (driver.video->poke_interface)
       driver.video->poke_interface(driver.video_data, &driver.video_poke);
 
@@ -1065,71 +1091,33 @@ void init_video_input(void)
    }
 #endif
 
-   // Video driver didn't provide an input driver so we use configured one.
-   if (driver.input == NULL)
+   // Video driver didn't provide an input driver so configured one.
+   if (driver.input && !driver.input_data)
    {
-      RARCH_LOG("Graphics driver did not initialize an input driver. Attempting to pick a suitable driver.\n");
-      driver.input = tmp;
-      if (driver.input != NULL)
+      driver.input_data = input_init_func();
+      if (!driver.input_data)
       {
-         driver.input_data = input_init_func();
-         if (driver.input_data == NULL)
-         {
-            RARCH_ERR("Cannot init input driver. Exiting ...\n");
-            rarch_fail(1, "init_video_input()");
-         }
-      }
-      else
-      {
-         RARCH_ERR("Cannot find input driver. Exiting ...\n");
+         RARCH_ERR("Cannot init input driver. Exiting ...\n");
          rarch_fail(1, "init_video_input()");
       }
    }
-
-#ifdef HAVE_OVERLAY
-   if (driver.overlay)
-   {
-      input_overlay_free(driver.overlay);
-      driver.overlay = NULL;
-   }
-
-   if (*g_settings.input.overlay)
-   {
-      driver.overlay = input_overlay_new(g_settings.input.overlay);
-      if (!driver.overlay)
-         RARCH_ERR("Failed to load overlay.\n");
-   }
-#endif
 
    g_extern.measure_data.frame_time_samples_count = 0;
 }
 
 void uninit_video_input(void)
 {
-#ifdef HAVE_OVERLAY
-   if (driver.overlay)
+   if (!driver.video_input_global) /* will be done later */
    {
-      input_overlay_free(driver.overlay);
-      driver.overlay = NULL;
-      memset(&driver.overlay_state, 0, sizeof(driver.overlay_state));
+      if (driver.input_data != driver.video_data && driver.input)
+         input_free_func();
+
+      if (driver.video_data && driver.video)
+         video_free_func();
    }
-#endif
-
-   if (driver.input_data != driver.video_data && driver.input)
-      input_free_func();
-
-   if (driver.video_data && driver.video)
-      video_free_func();
 
    deinit_pixel_converter();
-
-#ifdef HAVE_SCALERS_BUILTIN
-   rarch_deinit_filter();
-#endif
-#ifdef HAVE_SHADERS
-   deinit_shader_dir();
-#endif
-   compute_monitor_fps_statistics();
+   compute_monitor_fps_statistics();   
 }
 
 driver_t driver;

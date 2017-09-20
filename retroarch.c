@@ -2281,12 +2281,8 @@ int rarch_main_init(int argc, char *argv[])
 
    validate_cpu_features();
    config_load();
-
    init_libretro_sym(g_extern.libretro_dummy);
    rarch_init_system_info();
-
-   init_drivers_pre();
-
    verify_api_version();
    pretro_init();
 
@@ -2306,7 +2302,6 @@ int rarch_main_init(int argc, char *argv[])
 
       set_savestate_auto_index();
 
-
       if (!g_extern.sram_load_disable)
          load_save_files();
       else
@@ -2317,6 +2312,7 @@ int rarch_main_init(int argc, char *argv[])
 
    init_libretro_cbs();
    init_system_av_info();
+   find_drivers();   
    init_drivers();
 
 #ifdef HAVE_COMMAND
@@ -2515,8 +2511,6 @@ void rarch_main_deinit(void)
 int rarch_main_init_wrap(const struct rarch_main_wrap *args)
 {
    unsigned i;
-   if (g_extern.main_is_init)
-      rarch_main_deinit();
 
    int argc = 0;
    char *argv[MAX_ARGS] = {NULL};
