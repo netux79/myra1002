@@ -168,7 +168,6 @@ static void gx_audio_free(void *data)
    }
    if (data)
       free(data);
-   wa = NULL;
 }
 
 static size_t gx_audio_write_avail(void *data)

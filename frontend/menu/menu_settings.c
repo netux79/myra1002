@@ -752,6 +752,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                rarch_reset_drivers();
                break;
          }
+         
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_START)
+         {
+            char msg[50] = "Soft scaler removed.";
+            const char *filter_name = rarch_softfilter_get_name(g_settings.video.filter_idx);
+            if (filter_name)
+               snprintf(msg, sizeof(msg), "%s applied.", filter_name);
+            msg_queue_push(g_extern.msg_queue, msg, 1, 90);
+         }    
          break;
 #endif        
          // controllers

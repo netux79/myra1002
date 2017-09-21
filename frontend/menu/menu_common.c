@@ -1002,7 +1002,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                   input_overlay_free(driver.overlay);
                driver.overlay = input_overlay_new(g_settings.input.overlay);
                if (!driver.overlay)
-                  RARCH_ERR("Failed to load overlay.\n");
+                  RARCH_ERR("Unable to load overlay.\n");
 
                menu_flush_stack_type(rgui, RGUI_SETTINGS_OPTIONS);
             }

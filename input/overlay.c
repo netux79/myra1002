@@ -571,6 +571,10 @@ static void input_overlay_load_active(input_overlay_t *ol)
 
 input_overlay_t *input_overlay_new(const char *overlay)
 {
+   
+   if (!*g_extern.basename) /* don't load it if there is no game running */
+      return NULL;
+
    input_overlay_t *ol = (input_overlay_t*)calloc(1, sizeof(*ol));
 
    if (!ol)

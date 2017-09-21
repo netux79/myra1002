@@ -427,6 +427,9 @@ bool driver_update_system_av_info(const struct retro_system_av_info *info)
 #ifdef HAVE_SCALERS_BUILTIN
 void deinit_filter(void)
 {
+   if (!g_extern.filter.filter)
+      return;
+
    rarch_softfilter_free(g_extern.filter.filter);
    free(g_extern.filter.buffer);
    memset(&g_extern.filter, 0, sizeof(g_extern.filter));
@@ -436,7 +439,7 @@ void init_filter(enum retro_pixel_format colfmt)
 {
    deinit_filter();
 
-   if (!g_settings.video.filter_idx)
+   if (!g_settings.video.filter_idx || !*g_extern.basename)
       return;
 
    // Deprecated format. Gets pre-converted.
@@ -537,7 +540,7 @@ void global_uninit_drivers(void)
 
 void init_drivers(void)
 {
-   adjust_system_rates();   
+   adjust_system_rates();
    
 #ifdef HAVE_SHADERS
    init_shader_dir();
@@ -559,7 +562,7 @@ void init_drivers(void)
    {
       driver.overlay = input_overlay_new(g_settings.input.overlay);
       if (!driver.overlay)
-         RARCH_ERR("Failed to load overlay.\n");
+         RARCH_ERR("Unable to load overlay.\n");
    }
 #endif
 
@@ -598,6 +601,7 @@ void uninit_drivers(void)
 #ifdef HAVE_SCALERS_BUILTIN
    deinit_filter();
 #endif
+
 #ifdef HAVE_SHADERS
    deinit_shader_dir();
 #endif   
@@ -672,11 +676,11 @@ static void deinit_dsp_plugin(void)
 
 void init_audio(void)
 {
-   audio_convert_init_simd();
-
    // Resource leaks will follow if audio is initialized twice.
    if (driver.audio_data)
       return;
+
+   audio_convert_init_simd();
 
    // Accomodate rewind since at some point we might have two full buffers.
    size_t max_bufsamples = AUDIO_CHUNK_SIZE_NONBLOCKING * 2;
@@ -889,8 +893,11 @@ static void compute_monitor_fps_statistics(void)
 
 void uninit_audio(void)
 {
-   if (driver.audio_data && driver.audio)
-      driver.audio->free(driver.audio_data);
+   if (!driver.audio || !driver.audio_data)
+      return;
+
+   audio_free_func();
+   driver.audio_data = NULL;
 
    free(g_extern.audio_data.conv_outsamples);
    g_extern.audio_data.conv_outsamples = NULL;
@@ -922,6 +929,9 @@ void uninit_audio(void)
 
 static void deinit_pixel_converter(void)
 {
+   if (!driver.scaler_out)
+      return;
+
    scaler_ctx_gen_reset(&driver.scaler);
    memset(&driver.scaler, 0, sizeof(driver.scaler));
    free(driver.scaler_out);
@@ -947,6 +957,9 @@ static bool init_video_pixel_converter(unsigned size)
          return false;
 
       driver.scaler_out = calloc(sizeof(uint16_t), size * size);
+
+      if (!driver.scaler_out)
+         return false;
    }
 
    return true;
@@ -1068,7 +1081,6 @@ void init_video_input(void)
       /* TODO: For non console, we must ensure the previous one is freed */
    }
 
-   //driver.video_poke = NULL;
    if (driver.video->poke_interface)
       driver.video->poke_interface(driver.video_data, &driver.video_poke);
 
@@ -1117,7 +1129,7 @@ void uninit_video_input(void)
    }
 
    deinit_pixel_converter();
-   compute_monitor_fps_statistics();   
+   compute_monitor_fps_statistics();
 }
 
 driver_t driver;
