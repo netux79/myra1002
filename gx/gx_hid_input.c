@@ -173,11 +173,11 @@ static int16_t gx_hid_input_state(void *data, const struct retro_keybind **binds
 
 static void gx_hid_input_free_input(void *data)
 {
-   (void)data;
-
-   if (!driver.video_data) {
-	   /* shutdown pads */
-	   usbpad_shutdown(true);
+   if (data)
+   {
+      /* shutdown pads */
+      usbpad_shutdown(true);
+      free(data);
    }
 }
 

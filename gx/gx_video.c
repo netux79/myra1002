@@ -1193,7 +1193,8 @@ static bool gx_focus(void *data)
 
 static void gx_free(void *data)
 {
-   (void)data;
+   if (data)
+      free(data);
 }
 
 static void gx_set_texture_frame(void *data, const void *frame,

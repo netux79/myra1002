@@ -525,17 +525,14 @@ void global_init_drivers(void)
 {
    find_drivers();
    init_video_input();
-   /* let the system know video and input were started globally. */
-   driver.video_input_global = true;
+   /* started globally, lock video and input drivers. */
+   driver.video_input_locked = true;
 }
 
 void global_uninit_drivers(void)
 {
-   if (driver.input_data != driver.video_data && driver.input)
-      input_free_func();
-
-   if (driver.video_data && driver.video)
-      video_free_func();
+   driver.video_input_locked = false; /* unlock drivers */
+   uninit_video_input();
 }
 
 void init_drivers(void)
@@ -866,31 +863,6 @@ bool driver_monitor_fps_statistics(double *refresh_rate, double *deviation, unsi
    return true;
 }
 
-static void compute_monitor_fps_statistics(void)
-{
-   if (g_settings.video.threaded)
-   {
-      RARCH_LOG("Monitor FPS estimation is disabled for threaded video.\n");
-      return;
-   }
-
-   if (g_extern.measure_data.frame_time_samples_count < 2 * MEASURE_FRAME_TIME_SAMPLES_COUNT)
-   {
-      RARCH_LOG("Does not have enough samples for monitor refresh rate estimation. Requires to run for at least %u frames.\n",
-            2 * MEASURE_FRAME_TIME_SAMPLES_COUNT);
-      return;
-   }
-
-   double avg_fps = 0.0;
-   double stddev = 0.0;
-   unsigned samples = 0;
-   if (driver_monitor_fps_statistics(&avg_fps, &stddev, &samples))
-   {
-      RARCH_LOG("Average monitor Hz: %.6f Hz. (%.3f %% frame time deviation, based on %u last samples).\n",
-            avg_fps, 100.0 * stddev, samples);
-   }
-}
-
 void uninit_audio(void)
 {
    if (!driver.audio || !driver.audio_data)
@@ -1119,17 +1091,22 @@ void init_video_input(void)
 
 void uninit_video_input(void)
 {
-   if (!driver.video_input_global) /* will be done later */
+   if (!driver.video_input_locked) /* if locked, it will be done later */
    {
-      if (driver.input_data != driver.video_data && driver.input)
+      if (driver.input && driver.input_data)
+      {
          input_free_func();
+         driver.input_data = NULL;
+      }
 
-      if (driver.video_data && driver.video)
+      if (driver.video && driver.video_data)
+      {
          video_free_func();
+         driver.video_data = NULL;
+      }
    }
 
    deinit_pixel_converter();
-   compute_monitor_fps_statistics();
 }
 
 driver_t driver;

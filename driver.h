@@ -438,7 +438,7 @@ typedef struct driver
    // Driver core will still call init() and free(), but in this case
    // these calls should be seen as "reinit() + ref_count++" and "ref_count--"
    // respectively.
-   bool video_input_global;
+   bool video_input_locked;
 
 #ifdef HAVE_COMMAND
    rarch_cmd_t *command;
