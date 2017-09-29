@@ -340,12 +340,6 @@ static void adjust_system_rates(void)
 
 void driver_set_monitor_refresh_rate(float hz)
 {
-#ifndef GEKKO   
-   char msg[256];
-   snprintf(msg, sizeof(msg), "Setting refresh rate to: %.3f Hz.", hz);
-   msg_queue_push(g_extern.msg_queue, msg, 1, 180);
-   RARCH_LOG("%s\n", msg);
-#endif
    g_settings.video.refresh_rate = hz;
    adjust_system_rates();
 
@@ -770,97 +764,8 @@ void init_audio(void)
    init_dsp_plugin();
 #endif
 
-   g_extern.measure_data.buffer_free_samples_count = 0;
-
    if (g_extern.audio_active && !g_extern.audio_data.mute && g_extern.system.audio_callback.callback) // Threaded driver is initially stopped.
       audio_start_func();
-}
-
-
-static void compute_audio_buffer_statistics(void)
-{
-   unsigned i, samples;
-   samples = min(g_extern.measure_data.buffer_free_samples_count, AUDIO_BUFFER_FREE_SAMPLES_COUNT);
-   if (samples < 3)
-      return;
-
-   uint64_t accum = 0;
-   for (i = 1; i < samples; i++)
-      accum += g_extern.measure_data.buffer_free_samples[i];
-
-   int avg = accum / (samples - 1);
-
-   uint64_t accum_var = 0;
-   for (i = 1; i < samples; i++)
-   {
-      int diff = avg - g_extern.measure_data.buffer_free_samples[i];
-      accum_var += diff * diff;
-   }
-
-   unsigned stddev = (unsigned)sqrt((double)accum_var / (samples - 2));
-
-   float avg_filled = 1.0f - (float)avg / g_extern.audio_data.driver_buffer_size;
-   float deviation = (float)stddev / g_extern.audio_data.driver_buffer_size;
-   
-   (void)avg_filled;
-   (void)deviation;
-
-   unsigned low_water_size = g_extern.audio_data.driver_buffer_size * 3 / 4;
-   unsigned high_water_size = g_extern.audio_data.driver_buffer_size / 4;
-
-   unsigned low_water_count = 0;
-   unsigned high_water_count = 0;
-   for (i = 1; i < samples; i++)
-   {
-      if (g_extern.measure_data.buffer_free_samples[i] >= low_water_size)
-         low_water_count++;
-      else if (g_extern.measure_data.buffer_free_samples[i] <= high_water_size)
-         high_water_count++;
-   }
-
-   RARCH_LOG("Average audio buffer saturation: %.2f %%, standard deviation (percentage points): %.2f %%.\n",
-         avg_filled * 100.0, deviation * 100.0);
-   RARCH_LOG("Amount of time spent close to underrun: %.2f %%. Close to blocking: %.2f %%.\n",
-         (100.0 * low_water_count) / (samples - 1),
-         (100.0 * high_water_count) / (samples - 1));
-}
-
-bool driver_monitor_fps_statistics(double *refresh_rate, double *deviation, unsigned *sample_points)
-{
-   unsigned i;
-   if (g_settings.video.threaded)
-      return false;
-
-   unsigned samples = min(MEASURE_FRAME_TIME_SAMPLES_COUNT, g_extern.measure_data.frame_time_samples_count);
-   if (samples < 2)
-      return false;
-
-   // Measure statistics on frame time (microsecs), *not* FPS.
-   retro_time_t accum = 0;
-   for (i = 0; i < samples; i++)
-      accum += g_extern.measure_data.frame_time_samples[i];
-
-#if 0
-   for (i = 0; i < samples; i++)
-      RARCH_LOG("Interval #%u: %d usec / frame.\n",
-            i, (int)g_extern.measure_data.frame_time_samples[i]);
-#endif
-
-   retro_time_t avg = accum / samples;
-   retro_time_t accum_var = 0;
-
-   // Drop first measurement. It is likely to be bad.
-   for (i = 0; i < samples; i++)
-   {
-      retro_time_t diff = g_extern.measure_data.frame_time_samples[i] - avg;
-      accum_var += diff * diff;
-   }
-
-   *deviation = sqrt((double)accum_var / (samples - 1)) / avg;
-   *refresh_rate = 1000000.0 / avg;
-   *sample_points = samples;
-
-   return true;
 }
 
 void uninit_audio(void)
@@ -895,8 +800,6 @@ void uninit_audio(void)
 #ifdef HAVE_DYLIB
    deinit_dsp_plugin();
 #endif
-
-   compute_audio_buffer_statistics();
 }
 
 static void deinit_pixel_converter(void)
@@ -1085,8 +988,6 @@ void init_video_input(void)
          rarch_fail(1, "init_video_input()");
       }
    }
-
-   g_extern.measure_data.frame_time_samples_count = 0;
 }
 
 void uninit_video_input(void)

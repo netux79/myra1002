@@ -27,7 +27,6 @@ static inline float time_to_fps(retro_time_t last_time, retro_time_t new_time, i
 bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps)
 {
    static retro_time_t time;
-   static retro_time_t fps_time;
    static float last_fps;
    bool ret = false;
    *buf = '\0';
@@ -35,30 +34,17 @@ bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps)
    retro_time_t new_time = rarch_get_time_usec();
    if (g_extern.frame_count)
    {
-      unsigned write_index = g_extern.measure_data.frame_time_samples_count++ &
-         (MEASURE_FRAME_TIME_SAMPLES_COUNT - 1);
-      g_extern.measure_data.frame_time_samples[write_index] = new_time - fps_time;
-      fps_time = new_time;
-
       if ((g_extern.frame_count % FPS_UPDATE_INTERVAL) == 0)
       {
          last_fps = time_to_fps(time, new_time, FPS_UPDATE_INTERVAL);
          time = new_time;
 
-         snprintf(buf, size, "%s || FPS: %6.1f || Frames: %d", g_extern.title_buf, last_fps, g_extern.frame_count);
+         snprintf(buf, size, "%s || FPS %3.1f", g_extern.title_buf, last_fps);
          ret = true;
       }
 
       if (buf_fps)
-         snprintf(buf_fps, size_fps, "FPS: %6.1f || Frames: %d", last_fps, g_extern.frame_count);
-   }
-   else
-   {
-      time = fps_time = new_time;
-      strlcpy(buf, g_extern.title_buf, size);
-      if (buf_fps)
-         strlcpy(buf_fps, "N/A", size_fps);
-      ret = true;
+         snprintf(buf_fps, size_fps, "FPS %3.1f", last_fps);
    }
 
    return ret;

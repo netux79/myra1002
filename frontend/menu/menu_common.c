@@ -1578,7 +1578,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Windowed Scale (X)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_X, 0);
          file_list_push(rgui->selection_buf, "Windowed Scale (Y)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_Y, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Estimated Monitor FPS", RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO, 0);
+         file_list_push(rgui->selection_buf, "Video Refresh Rate", RGUI_SETTINGS_VIDEO_REFRESH_RATE, 0);
 #ifndef RARCH_CONSOLE
          file_list_push(rgui->selection_buf, "Window Compositing [G]", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Window Unfocus Pause [G]", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);

@@ -1420,31 +1420,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
          break;
       }
-      case RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO:
-         switch (action)
-         {
-            case RGUI_ACTION_START:
-               g_extern.measure_data.frame_time_samples_count = 0;
-               break;
-
-            case RGUI_ACTION_OK:
-            {
-               double refresh_rate = 0.0;
-               double deviation = 0.0;
-               unsigned sample_points = 0;
-               if (driver_monitor_fps_statistics(&refresh_rate, &deviation, &sample_points))
-               {
-                  driver_set_monitor_refresh_rate(refresh_rate);
-                  // Incase refresh rate update forced non-block video.
-                  video_set_nonblock_state_func(false);
-               }
-               break;
-            }
-
-            default:
-               break;
-         }
-         break;
 #ifdef HAVE_SHADER_MANAGER
       case RGUI_SETTINGS_SHADER_PASSES:
          switch (action)
@@ -1586,17 +1561,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_DRIVER_INPUT:
          strlcpy(type_str, g_settings.input.driver, type_str_size);
          break;
-      case RGUI_SETTINGS_VIDEO_REFRESH_RATE_AUTO:
-         {
-            double refresh_rate = 0.0;
-            double deviation = 0.0;
-            unsigned sample_points = 0;
-            if (driver_monitor_fps_statistics(&refresh_rate, &deviation, &sample_points))
-               snprintf(type_str, type_str_size, "%.3f Hz (%.1f%% dev, %u samples)", refresh_rate, 100.0 * deviation, sample_points);
-            else
-               strlcpy(type_str, "N/A", type_str_size);
-            break;
-         }
+      case RGUI_SETTINGS_VIDEO_REFRESH_RATE:
+            snprintf(type_str, type_str_size, "%3.2f", g_settings.video.refresh_rate);
+         break;
       case RGUI_SETTINGS_VIDEO_INTEGER_SCALE:
          strlcpy(type_str, g_settings.video.scale_integer ? "ON" : "OFF", type_str_size);
          break;

@@ -183,12 +183,6 @@ void rarch_take_screenshot(void)
 static void readjust_audio_input_rate(void)
 {
    int avail = audio_write_avail_func();
-   //RARCH_LOG_OUTPUT("Audio buffer is %u%% full\n",
-   //      (unsigned)(100 - (avail * 100) / g_extern.audio_data.driver_buffer_size));
-
-   unsigned write_index = g_extern.measure_data.buffer_free_samples_count++ & (AUDIO_BUFFER_FREE_SAMPLES_COUNT - 1);
-   g_extern.measure_data.buffer_free_samples[write_index] = avail;
-
    int half_size = g_extern.audio_data.driver_buffer_size / 2;
    int delta_mid = avail - half_size;
    double direction = (double)delta_mid / half_size;
@@ -196,9 +190,6 @@ static void readjust_audio_input_rate(void)
    double adjust = 1.0 + g_settings.audio.rate_control_delta * direction;
 
    g_extern.audio_data.src_ratio = g_extern.audio_data.orig_src_ratio * adjust;
-
-   //RARCH_LOG_OUTPUT("New rate: %lf, Orig rate: %lf\n",
-   //      g_extern.audio_data.src_ratio, g_extern.audio_data.orig_src_ratio);
 }
 
 static void video_frame(const void *data, unsigned width, unsigned height, size_t pitch)

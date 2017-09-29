@@ -500,7 +500,6 @@ void find_next_input_driver(void);
 void find_next_resampler_driver(void);
 
 void driver_set_monitor_refresh_rate(float hz);
-bool driver_monitor_fps_statistics(double *refresh_rate, double *deviation, unsigned *sample_points);
 void driver_set_nonblock_state(bool nonblock);
 
 // Used by RETRO_ENVIRONMENT_SET_HW_RENDER.

@@ -406,17 +406,6 @@ struct global
       float volume_gain;
    } audio_data;
 
-   struct
-   {
-#define AUDIO_BUFFER_FREE_SAMPLES_COUNT (8 * 1024)
-      unsigned buffer_free_samples[AUDIO_BUFFER_FREE_SAMPLES_COUNT];
-      uint64_t buffer_free_samples_count;
-
-#define MEASURE_FRAME_TIME_SAMPLES_COUNT (2 * 1024)
-      retro_time_t frame_time_samples[MEASURE_FRAME_TIME_SAMPLES_COUNT];
-      uint64_t frame_time_samples_count;
-   } measure_data;
-
 #ifdef HAVE_SCALERS_BUILTIN
    struct
    {
