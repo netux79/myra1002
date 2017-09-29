@@ -127,103 +127,108 @@ static void vblank_cb(u32 retrace_count)
 
 extern rgui_handle_t *rgui;
 
-static void gx_set_video_mode(void *data, unsigned res_index)
+static void gx_get_tvinfo(void *data)
 {
-   unsigned modetype, viHeightMultiplier, viWidth, tvmode,
-            max_width, max_height, i, fbWidth, lines;
-   bool progressive;
-   GXRModeObj gx_mode;
    gx_video_t *gx = (gx_video_t*)data;
-
-   viHeightMultiplier = 1;
-   viWidth = 640;
-#if defined(HW_RVL)
-   if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
-      viWidth = 678;
-
-   progressive = CONF_GetProgressiveScan() > 0 && VIDEO_HaveComponentCable();
+#ifdef HW_RVL
+   gx->tvinfo.progressive = CONF_GetProgressiveScan() > 0 && VIDEO_HaveComponentCable();
+   
    switch (CONF_GetVideo())
    {
       case CONF_VIDEO_PAL:
          if (CONF_GetEuRGB60() > 0)
-            tvmode = VI_EURGB60;
+            gx->tvinfo.tvmode = VI_EURGB60;
          else
-            tvmode = VI_PAL;
+            gx->tvinfo.tvmode = VI_PAL;
          break;
       case CONF_VIDEO_MPAL:
-         tvmode = VI_MPAL;
+         gx->tvinfo.tvmode = VI_MPAL;
          break;
       default:
-         tvmode = VI_NTSC;
+         gx->tvinfo.tvmode = VI_NTSC;
          break;
    }
 #else
-   progressive = VIDEO_HaveComponentCable();
-   tvmode = VIDEO_GetCurrentTvMode();
+   gx->tvinfo.progressive = VIDEO_HaveComponentCable();
+   gx->tvinfo.tvmode = VIDEO_GetCurrentTvMode();
 #endif
-   switch (tvmode)
+
+   switch (gx->tvinfo.tvmode)
    {
       case VI_PAL:
-         max_width = VI_MAX_WIDTH_PAL;
-         max_height = VI_MAX_HEIGHT_PAL;
+         gx->tvinfo.max_width = VI_MAX_WIDTH_PAL;
+         gx->tvinfo.max_height = VI_MAX_HEIGHT_PAL;
          break;
       case VI_MPAL:
-         max_width = VI_MAX_WIDTH_MPAL;
-         max_height = VI_MAX_HEIGHT_MPAL;
+         gx->tvinfo.max_width = VI_MAX_WIDTH_MPAL;
+         gx->tvinfo.max_height = VI_MAX_HEIGHT_MPAL;
          break;
       case VI_EURGB60:
-         max_width = VI_MAX_WIDTH_EURGB60;
-         max_height = VI_MAX_HEIGHT_EURGB60;
+         gx->tvinfo.max_width = VI_MAX_WIDTH_EURGB60;
+         gx->tvinfo.max_height = VI_MAX_HEIGHT_EURGB60;
          break;
       default:
-         tvmode = VI_NTSC;
-         max_width = VI_MAX_WIDTH_NTSC;
-         max_height = VI_MAX_HEIGHT_NTSC;
+         gx->tvinfo.max_width = VI_MAX_WIDTH_NTSC;
+         gx->tvinfo.max_height = VI_MAX_HEIGHT_NTSC;
          break;
    }
+}
 
+static void gx_set_video_mode(void *data, unsigned res_index)
+{
+   unsigned modetype, viHeightMultiplier;
+   unsigned i, fbWidth, fbLines;
+   GXRModeObj gx_mode;
+   gx_video_t *gx = (gx_video_t*)data;
+
+   /* Get the selected resolution values */
    fbWidth = gx_resolutions[res_index][0];
-   lines = gx_resolutions[res_index][1];
+   fbLines = gx_resolutions[res_index][1];
 
-   if (lines == 0 || fbWidth == 0)
+   if (fbLines == 0 || fbWidth == 0)
    {
       GXRModeObj tmp_mode;
       VIDEO_GetPreferredMode(&tmp_mode);
       fbWidth = tmp_mode.fbWidth;
-      lines = tmp_mode.xfbHeight;
+      fbLines = tmp_mode.xfbHeight;
    }
 
-   if (lines <= max_height / 2)
+   if (fbLines <= gx->tvinfo.max_height / 2)
    {
       modetype = VI_NON_INTERLACE;
       viHeightMultiplier = 2;
    }
    else
    {
-      modetype = (progressive) ? VI_PROGRESSIVE : VI_INTERLACE;
+      modetype = (gx->tvinfo.progressive) ? VI_PROGRESSIVE : VI_INTERLACE;
+      viHeightMultiplier = 1;
    }
 
-   if (lines > max_height)
-      lines = max_height;
+   if (fbLines > gx->tvinfo.max_height)
+      fbLines = gx->tvinfo.max_height;
 
-   if (fbWidth > max_width)
-      fbWidth = max_width;
+   if (fbWidth > gx->tvinfo.max_width)
+      fbWidth = gx->tvinfo.max_width;
 
-   gx_mode.viTVMode = VI_TVMODE(tvmode, modetype);
+   gx_mode.viTVMode = VI_TVMODE(gx->tvinfo.tvmode, modetype);
    gx_mode.fbWidth = fbWidth;
-   gx_mode.efbHeight = min(lines, 480);
+   gx_mode.efbHeight = min(fbLines, 480);
 
-   if (modetype == VI_NON_INTERLACE && lines > max_height / 2)
-      gx_mode.xfbHeight = max_height / 2;
-   else if (modetype != VI_NON_INTERLACE && lines > max_height)
-      gx_mode.xfbHeight = max_height;
+   if (modetype == VI_NON_INTERLACE && fbLines > gx->tvinfo.max_height / 2)
+      gx_mode.xfbHeight = gx->tvinfo.max_height / 2;
+   else if (modetype != VI_NON_INTERLACE && fbLines > gx->tvinfo.max_height)
+      gx_mode.xfbHeight = gx->tvinfo.max_height;
    else
-      gx_mode.xfbHeight = lines;
+      gx_mode.xfbHeight = fbLines;
 
-   gx_mode.viWidth = viWidth;
+#ifdef HW_RVL
+   gx_mode.viWidth = (CONF_GetAspectRatio() == CONF_ASPECT_16_9) ? 678 : 640;
+#else
+   gx_mode.viWidth = 640;
+#endif
    gx_mode.viHeight = gx_mode.xfbHeight * viHeightMultiplier;
-   gx_mode.viXOrigin = (max_width - gx_mode.viWidth) / 2;
-   gx_mode.viYOrigin = (max_height - gx_mode.viHeight) / (2 * viHeightMultiplier);
+   gx_mode.viXOrigin = (gx->tvinfo.max_width - gx_mode.viWidth) / 2;
+   gx_mode.viYOrigin = (gx->tvinfo.max_height - gx_mode.viHeight) / (2 * viHeightMultiplier);
    gx_mode.xfbMode = modetype == VI_INTERLACE ? VI_XFBMODE_DF : VI_XFBMODE_SF;
    gx_mode.field_rendering = GX_FALSE;
    gx_mode.aa = GX_FALSE;
@@ -301,8 +306,8 @@ static void gx_set_video_mode(void *data, unsigned res_index)
    g_curfb = 0;
    VIDEO_SetNextFramebuffer(g_fb[g_curfb]);
 
-   /* workaround for the artifacts 
-    * when switching between modes */
+   /* workaround for the artifacts when 
+    * switching between modes 250ms */
    usleep(250000);
    
    VIDEO_SetBlack(false);
@@ -314,7 +319,7 @@ static void gx_set_video_mode(void *data, unsigned res_index)
    /* restore vsync callback */
    VIDEO_SetPreRetraceCallback(vblank_cb);
    
-   if (tvmode == VI_PAL)
+   if (gx->tvinfo.tvmode == VI_PAL)
    {
       if (modetype == VI_NON_INTERLACE)
          driver_set_monitor_refresh_rate(50.0801f);
@@ -507,7 +512,6 @@ static void gx_apply_state_changes(void *data)
 
 static bool gx_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
-
    gx_video_t *gx;
 
    if (*data)
@@ -526,6 +530,7 @@ static bool gx_init(void **data, const video_info_t *video, const input_driver_t
       g_fb[0] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
       g_fb[1] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
       GX_SetPixelFmt(GX_PF_RGB8_Z24, GX_ZC_LINEAR);
+      gx_get_tvinfo(gx);
       gx_set_video_mode(gx, GX_RESOLUTIONS_AUTO);
       gx_init_vtx(gx);
       build_disp_list();
@@ -1073,7 +1078,7 @@ static bool gx_focus(void *data)
 
 static void gx_free(void *data)
 {
-   /* gme screen texture */
+   /* game screen texture */
    if (game_tex.data)
       free(game_tex.data);
 

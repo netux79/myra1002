@@ -39,6 +39,13 @@ typedef struct gx_video
    unsigned scale;
    bool scale_integer;
    unsigned orientation;
+   struct 
+   {
+      unsigned tvmode;
+      unsigned max_width;
+      unsigned max_height;
+      bool progressive;
+   } tvinfo;
 #ifdef HAVE_OVERLAY
    struct gx_overlay_data *overlay;
    unsigned overlays;
