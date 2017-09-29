@@ -68,7 +68,7 @@ static void rarch_get_environment_console(char *path)
 #define args_initial_ptr() data
 #else
 
-#if defined(__APPLE__) || defined(HAVE_BB10)
+#if defined(__APPLE__)
 #define main_entry rarch_main
 #else
 #define main_entry main
@@ -85,19 +85,19 @@ static void rarch_get_environment_console(char *path)
 
 #endif
 
-#if defined(HAVE_BB10) || defined(ANDROID)
+#ifdef ANDROID
 #define ra_preinited true
 #else
 #define ra_preinited false
 #endif
 
-#if defined(HAVE_BB10) || defined(RARCH_CONSOLE)
+#ifdef RARCH_CONSOLE
 #define attempt_load_game false
 #else
 #define attempt_load_game true
 #endif
 
-#if !defined(RARCH_CONSOLE) && !defined(HAVE_BB10) && !defined(ANDROID)
+#if !defined(RARCH_CONSOLE) && !defined(ANDROID)
 #define attempt_load_game_push_history true
 #else
 #define attempt_load_game_push_history false
