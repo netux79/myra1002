@@ -18,6 +18,26 @@
 #include "../general.h"
 #include "../performance.h"
 
+#ifdef GEKKO
+bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps)
+{
+   (void)*buf;
+   (void)size;
+   
+   uint32_t now = gettime();
+   uint32_t delta = diff_usec(g_extern.start_frame_time, now);
+   
+   if (delta > 1000000)
+   {
+      snprintf(buf_fps, size_fps, "FPS %3.1f", (float)g_extern.frame_count * 1000000.0 / (float)delta);
+      g_extern.frame_count = 0;
+      g_extern.start_frame_time = now;
+      return true;
+   }
+
+   return false;
+}
+#else
 static inline float time_to_fps(retro_time_t last_time, retro_time_t new_time, int frames)
 {
    return (1000000.0f * frames) / (new_time - last_time);
@@ -49,6 +69,7 @@ bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps)
 
    return ret;
 }
+#endif
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -122,7 +143,7 @@ void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned heigh
    if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
       const struct rarch_viewport *custom =
-         &g_extern.console.screen.viewports.custom_vp;
+         &g_extern.console_screen.custom_vp;
 
       padding_x = width - custom->width;
       padding_y = height - custom->height;

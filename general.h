@@ -262,12 +262,6 @@ enum rarch_game_type
    RARCH_CART_SUFAMI
 };
 
-typedef struct rarch_resolution
-{
-   unsigned idx;
-   unsigned id;
-} rarch_resolution_t;
-
 typedef struct rarch_viewport
 {
    int x;
@@ -344,7 +338,6 @@ struct global
 
       unsigned rotation;
       bool shutdown;
-      unsigned performance_level;
       enum retro_pixel_format pix_fmt;
 
       bool block_extract;
@@ -453,6 +446,7 @@ struct global
    } frame_cache;
 
    unsigned frame_count;
+   uint32_t start_frame_time;
    char title_buf[64];
 
    struct
@@ -466,28 +460,10 @@ struct global
    // Settings and/or global state that is specific to a console-style implementation.
    struct
    {
-      struct
-      {
-         struct
-         {
-            rarch_resolution_t current;
-            rarch_resolution_t initial;
-            uint32_t *list;
-            unsigned count;
-            bool check;
-         } resolutions;
-
-
-         struct
-         {
-            rarch_viewport_t custom_vp;
-         } viewports;
-
-         unsigned gamma_correction;
-         bool pal_enable;
-      } screen;
-      
-   } console;
+      unsigned resolution_idx;
+      rarch_viewport_t custom_vp;
+      unsigned gamma_correction;
+   } console_screen;
 
    uint64_t lifecycle_state;
 

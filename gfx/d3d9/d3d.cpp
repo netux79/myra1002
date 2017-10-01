@@ -660,7 +660,7 @@ static void d3d_calculate_rect(void *data, unsigned width, unsigned height,
    {
       if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
       {
-         const rarch_viewport_t &custom = g_extern.console.screen.viewports.custom_vp;
+         const rarch_viewport_t &custom = g_extern.console_screen.custom_vp;
          d3d_set_viewport(d3d, custom.x, custom.y, custom.width, custom.height);
       }
       else

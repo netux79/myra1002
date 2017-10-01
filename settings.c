@@ -247,10 +247,10 @@ void config_set_defaults(void)
          g_settings.input.libretro_device[i] = RETRO_DEVICE_JOYPAD;
    }
 
-   g_extern.console.screen.viewports.custom_vp.width = 0;
-   g_extern.console.screen.viewports.custom_vp.height = 0;
-   g_extern.console.screen.viewports.custom_vp.x = 0;
-   g_extern.console.screen.viewports.custom_vp.y = 0;
+   g_extern.console_screen.custom_vp.width = 0;
+   g_extern.console_screen.custom_vp.height = 0;
+   g_extern.console_screen.custom_vp.x = 0;
+   g_extern.console_screen.custom_vp.y = 0;
 
    // Make sure settings from other configs carry over into defaults for another config.
    if (!g_extern.has_set_save_path)
@@ -287,11 +287,11 @@ void config_set_defaults(void)
 
    // g_extern
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
-   g_extern.console.screen.gamma_correction = DEFAULT_GAMMA;
+   g_extern.console_screen.gamma_correction = DEFAULT_GAMMA;
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
    g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
 
-   g_extern.console.screen.resolutions.current.id = GX_RESOLUTIONS_AUTO;
+   g_extern.console_screen.resolution_idx = GX_RESOLUTIONS_AUTO;
    strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
 
    g_extern.state_slot = 0;
@@ -738,7 +738,7 @@ bool config_load_file(const char *path)
    /* TODO - will be refactored later to make it more clean - it's more 
     * important that it works for consoles right now */
 
-   CONFIG_GET_INT_EXTERN(console.screen.gamma_correction, "gamma_correction");
+   CONFIG_GET_INT_EXTERN(console_screen.gamma_correction, "gamma_correction");
 
    bool triple_buffering_enable = false;
    bool soft_filter_enable = false;
@@ -757,14 +757,14 @@ bool config_load_file(const char *path)
       else 
          g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
    }
-   CONFIG_GET_INT_EXTERN(console.screen.resolutions.current.id, "current_resolution_id");
+   CONFIG_GET_INT_EXTERN(console_screen.resolution_idx, "current_resolution_id");
 #endif
    CONFIG_GET_INT_EXTERN(state_slot, "state_slot");
 
-   CONFIG_GET_INT_EXTERN(console.screen.viewports.custom_vp.x, "custom_viewport_x");
-   CONFIG_GET_INT_EXTERN(console.screen.viewports.custom_vp.y, "custom_viewport_y");
-   CONFIG_GET_INT_EXTERN(console.screen.viewports.custom_vp.width, "custom_viewport_width");
-   CONFIG_GET_INT_EXTERN(console.screen.viewports.custom_vp.height, "custom_viewport_height");
+   CONFIG_GET_INT_EXTERN(console_screen.custom_vp.x, "custom_viewport_x");
+   CONFIG_GET_INT_EXTERN(console_screen.custom_vp.y, "custom_viewport_y");
+   CONFIG_GET_INT_EXTERN(console_screen.custom_vp.width, "custom_viewport_width");
+   CONFIG_GET_INT_EXTERN(console_screen.custom_vp.height, "custom_viewport_height");
 
    unsigned msg_color = 0;
    if (config_get_hex(conf, "video_message_color", &msg_color))
@@ -1119,16 +1119,16 @@ bool config_save_file(const char *path)
    config_set_int(conf, "input_autodetect_icade_profile_pad3", g_settings.input.icade_profile[2]);
    config_set_int(conf, "input_autodetect_icade_profile_pad4", g_settings.input.icade_profile[3]);
 #endif
-   config_set_int(conf, "gamma_correction", g_extern.console.screen.gamma_correction);
+   config_set_int(conf, "gamma_correction", g_extern.console_screen.gamma_correction);
    bool triple_buffering_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
    bool soft_filter_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
    config_set_bool(conf, "triple_buffering_enable", triple_buffering_enable_val);
    config_set_bool(conf, "soft_filter_enable", soft_filter_enable_val);
-   config_set_int(conf, "current_resolution_id", g_extern.console.screen.resolutions.current.id);
-   config_set_int(conf, "custom_viewport_width", g_extern.console.screen.viewports.custom_vp.width);
-   config_set_int(conf, "custom_viewport_height", g_extern.console.screen.viewports.custom_vp.height);
-   config_set_int(conf, "custom_viewport_x", g_extern.console.screen.viewports.custom_vp.x);
-   config_set_int(conf, "custom_viewport_y", g_extern.console.screen.viewports.custom_vp.y);
+   config_set_int(conf, "current_resolution_id", g_extern.console_screen.resolution_idx);
+   config_set_int(conf, "custom_viewport_width", g_extern.console_screen.custom_vp.width);
+   config_set_int(conf, "custom_viewport_height", g_extern.console_screen.custom_vp.height);
+   config_set_int(conf, "custom_viewport_x", g_extern.console_screen.custom_vp.x);
+   config_set_int(conf, "custom_viewport_y", g_extern.console_screen.custom_vp.y);
    config_set_bool(conf, "block_sram_overwrite", g_settings.block_sram_overwrite);
    config_set_bool(conf, "savestate_auto_index", g_settings.savestate_auto_index);
    config_set_bool(conf, "savestate_auto_save", g_settings.savestate_auto_save);

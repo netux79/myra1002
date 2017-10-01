@@ -1136,16 +1136,16 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
       case RGUI_SETTINGS_VIDEO_GAMMA:
          if (action == RGUI_ACTION_START)
-            g_extern.console.screen.gamma_correction = 0;
+            g_extern.console_screen.gamma_correction = 0;
          else if (action == RGUI_ACTION_LEFT)
          {
-            if (g_extern.console.screen.gamma_correction > 0)
-               g_extern.console.screen.gamma_correction--;
+            if (g_extern.console_screen.gamma_correction > 0)
+               g_extern.console_screen.gamma_correction--;
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
-            if (g_extern.console.screen.gamma_correction < MAX_GAMMA_SETTING)
-               g_extern.console.screen.gamma_correction++;
+            if (g_extern.console_screen.gamma_correction < MAX_GAMMA_SETTING)
+               g_extern.console_screen.gamma_correction++;
          }
          
          if (driver.video_poke && driver.video_poke->apply_state_changes)
@@ -1186,21 +1186,21 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_X:
          if (action == RGUI_ACTION_START)
-            g_extern.console.screen.viewports.custom_vp.x = 0;
+            g_extern.console_screen.custom_vp.x = 0;
          else if (action == RGUI_ACTION_LEFT)
-               g_extern.console.screen.viewports.custom_vp.x--;
+               g_extern.console_screen.custom_vp.x--;
          else if (action == RGUI_ACTION_RIGHT)
-               g_extern.console.screen.viewports.custom_vp.x++;
+               g_extern.console_screen.custom_vp.x++;
 
          break;
 
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_Y:
          if (action == RGUI_ACTION_START)
-            g_extern.console.screen.viewports.custom_vp.y = 0;
+            g_extern.console_screen.custom_vp.y = 0;
          else if (action == RGUI_ACTION_LEFT)
-               g_extern.console.screen.viewports.custom_vp.y--;
+               g_extern.console_screen.custom_vp.y--;
          else if (action == RGUI_ACTION_RIGHT)
-               g_extern.console.screen.viewports.custom_vp.y++;
+               g_extern.console_screen.custom_vp.y++;
 
          break;
 
@@ -1210,19 +1210,19 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #ifdef GEKKO
             unsigned w, h;
             if (driver.video_poke && driver.video_poke->get_resolution_size)
-               driver.video_poke->get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
-            g_extern.console.screen.viewports.custom_vp.width = w;
+               driver.video_poke->get_resolution_size(g_extern.console_screen.resolution_idx, &w, &h);
+            g_extern.console_screen.custom_vp.width = w;
 #else
             rarch_viewport_t vp;
             if (video_data && driver.video && driver.video->viewport_info)
                driver.video->viewport_info(video_data, &vp);
-            g_extern.console.screen.viewports.custom_vp.width = vp.full_width;
+            g_extern.console_screen.custom_vp.width = vp.full_width;
 #endif
          }
          else if (action == RGUI_ACTION_LEFT)
-               g_extern.console.screen.viewports.custom_vp.width--;
+               g_extern.console_screen.custom_vp.width--;
          else if (action == RGUI_ACTION_RIGHT)
-               g_extern.console.screen.viewports.custom_vp.width++;
+               g_extern.console_screen.custom_vp.width++;
 
          break;
 
@@ -1232,19 +1232,19 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #ifdef GEKKO
             unsigned w, h;
             if (driver.video_poke && driver.video_poke->get_resolution_size)
-               driver.video_poke->get_resolution_size(g_extern.console.screen.resolutions.current.id, &w, &h);
-            g_extern.console.screen.viewports.custom_vp.height = h;
+               driver.video_poke->get_resolution_size(g_extern.console_screen.resolution_idx, &w, &h);
+            g_extern.console_screen.custom_vp.height = h;
 #else
             rarch_viewport_t vp;
             if (video_data && driver.video && driver.video->viewport_info)
                driver.video->viewport_info(video_data, &vp);
-            g_extern.console.screen.viewports.custom_vp.height = vp.full_height;
+            g_extern.console_screen.custom_vp.height = vp.full_height;
 #endif
          }
          else if (action == RGUI_ACTION_LEFT)
-               g_extern.console.screen.viewports.custom_vp.height--;
+               g_extern.console_screen.custom_vp.height--;
          else if (action == RGUI_ACTION_RIGHT)
-               g_extern.console.screen.viewports.custom_vp.height++;
+               g_extern.console_screen.custom_vp.height++;
 
          break;
 
@@ -1266,23 +1266,25 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
+      {
+         unsigned old_index = g_extern.console_screen.resolution_idx;
          if (action == RGUI_ACTION_LEFT)
          {
-            if(g_extern.console.screen.resolutions.current.id > 0)
+            if(g_extern.console_screen.resolution_idx > 0)
             {
-               g_extern.console.screen.resolutions.current.id--;
+               g_extern.console_screen.resolution_idx--;
             }
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
-            if (g_extern.console.screen.resolutions.current.id < GX_RESOLUTIONS_LAST)
+            if (g_extern.console_screen.resolution_idx < GX_RESOLUTIONS_LAST)
             {
-               g_extern.console.screen.resolutions.current.id++;
+               g_extern.console_screen.resolution_idx++;
             }
          }
          else if (action == RGUI_ACTION_START)
          {
-            g_extern.console.screen.resolutions.current.id = GX_RESOLUTIONS_AUTO;
+            g_extern.console_screen.resolution_idx = GX_RESOLUTIONS_AUTO;
          }
          else if (action == RGUI_ACTION_OK)
          {
@@ -1291,7 +1293,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             snprintf(msg, sizeof(msg), "Game internal resolution: %ux%u", g_extern.frame_cache.width, g_extern.frame_cache.height);
             msg_queue_push(g_extern.msg_queue, msg, 0, 80);
          }
+         /* adjust refresh rate accordingly */
+         if (old_index != g_extern.console_screen.resolution_idx)
+            if (driver.video_poke && driver.video_poke->set_refresh_rate)
+                  driver.video_poke->set_refresh_rate(video_data, g_extern.console_screen.resolution_idx);            
          break;
+      }
 #endif
 #ifdef HW_RVL
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
@@ -1526,7 +1533,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          strlcpy(type_str, g_settings.video.smooth ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_GAMMA:
-         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.gamma_correction);
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.gamma_correction);
          break;
       case RGUI_SETTINGS_VIDEO_VSYNC:
          strlcpy(type_str, g_settings.video.vsync ? "ON" : "OFF", type_str_size);
@@ -1571,21 +1578,22 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          strlcpy(type_str, aspectratio_lut[g_settings.video.aspect_ratio_idx].name, type_str_size);
          break;
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_X:
-         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.x);
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.custom_vp.x);
          break;
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_Y:
-         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.y);
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.custom_vp.y);
          break;
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH:
-         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.width);
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.custom_vp.width);
          break;
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT:
-         snprintf(type_str, type_str_size, "%d", g_extern.console.screen.viewports.custom_vp.height);
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.custom_vp.height);
          break;
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
          if (driver.video_poke && driver.video_poke->get_resolution)
-            strlcpy(type_str, driver.video_poke->get_resolution(g_extern.console.screen.resolutions.current.id), type_str_size);
+            snprintf(type_str, type_str_size, "%s %3.2fhz", driver.video_poke->get_resolution(g_extern.console_screen.resolution_idx), 
+                                                           g_settings.video.refresh_rate);
          break;
 #endif
       case RGUI_FILE_PLAIN:

@@ -177,7 +177,7 @@ int main_entry_iterate(signature(), args_type() args)
       // setup the screen for the current core
       if (driver.video_poke && driver.video_poke->update_screen_config)
          driver.video_poke->update_screen_config(driver.video_data,
-                                                 g_extern.console.screen.resolutions.current.id,
+                                                 g_extern.console_screen.resolution_idx,
                                                  g_settings.video.aspect_ratio_idx,
                                                  g_settings.video.scale_integer,
                                                  g_settings.video.rotation,

@@ -379,6 +379,7 @@ typedef struct video_poke_interface
    void (*update_screen_config)(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation, bool show_overlay);
    const char *(*get_resolution)(unsigned res_index);
    void (*get_resolution_size)(unsigned res_index, unsigned *width, unsigned *height);
+   void (*set_refresh_rate)(void *data, unsigned res_index);
 #endif
 } video_poke_interface_t;
 

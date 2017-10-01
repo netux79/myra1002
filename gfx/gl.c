@@ -771,7 +771,7 @@ void gl_set_viewport(void *data, unsigned width, unsigned height, bool force_ful
       if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
       {
          const struct rarch_viewport *custom =
-            &g_extern.console.screen.viewports.custom_vp;
+            &g_extern.console_screen.custom_vp;
 
          // GL has bottom-left origin viewport.
          x      = custom->x;

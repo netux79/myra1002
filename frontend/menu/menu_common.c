@@ -1557,6 +1557,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #if defined(HW_RVL)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);
 #endif
+         file_list_push(rgui->selection_buf, "VSync", RGUI_SETTINGS_VIDEO_VSYNC, 0);
          file_list_push(rgui->selection_buf, "Crop Overscan", RGUI_SETTINGS_VIDEO_CROP_OVERSCAN, 0);
          file_list_push(rgui->selection_buf, "Aspect Ratio", RGUI_SETTINGS_VIDEO_ASPECT_RATIO, 0);
          file_list_push(rgui->selection_buf, "Custom Viewport X", RGUI_SETTINGS_CUSTOM_VIEWPORT_X, 0);
@@ -1565,7 +1566,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Custom Viewport Height", RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT, 0);
          file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
-         file_list_push(rgui->selection_buf, "VSync", RGUI_SETTINGS_VIDEO_VSYNC, 0);
 #ifndef GEKKO
          file_list_push(rgui->selection_buf, "VSync Swap Interval", RGUI_SETTINGS_VIDEO_SWAP_INTERVAL, 0);
 #if defined(HAVE_THREADS)
@@ -1578,10 +1578,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Windowed Scale (X)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_X, 0);
          file_list_push(rgui->selection_buf, "Windowed Scale (Y)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_Y, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Video Refresh Rate", RGUI_SETTINGS_VIDEO_REFRESH_RATE, 0);
 #ifndef RARCH_CONSOLE
          file_list_push(rgui->selection_buf, "Window Compositing [G]", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Window Unfocus Pause [G]", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);
+         file_list_push(rgui->selection_buf, "Screen Refresh Rate", RGUI_SETTINGS_VIDEO_REFRESH_RATE, 0);         
 #endif
 #if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
          file_list_push(rgui->selection_buf, "GPU Screenshots [G]", RGUI_SETTINGS_GPU_SCREENSHOT, 0);

@@ -81,6 +81,7 @@ static volatile bool g_vsync;
 #define WAIT_VBLANK true
 #define NO_WAIT false
 
+extern rgui_handle_t *rgui;
 
 static struct
 {
@@ -125,7 +126,35 @@ static void vblank_cb(u32 retrace_count)
    g_vsync = NO_WAIT;
 }
 
-extern rgui_handle_t *rgui;
+static void gx_set_refresh_rate(void *data, unsigned res_index)
+{
+   unsigned modetype, fbLines;
+   gx_video_t *gx = (gx_video_t*)data;
+   
+   fbLines = gx_resolutions[res_index][1] ? gx_resolutions[res_index][1] : 480;
+
+   if (fbLines <= gx->tvinfo.max_height / 2)
+      modetype = VI_NON_INTERLACE;
+   else if (gx->tvinfo.progressive)
+      modetype = VI_PROGRESSIVE;
+   else
+      modetype = VI_INTERLACE;
+
+   if (gx->tvinfo.tvmode == VI_PAL)
+   {
+      if (modetype == VI_NON_INTERLACE)
+         driver_set_monitor_refresh_rate(50.0801f);
+      else
+         driver_set_monitor_refresh_rate(50.0f);
+   }
+   else
+   {
+      if (modetype == VI_NON_INTERLACE)
+         driver_set_monitor_refresh_rate(59.8261f);
+      else
+         driver_set_monitor_refresh_rate(59.94f);
+   }
+}
 
 static void gx_get_tvinfo(void *data)
 {
@@ -318,21 +347,6 @@ static void gx_set_video_mode(void *data, unsigned res_index)
    
    /* restore vsync callback */
    VIDEO_SetPreRetraceCallback(vblank_cb);
-   
-   if (gx->tvinfo.tvmode == VI_PAL)
-   {
-      if (modetype == VI_NON_INTERLACE)
-         driver_set_monitor_refresh_rate(50.0801f);
-      else
-         driver_set_monitor_refresh_rate(50.0f);
-   }
-   else
-   {
-      if (modetype == VI_NON_INTERLACE)
-         driver_set_monitor_refresh_rate(59.8261f);
-      else
-         driver_set_monitor_refresh_rate(59.94f);
-   }
 }
 
 static const char *gx_get_resolution(unsigned res_index)
@@ -383,49 +397,50 @@ static void gx_set_rotation(void *data, unsigned orientation)
 
 static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation, bool show_overlay)
 {
-    gx_video_t *gx = (gx_video_t*)data;
-    static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
-    static unsigned actual_aspect_ratio_index = ASPECT_RATIO_END;
+   gx_video_t *gx = (gx_video_t*)data;
+   static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
+   static unsigned actual_aspect_ratio_index = ASPECT_RATIO_END;
 
-    if (res_idx != actual_res_index)
-    {
-        gx_set_video_mode(data, res_idx);
-        actual_res_index = res_idx;
-    }
+   if (res_idx != actual_res_index)
+   {
+     gx_set_video_mode(data, res_idx);
+     actual_res_index = res_idx;
+   }
 
-    if (aspect_idx != actual_aspect_ratio_index)
-    {
-        gx_set_aspect_ratio(data, aspect_idx);
-        actual_aspect_ratio_index = aspect_idx;
-    }
+   if (aspect_idx != actual_aspect_ratio_index)
+   {
+     gx_set_aspect_ratio(data, aspect_idx);
+     actual_aspect_ratio_index = aspect_idx;
+   }
 
-    gx_overlay_enable(data, show_overlay);
-    gx_set_rotation(data, orientation);
-    
-    gx->scale_integer = scale_integer;
-    
-    // Apply changes...
-    gx->should_resize = true;
+   gx_overlay_enable(data, show_overlay);
+   gx_set_rotation(data, orientation);
+
+   gx->scale_integer = scale_integer;
+
+   /* reset FPS counting when switching 
+    * between menu & game screens */
+   g_extern.frame_count = 0;
+   g_extern.start_frame_time = gettime();
+
+   /* Apply changes... */
+   gx->should_resize = true;
 }
 
 static void gx_alloc_textures(void *data, const video_info_t *video)
 {
    gx_video_t *gx = (gx_video_t*)data;
 
-   if (gx->scale != video->input_scale || gx->rgb32 != video->rgb32)
-   {                
-      if (game_tex.data) free(game_tex.data);
-      game_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * video->input_scale * video->input_scale * (video->rgb32 ? 4 : 2));
+   if (game_tex.data) free(game_tex.data);
+   game_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * video->input_scale * video->input_scale * (video->rgb32 ? 4 : 2));
 
-      if (!game_tex.data)
-      {
-         RARCH_ERR("[GX] Error allocating video texture\n");
-         exit(1);
-      }
+   if (!game_tex.data)
+   {
+      RARCH_ERR("[GX] Error allocating video texture\n");
+      exit(1);
    }
-   
+
    gx->rgb32 = video->rgb32;
-   gx->scale = video->input_scale;
 }
 
 static void gx_setup_textures(void *data, unsigned width, unsigned height)
@@ -507,16 +522,14 @@ static void gx_apply_state_changes(void *data)
 #ifdef HW_RVL
    VIDEO_SetTrapFilter(g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE));
 #endif
-   GX_SetDispCopyGamma(g_extern.console.screen.gamma_correction);
+   GX_SetDispCopyGamma(g_extern.console_screen.gamma_correction);
 }
 
 static bool gx_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
 {
-   gx_video_t *gx;
-
-   if (*data)
-      gx = *data;
-   else
+   gx_video_t *gx = (gx_video_t*)*data;
+   
+   if (!gx) /* setup if no driver data */
    {
       gx = (gx_video_t*)calloc(1, sizeof(gx_video_t));
       if (!gx)
@@ -694,18 +707,18 @@ static void gx_resize_viewport(void *data)
    }
    else if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
-      if (!g_extern.console.screen.viewports.custom_vp.width || !g_extern.console.screen.viewports.custom_vp.height)
+      if (!g_extern.console_screen.custom_vp.width || !g_extern.console_screen.custom_vp.height)
       {
-         g_extern.console.screen.viewports.custom_vp.x = 0;
-         g_extern.console.screen.viewports.custom_vp.y = 0;
-         g_extern.console.screen.viewports.custom_vp.width = gx->vp.full_width;
-         g_extern.console.screen.viewports.custom_vp.height = gx->vp.full_height;
+         g_extern.console_screen.custom_vp.x = 0;
+         g_extern.console_screen.custom_vp.y = 0;
+         g_extern.console_screen.custom_vp.width = gx->vp.full_width;
+         g_extern.console_screen.custom_vp.height = gx->vp.full_height;
       }
 
-      gx->vp.x      = g_extern.console.screen.viewports.custom_vp.x;
-      gx->vp.y      = g_extern.console.screen.viewports.custom_vp.y;
-      gx->vp.width  = g_extern.console.screen.viewports.custom_vp.width;
-      gx->vp.height = g_extern.console.screen.viewports.custom_vp.height;
+      gx->vp.x      = g_extern.console_screen.custom_vp.x;
+      gx->vp.y      = g_extern.console_screen.custom_vp.y;
+      gx->vp.width  = g_extern.console_screen.custom_vp.width;
+      gx->vp.height = g_extern.console_screen.custom_vp.height;
    }
    else if (!gx->double_strike) /* Apply aspect ratio just to non-240p resolutions */
    {
@@ -972,24 +985,28 @@ static void gx_get_overlay_interface(void *data, const video_overlay_interface_t
 
 static inline void gx_onscreen_display(gx_video_t *gx, const char *msg)
 {
-   char fps_txt[32], fps_text_buf[32];
-   
-   /* calculate frames per second */
-   gfx_get_fps(fps_txt, sizeof(fps_txt), fps_text_buf, sizeof(fps_text_buf));
+   g_extern.frame_count++;
 
    if (!gx->rgui_texture_enable) /* only show in-game */
    {
       if (msg || g_settings.fps_show)
       {
+         const char *tmp;
          unsigned x = 8 * (gx->double_strike ? 1 : 2);
          unsigned y = gx->vp.full_height - (22 * (gx->double_strike ? 1 : 2));
+
+         if (msg)
+            tmp = msg;
+         else
+         {
+            static char fps_txt[16];
+            gfx_get_fps(NULL, 0, fps_txt, sizeof(fps_txt));
+            tmp = fps_txt;
+         }
          
-         const char *tmp = msg ? msg : fps_text_buf;
          gx_blit_line(gx, x, y, tmp);
       }
    }
-   
-   g_extern.frame_count++;
 }
 
 static bool gx_frame(void *data, const void *frame,
@@ -1010,8 +1027,6 @@ static bool gx_frame(void *data, const void *frame,
        * menu force to sync */
       g_vsync = g_vsync_state;
    }
-
-   GX_InvalidateTexAll();
    
    /* Load menu if enabled */
    if (gx->rgui_texture_enable && gx->menu_data)
@@ -1032,6 +1047,7 @@ static bool gx_frame(void *data, const void *frame,
       GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
    }
 
+   GX_InvalidateTexAll();
    GX_CallDispList(display_list, display_list_size);
 
 #ifdef HAVE_OVERLAY
@@ -1140,7 +1156,8 @@ static const video_poke_interface_t gx_poke_interface = {
    NULL,
    gx_update_screen_config,
    gx_get_resolution,
-   gx_get_resolution_size
+   gx_get_resolution_size,
+   gx_set_refresh_rate
 };
 
 static void gx_get_poke_interface(void *data, const video_poke_interface_t **iface)

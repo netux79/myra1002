@@ -531,11 +531,16 @@ void global_uninit_drivers(void)
 
 void init_drivers(void)
 {
+#ifndef GEKKO
+   /* no need for GX as it is being called later
+    * from set_refresh_rate in init_video_input */
    adjust_system_rates();
-   
+#endif
+
 #ifdef HAVE_SHADERS
    init_shader_dir();
 #endif
+
 #ifdef HAVE_SCALERS_BUILTIN
    init_filter(g_extern.system.pix_fmt);
 #endif
@@ -863,7 +868,7 @@ void init_video_input(void)
    gfx_set_config_viewport();
 
    // Update CUSTOM viewport.
-   rarch_viewport_t *custom_vp = &g_extern.console.screen.viewports.custom_vp;
+   rarch_viewport_t *custom_vp = &g_extern.console_screen.custom_vp;
    if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
       float default_aspect = aspectratio_lut[ASPECT_RATIO_CORE].value;
@@ -966,7 +971,10 @@ void init_video_input(void)
       custom_vp->height = height;
       driver.video->viewport_info(driver.video_data, custom_vp);
    }
-#ifndef GEKKO
+#ifdef GEKKO
+   if (driver.video_poke && driver.video_poke->set_refresh_rate)
+         driver.video_poke->set_refresh_rate(driver.video_data, g_extern.console_screen.resolution_idx);
+#else         
    if (driver.video->set_rotation)
       video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
 #endif
@@ -977,7 +985,6 @@ void init_video_input(void)
       x11_suspend_screensaver(driver.video_window);
    }
 #endif
-
    // Video driver didn't provide an input driver so configured one.
    if (driver.input && !driver.input_data)
    {
