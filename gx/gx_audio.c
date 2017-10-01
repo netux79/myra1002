@@ -37,7 +37,6 @@ typedef struct
    volatile unsigned dma_write;
    size_t write_ptr;
 
-   lwpq_t cond;
    bool nonblock;
 } gx_audio_t;
 
@@ -54,8 +53,6 @@ static void dma_callback(void)
 
    DCFlushRange(wa->data[wa->dma_next], CHUNK_SIZE);
    AUDIO_InitDMA((uint32_t)wa->data[wa->dma_next], CHUNK_SIZE);
-
-   LWP_ThreadSignal(wa->cond);
 }
 
 static void *gx_audio_init(const char *device, unsigned rate, unsigned latency)
@@ -81,8 +78,6 @@ static void *gx_audio_init(const char *device, unsigned rate, unsigned latency)
       AUDIO_SetDSPSampleRate(AI_SAMPLERATE_48KHZ);
       g_settings.audio.out_rate = 48000;
    }
-
-   LWP_InitQueue(&wa->cond);
 
    wa->dma_write = BLOCKS - 1;
    DCFlushRange(wa->data, sizeof(wa->data));
@@ -115,8 +110,7 @@ static ssize_t gx_audio_write(void *data, const void *buf_, size_t size)
          to_write = frames;
 
       // FIXME: Nonblocking audio should break out of loop when it has nothing to write.
-      while ((wa->dma_write == wa->dma_next || wa->dma_write == wa->dma_busy) && !wa->nonblock)
-         LWP_ThreadSleep(wa->cond);
+      while ((wa->dma_write == wa->dma_next || wa->dma_write == wa->dma_busy) && !wa->nonblock);
 
       copy_swapped(wa->data[wa->dma_write] + wa->write_ptr, buf, to_write);
 
@@ -158,14 +152,9 @@ static bool gx_audio_start(void *data)
 
 static void gx_audio_free(void *data)
 {
-   gx_audio_t *wa = (gx_audio_t*)data;
    AUDIO_StopDMA();
    AUDIO_RegisterDMACallback(NULL);
-   if (wa && wa->cond)
-   {
-      LWP_CloseQueue(wa->cond);
-      wa->cond = 0;
-   }
+
    if (data)
       free(data);
 }
