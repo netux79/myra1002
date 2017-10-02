@@ -70,24 +70,24 @@ static void rgui_copy_glyph(uint8_t *glyph, const uint8_t *buf)
 
 static uint16_t gray_filler(unsigned x, unsigned y)
 {
+#ifdef GEKKO
+   return 0x7210; /* Maroon */
+#else
    x >>= 1;
    y >>= 1;
    unsigned col = ((x + y) & 1) + 1;
-#ifdef GEKKO
-   return (7 << 12) | (col << 8) | (col << 4) | (col << 0);
-#else
    return (col << 13) | (col << 9) | (col << 5) | (12 << 0);
 #endif
 }
 
 static uint16_t green_filler(unsigned x, unsigned y)
 {
+#ifdef GEKKO
+   return 0x7040; /* Light green */
+#else
    x >>= 1;
    y >>= 1;
    unsigned col = ((x + y) & 1) + 1;
-#ifdef GEKKO
-   return (7 << 12) | (col << 8) | (col << 5) | (col << 0);
-#else
    return (col << 13) | (col << 10) | (col << 5) | (12 << 0);
 #endif
 }
@@ -121,7 +121,7 @@ static void blit_line(rgui_handle_t *rgui,
             {
                rgui->frame_buf[(y + j) * (rgui->frame_buf_pitch >> 1) + (x + i)] = green ?
 #ifdef GEKKO
-               (3 << 0) | (10 << 4) | (3 << 8) | (7 << 12) : 0x7FFF;
+               0x70C0 : 0x7FFF;
 #else
                (15 << 0) | (7 << 4) | (15 << 8) | (7 << 12) : 0xFFFF;
 #endif
