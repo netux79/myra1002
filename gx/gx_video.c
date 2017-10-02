@@ -319,13 +319,13 @@ static void gx_set_video_mode(void *data, unsigned res_index)
    /* clear vsync callback */
    VIDEO_SetPreRetraceCallback(NULL);
 
+   VIDEO_SetBlack(true);
+   VIDEO_Flush();
+
    /* wait for next even field, this prevents screen artefacts
     * when switching between interlaced & non-interlaced modes */
    do VIDEO_WaitVSync();
    while (!VIDEO_GetNextField());
-
-   VIDEO_SetBlack(true);
-   VIDEO_Flush();
 
    VIDEO_Configure(&gx_mode);
    VIDEO_Flush();
@@ -337,8 +337,8 @@ static void gx_set_video_mode(void *data, unsigned res_index)
 
    /* workaround for the artifacts when 
     * switching between modes 250ms */
-   usleep(250000);
-   
+   usleep(150000);
+
    VIDEO_SetBlack(false);
    VIDEO_Flush();
 
