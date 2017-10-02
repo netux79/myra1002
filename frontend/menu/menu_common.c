@@ -958,7 +958,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                load_menu_game_new_core();
                rgui->msg_force = true;
                ret = -1;
-               menu_flush_stack_type(rgui, RGUI_SETTINGS);
             }
             else if (menu_type == RGUI_SETTINGS_CORE)
             {
@@ -1004,7 +1003,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                if (!driver.overlay)
                   RARCH_ERR("Unable to load overlay.\n");
 
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_OPTIONS);
+               menu_flush_stack_type(rgui, RGUI_SETTINGS_OVERLAY_OPTIONS);
             }
 #endif
             else if (menu_type == RGUI_SETTINGS_DISK_APPEND)
