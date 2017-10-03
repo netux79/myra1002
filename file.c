@@ -21,7 +21,6 @@
 #include <string.h>
 #include <time.h>
 #include "dynamic.h"
-#include "patch.h"
 #include "compat/strl.h"
 #include "hash.h"
 #include "file_extract.h"
@@ -31,114 +30,6 @@
 #include <fcntl.h>
 #include <windows.h>
 #endif
-
-static void patch_rom(uint8_t **buf, ssize_t *size)
-{
-   uint8_t *ret_buf = *buf;
-   ssize_t ret_size = *size;
-
-   const char *patch_desc = NULL;
-   const char *patch_path = NULL;
-   patch_error_t err = PATCH_UNKNOWN;
-   patch_func_t func = NULL;
-
-   ssize_t patch_size = 0;
-   void *patch_data = NULL;
-   bool success = false;
-   
-   (void)patch_desc;
-   (void)patch_path;
-
-   if (g_extern.ups_pref + g_extern.bps_pref + g_extern.ips_pref > 1)
-   {
-      RARCH_WARN("Several patches are explicitly defined, ignoring all ...\n");
-      return;
-   }
-
-   bool allow_bps = !g_extern.ups_pref && !g_extern.ips_pref;
-   bool allow_ups = !g_extern.bps_pref && !g_extern.ips_pref;
-   bool allow_ips = !g_extern.ups_pref && !g_extern.bps_pref;
-
-   if (allow_ups && *g_extern.ups_name && (patch_size = read_file(g_extern.ups_name, &patch_data)) >= 0)
-   {
-      patch_desc = "UPS";
-      patch_path = g_extern.ups_name;
-      func = ups_apply_patch;
-   }
-   else if (allow_bps && *g_extern.bps_name && (patch_size = read_file(g_extern.bps_name, &patch_data)) >= 0)
-   {
-      patch_desc = "BPS";
-      patch_path = g_extern.bps_name;
-      func = bps_apply_patch;
-   }
-   else if (allow_ips && *g_extern.ips_name && (patch_size = read_file(g_extern.ips_name, &patch_data)) >= 0)
-   {
-      patch_desc = "IPS";
-      patch_path = g_extern.ips_name;
-      func = ips_apply_patch;
-   }
-   else
-   {
-      RARCH_LOG("Did not find a valid ROM patch.\n");
-      return;
-   }
-
-   RARCH_LOG("Found %s file in \"%s\", attempting to patch ...\n", patch_desc, patch_path);
-
-   size_t target_size = ret_size * 4; // Just to be sure ...
-   uint8_t *patched_rom = (uint8_t*)malloc(target_size);
-   if (!patched_rom)
-   {
-      RARCH_ERR("Failed to allocate memory for patched ROM ...\n");
-      goto error;
-   }
-
-   err = func((const uint8_t*)patch_data, patch_size, ret_buf, ret_size, patched_rom, &target_size);
-   if (err == PATCH_SUCCESS)
-   {
-      RARCH_LOG("ROM patched successfully (%s).\n", patch_desc);
-      success = true;
-   }
-   else
-      RARCH_ERR("Failed to patch %s: Error #%u\n", patch_desc, (unsigned)err);
-
-   if (success)
-   {
-      free(ret_buf);
-      *buf = patched_rom;
-      *size = target_size;
-   }
-
-   free(patch_data);
-   return;
-
-error:
-   *buf = ret_buf;
-   *size = ret_size;
-   free(patch_data);
-}
-
-static ssize_t read_rom_file(const char *path, void **buf)
-{
-   uint8_t *ret_buf = NULL;
-   ssize_t ret = read_file(path, (void**)&ret_buf);
-   if (ret <= 0)
-      return ret;
-
-   if (!g_extern.block_patch)
-   {
-      // Attempt to apply a patch.
-      patch_rom(&ret_buf, &ret);
-   }
-   
-   g_extern.cart_crc = crc32_calculate(ret_buf, ret);
-   sha256_hash(g_extern.sha256, ret_buf, ret);
-   RARCH_LOG("CRC32: 0x%x, SHA256: %s\n",
-         (unsigned)g_extern.cart_crc, g_extern.sha256);
-   *buf = ret_buf;
-   return ret;
-}
-
 
 static const char *ramtype2str(int type)
 {
@@ -373,28 +264,9 @@ static bool load_roms(unsigned rom_type, const char **rom_paths, size_t roms)
    long rom_len[MAX_ROMS] = {0};
    struct retro_game_info info[MAX_ROMS] = {{NULL}};
 
-   if (!g_extern.system.info.need_fullpath)
+   for (i = 0; i < roms; i++)
    {
-      RARCH_LOG("Loading ROM file: %s.\n", rom_paths[0]);
-      if ((rom_len[0] = read_rom_file(rom_paths[0], &rom_buf[0])) == -1)
-      {
-         RARCH_ERR("Could not read ROM file.\n");
-         ret = false;
-         goto end;
-      }
-
-      RARCH_LOG("ROM size: %u bytes.\n", (unsigned)rom_len[0]);
-   }
-   else
-      RARCH_LOG("ROM loading skipped. Implementation will load it on its own.\n");
-
-   info[0].path = rom_paths[0];
-   info[0].data = rom_buf[0];
-   info[0].size = rom_len[0];
-   info[0].meta = NULL; // Not relevant at this moment.
-
-   for (i = 1; i < roms; i++)
-   {
+      RARCH_LOG("Loading ROM file: %s.\n", rom_paths[i]);
       if (rom_paths[i] &&
             !g_extern.system.info.need_fullpath &&
             (rom_len[i] = read_file(rom_paths[i], &rom_buf[i])) == -1)
@@ -403,6 +275,7 @@ static bool load_roms(unsigned rom_type, const char **rom_paths, size_t roms)
          ret = false;
          goto end;
       }
+      RARCH_LOG("ROM size: %u bytes.\n", (unsigned)rom_len[i]);
       
       info[i].path = rom_paths[i];
       info[i].data = rom_buf[i];

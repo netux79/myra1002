@@ -22,7 +22,6 @@ OBJ = frontend/frontend.o \
 		input/keyboard_line.o \
 		input/autoconf/builtin_win.o \
 		core_options.o \
-		patch.o \
 		compat/compat.o \
 		screenshot.o \
 		frontend/info/core_info.o \

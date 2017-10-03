@@ -20,7 +20,6 @@ OBJ = frontend/frontend.o \
 		input/input_common.o \
 		input/keyboard_line.o \
 		input/overlay.o \
-		patch.o \
 		fifo_buffer.o \
 		core_options.o \
 		compat/compat.o \

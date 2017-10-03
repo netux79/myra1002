@@ -274,7 +274,6 @@ struct global
    bool rom_file_temporary;
    char last_rom[PATH_MAX];
    enum rarch_game_type game_type;
-   uint32_t cart_crc;
 
    char gb_rom_path[PATH_MAX];
    char bsx_rom_path[PATH_MAX];
@@ -304,14 +303,6 @@ struct global
 #ifdef HAVE_OVERLAY
    char overlay_dir[PATH_MAX];
 #endif
-
-   bool block_patch;
-   bool ups_pref;
-   bool bps_pref;
-   bool ips_pref;
-   char ups_name[PATH_MAX];
-   char bps_name[PATH_MAX];
-   char ips_name[PATH_MAX];
 
    int state_slot;
 
@@ -445,8 +436,6 @@ struct global
       struct string_list *list;
       size_t ptr;
    } shader_dir;
-
-   char sha256[64 + 1];
 
    // Settings and/or global state that is specific to a console-style implementation.
    struct

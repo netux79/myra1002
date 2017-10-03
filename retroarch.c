@@ -658,10 +658,6 @@ static void print_help(void)
    puts("\t\tDo note that noload-save implies that save files will be deleted and overwritten.");
 
    puts("\t-v/--verbose: Verbose logging.");
-   puts("\t-U/--ups: Specifies path for UPS patch that will be applied to ROM.");
-   puts("\t--bps: Specifies path for BPS patch that will be applied to ROM.");
-   puts("\t--ips: Specifies path for IPS patch that will be applied to ROM.");
-   puts("\t--no-patch: Disables all forms of rom patching.");
    puts("\t-D/--detach: Detach RetroArch from the running console. Not relevant for all platforms.\n");
 }
 
@@ -739,10 +735,6 @@ static void parse_input(int argc, char *argv[])
       { "bsxslot", 1, NULL, 'B' },
       { "sufamiA", 1, NULL, 'Y' },
       { "sufamiB", 1, NULL, 'Z' },
-      { "ups", 1, NULL, 'U' },
-      { "bps", 1, &val, 'B' },
-      { "ips", 1, &val, 'I' },
-      { "no-patch", 0, &val, 'n' },
       { "detach", 0, NULL, 'D' },
       { "features", 0, &val, 'f' },
       { NULL, 0, NULL, 0 }
@@ -866,11 +858,6 @@ static void parse_input(int argc, char *argv[])
             strlcpy(g_settings.libretro, optarg, sizeof(g_settings.libretro));
             break;
 #endif
-         case 'U':
-            strlcpy(g_extern.ups_name, optarg, sizeof(g_extern.ups_name));
-            g_extern.ups_pref = true;
-            break;
-
          case 'D':
 #if defined(_WIN32)
             FreeConsole();
@@ -882,20 +869,6 @@ static void parse_input(int argc, char *argv[])
             {
                case 'M':
                   g_extern.libretro_dummy = true;
-                  break;
-
-               case 'B':
-                  strlcpy(g_extern.bps_name, optarg, sizeof(g_extern.bps_name));
-                  g_extern.bps_pref = true;
-                  break;
-
-               case 'I':
-                  strlcpy(g_extern.ips_name, optarg, sizeof(g_extern.ips_name));
-                  g_extern.ips_pref = true;
-                  break;
-
-               case 'n':
-                  g_extern.block_patch = true;
                   break;
 
                case 'f':
@@ -1318,18 +1291,6 @@ static void fill_pathnames(void)
          // Infer .rtc save path from save ram path.
          fill_pathname(g_extern.savefile_name_rtc,
                g_extern.savefile_name_srm, ".rtc", sizeof(g_extern.savefile_name_rtc));
-   }
-
-   if (*g_extern.basename)
-   {
-      if (!(*g_extern.ups_name))
-         fill_pathname_noext(g_extern.ups_name, g_extern.basename, ".ups", sizeof(g_extern.ups_name));
-
-      if (!(*g_extern.bps_name))
-         fill_pathname_noext(g_extern.bps_name, g_extern.basename, ".bps", sizeof(g_extern.bps_name));
-
-      if (!(*g_extern.ips_name))
-         fill_pathname_noext(g_extern.ips_name, g_extern.basename, ".ips", sizeof(g_extern.ips_name));
    }
 }
 
