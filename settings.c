@@ -288,8 +288,7 @@ void config_set_defaults(void)
    // g_extern
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
    g_extern.console_screen.gamma_correction = DEFAULT_GAMMA;
-   g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
-   g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
+   g_extern.console_screen.soft_filter_enable = true;
 
    g_extern.console_screen.resolution_idx = GX_RESOLUTIONS_AUTO;
    strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
@@ -735,28 +734,8 @@ bool config_load_file(const char *path)
 #endif
 
 #ifdef RARCH_CONSOLE
-   /* TODO - will be refactored later to make it more clean - it's more 
-    * important that it works for consoles right now */
-
    CONFIG_GET_INT_EXTERN(console_screen.gamma_correction, "gamma_correction");
-
-   bool triple_buffering_enable = false;
-   bool soft_filter_enable = false;
-
-   if (config_get_bool(conf, "triple_buffering_enable", &triple_buffering_enable))
-   {
-      if (triple_buffering_enable)
-         g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
-      else
-         g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
-   }
-   if (config_get_bool(conf, "soft_filter_enable", &soft_filter_enable))
-   {
-      if (soft_filter_enable)
-         g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-      else 
-         g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-   }
+   CONFIG_GET_BOOL_EXTERN(console_screen.soft_filter_enable, "soft_filter_enable");
    CONFIG_GET_INT_EXTERN(console_screen.resolution_idx, "current_resolution_id");
 #endif
    CONFIG_GET_INT_EXTERN(state_slot, "state_slot");
@@ -1119,12 +1098,11 @@ bool config_save_file(const char *path)
    config_set_int(conf, "input_autodetect_icade_profile_pad3", g_settings.input.icade_profile[2]);
    config_set_int(conf, "input_autodetect_icade_profile_pad4", g_settings.input.icade_profile[3]);
 #endif
+#ifdef RARCH_CONSOLE
    config_set_int(conf, "gamma_correction", g_extern.console_screen.gamma_correction);
-   bool triple_buffering_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_TRIPLE_BUFFERING_ENABLE);
-   bool soft_filter_enable_val = g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-   config_set_bool(conf, "triple_buffering_enable", triple_buffering_enable_val);
-   config_set_bool(conf, "soft_filter_enable", soft_filter_enable_val);
+   config_set_bool(conf, "soft_filter_enable", g_extern.console_screen.soft_filter_enable);
    config_set_int(conf, "current_resolution_id", g_extern.console_screen.resolution_idx);
+#endif
    config_set_int(conf, "custom_viewport_width", g_extern.console_screen.custom_vp.width);
    config_set_int(conf, "custom_viewport_height", g_extern.console_screen.custom_vp.height);
    config_set_int(conf, "custom_viewport_x", g_extern.console_screen.custom_vp.x);

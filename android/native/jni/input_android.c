@@ -1234,8 +1234,6 @@ static void android_input_set_keybinds(void *data, unsigned device,
                shift = 8 + (port * 8);
             }
 
-            g_extern.lifecycle_state |= (1ULL << MODE_INPUT_XPERIA_PLAY_HACK);
-
             android->dpad_emulation[port] = ANALOG_DPAD_NONE;
             android->keycode_lut[AKEYCODE_DPAD_CENTER] |=  ((RETRO_DEVICE_ID_JOYPAD_B+1)      << shift);
             android->keycode_lut[AKEYCODE_BACK] |=  ((RETRO_DEVICE_ID_JOYPAD_A+1)      << shift);

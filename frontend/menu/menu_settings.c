@@ -1302,10 +1302,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif
 #ifdef HW_RVL
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
-         if (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE))
-            g_extern.lifecycle_state &= ~(1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
-         else
-            g_extern.lifecycle_state |= (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE);
+         g_extern.console_screen.soft_filter_enable=!g_extern.console_screen.soft_filter_enable;
 
          if (driver.video_poke && driver.video_poke->apply_state_changes)
             driver.video_poke->apply_state_changes(video_data);
@@ -1526,8 +1523,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
                type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
-         snprintf(type_str, type_str_size,
-               (g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE)) ? "ON" : "OFF");
+         snprintf(type_str, type_str_size, g_extern.console_screen.soft_filter_enable ? "ON" : "OFF");
          break;
       case RGUI_SETTINGS_VIDEO_BILINEAR:
          strlcpy(type_str, g_settings.video.smooth ? "ON" : "OFF", type_str_size);

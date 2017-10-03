@@ -77,18 +77,9 @@ enum menu_enums
    MODE_LOAD_GAME,
    MODE_MENU,
    MODE_EXIT,
-   MODE_MENU_WIDESCREEN,
-   MODE_MENU_HD,
    MODE_MENU_PREINIT,
-   MODE_EXTLAUNCH_MULTIMAN,
    MODE_EXITSPAWN,
    MODE_EXITSPAWN_START_GAME,
-   MODE_EXITSPAWN_MULTIMAN,
-   MODE_INPUT_XPERIA_PLAY_HACK,
-   MODE_VIDEO_TRIPLE_BUFFERING_ENABLE,
-   MODE_VIDEO_SOFT_FILTER_ENABLE,
-   MODE_OSK_ENTRY_SUCCESS,
-   MODE_OSK_ENTRY_FAIL,
    MODE_CLEAR_INPUT,
 };
 
@@ -463,6 +454,7 @@ struct global
       unsigned resolution_idx;
       rarch_viewport_t custom_vp;
       unsigned gamma_correction;
+      bool soft_filter_enable;
    } console_screen;
 
    uint64_t lifecycle_state;

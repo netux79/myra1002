@@ -520,7 +520,7 @@ static void gx_apply_state_changes(void *data)
 {
    (void)data;
 #ifdef HW_RVL
-   VIDEO_SetTrapFilter(g_extern.lifecycle_state & (1ULL << MODE_VIDEO_SOFT_FILTER_ENABLE));
+   VIDEO_SetTrapFilter(g_extern.console_screen.soft_filter_enable);
 #endif
    GX_SetDispCopyGamma(g_extern.console_screen.gamma_correction);
 }
