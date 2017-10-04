@@ -447,8 +447,8 @@ void init_filter(enum retro_pixel_format colfmt)
    }
 
    struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
-   unsigned width   = geom->base_width;
-   unsigned height  = geom->base_height;
+   unsigned width   = geom->max_width;
+   unsigned height  = geom->max_height;
    unsigned max_dim = 0;
 
    g_extern.filter.filter = rarch_softfilter_new(colfmt, width, height);
@@ -467,8 +467,11 @@ void init_filter(enum retro_pixel_format colfmt)
    g_extern.filter.out_rgb32 = rarch_softfilter_get_output_format(g_extern.filter.filter) == RETRO_PIXEL_FORMAT_XRGB8888;
    g_extern.filter.out_bpp = g_extern.filter.out_rgb32 ? sizeof(uint32_t) : sizeof(uint16_t);
 
-   // TODO: Aligned output.
-   g_extern.filter.buffer = malloc(width * height * g_extern.filter.out_bpp);
+#ifdef GEKKO
+   g_extern.filter.buffer = memalign(32, width * height * g_extern.filter.out_bpp);
+#else
+   g_extern.filter.buffer = calloc(width * height * g_extern.filter.out_bpp);
+#endif   
    if (!g_extern.filter.buffer)
       goto error;
 
@@ -856,7 +859,7 @@ void init_video_input(void)
    else
 #endif
    {
-      unsigned max_dim = max(geom->base_width, geom->base_height);
+      unsigned max_dim = max(geom->max_width, geom->max_height);
       scale = next_pow2(max_dim) / RARCH_SCALE_BASE;
    }
 

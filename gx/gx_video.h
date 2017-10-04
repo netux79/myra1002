@@ -36,6 +36,7 @@ typedef struct gx_video
    uint32_t *menu_data; // FIXME: Should be const uint16_t*.
    bool rgui_texture_enable;
    rarch_viewport_t vp;
+   unsigned scale;
    bool scale_integer;
    unsigned orientation;
    struct 
@@ -65,6 +66,7 @@ enum
    GX_RESOLUTIONS_304_224,
    GX_RESOLUTIONS_320_224,
    GX_RESOLUTIONS_384_224,
+   GX_RESOLUTIONS_512_224,
    GX_RESOLUTIONS_256_232,
    GX_RESOLUTIONS_256_236,
    GX_RESOLUTIONS_192_240,

@@ -204,8 +204,6 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
 
    if (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_0RGB1555 && data && data != RETRO_HW_FRAME_BUFFER_VALID)
    {
-      RARCH_PERFORMANCE_INIT(video_frame_conv);
-      RARCH_PERFORMANCE_START(video_frame_conv);
       driver.scaler.in_width = width;
       driver.scaler.in_height = height;
       driver.scaler.out_width = width;
@@ -216,7 +214,6 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
       scaler_ctx_scale(&driver.scaler, driver.scaler_out, data);
       data = driver.scaler_out;
       pitch = driver.scaler.out_stride;
-      RARCH_PERFORMANCE_STOP(video_frame_conv);
    }
 
    const char *msg = msg_queue_pull(g_extern.msg_queue);
@@ -233,12 +230,9 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
 
       opitch = owidth * g_extern.filter.out_bpp;
 
-      RARCH_PERFORMANCE_INIT(softfilter_process);
-      RARCH_PERFORMANCE_START(softfilter_process);
       rarch_softfilter_process(g_extern.filter.filter,
             g_extern.filter.buffer, opitch,
             data, width, height, pitch);
-      RARCH_PERFORMANCE_STOP(softfilter_process);
 
       if (!video_frame_func(g_extern.filter.buffer, owidth, oheight, opitch, msg))
          g_extern.video_active = false;

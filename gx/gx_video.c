@@ -46,6 +46,7 @@ static unsigned gx_resolutions[][2] = {
     { 304, 224 },
     { 320, 224 },
     { 384, 224 },
+    { 512, 224 },
     { 256, 232 },
     { 256, 236 },
     { 192, 240 },
@@ -431,16 +432,20 @@ static void gx_alloc_textures(void *data, const video_info_t *video)
 {
    gx_video_t *gx = (gx_video_t*)data;
 
-   if (game_tex.data) free(game_tex.data);
-   game_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * video->input_scale * video->input_scale * (video->rgb32 ? 4 : 2));
-
-   if (!game_tex.data)
+   if (gx->scale != video->input_scale || gx->rgb32 != video->rgb32)
    {
-      RARCH_ERR("[GX] Error allocating video texture\n");
-      exit(1);
-   }
+      if (game_tex.data) free(game_tex.data);
+      game_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * video->input_scale * video->input_scale * (video->rgb32 ? 4 : 2));
 
-   gx->rgb32 = video->rgb32;
+      if (!game_tex.data)
+      {
+         RARCH_ERR("[GX] Error allocating video texture\n");
+         exit(1);
+      }
+
+      gx->rgb32 = video->rgb32;
+      gx->scale = video->input_scale;
+   }
 }
 
 static void gx_setup_textures(void *data, unsigned width, unsigned height)
@@ -1013,15 +1018,19 @@ static bool gx_frame(void *data, const void *frame,
       unsigned width, unsigned height, unsigned pitch,
       const char *msg)
 {
+   static unsigned pw, ph; /* keep track of frame size */ 
    gx_video_t *gx = (gx_video_t*)data;
    
    if (!frame && !gx->rgui_texture_enable)
       return true;
 
-   if (gx->should_resize)
+   if (gx->should_resize || pw != width || ph != height)
    {
       gx_setup_textures(data, width, height);
       gx_resize_viewport(gx);
+      
+      pw = width;
+      ph = height;
       
       /* when returning from 
        * menu force to sync */
