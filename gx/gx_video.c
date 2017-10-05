@@ -450,25 +450,29 @@ static void gx_alloc_textures(void *data, const video_info_t *video)
 
 static void gx_setup_textures(void *data, unsigned width, unsigned height)
 {
-   unsigned g_filter, rgui_w, rgui_h;
+   unsigned g_filter;
    gx_video_t *gx = (gx_video_t*)data;
 
-   width &= ~3;
-   height &= ~3;
    g_filter = g_settings.video.smooth ? GX_LINEAR : GX_NEAR;
-   rgui_w = 320;
-   rgui_h = 240;
 
-   if (rgui)
+   if (gx->rgui_texture_enable) 
    {
-      rgui_w = rgui->width;
-      rgui_h = rgui->height;
+      unsigned rgui_w = (rgui) ? rgui->width  : 320;
+      unsigned rgui_h = (rgui) ? rgui->height : 240;
+      GX_InitTexObj(&menu_tex.obj, menu_tex.data, rgui_w, rgui_h, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
+      GX_InitTexObjFilterMode(&menu_tex.obj, g_filter, g_filter);
+      GX_SetCurrentMtx(GX_PNMTX1);
+      GX_LoadTexObj(&menu_tex.obj, GX_TEXMAP0);
    }
-
-   GX_InitTexObj(&game_tex.obj, game_tex.data, width, height, (gx->rgb32) ? GX_TF_RGBA8 : GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
-   GX_InitTexObjFilterMode(&game_tex.obj, g_filter, g_filter);
-   GX_InitTexObj(&menu_tex.obj, menu_tex.data, rgui_w, rgui_h, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
-   GX_InitTexObjFilterMode(&menu_tex.obj, g_filter, g_filter);
+   else
+   {
+      width &= ~3;
+      height &= ~3;
+      GX_InitTexObj(&game_tex.obj, game_tex.data, width, height, (gx->rgb32) ? GX_TF_RGBA8 : GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
+      GX_InitTexObjFilterMode(&game_tex.obj, g_filter, g_filter);
+      GX_SetCurrentMtx(GX_PNMTX0);
+      GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
+   }
 }
 
 static void gx_init_vtx(void *data)
@@ -1042,8 +1046,6 @@ static bool gx_frame(void *data, const void *frame,
    {
       convert_texture16(gx->menu_data, menu_tex.data, rgui->width, rgui->height, rgui->width * 2);
       DCStoreRange(menu_tex.data, rgui->width * rgui->height * 2);
-      GX_SetCurrentMtx(GX_PNMTX1);
-      GX_LoadTexObj(&menu_tex.obj, GX_TEXMAP0);
    }
    else if (frame) /* Load the frame if any */
    {
@@ -1051,9 +1053,8 @@ static bool gx_frame(void *data, const void *frame,
          convert_texture32(frame, game_tex.data, width, height, pitch);
       else
          convert_texture16(frame, game_tex.data, width, height, pitch);
+
       DCStoreRange(game_tex.data, height * (width << (gx->rgb32 ? 2 : 1)));
-      GX_SetCurrentMtx(GX_PNMTX0);
-      GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
    }
 
    GX_InvalidateTexAll();
