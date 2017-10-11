@@ -1564,6 +1564,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Custom Viewport Width", RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH, 0);
          file_list_push(rgui->selection_buf, "Custom Viewport Height", RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT, 0);
          file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
+         file_list_push(rgui->selection_buf, "Force Aspect", RGUI_SETTINGS_VIDEO_FORCE_ASPECT, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
 #ifndef GEKKO
          file_list_push(rgui->selection_buf, "VSync Swap Interval", RGUI_SETTINGS_VIDEO_SWAP_INTERVAL, 0);

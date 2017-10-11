@@ -1165,6 +1165,18 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif            
          break;
 
+      case RGUI_SETTINGS_VIDEO_FORCE_ASPECT:
+         if (action == RGUI_ACTION_START)
+            g_settings.video.force_aspect = force_aspect;
+         else if (action == RGUI_ACTION_LEFT ||
+               action == RGUI_ACTION_RIGHT ||
+               action == RGUI_ACTION_OK)
+            g_settings.video.force_aspect = !g_settings.video.force_aspect;
+         
+         if (driver.video_poke && driver.video_poke->apply_state_changes)
+            driver.video_poke->apply_state_changes(video_data);          
+         break;
+
       case RGUI_SETTINGS_VIDEO_ASPECT_RATIO:
          if (action == RGUI_ACTION_START)
             g_settings.video.aspect_ratio_idx = aspect_ratio_idx;
@@ -1569,6 +1581,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_VIDEO_INTEGER_SCALE:
          strlcpy(type_str, g_settings.video.scale_integer ? "ON" : "OFF", type_str_size);
+         break;
+      case RGUI_SETTINGS_VIDEO_FORCE_ASPECT:
+         strlcpy(type_str, g_settings.video.force_aspect ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_ASPECT_RATIO:
          strlcpy(type_str, aspectratio_lut[g_settings.video.aspect_ratio_idx].name, type_str_size);

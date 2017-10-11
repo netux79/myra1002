@@ -38,6 +38,7 @@ typedef struct gx_video
    rarch_viewport_t vp;
    unsigned scale;
    bool scale_integer;
+   bool force_aspect;
    unsigned orientation;
    struct 
    {

@@ -883,6 +883,7 @@ void init_video_input(void)
 
    unsigned width;
    unsigned height;
+#ifndef CONSOLE
    if (g_settings.video.fullscreen)
    {
       width = g_settings.video.fullscreen_x;
@@ -908,7 +909,7 @@ void init_video_input(void)
       RARCH_LOG("Video @ %ux%u\n", width, height);
    else
       RARCH_LOG("Video @ fullscreen\n");
-
+#endif
    driver.display_type  = RARCH_DISPLAY_NONE;
    driver.video_display = 0;
    driver.video_window  = 0;
@@ -967,6 +968,10 @@ void init_video_input(void)
    if (driver.video->poke_interface)
       driver.video->poke_interface(driver.video_data, &driver.video_poke);
 
+#ifdef GEKKO
+   if (driver.video_poke && driver.video_poke->set_refresh_rate)
+         driver.video_poke->set_refresh_rate(driver.video_data, g_extern.console_screen.resolution_idx);
+#else
    // Force custom viewport to have sane parameters.
    if (driver.video->viewport_info && (!custom_vp->width || !custom_vp->height))
    {
@@ -974,10 +979,7 @@ void init_video_input(void)
       custom_vp->height = height;
       driver.video->viewport_info(driver.video_data, custom_vp);
    }
-#ifdef GEKKO
-   if (driver.video_poke && driver.video_poke->set_refresh_rate)
-         driver.video_poke->set_refresh_rate(driver.video_data, g_extern.console_screen.resolution_idx);
-#else         
+
    if (driver.video->set_rotation)
       video_set_rotation_func((g_settings.video.rotation + g_extern.system.rotation) % 4);
 #endif

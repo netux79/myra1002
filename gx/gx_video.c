@@ -527,11 +527,13 @@ static void build_disp_list(void)
 
 static void gx_apply_state_changes(void *data)
 {
-   (void)data;
+   gx_video_t *gx = (gx_video_t*)data;
+
 #ifdef HW_RVL
    VIDEO_SetTrapFilter(g_extern.console_screen.soft_filter_enable);
 #endif
    GX_SetDispCopyGamma(g_extern.console_screen.gamma_correction);
+   gx->force_aspect = g_settings.video.force_aspect;
 }
 
 static bool gx_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
@@ -712,7 +714,7 @@ static void gx_resize_viewport(void *data)
    {
       gfx_scale_integer(&gx->vp, gx->vp.width, gx->vp.height, 
                        (gx->double_strike ? 0.0f : gx->aspect_ratio), 
-                        true);
+                        gx->force_aspect);
    }
    else if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
