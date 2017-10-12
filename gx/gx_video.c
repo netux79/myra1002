@@ -1106,6 +1106,13 @@ static bool gx_focus(void *data)
 
 static void gx_free(void *data)
 {
+   /* finish current job */
+   GX_DrawDone();
+   GX_AbortFrame();
+   GX_Flush();
+   VIDEO_SetBlack(true);
+   VIDEO_Flush();
+   
    /* game screen texture */
    if (game_tex.data)
       free(game_tex.data);

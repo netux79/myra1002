@@ -259,20 +259,6 @@ static void system_exitspawn(void)
 #endif
 }
 
-static void system_deinit(void *data)
-{
-   (void)data;
-#ifndef IS_SALAMANDER
-   // we never init GX/VIDEO subsystems in salamander
-   GX_DrawDone();
-   GX_AbortFrame();
-   GX_Flush();
-   VIDEO_SetBlack(true);
-   VIDEO_Flush();
-   VIDEO_WaitVSync();
-#endif
-}
-
 static int system_process_args(int argc, char *argv[], void *args)
 {
    int ret = 0;
@@ -307,7 +293,7 @@ static void system_exec(const char *path, bool should_load_game)
 const frontend_ctx_driver_t frontend_ctx_gx = {
    get_environment_settings,        /* get_environment_settings */
    system_init,                     /* init */
-   system_deinit,                   /* deinit */
+   NULL,                            /* deinit */
    system_exitspawn,                /* exitspawn */
    system_process_args,             /* process_args */
    NULL,                            /* process_events */
