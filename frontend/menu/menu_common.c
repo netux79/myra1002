@@ -306,29 +306,45 @@ void load_menu_game_prepare(void *video_data)
             MENU_TEXTURE_FULLSCREEN);
 }
 
+bool load_menu_game_new_core(const char* gamepath, const char* corepath)
+{
+#ifdef HAVE_DYNAMIC
+   strlcpy(g_extern.fullpath, gamepath, sizeof(g_extern.fullpath));
+   strlcpy(g_settings.libretro, corepath, sizeof(g_settings.libretro));
+   menu_update_system_info(rgui, &rgui->load_no_rom);
+   g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
+   return true;
+#else
+   /* If the core is the one actually loaded, no need 
+    * to load it again, just launch the game! */
+   if (strcmp(g_settings.libretro, corepath) == 0)
+   {
+      strlcpy(g_extern.fullpath, gamepath, sizeof(g_extern.fullpath));
+      g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
+      return false;
+   }
+   else
+   {
+      /* if SET_LIBRETRO_PATH fails (core doesn't found) copy the path 
+       * anyway to avoid launching current core with incorrect game. */
+      if (!rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)corepath))
+         strlcpy(g_settings.libretro, corepath, sizeof(g_settings.libretro));
+      rarch_environment_cb(RETRO_ENVIRONMENT_EXEC, (void*)gamepath);
+      return true;
+   }
+#endif
+}
+
 void load_menu_game_history(unsigned game_index)
 {
    const char *path = NULL;
    const char *core_path = NULL;
    const char *core_name = NULL;
 
-   rom_history_get_index(rgui->history,
-         game_index, &path, &core_path, &core_name);
-
-   // SET_LIBRETRO_PATH is unsafe here.
-   // Risks booting different and wrong core if core doesn't exist anymore.
-   strlcpy(g_settings.libretro, core_path, sizeof(g_settings.libretro));
-
-   if (path)
-      rgui->load_no_rom = false;
-   else
-      rgui->load_no_rom = true;
-
-   rarch_environment_cb(RETRO_ENVIRONMENT_EXEC, (void*)path);
-
-#if defined(HAVE_DYNAMIC)
-   menu_update_system_info(rgui, NULL);
-#endif
+   rom_history_get_index(rgui->history, game_index, &path, &core_path, &core_name);
+   rgui->load_no_rom = path ? false : true;
+   /* load it as a normal game */
+   load_menu_game_new_core(path, core_path);
 }
 
 static void menu_init_history(void)
@@ -821,17 +837,6 @@ static void menu_flush_stack_type(void *data, unsigned final_type)
    }
 }
 
-void load_menu_game_new_core(void)
-{
-#ifdef HAVE_DYNAMIC
-   menu_update_system_info(rgui, &rgui->load_no_rom);
-   g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
-#else
-   rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)g_settings.libretro);
-   rarch_environment_cb(RETRO_ENVIRONMENT_EXEC, (void*)g_extern.fullpath);
-#endif
-}
-
 static int menu_iterate_func(void *data, void *video_data, unsigned action)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
@@ -952,10 +957,8 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
 #endif
             if (menu_type == RGUI_SETTINGS_DEFERRED_CORE)
             {
-               // FIXME: Add for consoles.
-               strlcpy(g_settings.libretro, path, sizeof(g_settings.libretro));
-               strlcpy(g_extern.fullpath, rgui->deferred_path, sizeof(g_extern.fullpath));
-               load_menu_game_new_core();
+               if (!load_menu_game_new_core(rgui->deferred_path, path))
+                  menu_flush_stack_type(rgui, RGUI_SETTINGS);
                rgui->msg_force = true;
                ret = -1;
             }
@@ -1099,24 +1102,14 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                   if (rgui->core_info)
                      core_info_list_get_supported_cores(rgui->core_info, rgui->deferred_path, &info, &supported);
 
-                  if (supported == 1) // Can make a decision right now.
+                  if (supported == 1) /* Can make a decision right now. */
                   {
-                     strlcpy(g_extern.fullpath, rgui->deferred_path, sizeof(g_extern.fullpath));
-                     strlcpy(g_settings.libretro, info->path, sizeof(g_settings.libretro));
-
-#ifdef HAVE_DYNAMIC
-                     menu_update_system_info(rgui, &rgui->load_no_rom);
-                     g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
-#else
-                     rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)g_settings.libretro);
-                     rarch_environment_cb(RETRO_ENVIRONMENT_EXEC, (void*)g_extern.fullpath);
-#endif
-
-                     menu_flush_stack_type(rgui, RGUI_SETTINGS);
+                     if (!load_menu_game_new_core(rgui->deferred_path, info->path))
+                        menu_flush_stack_type(rgui, RGUI_SETTINGS);
                      rgui->msg_force = true;
                      ret = -1;
                   }
-                  else // Present a selection.
+                  else /* Present a selection. */
                   {
                      file_list_push(rgui->menu_stack, rgui->libretro_dir, RGUI_SETTINGS_DEFERRED_CORE, rgui->selection_ptr);
                      menu_clear_navigation(rgui);

@@ -459,93 +459,6 @@ static void get_environment_settings(int argc, char *argv[], void *data)
 
 }
 
-static void process_pending_intent(void *data)
-{
-#if 0
-   RARCH_LOG("process_pending_intent.\n");
-   JNIEnv *env;
-   struct android_app* android_app = (struct android_app*)data;
-   jstring jstr = NULL;
-   bool valschanged = false;
-   bool startgame = false;
-
-   if (!android_app)
-      return;
-
-   env = jni_thread_getenv();
-   if (!env)
-      return;
-
-   // ROM
-   jstr = (*env)->CallObjectMethod(env, android_app->activity->clazz, android_app->getPendingIntentFullPath);
-   JNI_EXCEPTION(env);
-   RARCH_LOG("Checking arguments passed from intent...\n");
-   if (android_app->getPendingIntentFullPath && jstr)
-   {
-      const char *argv = (*env)->GetStringUTFChars(env, jstr, 0);
-      strlcpy(g_extern.fullpath, argv, sizeof(g_extern.fullpath));
-      (*env)->ReleaseStringUTFChars(env, jstr, argv);
-
-      valschanged = true;
-      startgame = true;
-      RARCH_LOG("ROM Filename: [%s].\n", g_extern.fullpath);
-   }
-
-   // Config file
-   jstr = (*env)->CallObjectMethod(env, android_app->activity->clazz, android_app->getPendingIntentConfigPath);
-   JNI_EXCEPTION(env);
-   if (android_app->getPendingIntentConfigPath && jstr)
-   {
-      const char *argv = (*env)->GetStringUTFChars(env, jstr, 0);
-      strlcpy(g_extern.config_path, argv, sizeof(g_extern.config_path));
-      (*env)->ReleaseStringUTFChars(env, jstr, argv);
-
-      valschanged = true;
-      RARCH_LOG("Config file: [%s].\n", g_extern.config_path);
-   }
-
-   // Current IME
-   jstr = (*env)->CallObjectMethod(env, android_app->activity->clazz, android_app->getPendingIntentIME);
-   JNI_EXCEPTION(env);
-   if (android_app->getPendingIntentIME && jstr)
-   {
-      const char *argv = (*env)->GetStringUTFChars(env, jstr, 0);
-      strlcpy(android_app->current_ime, argv, sizeof(android_app->current_ime));
-      (*env)->ReleaseStringUTFChars(env, jstr, argv);
-
-      valschanged = true;
-      RARCH_LOG("Current IME: [%s].\n", android_app->current_ime);
-   }
-
-   if (valschanged)
-   {
-      config_load();
-   }
-
-   //LIBRETRO
-   jstr = (*env)->CallObjectMethod(env, android_app->activity->clazz, android_app->getPendingIntentLibretroPath);
-   JNI_EXCEPTION(env);
-   if (android_app->getPendingIntentLibretroPath && jstr)
-   {
-      const char *argv = (*env)->GetStringUTFChars(env, jstr, 0);
-      strlcpy(g_settings.libretro, argv, sizeof(g_settings.libretro));
-      (*env)->ReleaseStringUTFChars(env, jstr, argv);
-   }
-
-   RARCH_LOG("Libretro path: [%s].\n", g_settings.libretro);
-
-   if (startgame)
-   {
-      RARCH_LOG("Starting new game %s...\n", g_extern.fullpath);
-      g_extern.lifecycle_state &= ~(1ULL << MODE_MENU_PREINIT);
-      g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
-      load_menu_game_new_core();
-   }
-
-   CALL_VOID_METHOD(env, android_app->activity->clazz, android_app->clearPendingIntent);
-#endif
-}
-
 static int process_events(void *data)
 {
    //jboolean hasPendingIntent;
@@ -554,16 +467,6 @@ static int process_events(void *data)
 
    if (input_key_pressed_func(RARCH_PAUSE_TOGGLE))
          android_run_events(android_app);
-
-#if 0
-   env = jni_thread_getenv();
-   if (!env)
-      return -1;
-
-   CALL_BOOLEAN_METHOD(env, hasPendingIntent, android_app->activity->clazz, android_app->hasPendingIntent);
-   if (hasPendingIntent)
-      process_pending_intent(android_app);
-#endif
 
    return 0;
 }
