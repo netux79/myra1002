@@ -265,13 +265,15 @@ static void rgui_render(void *data, void *video_data)
       snprintf(title, sizeof(title), "DISK APPEND %s", dir);
    else if (menu_type == RGUI_SETTINGS_VIDEO_OPTIONS)
       strlcpy(title, "VIDEO OPTIONS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_INPUT_OPTIONS)
+   else if (menu_type == RGUI_SETTINGS_INPUT_OPTIONS ||
+         menu_type == RGUI_SETTINGS_CUSTOM_BIND)
       strlcpy(title, "INPUT OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_OVERLAY_OPTIONS)
       strlcpy(title, "OVERLAY OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
       strlcpy(title, "PATH OPTIONS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_OPTIONS)
+   else if (menu_type == RGUI_SETTINGS_OPTIONS ||
+         menu_type == RGUI_HELP_SCREEN)
       strlcpy(title, "SETTINGS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_DRIVERS)
       strlcpy(title, "DRIVER OPTIONS", sizeof(title));
@@ -295,13 +297,8 @@ static void rgui_render(void *data, void *video_data)
    else if (menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)
       snprintf(title, sizeof(title), "SHADER %s", dir);
 #endif
-   else if ((menu_type == RGUI_SETTINGS_INPUT_OPTIONS) ||
-         (menu_type == RGUI_SETTINGS_PATH_OPTIONS) ||
-         (menu_type == RGUI_SETTINGS_OPTIONS) ||
-         menu_type == RGUI_SETTINGS_CUSTOM_BIND ||
-         menu_type == RGUI_HELP_SCREEN ||
-         menu_type == RGUI_SETTINGS)
-      snprintf(title, sizeof(title), "MENU %s", dir);
+   else if (menu_type == RGUI_SETTINGS)
+      strlcpy(title, PACKAGE_VERSION, sizeof(title));
    else if (menu_type == RGUI_SETTINGS_OPEN_HISTORY)
       strlcpy(title, "LOAD RECENT", sizeof(title));
 #ifdef HAVE_OVERLAY
@@ -309,33 +306,33 @@ static void rgui_render(void *data, void *video_data)
       snprintf(title, sizeof(title), "OVERLAY %s", dir);
 #endif
    else if (menu_type == RGUI_BROWSER_DIR_PATH)
-      snprintf(title, sizeof(title), "BROWSER DIR %s", dir);
+      snprintf(title, sizeof(title), "GAMES PATH %s", dir);
+   else if (menu_type == RGUI_LIBRETRO_DIR_PATH)
+      snprintf(title, sizeof(title), "CORE PATH %s", dir);
+   else if (menu_type == RGUI_LIBRETRO_INFO_DIR_PATH)
+      snprintf(title, sizeof(title), "CORE INFO PATH %s", dir);
 #ifdef HAVE_SCREENSHOTS
    else if (menu_type == RGUI_SCREENSHOT_DIR_PATH)
-      snprintf(title, sizeof(title), "SCREENSHOT DIR %s", dir);
+      snprintf(title, sizeof(title), "SCREENSHOT PATH %s", dir);
 #endif
    else if (menu_type == RGUI_SHADER_DIR_PATH)
-      snprintf(title, sizeof(title), "SHADER DIR %s", dir);
+      snprintf(title, sizeof(title), "SHADER PATH %s", dir);
    else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
-      snprintf(title, sizeof(title), "SAVESTATE DIR %s", dir);
-#ifdef HAVE_DYNAMIC
-   else if (menu_type == RGUI_LIBRETRO_DIR_PATH)
-      snprintf(title, sizeof(title), "LIBRETRO DIR %s", dir);
-#endif
+      snprintf(title, sizeof(title), "SAVESTATE PATH %s", dir);
    else if (menu_type == RGUI_CONFIG_DIR_PATH)
-      snprintf(title, sizeof(title), "CONFIG DIR %s", dir);
+      snprintf(title, sizeof(title), "CONFIG PATH %s", dir);
    else if (menu_type == RGUI_SAVEFILE_DIR_PATH)
-      snprintf(title, sizeof(title), "SAVEFILE DIR %s", dir);
+      snprintf(title, sizeof(title), "SAVEFILE PATH %s", dir);
 #ifdef HAVE_OVERLAY
    else if (menu_type == RGUI_OVERLAY_DIR_PATH)
-      snprintf(title, sizeof(title), "OVERLAY DIR %s", dir);
+      snprintf(title, sizeof(title), "OVERLAY PATH %s", dir);
 #endif
 #ifndef RARCH_CONSOLE
    else if (menu_type == RGUI_AUTOCONF_DIR_PATH)
-      snprintf(title, sizeof(title), "AUTOCONFIG DIR %s", dir);
+      snprintf(title, sizeof(title), "AUTOCONFIG PATH %s", dir);
 #endif
    else if (menu_type == RGUI_SYSTEM_DIR_PATH)
-      snprintf(title, sizeof(title), "SYSTEM DIR %s", dir);
+      snprintf(title, sizeof(title), "SYSTEM PATH %s", dir);
    else
    {
       if (rgui->defer_core)
@@ -362,7 +359,7 @@ static void rgui_render(void *data, void *video_data)
    if (!core_name)
       core_name = "No Core";
 
-   snprintf(title_msg, sizeof(title_msg), "%s - %s", PACKAGE_VERSION, core_name);
+   snprintf(title_msg, sizeof(title_msg), "Core: %s", core_name);
    blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, title_msg, true);
 
    /* get the time */
