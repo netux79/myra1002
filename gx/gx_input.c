@@ -36,18 +36,16 @@ typedef struct gx_input
 
 extern const rarch_joypad_driver_t gx_joypad;
 
-static bool g_menu;
+static bool gx_reset_btn;
 #ifdef HW_RVL
-static bool g_quit;
-
-static void gx_power_callback(void)
+static void gx_power_cb(void)
 {
-   g_quit = true;
+   g_extern.lifecycle_state |= (1ULL << RARCH_QUIT_KEY);
 }
 #endif
 static void gx_reset_cb(void)
 {
-   g_menu = true;
+   gx_reset_btn = true;
 }
 
 static bool gx_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])
@@ -258,7 +256,7 @@ static void *gx_input_init(void)
       return NULL;
 
    SYS_SetResetCallback(gx_reset_cb);
-   SYS_SetPowerCallback(gx_power_callback);
+   SYS_SetPowerCallback(gx_power_cb);
 
    gxpad_init();
 
@@ -322,21 +320,20 @@ static void gx_input_poll(void *data)
 	  }
    }
 
-   uint64_t *state_p1 = &gx->pad_state[0];
-
-   /* check if the user press the Wii's reset button, it works as the HOME button */
-   *state_p1 |= g_menu ? (1ULL << GX_GXPAD_HOME) : 0;
-   /* clear the reset Wii button flag */
-   g_menu = false;
-
    /* poll mouse & lightgun data */
    gx_input_poll_ml(gx);
 
-   /* Check if we need to get into the menu */
-   uint64_t *lifecycle_state = &g_extern.lifecycle_state;
-   *lifecycle_state &= ~((1ULL << RARCH_MENU_TOGGLE));
-
-   if (*state_p1 & (1ULL << GX_GXPAD_HOME)) *lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+   /* check if the user press the Wii's reset button, it works as the HOME button */
+   if (gx_reset_btn)
+   {
+      gx->pad_state[0] |= (1ULL << GX_GXPAD_HOME);
+      gx_reset_btn = false;/* clear the reset Wii button flag */
+   }
+   
+   if (gx->pad_state[0] & (1ULL << GX_GXPAD_HOME))
+      g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+   else
+      g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_input_key_pressed(void *data, int key)

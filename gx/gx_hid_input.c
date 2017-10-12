@@ -54,17 +54,16 @@ typedef struct gx_hid_input
 
 extern const rarch_joypad_driver_t gx_hid_joypad;
 
-static bool g_menu;
-static bool g_quit;
-
-static void gx_hid_power_callback(void)
+static bool gx_reset_btn;
+#ifdef HW_RVL
+static void gx_hid_power_cb(void)
 {
-   g_quit = true;
+   g_extern.lifecycle_state |= (1ULL << RARCH_QUIT_KEY);   
 }
-
+#endif
 static void gx_hid_reset_cb(void)
 {
-   g_menu = true;
+   gx_reset_btn = true;
 }
 
 static bool gx_hid_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])
@@ -281,7 +280,7 @@ static void *gx_hid_input_init(void)
    WPAD_SetDataFormat(WPAD_CHAN_0, WPAD_FMT_BTNS_ACC_IR); /* read IR info from wiimote 1 */
 
    SYS_SetResetCallback(gx_hid_reset_cb);
-   SYS_SetPowerCallback(gx_hid_power_callback);
+   SYS_SetPowerCallback(gx_hid_power_cb);
 
    usbpad_init(NUM_PADS, true);
 
@@ -384,25 +383,23 @@ static void gx_hid_input_poll(void *data)
    *state_p1 |= (down & WPAD_BUTTON_PLUS) ? (1ULL << GX_HID_WIIMOTE_PLUS) : 0;
    *state_p1 |= (down & WPAD_BUTTON_MINUS) ? (1ULL << GX_HID_WIIMOTE_MINUS) : 0;
    /* check also if the user press the Wii's reset button, it works as the HOME button */
-   *state_p1 |= (down & WPAD_BUTTON_HOME) || g_menu ? (1ULL << GX_HID_WIIMOTE_HOME) : 0;
+   *state_p1 |= (down & WPAD_BUTTON_HOME) || gx_reset_btn ? (1ULL << GX_HID_WIIMOTE_HOME) : 0;
    // rotated d-pad on Wiimote
    *state_p1 |= (down & WPAD_BUTTON_UP) ? (1ULL << GX_HID_WIIMOTE_LEFT) : 0;
    *state_p1 |= (down & WPAD_BUTTON_DOWN) ? (1ULL << GX_HID_WIIMOTE_RIGHT) : 0;
    *state_p1 |= (down & WPAD_BUTTON_LEFT) ? (1ULL << GX_HID_WIIMOTE_DOWN) : 0;
    *state_p1 |= (down & WPAD_BUTTON_RIGHT) ? (1ULL << GX_HID_WIIMOTE_UP) : 0;
 
-   /* clear the reset Wii button flag */
-   g_menu = false;
-
    /* poll mouse & lightgun data */
    gx_hid_input_poll_ml(gx);
 
-   /* Check if we need to get into the menu */
-   uint64_t *lifecycle_state = &g_extern.lifecycle_state;
-   *lifecycle_state &= ~((1ULL << RARCH_MENU_TOGGLE));
-
    if (*state_p1 & ((1ULL << GX_HID_WIIMOTE_HOME) | (1ULL << GX_HID_USBPAD_HOME)))
-      *lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+   {
+      g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+      gx_reset_btn = false;/* clear the reset Wii button flag */
+   }
+   else
+      g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_hid_input_key_pressed(void *data, int key)
