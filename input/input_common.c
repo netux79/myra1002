@@ -1131,7 +1131,7 @@ void input_config_autoconfigure_joypad(unsigned index, const char *name, const c
 #endif
 }
 
-void input_get_bind_string(char *buf, const struct retro_keybind *bind, size_t size)
+void input_get_bind_string(char *buf, const struct retro_keybind *bind, unsigned port, size_t size)
 {
    *buf = '\0';
    if (bind->joykey != NO_BTN)
@@ -1141,7 +1141,7 @@ void input_get_bind_string(char *buf, const struct retro_keybind *bind, size_t s
          struct platform_bind key_label;
          strlcpy(key_label.desc, "Unknown", sizeof(key_label.desc));
          key_label.joykey = bind->joykey;
-         driver.input->set_keybinds(&key_label, 0, 0, 0, (1ULL << KEYBINDS_ACTION_GET_BIND_LABEL));
+         driver.input->set_keybinds(&key_label, 0, port, 0, (1ULL << KEYBINDS_ACTION_GET_BIND_LABEL));
          snprintf(buf, size, "%s (btn) ", key_label.desc);
       }
       else if (GET_HAT_DIR(bind->joykey))

@@ -55,7 +55,9 @@ unsigned menu_type_is(unsigned type)
       type == RGUI_SETTINGS_OVERLAY_OPTIONS ||
       type == RGUI_SETTINGS_OPTIONS ||
       type == RGUI_SETTINGS_DRIVERS ||
-      (type == RGUI_SETTINGS_INPUT_OPTIONS);
+      type == RGUI_SETTINGS_BIND_PLAYER_KEYS ||
+      type == RGUI_SETTINGS_BIND_HOTKEYS ||
+      type == RGUI_SETTINGS_INPUT_OPTIONS;
 
    if (type_found)
    {
@@ -907,8 +909,10 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             break;
          }
       case RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE:
-         if (action == RGUI_ACTION_OK)
+         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
             g_settings.input.autodetect_enable = !g_settings.input.autodetect_enable;
+         else
+            g_settings.input.autodetect_enable = input_autodetect_enable;
          break;
       case RGUI_SETTINGS_CUSTOM_BIND_ALL:
          if (action == RGUI_ACTION_OK)
@@ -935,31 +939,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             }
          }
          break;
-      case RGUI_SETTINGS_BIND_UP:
-      case RGUI_SETTINGS_BIND_DOWN:
-      case RGUI_SETTINGS_BIND_LEFT:
-      case RGUI_SETTINGS_BIND_RIGHT:
-      case RGUI_SETTINGS_BIND_A:
-      case RGUI_SETTINGS_BIND_B:
-      case RGUI_SETTINGS_BIND_X:
-      case RGUI_SETTINGS_BIND_Y:
-      case RGUI_SETTINGS_BIND_START:
-      case RGUI_SETTINGS_BIND_SELECT:
-      case RGUI_SETTINGS_BIND_L:
-      case RGUI_SETTINGS_BIND_R:
-      case RGUI_SETTINGS_BIND_L2:
-      case RGUI_SETTINGS_BIND_R2:
-      case RGUI_SETTINGS_BIND_L3:
-      case RGUI_SETTINGS_BIND_R3:
-      case RGUI_SETTINGS_BIND_TURBO_ENABLE:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_MINUS:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_MINUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_MINUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
       case RGUI_SETTINGS_BIND_FAST_FORWARD_KEY:
       case RGUI_SETTINGS_BIND_FAST_FORWARD_HOLD_KEY:
       case RGUI_SETTINGS_BIND_LOAD_STATE_KEY:
@@ -986,7 +965,33 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_DISK_EJECT_TOGGLE:
       case RGUI_SETTINGS_BIND_DISK_NEXT:
       case RGUI_SETTINGS_BIND_GRAB_MOUSE_TOGGLE:
-      case RGUI_SETTINGS_BIND_MENU_TOGGLE:
+      case RGUI_SETTINGS_BIND_MENU_TOGGLE:   
+         port = 0; /* all the hotkeys always mapped to first port */
+      case RGUI_SETTINGS_BIND_UP:
+      case RGUI_SETTINGS_BIND_DOWN:
+      case RGUI_SETTINGS_BIND_LEFT:
+      case RGUI_SETTINGS_BIND_RIGHT:
+      case RGUI_SETTINGS_BIND_A:
+      case RGUI_SETTINGS_BIND_B:
+      case RGUI_SETTINGS_BIND_X:
+      case RGUI_SETTINGS_BIND_Y:
+      case RGUI_SETTINGS_BIND_START:
+      case RGUI_SETTINGS_BIND_SELECT:
+      case RGUI_SETTINGS_BIND_L:
+      case RGUI_SETTINGS_BIND_R:
+      case RGUI_SETTINGS_BIND_L2:
+      case RGUI_SETTINGS_BIND_R2:
+      case RGUI_SETTINGS_BIND_L3:
+      case RGUI_SETTINGS_BIND_R3:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_MINUS:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_MINUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_MINUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
+      case RGUI_SETTINGS_BIND_TURBO_ENABLE:      
          if (driver.input->set_keybinds && !driver.input->get_joypad_driver)
          {
             unsigned keybind_action = KEYBINDS_ACTION_NONE;
@@ -994,7 +999,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (action == RGUI_ACTION_START)
                keybind_action = (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND);
 
-            // FIXME: The array indices here look totally wrong ... Fixed it so it looks kind of sane for now.
             if (keybind_action != KEYBINDS_ACTION_NONE)
                driver.input->set_keybinds(driver.input_data, g_settings.input.device[port], port,
                      setting - RGUI_SETTINGS_BIND_BEGIN, keybind_action);
@@ -1752,6 +1756,8 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_DRIVERS:
       case RGUI_SETTINGS_CUSTOM_BIND_ALL:
       case RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL:
+      case RGUI_SETTINGS_BIND_HOTKEYS:
+      case RGUI_SETTINGS_BIND_PLAYER_KEYS:
          strlcpy(type_str, "...", type_str_size);
          break;
 #ifdef HAVE_SCALERS_BUILTIN
@@ -1830,31 +1836,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE:
          strlcpy(type_str, g_settings.input.autodetect_enable ? "ON" : "OFF", type_str_size);
          break;
-      case RGUI_SETTINGS_BIND_UP:
-      case RGUI_SETTINGS_BIND_DOWN:
-      case RGUI_SETTINGS_BIND_LEFT:
-      case RGUI_SETTINGS_BIND_RIGHT:
-      case RGUI_SETTINGS_BIND_A:
-      case RGUI_SETTINGS_BIND_B:
-      case RGUI_SETTINGS_BIND_X:
-      case RGUI_SETTINGS_BIND_Y:
-      case RGUI_SETTINGS_BIND_START:
-      case RGUI_SETTINGS_BIND_SELECT:
-      case RGUI_SETTINGS_BIND_L:
-      case RGUI_SETTINGS_BIND_R:
-      case RGUI_SETTINGS_BIND_L2:
-      case RGUI_SETTINGS_BIND_R2:
-      case RGUI_SETTINGS_BIND_L3:
-      case RGUI_SETTINGS_BIND_R3:
-      case RGUI_SETTINGS_BIND_TURBO_ENABLE:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_MINUS:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_MINUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_MINUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
-      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
       case RGUI_SETTINGS_BIND_FAST_FORWARD_KEY:
       case RGUI_SETTINGS_BIND_FAST_FORWARD_HOLD_KEY:
       case RGUI_SETTINGS_BIND_LOAD_STATE_KEY:
@@ -1882,7 +1863,35 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_DISK_NEXT:
       case RGUI_SETTINGS_BIND_GRAB_MOUSE_TOGGLE:
       case RGUI_SETTINGS_BIND_MENU_TOGGLE:
-         input_get_bind_string(type_str, &g_settings.input.binds[rgui->current_pad][type - RGUI_SETTINGS_BIND_BEGIN], type_str_size);
+         input_get_bind_string(type_str, &g_settings.input.binds[0][type - RGUI_SETTINGS_BIND_BEGIN], 0, type_str_size);
+         break;    
+      case RGUI_SETTINGS_BIND_UP:
+      case RGUI_SETTINGS_BIND_DOWN:
+      case RGUI_SETTINGS_BIND_LEFT:
+      case RGUI_SETTINGS_BIND_RIGHT:
+      case RGUI_SETTINGS_BIND_A:
+      case RGUI_SETTINGS_BIND_B:
+      case RGUI_SETTINGS_BIND_X:
+      case RGUI_SETTINGS_BIND_Y:
+      case RGUI_SETTINGS_BIND_START:
+      case RGUI_SETTINGS_BIND_SELECT:
+      case RGUI_SETTINGS_BIND_L:
+      case RGUI_SETTINGS_BIND_R:
+      case RGUI_SETTINGS_BIND_L2:
+      case RGUI_SETTINGS_BIND_R2:
+      case RGUI_SETTINGS_BIND_L3:
+      case RGUI_SETTINGS_BIND_R3:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_X_MINUS:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_LEFT_Y_MINUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_MINUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
+      case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
+      case RGUI_SETTINGS_BIND_TURBO_ENABLE:
+         input_get_bind_string(type_str, &g_settings.input.binds[rgui->current_pad][type - RGUI_SETTINGS_BIND_BEGIN], 
+               rgui->current_pad, type_str_size);
          break;
       case RGUI_SETTINGS_AUDIO_VOLUME:
          snprintf(type_str, type_str_size, "%.1f dB", g_extern.audio_data.volume_db);

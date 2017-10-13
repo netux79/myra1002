@@ -265,9 +265,14 @@ static void rgui_render(void *data, void *video_data)
       snprintf(title, sizeof(title), "DISK APPEND %s", dir);
    else if (menu_type == RGUI_SETTINGS_VIDEO_OPTIONS)
       strlcpy(title, "VIDEO OPTIONS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_INPUT_OPTIONS ||
-         menu_type == RGUI_SETTINGS_CUSTOM_BIND)
+   else if (menu_type == RGUI_SETTINGS_INPUT_OPTIONS)
       strlcpy(title, "INPUT OPTIONS", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_CUSTOM_BIND)
+      strlcpy(title, "BIND KEY", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS)
+      strlcpy(title, "BIND PLAYER KEYS", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_BIND_HOTKEYS)
+      strlcpy(title, "BIND HOTKEYS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_OVERLAY_OPTIONS)
       strlcpy(title, "OVERLAY OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
@@ -387,7 +392,7 @@ static void rgui_render(void *data, void *video_data)
       char type_str[256];
 
       unsigned w = 19;
-      if (menu_type == RGUI_SETTINGS_INPUT_OPTIONS || menu_type == RGUI_SETTINGS_CUSTOM_BIND)
+      if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS || RGUI_SETTINGS_BIND_HOTKEYS || menu_type == RGUI_SETTINGS_CUSTOM_BIND)
          w = 21;
       else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
          w = 24;

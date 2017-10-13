@@ -651,7 +651,7 @@ static int menu_start_screen_iterate(void *data, void *video_data, unsigned acti
       else
       {
          const struct retro_keybind *bind = &g_settings.input.binds[0][binds[i]];
-         input_get_bind_string(desc[i], bind, sizeof(desc[i]));
+         input_get_bind_string(desc[i], bind, 0, sizeof(desc[i]));
       }
    }
 
@@ -811,6 +811,8 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             || menu_type == RGUI_SETTINGS_SAVE_OPTIONS
             || menu_type == RGUI_SETTINGS_VIDEO_OPTIONS
             || menu_type == RGUI_SETTINGS_SHADER_OPTIONS
+            || menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS
+            || menu_type == RGUI_SETTINGS_BIND_HOTKEYS
             )
          menu_populate_entries(rgui, menu_type);
       else
@@ -1479,7 +1481,7 @@ static void menu_build_scroll_indices(void *data, file_list_t *buf)
 void menu_populate_entries(void *data, unsigned menu_type)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
-   unsigned i, last;
+   unsigned i;
    char tmp[256];
    switch (menu_type)
    {
@@ -1724,18 +1726,26 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
          file_list_clear(rgui->selection_buf);
+         file_list_push(rgui->selection_buf, "Autoconfig Buttons [G]", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);
+         file_list_push(rgui->selection_buf, "Bind Hotkeys", RGUI_SETTINGS_BIND_HOTKEYS, 0);
+         break;
+      case RGUI_SETTINGS_BIND_PLAYER_KEYS:
+         file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Player", RGUI_SETTINGS_BIND_PLAYER, 0);
          file_list_push(rgui->selection_buf, "Device", RGUI_SETTINGS_BIND_DEVICE, 0);
          file_list_push(rgui->selection_buf, "Device Type", RGUI_SETTINGS_BIND_DEVICE_TYPE, 0);
          file_list_push(rgui->selection_buf, "Analog D-pad Mode", RGUI_SETTINGS_BIND_ANALOG_MODE, 0);
-         file_list_push(rgui->selection_buf, "Autoconfig Buttons [G]", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
-
          file_list_push(rgui->selection_buf, "Bind All Buttons", RGUI_SETTINGS_CUSTOM_BIND_ALL, 0);
          file_list_push(rgui->selection_buf, "Default All Buttons", RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL, 0);
-         last = (driver.input && driver.input->set_keybinds && !driver.input->get_joypad_driver) ? RGUI_SETTINGS_BIND_R3 : RGUI_SETTINGS_BIND_MENU_TOGGLE;
-         for (i = RGUI_SETTINGS_BIND_BEGIN; i <= last; i++)
+         for (i = RGUI_SETTINGS_BIND_BEGIN; i <= RGUI_SETTINGS_BIND_TURBO_ENABLE; i++)
             file_list_push(rgui->selection_buf, input_config_bind_map[i - RGUI_SETTINGS_BIND_BEGIN].desc, i, 0);
          break;
+      case RGUI_SETTINGS_BIND_HOTKEYS:
+         file_list_clear(rgui->selection_buf);
+         for (i = RGUI_SETTINGS_BIND_FAST_FORWARD_KEY; i <= RGUI_SETTINGS_BIND_MENU_TOGGLE; i++)
+            file_list_push(rgui->selection_buf, input_config_bind_map[i - RGUI_SETTINGS_BIND_BEGIN].desc, i, 0);
+         break;                  
       case RGUI_SETTINGS_AUDIO_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Mute Audio", RGUI_SETTINGS_AUDIO_MUTE, 0);
