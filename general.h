@@ -66,7 +66,7 @@
 extern "C" {
 #endif
 
-#define MAX_PLAYERS 8
+#define MAX_PLAYERS 4
 
 enum menu_enums
 {
@@ -80,7 +80,6 @@ enum menu_enums
    MODE_MENU_PREINIT,
    MODE_EXITSPAWN,
    MODE_EXITSPAWN_START_GAME,
-   MODE_CLEAR_INPUT,
 };
 
 enum sound_mode_enums

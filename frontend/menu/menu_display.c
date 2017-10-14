@@ -556,18 +556,22 @@ static void rgui_free(void *data)
 static int rgui_input_postprocess(void *data, uint64_t old_state)
 {
    (void)data;
+   (void)old_state;
 
-   int ret = 0;
-
-   if ((rgui->trigger_state & (1ULL << RARCH_MENU_TOGGLE)) &&
-         g_extern.main_is_init &&
-         !g_extern.libretro_dummy)
+   /* check if we need to return to game */
+   if ((rgui->trigger_state & (1ULL << RARCH_MENU_TOGGLE)) 
+         && g_extern.main_is_init && !g_extern.libretro_dummy)
    {
       g_extern.lifecycle_state |= (1ULL << MODE_GAME);
-      ret = -1;
+      return 1;
    }
+   
+   /* Check if we need to exit */
+   if ((rgui->trigger_state & (1ULL << RARCH_QUIT_KEY))
+         || !video_alive_func())
+      return 1;
 
-   return ret;
+   return 0;
 }
 
 void rgui_set_texture(void *data, void *video_data, bool enable)

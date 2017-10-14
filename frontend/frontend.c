@@ -130,17 +130,6 @@ int main_entry_iterate(signature(), args_type() args)
 #endif
          return 1;
    }
-   else if (g_extern.lifecycle_state & (1ULL << MODE_CLEAR_INPUT))
-   {
-      rarch_input_poll();
-      if (!menu_input())
-      {
-         // Restore libretro keyboard callback.
-         g_extern.system.key_event = key_event;
-
-         g_extern.lifecycle_state &= ~(1ULL << MODE_CLEAR_INPUT);
-      }
-   }
    else if (g_extern.lifecycle_state & (1ULL << MODE_LOAD_GAME))
    {
       load_menu_game_prepare(driver.video_data);
@@ -203,7 +192,7 @@ int main_entry_iterate(signature(), args_type() args)
 #ifdef GEKKO
          g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
 #else
-		 g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
+         g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
 #endif
    }
 #ifdef HAVE_MENU
@@ -257,7 +246,8 @@ int main_entry_iterate(signature(), args_type() args)
             g_extern.audio_active = false;
          }
 
-         g_extern.lifecycle_state |= (1ULL << MODE_CLEAR_INPUT);
+         /* Restore libretro keyboard callback. */
+         g_extern.system.key_event = key_event;
       }
    }
 #endif

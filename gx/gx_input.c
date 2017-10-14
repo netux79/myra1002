@@ -23,7 +23,7 @@
 #include "../driver.h"
 #include "../libretro.h"
 
-#define GX_NUM_PADS 8
+#define GX_NUM_PADS MAX_PLAYERS
 #define GX_JS_THRESHOLD (40 * 256)
 
 typedef struct gx_input

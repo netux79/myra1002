@@ -565,6 +565,7 @@ uint64_t menu_input(void)
    }
 
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
+   input_state |= input_key_pressed_func(RARCH_QUIT_KEY) ? (1ULL << RARCH_QUIT_KEY) : 0;
 
    input_pop_analog_dpad((struct retro_keybind*)binds[0]);
    for (i = 0; i < MAX_PLAYERS; i++)
@@ -1194,17 +1195,8 @@ bool menu_iterate(void *video_data)
 #endif
    rarch_check_fullscreen();
 
-   // video_data can have changed here ...
-   video_data = driver.video_data;
-
-   if (input_key_pressed_func(RARCH_QUIT_KEY) || !video_alive_func())
-   {
-      g_extern.lifecycle_state |= (1ULL << MODE_GAME);
-      goto deinit;
-   }
-
    input_state = menu_input();
-   
+
    if (rgui->do_held)
    {
       if (!first_held)
@@ -1260,9 +1252,6 @@ bool menu_iterate(void *video_data)
 
    if (menugui_driver)
       input_entry_ret = menu_iterate_func(rgui, video_data, action);
-
-   // video_data can have changed here ...
-   video_data = driver.video_data;
 
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
       driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, MENU_TEXTURE_FULLSCREEN);
