@@ -405,7 +405,7 @@ void load_menu_game_prepare_dummy(void)
 
    g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
    g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
-   g_extern.system.shutdown = false;
+   g_extern.system.core_shutdown = false;
 }
 
 bool load_menu_game(void)
@@ -1176,10 +1176,6 @@ bool menu_iterate(void *video_data)
    static bool initial_held = true;
    static bool first_held = false;
    uint64_t input_state = 0;
-   int32_t input_entry_ret, ret;
-
-   input_entry_ret = 0;
-   ret = 0;
 
    if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
    {
@@ -1251,7 +1247,8 @@ bool menu_iterate(void *video_data)
       action = RGUI_ACTION_START;
 
    if (menugui_driver)
-      input_entry_ret = menu_iterate_func(rgui, video_data, action);
+      if (menu_iterate_func(rgui, video_data, action))
+         return false;
 
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
       driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, MENU_TEXTURE_FULLSCREEN);
@@ -1272,15 +1269,10 @@ bool menu_iterate(void *video_data)
             MENU_TEXTURE_FULLSCREEN);
 
    if (menugui_driver && menugui_driver->input_postprocess)
-      ret = menugui_driver->input_postprocess(rgui, rgui->old_input_state);
-
-   if (ret || input_entry_ret)
-      goto deinit;
+      if (menugui_driver->input_postprocess(rgui, rgui->old_input_state))
+         return false;
 
    return true;
-
-deinit:
-   return false;
 }
 #endif
 

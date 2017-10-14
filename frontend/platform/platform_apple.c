@@ -42,7 +42,7 @@ void apple_event_basic_command(enum basic_event_t action)
          rarch_save_state();
          return;
       case QUIT:
-         g_extern.system.shutdown = true;
+         g_extern.system.core_shutdown = true;
          return;
    }
 }

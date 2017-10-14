@@ -2355,7 +2355,7 @@ bool rarch_main_iterate(void)
 #endif
 
    // SHUTDOWN on consoles should exit RetroArch completely.
-   if (g_extern.system.shutdown)
+   if (g_extern.system.core_shutdown)
       return false;
 
    // Time to drop?

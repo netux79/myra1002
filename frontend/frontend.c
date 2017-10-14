@@ -103,12 +103,6 @@ static void rarch_get_environment_console(char *path)
 #define attempt_load_game_push_history false
 #endif
 
-#if defined(RARCH_CONSOLE) || defined(ANDROID)
-#define attempt_load_game_fails (1ULL << MODE_MENU_PREINIT)
-#else
-#define attempt_load_game_fails (1ULL << MODE_EXIT)
-#endif
-
 #if defined(RARCH_CONSOLE) || defined(__APPLE__)
 #define load_dummy_on_core_shutdown false
 #else
@@ -120,7 +114,7 @@ int main_entry_iterate(signature(), args_type() args)
    int i;
    static retro_keyboard_event_t key_event;
 
-   if (g_extern.system.shutdown)
+   if (g_extern.system.core_shutdown)
    {
 #ifdef HAVE_MENU
       // Load dummy core instead of exiting RetroArch completely.
@@ -130,6 +124,12 @@ int main_entry_iterate(signature(), args_type() args)
 #endif
          return 1;
    }
+#if !(defined(RARCH_CONSOLE) || defined(ANDROID))
+   else if (g_extern.lifecycle_state & (1ULL << MODE_EXIT))
+   {
+      return 1;
+   }
+#endif
    else if (g_extern.lifecycle_state & (1ULL << MODE_LOAD_GAME))
    {
       load_menu_game_prepare(driver.video_data);
@@ -144,20 +144,16 @@ int main_entry_iterate(signature(), args_type() args)
       }
       else
       {
-         // If ROM load fails, we exit RetroArch. On console it might make more sense to go back to menu though ...
-         g_extern.lifecycle_state = attempt_load_game_fails;
-
-         if (g_extern.lifecycle_state & (1ULL << MODE_EXIT))
-         {
-            if (frontend_ctx && frontend_ctx->shutdown)
-               frontend_ctx->shutdown(true);
-
-            return 1;
-         }
+         /* If ROM load fails, we exit RetroArch. On console it 
+          * makes more sense to go back to menu though ... */
+#if defined(RARCH_CONSOLE) || defined(ANDROID)         
+         g_extern.lifecycle_state = (1ULL << MODE_MENU_PREINIT);
+#else
+         g_extern.lifecycle_state = (1ULL << MODE_EXIT);
+#endif         
       }
 
       g_extern.lifecycle_state &= ~(1ULL << MODE_LOAD_GAME);
-
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_GAME))
 #ifdef GEKKO
@@ -260,7 +256,7 @@ int main_entry_iterate(signature(), args_type() args)
 void main_exit(args_type() args)
 {
 #ifdef HAVE_MENU
-   g_extern.system.shutdown = false;
+   g_extern.system.core_shutdown = false;
 
    menu_free(driver.video_data);
 

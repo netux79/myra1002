@@ -267,7 +267,7 @@ static void handle_touch_event(NSArray* touches)
    if (apple_use_tv_mode)
    {
       // We force to shutdown so we are able to load a dummy core.
-      g_extern.system.shutdown = true;
+      g_extern.system.core_shutdown = true;
       apple_run_core(nil, 0);
    }
 }

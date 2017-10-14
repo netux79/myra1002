@@ -76,7 +76,9 @@ enum menu_enums
 #endif
    MODE_LOAD_GAME,
    MODE_MENU,
+#if !(defined(RARCH_CONSOLE) || defined(ANDROID))   
    MODE_EXIT,
+#endif
    MODE_MENU_PREINIT,
    MODE_EXITSPAWN,
    MODE_EXITSPAWN_START_GAME,
@@ -318,7 +320,7 @@ struct global
       float aspect_ratio;
 
       unsigned rotation;
-      bool shutdown;
+      bool core_shutdown;
       enum retro_pixel_format pix_fmt;
 
       bool block_extract;
