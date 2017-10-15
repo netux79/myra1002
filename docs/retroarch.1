@@ -157,20 +157,6 @@ If set explicitly here, overrides config file for that port.
 ID is an unsigned number corresponding to the device for a libretro core.
 
 .TP
-\fB--record PATH, -r PATH\fR
-Activates video recording of gameplay into PATH. Using .mkv extension is recommended.
-Codecs used are (FFV1 or H264 RGB lossless (x264))/FLAC, suitable for processing the material further.
-
-.TP
-\fB--bsvplay PATH, -P PATH\fR
-Play back a movie recorded in the .bsv format (bSNES). Cart ROM and movie file need to correspond.
-It also requires to play back with the same libretro backend that was used for recording.
-
-.TP
-\fB--bsvrecord PATH, -R PATH\fR
-Start recording a .bsv video to PATH immediately after startup.
-
-.TP
 \fB--sram-mode MODE, -M MODE\fR
 MODE designates how to handle SRAM.
 The format of the second parameter is {no,}load-{no,}save.

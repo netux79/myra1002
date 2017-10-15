@@ -1425,7 +1425,7 @@ void rarch_reset_drivers(void)
    if (driver.input)
       input_poll_func();
 }
-
+#ifndef RARCH_CONSOLE
 bool rarch_check_fullscreen(void)
 {
    // If we go fullscreen we drop all drivers and reinit to be safe.
@@ -1442,7 +1442,7 @@ bool rarch_check_fullscreen(void)
    was_pressed = pressed;
    return toggle;
 }
-
+#endif
 void rarch_state_slot_increase(void)
 {
    g_extern.state_slot++;
@@ -1693,7 +1693,7 @@ static void check_turbo(void)
       g_extern.turbo_frame_enable[i] =
          input_input_state_func(binds, i, RETRO_DEVICE_JOYPAD, 0, RARCH_TURBO_ENABLE);
 }
-
+#ifndef RARCH_CONSOLE
 static void check_shader_dir(void)
 {
    static bool old_pressed_next;
@@ -1750,7 +1750,7 @@ static void check_shader_dir(void)
    old_pressed_next = pressed_next;
    old_pressed_prev = pressed_prev;
 }
-
+#endif
 void rarch_disk_control_append_image(const char *path)
 {
    const struct retro_disk_control_callback *control = &g_extern.system.disk_control;
@@ -2001,7 +2001,7 @@ void rarch_check_block_hotkey(void)
    driver.block_hotkey = driver.block_input || !input_key_pressed_func(RARCH_ENABLE_HOTKEY);
 }
 
-#ifdef HAVE_OVERLAY
+#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
 void rarch_check_overlay(void)
 {
    if (!driver.overlay)
@@ -2055,14 +2055,18 @@ static void do_state_checks(void)
    check_grab_mouse_toggle();
 #endif
 
-#ifdef HAVE_OVERLAY
+#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
    rarch_check_overlay();
 #endif
 
    check_pause();
    check_oneshot();
 
-   if (rarch_check_fullscreen() && g_extern.is_paused)
+   if (
+#ifndef RARCH_CONSOLE
+   rarch_check_fullscreen() && 
+#endif   
+   g_extern.is_paused)
       rarch_render_cached_frame();
 
    if (g_extern.is_paused && !g_extern.is_oneshot)
@@ -2077,7 +2081,9 @@ static void do_state_checks(void)
    check_rewind();
    check_slowmotion();
 
+#ifndef RARCH_CONSOLE
    check_shader_dir();
+#endif
    check_disk();
 
 #ifdef HAVE_DYLIB

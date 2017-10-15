@@ -503,12 +503,16 @@ void rarch_render_cached_frame(void);
 void rarch_init_msg_queue(void);
 void rarch_deinit_msg_queue(void);
 void rarch_input_poll(void);
+#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
 void rarch_check_overlay(void);
+#endif
 void rarch_check_block_hotkey(void);
 void rarch_init_rewind(void);
 void rarch_deinit_rewind(void);
 void rarch_reset_drivers(void);
+#ifndef RARCH_CONSOLE
 bool rarch_check_fullscreen(void);
+#endif
 void rarch_disk_control_set_eject(bool state, bool log);
 void rarch_disk_control_set_index(unsigned index);
 void rarch_disk_control_append_image(const char *path);

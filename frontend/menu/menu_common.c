@@ -1186,10 +1186,12 @@ bool menu_iterate(void *video_data)
 
    rarch_check_block_hotkey();
    rarch_input_poll();
-#ifdef HAVE_OVERLAY
+#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
    rarch_check_overlay();
 #endif
+#ifndef RARCH_CONSOLE
    rarch_check_fullscreen();
+#endif
 
    input_state = menu_input();
 

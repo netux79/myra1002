@@ -110,29 +110,32 @@ static const struct cmd_map map[] = {
    { "FAST_FORWARD_HOLD",      RARCH_FAST_FORWARD_HOLD_KEY },
    { "LOAD_STATE",             RARCH_LOAD_STATE_KEY },
    { "SAVE_STATE",             RARCH_SAVE_STATE_KEY },
-   { "FULLSCREEN_TOGGLE",      RARCH_FULLSCREEN_TOGGLE_KEY },
    { "QUIT",                   RARCH_QUIT_KEY },
    { "STATE_SLOT_PLUS",        RARCH_STATE_SLOT_PLUS },
    { "STATE_SLOT_MINUS",       RARCH_STATE_SLOT_MINUS },
    { "REWIND",                 RARCH_REWIND },
-   { "MOVIE_RECORD_TOGGLE",    RARCH_MOVIE_RECORD_TOGGLE },
    { "PAUSE_TOGGLE",           RARCH_PAUSE_TOGGLE },
    { "FRAMEADVANCE",           RARCH_FRAMEADVANCE },
    { "RESET",                  RARCH_RESET },
-   { "SHADER_NEXT",            RARCH_SHADER_NEXT },
-   { "SHADER_PREV",            RARCH_SHADER_PREV },
    { "SCREENSHOT",             RARCH_SCREENSHOT },
-   { "DSP_CONFIG",             RARCH_DSP_CONFIG },
    { "MUTE",                   RARCH_MUTE },
    { "NETPLAY_FLIP",           RARCH_NETPLAY_FLIP },
    { "SLOWMOTION",             RARCH_SLOWMOTION },
    { "VOLUME_UP",              RARCH_VOLUME_UP },
    { "VOLUME_DOWN",            RARCH_VOLUME_DOWN },
-   { "OVERLAY_NEXT",           RARCH_OVERLAY_NEXT },
    { "DISK_EJECT_TOGGLE",      RARCH_DISK_EJECT_TOGGLE },
    { "DISK_NEXT",              RARCH_DISK_NEXT },
+#ifndef RARCH_CONSOLE
+   { "FULLSCREEN_TOGGLE",      RARCH_FULLSCREEN_TOGGLE_KEY },
+   { "SHADER_NEXT",            RARCH_SHADER_NEXT },
+   { "SHADER_PREV",            RARCH_SHADER_PREV },
+   { "DSP_CONFIG",             RARCH_DSP_CONFIG },
+   { "OVERLAY_NEXT",           RARCH_OVERLAY_NEXT },
    { "GRAB_MOUSE_TOGGLE",      RARCH_GRAB_MOUSE_TOGGLE },
+#endif
+#ifdef HAVE_MENU
    { "MENU_TOGGLE",            RARCH_MENU_TOGGLE },
+#endif
 };
 
 static bool cmd_set_shader(const char *arg)
