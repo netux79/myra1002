@@ -433,8 +433,7 @@ const input_driver_t input_gx_hid = {
    NULL,
    NULL,
    gx_hid_input_get_capabilities,
-   "gxhid",
-
+   "usb",
    NULL,
    NULL,
    gx_hid_input_get_joypad_driver,

@@ -377,7 +377,7 @@ const input_driver_t input_gx = {
    NULL,
    NULL,
    gx_input_get_capabilities,
-   "gx",
+   "native",
    NULL,
    gx_input_set_rumble,
    gx_input_get_joypad_driver,

@@ -1669,7 +1669,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
             if (g_extern.system.disk_control.get_num_images)
                file_list_push(rgui->selection_buf, "Disks", RGUI_SETTINGS_DISK_OPTIONS, 0);
          }
+#ifndef RARCH_CONSOLE
          file_list_push(rgui->selection_buf, "Drivers", RGUI_SETTINGS_DRIVERS, 0);
+#endif
          file_list_push(rgui->selection_buf, "Help", RGUI_HELP_SCREEN, 0);
          break;
       case RGUI_SETTINGS_DISK_OPTIONS:
@@ -1709,6 +1711,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
          file_list_clear(rgui->selection_buf);
+#ifdef RARCH_CONSOLE
+         file_list_push(rgui->selection_buf, "Input Type (Restart) [G]", RGUI_SETTINGS_DRIVER_INPUT, 0);
+#endif
          file_list_push(rgui->selection_buf, "All P. Control Menu [G]", RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);

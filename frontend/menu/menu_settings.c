@@ -1143,7 +1143,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_DRIVER_INPUT:
          if (action == RGUI_ACTION_LEFT)
             find_prev_input_driver();
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
             find_next_input_driver();
          break;
 
@@ -1588,6 +1588,10 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_DRIVER_INPUT:
          strlcpy(type_str, g_settings.input.driver, type_str_size);
+#ifdef RARCH_CONSOLE
+         /* Convert to uppercase */
+         for(int i = 0; type_str[i] != '\0'; i++ ) type_str[i] = toupper(type_str[i]);
+#endif         
          break;
       case RGUI_SETTINGS_VIDEO_REFRESH_RATE:
             snprintf(type_str, type_str_size, "%3.2f", g_settings.video.refresh_rate);

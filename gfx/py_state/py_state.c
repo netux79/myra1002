@@ -83,10 +83,6 @@ static const struct retro_keybind *py_binds[MAX_PLAYERS] = {
    g_settings.input.binds[1],
    g_settings.input.binds[2],
    g_settings.input.binds[3],
-   g_settings.input.binds[4],
-   g_settings.input.binds[5],
-   g_settings.input.binds[6],
-   g_settings.input.binds[7],
 };
 
 static PyObject *py_read_input(PyObject *self, PyObject *args)
