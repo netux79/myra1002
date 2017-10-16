@@ -392,7 +392,7 @@ static void rgui_render(void *data, void *video_data)
       char type_str[256];
 
       unsigned w = 19;
-      if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS || RGUI_SETTINGS_BIND_HOTKEYS || menu_type == RGUI_SETTINGS_CUSTOM_BIND)
+      if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS || menu_type == RGUI_SETTINGS_BIND_HOTKEYS || menu_type == RGUI_SETTINGS_CUSTOM_BIND)
          w = 21;
       else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
          w = 24;

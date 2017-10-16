@@ -520,7 +520,7 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index, unsig
 
 #ifdef HAVE_OVERLAY
    if (device == RETRO_DEVICE_JOYPAD && port == 0)
-      res |= driver.overlay_state.buttons & (UINT64_C(1) << id) ? 1 : 0;
+      res |= driver.overlay_state.buttons & (1ULL << id) ? 1 : 0;
    else if (device == RETRO_DEVICE_KEYBOARD && port == 0 && id < RETROK_LAST)
       res |= OVERLAY_GET_KEY(&driver.overlay_state, id) ? 1 : 0;
    else if (device == RETRO_DEVICE_ANALOG && port == 0)

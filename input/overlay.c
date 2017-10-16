@@ -258,10 +258,10 @@ static bool input_overlay_load_desc(input_overlay_t *ol, config_file_t *conf, st
       for (tmp = strtok_r(key, "|", &save); tmp; tmp = strtok_r(NULL, "|", &save))
       {
          if (strcmp(tmp, "nul") != 0)
-            desc->key_mask |= UINT64_C(1) << input_translate_str_to_bind_id(tmp);
+            desc->key_mask |= 1ULL << input_translate_str_to_bind_id(tmp);
       }
 #ifndef RARCH_CONSOLE
-      if (desc->key_mask & (UINT64_C(1) << RARCH_OVERLAY_NEXT))
+      if (desc->key_mask & (1ULL << RARCH_OVERLAY_NEXT))
       {
          char overlay_target_key[64];
          snprintf(overlay_target_key, sizeof(overlay_target_key), "overlay%u_desc%u_next_target", ol_index, desc_index);
@@ -693,7 +693,7 @@ void input_overlay_poll(input_overlay_t *ol, input_overlay_state_t *out, int16_t
          uint64_t mask = desc->key_mask;
          out->buttons |= mask;
 #ifndef RARCH_CONSOLE
-         if (mask & (UINT64_C(1) << RARCH_OVERLAY_NEXT))
+         if (mask & (1ULL << RARCH_OVERLAY_NEXT))
             ol->next_index = desc->next_index;
 #endif
       }

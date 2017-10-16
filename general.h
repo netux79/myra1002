@@ -192,6 +192,7 @@ struct settings
       char device_names[MAX_PLAYERS][64];
       bool debug_enable;
       bool autodetect_enable;
+      bool menu_all_users_enable;
 #ifdef ANDROID
       unsigned back_behavior;
       unsigned icade_profile[MAX_PLAYERS];

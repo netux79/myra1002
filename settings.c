@@ -234,6 +234,7 @@ void config_set_defaults(void)
    g_settings.input.overlay_scale = 1.0f;
    g_settings.input.debug_enable = input_debug_enable;
    g_settings.input.autodetect_enable = input_autodetect_enable;
+   g_settings.input.menu_all_users_enable = menu_all_users_enable;   
    *g_settings.input.keyboard_layout = '\0';
 #ifdef ANDROID
    g_settings.input.back_behavior = BACK_BUTTON_QUIT;
@@ -590,7 +591,7 @@ bool global_config_load_file(const char *path)
    CONFIG_GET_INT(libretro_log_level, "libretro_log_level");
    CONFIG_GET_BOOL_EXTERN(config_save_on_exit, "config_save_on_exit");
    CONFIG_GET_BOOL(video.gpu_screenshot, "video_gpu_screenshot");
-   CONFIG_GET_BOOL(input.autodetect_enable, "input_autodetect_enable");
+   CONFIG_GET_BOOL(input.menu_all_users_enable, "menu_all_users_enable");
    CONFIG_GET_BOOL(input.debug_enable, "input_debug_enable");
    CONFIG_GET_BOOL(fps_show, "fps_show");
    CONFIG_GET_INT(game_history_size, "game_history_size");
@@ -803,6 +804,7 @@ bool config_load_file(const char *path)
    CONFIG_GET_BOOL(savestate_auto_load, "savestate_auto_load");
    CONFIG_GET_INT(input.turbo_period, "input_turbo_period");
    CONFIG_GET_INT(input.turbo_duty_cycle, "input_duty_cycle");
+   CONFIG_GET_BOOL(input.autodetect_enable, "input_autodetect_enable");
 
 #ifdef ANDROID
    CONFIG_GET_INT(input.back_behavior, "input_back_behavior");
@@ -1016,7 +1018,7 @@ bool global_config_save_file(const char *path)
    config_set_bool(conf, "video_windowed_fullscreen", g_settings.video.windowed_fullscreen);
    config_set_bool(conf, "video_gpu_screenshot", g_settings.video.gpu_screenshot);
    config_set_int(conf, "game_history_size", g_settings.game_history_size);
-   config_set_bool(conf, "input_autodetect_enable", g_settings.input.autodetect_enable);
+   config_set_bool(conf, "menu_all_users_enable", g_settings.input.menu_all_users_enable);
    config_set_float(conf, "video_font_size", g_settings.video.font_size);
 
    config_set_string(conf, "video_driver", g_settings.video.driver);
@@ -1113,6 +1115,7 @@ bool config_save_file(const char *path)
    config_set_bool(conf, "savestate_auto_save", g_settings.savestate_auto_save);
    config_set_bool(conf, "savestate_auto_load", g_settings.savestate_auto_load);
    config_set_int(conf, "state_slot", g_extern.state_slot);
+   config_set_bool(conf, "input_autodetect_enable", g_settings.input.autodetect_enable);
    
    for (i = 0; i < MAX_PLAYERS; i++)
    {

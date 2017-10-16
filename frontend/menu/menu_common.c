@@ -542,34 +542,34 @@ void menu_ticker_line(char *buf, size_t len, unsigned index, const char *str, bo
 #ifdef HAVE_MENU
 uint64_t menu_input(void)
 {
-   unsigned i;
+   unsigned p, i, players;
    uint64_t input_state = 0;
 
 #ifdef RARCH_CONSOLE
-   static const struct retro_keybind *binds[] = { g_settings.input.menu_binds };
+   static const struct retro_keybind *binds[MAX_PLAYERS] = { 
+    g_settings.input.menu_binds,
+    g_settings.input.menu_binds,
+    g_settings.input.menu_binds,
+    g_settings.input.menu_binds,
+}; /* Make all players use the same menu binds */
 #else
-   static const struct retro_keybind *binds[] = { g_settings.input.binds[0] };
+   static const struct retro_keybind *binds[MAX_PLAYERS] = { g_settings.input.binds };
 #endif
+   
+   /* read all players o just player 1 */
+   players = g_settings.input.menu_all_users_enable ? MAX_PLAYERS : 1;
 
-   input_push_analog_dpad((struct retro_keybind*)binds[0], g_settings.input.analog_dpad_mode[0]);
-   for (i = 0; i < MAX_PLAYERS; i++)
-      input_push_analog_dpad(g_settings.input.autoconf_binds[i], g_settings.input.analog_dpad_mode[i]);
+   for (p = 0; p < players; p++)
+      for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R; i++)
+         input_state |= input_input_state_func(binds, p, RETRO_DEVICE_JOYPAD, 0, i) ? (1ULL << i) : 0;
 
-   for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R2; i++)
-   {
-      input_state |= input_input_state_func(binds,
-            0, RETRO_DEVICE_JOYPAD, 0, i) ? (1ULL << i) : 0;
-#ifdef HAVE_OVERLAY
-      input_state |= (driver.overlay_state.buttons & (UINT64_C(1) << i)) ? (1ULL << i) : 0;
+#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
+   for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R; i++)
+      input_state |= (driver.overlay_state.buttons & (1ULL << i)) ? (1ULL << i) : 0;
 #endif
-   }
 
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
    input_state |= input_key_pressed_func(RARCH_QUIT_KEY) ? (1ULL << RARCH_QUIT_KEY) : 0;
-
-   input_pop_analog_dpad((struct retro_keybind*)binds[0]);
-   for (i = 0; i < MAX_PLAYERS; i++)
-      input_pop_analog_dpad(g_settings.input.autoconf_binds[i]);
 
    rgui->trigger_state = input_state & ~rgui->old_input_state;
 
@@ -1709,7 +1709,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Autoconfig Buttons [G]", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "All Users Control Menu [G]", RGUI_SETTINGS_MENU_ALL_USERS_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);
          file_list_push(rgui->selection_buf, "Bind Hotkeys", RGUI_SETTINGS_BIND_HOTKEYS, 0);
          break;

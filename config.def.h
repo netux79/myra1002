@@ -386,6 +386,9 @@ static const bool input_debug_enable = false;
 // gamepads, plug-and-play style.
 static const bool input_autodetect_enable = true;
 
+/* Enable all users can control the menu */
+static const bool menu_all_users_enable = false;
+
 #ifndef IS_SALAMANDER
 
 #define RETRO_DEF_JOYPAD_B NO_BTN
@@ -498,7 +501,7 @@ static const struct retro_keybind retro_keybinds_1[] = {
    { true, RARCH_ANALOG_RIGHT_Y_PLUS,     RETRO_LBL_ANALOG_RIGHT_Y_PLUS,   RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
    { true, RARCH_ANALOG_RIGHT_Y_MINUS,    RETRO_LBL_ANALOG_RIGHT_Y_MINUS,  RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
 
-   { true, RARCH_TURBO_ENABLE,             RETRO_LBL_TURBO_ENABLE,          RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
+   { true, RARCH_TURBO_ENABLE,             RETRO_LBL_TURBO_ENABLE,         RETROK_UNKNOWN, NO_BTN, 0, AXIS_NONE },
    { true, RARCH_FAST_FORWARD_KEY,         RETRO_LBL_FAST_FORWARD_KEY,     RETROK_SPACE,   NO_BTN, 0, AXIS_NONE },
    { true, RARCH_FAST_FORWARD_HOLD_KEY,    RETRO_LBL_FAST_FORWARD_HOLD_KEY,RETROK_l,       NO_BTN, 0, AXIS_NONE },
    { true, RARCH_LOAD_STATE_KEY,           RETRO_LBL_LOAD_STATE_KEY,       RETROK_F4,      NO_BTN, 0, AXIS_NONE },
