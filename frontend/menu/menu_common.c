@@ -557,7 +557,7 @@ uint64_t menu_input(void)
 #endif
    
    /* read all players o just player 1 */
-   players = g_settings.input.menu_all_users_enable ? MAX_PLAYERS : 1;
+   players = g_settings.input.menu_all_players_enable ? MAX_PLAYERS : 1;
 
    for (p = 0; p < players; p++)
       for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R; i++)
@@ -1709,7 +1709,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "All Users Control Menu [G]", RGUI_SETTINGS_MENU_ALL_USERS_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "All P. Control Menu [G]", RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);
          file_list_push(rgui->selection_buf, "Bind Hotkeys", RGUI_SETTINGS_BIND_HOTKEYS, 0);

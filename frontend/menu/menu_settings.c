@@ -914,11 +914,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else
             g_settings.input.autodetect_enable = input_autodetect_enable;
          break;
-      case RGUI_SETTINGS_MENU_ALL_USERS_ENABLE:
+      case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
-            g_settings.input.menu_all_users_enable = !g_settings.input.menu_all_users_enable;
+            g_settings.input.menu_all_players_enable = !g_settings.input.menu_all_players_enable;
          else
-            g_settings.input.menu_all_users_enable = menu_all_users_enable;
+            g_settings.input.menu_all_players_enable = menu_all_players_enable;
          break;                  
       case RGUI_SETTINGS_CUSTOM_BIND_ALL:
          if (action == RGUI_ACTION_OK)
@@ -1845,8 +1845,8 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE:
          strlcpy(type_str, g_settings.input.autodetect_enable ? "ON" : "OFF", type_str_size);
          break;
-      case RGUI_SETTINGS_MENU_ALL_USERS_ENABLE:
-         strlcpy(type_str, g_settings.input.menu_all_users_enable ? "ON" : "OFF", type_str_size);
+      case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
+         strlcpy(type_str, g_settings.input.menu_all_players_enable ? "ON" : "OFF", type_str_size);
          break;         
       case RGUI_SETTINGS_BIND_FAST_FORWARD_KEY:
       case RGUI_SETTINGS_BIND_FAST_FORWARD_HOLD_KEY:

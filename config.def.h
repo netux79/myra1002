@@ -386,8 +386,8 @@ static const bool input_debug_enable = false;
 // gamepads, plug-and-play style.
 static const bool input_autodetect_enable = true;
 
-/* Enable all users can control the menu */
-static const bool menu_all_users_enable = false;
+/* Enable all players can control the menu */
+static const bool menu_all_players_enable = false;
 
 #ifndef IS_SALAMANDER
 
