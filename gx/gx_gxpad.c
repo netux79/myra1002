@@ -453,9 +453,12 @@ bool gxpad_buttonavail(uint8_t pad_idx, uint8_t b_idx) {
 	return false;
 }
 
+static char temp_name[32];
 const char *gxpad_padname(uint8_t pad_idx) {
-	if (pad_idx < GX_MAX_PADS && _gx_list[pad_idx]) {
-		return _gx_list[pad_idx]->config->name;
+   if (pad_idx < GX_MAX_PADS && _gx_list[pad_idx]) {
+      struct gxpad *p = _gx_list[pad_idx];
+      snprintf(temp_name, sizeof(temp_name), "%s [#%d]", p->config->name, p->p_slot+1);
+		return temp_name;
 	}
 
 	return "No pad plugged in";

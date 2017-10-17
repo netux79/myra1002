@@ -355,7 +355,7 @@ void update_config_params()
 int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned action)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
-   unsigned port = rgui->current_pad;
+   unsigned port = rgui->c_player;
 
    switch (setting)
    {
@@ -768,65 +768,39 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          // controllers
       case RGUI_SETTINGS_BIND_PLAYER:
          if (action == RGUI_ACTION_START)
-            rgui->current_pad = 0;
+            rgui->c_player = 0;
          else if (action == RGUI_ACTION_LEFT)
          {
-            if (rgui->current_pad != 0)
-               rgui->current_pad--;
+            if (rgui->c_player != 0)
+               rgui->c_player--;
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
-            if (rgui->current_pad < MAX_PLAYERS - 1)
-               rgui->current_pad++;
+            if (rgui->c_player < MAX_PLAYERS - 1)
+               rgui->c_player++;
          }
 #ifdef HAVE_MENU
-         if (port != rgui->current_pad)
+         if (port != rgui->c_player)
+         {
+            /* set the selected device to the selected player´s device */
+            rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
             rgui->need_refresh = true;
+         }
 #endif
-         port = rgui->current_pad;
+         port = rgui->c_player;
          break;
       case RGUI_SETTINGS_BIND_DEVICE:
-         // If set_keybinds is supported, we do it more fancy, and scroll through
-         // a list of supported devices directly.
-         if (driver.input->set_keybinds)
-         {
-            g_settings.input.device[port] += DEVICE_LAST;
             if (action == RGUI_ACTION_START)
-               g_settings.input.device[port] = 0;
+               rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
             else if (action == RGUI_ACTION_LEFT)
-               g_settings.input.device[port]--;
+               rgui->s_device--;
             else if (action == RGUI_ACTION_RIGHT)
-               g_settings.input.device[port]++;
+               rgui->s_device++;
 
-            // DEVICE_LAST can be 0, avoid modulo.
-            if (g_settings.input.device[port] >= DEVICE_LAST)
-               g_settings.input.device[port] -= DEVICE_LAST;
-            // needs to be checked twice, in case we go right past the end of the list
-            if (g_settings.input.device[port] >= DEVICE_LAST)
-               g_settings.input.device[port] -= DEVICE_LAST;
-
-            unsigned keybind_action = (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS);
-
-            driver.input->set_keybinds(driver.input_data, g_settings.input.device[port], port, 0,
-                  keybind_action);
-         }
-         else
-         {
-            // When only straight g_settings.input.joypad_map[] style
-            // mapping is supported.
-            int *p = &g_settings.input.joypad_map[port];
-            if (action == RGUI_ACTION_START)
-               *p = port;
-            else if (action == RGUI_ACTION_LEFT)
-               (*p)--;
-            else if (action == RGUI_ACTION_RIGHT)
-               (*p)++;
-
-            if (*p < -1)
-               *p = -1;
-            else if (*p >= MAX_PLAYERS)
-               *p = MAX_PLAYERS - 1;
-         }
+            if (rgui->s_device < -1)
+               rgui->s_device = -1;
+            else if (rgui->s_device >= MAX_PLAYERS)
+               rgui->s_device = MAX_PLAYERS - 1;
          break;
       case RGUI_SETTINGS_BIND_ANALOG_MODE:
          switch (action)
@@ -1793,21 +1767,20 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #endif
       case RGUI_SETTINGS_BIND_PLAYER:
-         snprintf(type_str, type_str_size, "#%d", rgui->current_pad + 1);
+         snprintf(type_str, type_str_size, "#%d", rgui->c_player + 1);
          break;
       case RGUI_SETTINGS_BIND_DEVICE:
       {
-         int map = g_settings.input.joypad_map[rgui->current_pad];
-         if (map >= 0 && map < MAX_PLAYERS)
+         if (rgui->s_device >-1 && rgui->s_device < MAX_PLAYERS)
          {
-            const char *device_name = g_settings.input.device_names[map];
+            const char *device_name = g_settings.input.device_names[rgui->s_device];
             if (*device_name)
                strlcpy(type_str, device_name, type_str_size);
             else
-               strlcpy(type_str, "N/A", type_str_size);
+               strlcpy(type_str, "Unnamed Device", type_str_size);
          }
          else
-            strlcpy(type_str, "Disabled", type_str_size);
+            strlcpy(type_str, "No Device", type_str_size);
          break;
       }
       case RGUI_SETTINGS_BIND_ANALOG_MODE:
@@ -1819,22 +1792,22 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
             "Dual Analog",
          };
 
-         strlcpy(type_str, modes[g_settings.input.analog_dpad_mode[rgui->current_pad] % ANALOG_DPAD_LAST], type_str_size);
+         strlcpy(type_str, modes[g_settings.input.analog_dpad_mode[rgui->c_player] % ANALOG_DPAD_LAST], type_str_size);
          break;
       }
       case RGUI_SETTINGS_BIND_DEVICE_TYPE:
       {
          const struct retro_controller_description *desc = NULL;
-         if (rgui->current_pad < g_extern.system.num_ports)
+         if (rgui->c_player < g_extern.system.num_ports)
          {
-            desc = libretro_find_controller_description(&g_extern.system.ports[rgui->current_pad],
-                  g_settings.input.libretro_device[rgui->current_pad]);
+            desc = libretro_find_controller_description(&g_extern.system.ports[rgui->c_player],
+                  g_settings.input.libretro_device[rgui->c_player]);
          }
 
          const char *name = desc ? desc->desc : NULL;
          if (!name) // Find generic name.
          {
-            switch (g_settings.input.libretro_device[rgui->current_pad])
+            switch (g_settings.input.libretro_device[rgui->c_player])
             {
                case RETRO_DEVICE_NONE: name = "None"; break;
                case RETRO_DEVICE_JOYPAD: name = "Joypad"; break;
@@ -1909,8 +1882,8 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
       case RGUI_SETTINGS_BIND_TURBO_ENABLE:
-         input_get_bind_string(type_str, &g_settings.input.binds[rgui->current_pad][type - RGUI_SETTINGS_BIND_BEGIN], 
-               rgui->current_pad, type_str_size);
+         input_get_bind_string(type_str, &g_settings.input.binds[rgui->c_player][type - RGUI_SETTINGS_BIND_BEGIN], 
+               rgui->c_player, type_str_size);
          break;
       case RGUI_SETTINGS_AUDIO_VOLUME:
          snprintf(type_str, type_str_size, "%.1f dB", g_extern.audio_data.volume_db);

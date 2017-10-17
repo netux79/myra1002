@@ -187,7 +187,7 @@ struct settings
       unsigned analog_dpad_mode[MAX_PLAYERS];
 
       float axis_threshold;
-      int joypad_map[MAX_PLAYERS];
+      int device_mapping[MAX_PLAYERS];
       unsigned device[MAX_PLAYERS];
       char device_names[MAX_PLAYERS][64];
       bool debug_enable;

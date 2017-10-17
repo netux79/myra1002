@@ -119,7 +119,7 @@ bool input_joypad_set_rumble(const rarch_joypad_driver_t *driver,
    if (!driver || !driver->set_rumble)
       return false;
 
-   int joy_index = g_settings.input.joypad_map[port];
+   int joy_index = g_settings.input.device_mapping[port];
    if (joy_index < 0 || joy_index >= MAX_PLAYERS)
       return false;
 
@@ -132,7 +132,7 @@ bool input_joypad_pressed(const rarch_joypad_driver_t *driver,
    if (!driver)
       return false;
 
-   int joy_index = g_settings.input.joypad_map[port];
+   int joy_index = g_settings.input.device_mapping[port];
    if (joy_index < 0 || joy_index >= MAX_PLAYERS)
       return false;
 
@@ -164,7 +164,7 @@ int16_t input_joypad_analog(const rarch_joypad_driver_t *driver,
    if (!driver)
       return 0;
 
-   int joy_index = g_settings.input.joypad_map[port];
+   int joy_index = g_settings.input.device_mapping[port];
    if (joy_index < 0 || joy_index >= MAX_PLAYERS)
       return 0;
 

@@ -331,7 +331,8 @@ typedef struct
 #ifdef HAVE_SHADER_MANAGER
    struct gfx_shader shader;
 #endif
-   unsigned current_pad;
+   unsigned c_player;
+   int s_device;
 
    rom_history_t *history;
    retro_time_t last_time; // Used to throttle RGUI in case VSync is broken.

@@ -470,7 +470,7 @@ void menu_init(void *video_data)
    rgui->old_input_state = 0;
    rgui->do_held = false;
    rgui->frame_buf_show = true;
-   rgui->current_pad = 0;
+   rgui->c_player = 0;
 
    menu_update_libretro_info();
 
@@ -1397,10 +1397,7 @@ bool menu_poll_find_trigger(struct rgui_bind_state *state, struct rgui_bind_stat
    for (i = 0; i < MAX_PLAYERS; i++)
    {
       if (menu_poll_find_trigger_pad(state, new_state, i))
-      {
-         g_settings.input.joypad_map[state->player] = i; // Update the joypad mapping automatically. More friendly that way.
          return true;
-      }
    }
    return false;
 }
@@ -1718,6 +1715,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);
          file_list_push(rgui->selection_buf, "Bind Hotkeys", RGUI_SETTINGS_BIND_HOTKEYS, 0);
+         /* init the selected device to the current player's device */
+         rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
          break;
       case RGUI_SETTINGS_BIND_PLAYER_KEYS:
          file_list_clear(rgui->selection_buf);
