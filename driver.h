@@ -290,7 +290,7 @@ enum input_devices
    DEVICE_WIKIPAD,
    DEVICE_FC30_GAMEPAD,
 #elif defined(GEKKO)
-   DEVICE_GXPAD = 0,
+   DEVICE_GXPAD = 1,
 #elif defined(IOS)
    DEVICE_NONE,
    DEVICE_WIIMOTE,

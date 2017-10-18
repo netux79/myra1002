@@ -767,18 +767,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif        
          // controllers
       case RGUI_SETTINGS_BIND_PLAYER:
-         if (action == RGUI_ACTION_START)
-            rgui->c_player = 0;
-         else if (action == RGUI_ACTION_LEFT)
-         {
-            if (rgui->c_player != 0)
-               rgui->c_player--;
-         }
+         if (action == RGUI_ACTION_LEFT)
+            do rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;
+            while (!g_settings.input.device[g_settings.input.device_mapping[rgui->c_player]]);
          else if (action == RGUI_ACTION_RIGHT)
-         {
-            if (rgui->c_player < MAX_PLAYERS - 1)
-               rgui->c_player++;
-         }
+            do rgui->c_player = (rgui->c_player + 1) % MAX_PLAYERS;
+            while (!g_settings.input.device[g_settings.input.device_mapping[rgui->c_player]]);
 #ifdef HAVE_MENU
          if (port != rgui->c_player)
          {
@@ -790,17 +784,14 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          port = rgui->c_player;
          break;
       case RGUI_SETTINGS_BIND_DEVICE:
-            if (action == RGUI_ACTION_START)
-               rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
-            else if (action == RGUI_ACTION_LEFT)
-               rgui->s_device--;
-            else if (action == RGUI_ACTION_RIGHT)
-               rgui->s_device++;
-
-            if (rgui->s_device < -1)
-               rgui->s_device = -1;
-            else if (rgui->s_device >= MAX_PLAYERS)
-               rgui->s_device = MAX_PLAYERS - 1;
+         if (action == RGUI_ACTION_START)
+            rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
+         else if (action == RGUI_ACTION_LEFT)
+            do rgui->s_device = (rgui->s_device + MAX_PLAYERS - 1) % MAX_PLAYERS;
+            while (g_settings.input.device_names[rgui->s_device][0] == '\0');
+         else if (action == RGUI_ACTION_RIGHT)
+            do rgui->s_device = (rgui->s_device + 1) % MAX_PLAYERS;
+            while (g_settings.input.device_names[rgui->s_device][0] == '\0');
          break;
       case RGUI_SETTINGS_BIND_ANALOG_MODE:
          switch (action)

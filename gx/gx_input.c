@@ -173,9 +173,19 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
    /* Set the name when binding default keys too */
    if ((keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME)) || (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS)))
    {
-      /* We are not supporting different devices but GXPAD */
-      g_settings.input.device[port] = DEVICE_GXPAD;
-      strlcpy(g_settings.input.device_names[port], gxpad_padname(port), sizeof(g_settings.input.device_names[port]));
+      const char *pad_name = gxpad_padname(port);
+      
+      if (pad_name)
+      {
+         /* We are only supporting GXPAD devices */
+         g_settings.input.device[port] = DEVICE_GXPAD;
+         strlcpy(g_settings.input.device_names[port], pad_name, sizeof(g_settings.input.device_names[port]));
+      }
+      else /* Clear device */
+      {
+         g_settings.input.device[port] = 0;
+         g_settings.input.device_names[port][0] = '\0';
+      }
    }
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS))
@@ -313,10 +323,8 @@ static void gx_input_poll(void *data)
 			snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], port+1);
          msg_queue_push(g_extern.msg_queue, msg, 0, 80);
 
-		 if (g_settings.input.autodetect_enable)
-            gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-         else
-            gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_PAD_NAME));
+		 unsigned action = 1ULL << (g_settings.input.autodetect_enable ? KEYBINDS_ACTION_SET_DEFAULT_BINDS : KEYBINDS_ACTION_SET_PAD_NAME);
+       gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, action);
 	  }
    }
 
