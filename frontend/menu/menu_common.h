@@ -332,7 +332,7 @@ typedef struct
    struct gfx_shader shader;
 #endif
    unsigned c_player;
-   int s_device;
+   unsigned s_device;
 
    rom_history_t *history;
    retro_time_t last_time; // Used to throttle RGUI in case VSync is broken.

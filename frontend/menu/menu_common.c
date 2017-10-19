@@ -789,6 +789,28 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
 
    file_list_get_last(rgui->menu_stack, &dir, &menu_type);
 
+   if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS)
+   {   
+      /* Need to check if the selected player's joypad
+       * is still available, it not, automatically
+       * switch to the previous player (if any) */            
+      unsigned attempts = 0;
+      while (!g_settings.input.device[g_settings.input.device_mapping[rgui->c_player]])
+      {
+         attempts++;
+         if (attempts < MAX_PLAYERS) 
+            rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;            
+         else
+         {
+            rgui->c_player = 0;
+            break;
+         }
+      }
+      /* ...also update the selected device. */
+      if (attempts) 
+         rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
+   }
+
    if (rgui->need_refresh && !(menu_type == RGUI_FILE_DIRECTORY ||
             menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||

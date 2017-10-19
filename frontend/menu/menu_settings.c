@@ -792,6 +792,24 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else if (action == RGUI_ACTION_RIGHT)
             do rgui->s_device = (rgui->s_device + 1) % MAX_PLAYERS;
             while (g_settings.input.device_names[rgui->s_device][0] == '\0');
+         else if (action == RGUI_ACTION_OK)
+         {
+            unsigned o_device = g_settings.input.device_mapping[rgui->c_player];
+            if (o_device != rgui->s_device)
+            {
+               unsigned p;
+               for (p = 0; rgui->s_device != g_settings.input.device_mapping[p] && p < MAX_PLAYERS; p++);
+               if (p != rgui->c_player && p < MAX_PLAYERS)
+               {
+                  g_settings.input.device_mapping[rgui->c_player] = rgui->s_device;
+                  g_settings.input.device_mapping[p] = o_device;
+                  
+                  char msg[50];
+                  snprintf(msg, sizeof(msg), "Player %d and Player %d devices has been switched", rgui->c_player, p);
+                  msg_queue_push(g_extern.msg_queue, msg, 1, 90);                  
+               }
+            }
+         }
          break;
       case RGUI_SETTINGS_BIND_ANALOG_MODE:
          switch (action)
@@ -1758,22 +1776,14 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #endif
       case RGUI_SETTINGS_BIND_PLAYER:
-         snprintf(type_str, type_str_size, "#%d", rgui->c_player + 1);
+         snprintf(type_str, type_str_size, "< #%d >", rgui->c_player + 1);
          break;
       case RGUI_SETTINGS_BIND_DEVICE:
-      {
-         if (rgui->s_device >-1 && rgui->s_device < MAX_PLAYERS)
-         {
-            const char *device_name = g_settings.input.device_names[rgui->s_device];
-            if (*device_name)
-               strlcpy(type_str, device_name, type_str_size);
-            else
-               strlcpy(type_str, "Unnamed Device", type_str_size);
-         }
+         if (g_settings.input.device_names[rgui->s_device][0] != '\0')
+            strlcpy(type_str, g_settings.input.device_names[rgui->s_device], type_str_size);
          else
             strlcpy(type_str, "No Device", type_str_size);
          break;
-      }
       case RGUI_SETTINGS_BIND_ANALOG_MODE:
       {
          static const char *modes[] = {

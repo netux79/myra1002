@@ -461,7 +461,7 @@ const char *gxpad_padname(uint8_t pad_idx) {
 		return temp_name;
 	}
 
-	return "No pad plugged in";
+	return NULL;
 }
 
 int16_t gxpad_analog(uint8_t pad_idx, uint8_t a_idx) {
