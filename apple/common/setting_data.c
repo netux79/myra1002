@@ -574,11 +574,11 @@ const rarch_setting_t* setting_data_get_list()
 
       START_SUB_GROUP("Joypad Mapping")
          //TODO: input_libretro_device_p%u
-         CONFIG_INT(g_settings.input.device_mapping[0],         "input_player1_joypad_index", "Player 1 Pad Index",         0)
-         CONFIG_INT(g_settings.input.device_mapping[1],         "input_player2_joypad_index", "Player 2 Pad Index",         1)
-         CONFIG_INT(g_settings.input.device_mapping[2],         "input_player3_joypad_index", "Player 3 Pad Index",         2)
-         CONFIG_INT(g_settings.input.device_mapping[3],         "input_player4_joypad_index", "Player 4 Pad Index",         3)
-         CONFIG_INT(g_settings.input.device_mapping[4],         "input_player5_joypad_index", "Player 5 Pad Index",         4)
+         CONFIG_INT(g_settings.input.device_port[0],         "input_player1_joypad_index", "Player 1 Pad Index",         0)
+         CONFIG_INT(g_settings.input.device_port[1],         "input_player2_joypad_index", "Player 2 Pad Index",         1)
+         CONFIG_INT(g_settings.input.device_port[2],         "input_player3_joypad_index", "Player 3 Pad Index",         2)
+         CONFIG_INT(g_settings.input.device_port[3],         "input_player4_joypad_index", "Player 4 Pad Index",         3)
+         CONFIG_INT(g_settings.input.device_port[4],         "input_player5_joypad_index", "Player 5 Pad Index",         4)
       END_SUB_GROUP()
 
       START_SUB_GROUP("Turbo/Deadzone")

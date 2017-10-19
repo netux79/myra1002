@@ -795,7 +795,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
        * is still available, it not, automatically
        * switch to the previous player (if any) */            
       unsigned attempts = 0;
-      while (!g_settings.input.device[g_settings.input.device_mapping[rgui->c_player]])
+      while (!g_settings.input.device[g_settings.input.device_port[rgui->c_player]])
       {
          attempts++;
          if (attempts < MAX_PLAYERS) 
@@ -808,7 +808,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
       }
       /* ...also update the selected device. */
       if (attempts) 
-         rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
+         rgui->s_device = g_settings.input.device_port[rgui->c_player];
    }
 
    if (rgui->need_refresh && !(menu_type == RGUI_FILE_DIRECTORY ||
@@ -1738,12 +1738,12 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);
          file_list_push(rgui->selection_buf, "Bind Hotkeys", RGUI_SETTINGS_BIND_HOTKEYS, 0);
          /* init the selected device to the current player's device */
-         rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
+         rgui->s_device = g_settings.input.device_port[rgui->c_player];
          break;
       case RGUI_SETTINGS_BIND_PLAYER_KEYS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Player", RGUI_SETTINGS_BIND_PLAYER, 0);
-         file_list_push(rgui->selection_buf, "Device", RGUI_SETTINGS_BIND_DEVICE, 0);
+         file_list_push(rgui->selection_buf, "Controller", RGUI_SETTINGS_BIND_DEVICE, 0);
          file_list_push(rgui->selection_buf, "Device Type", RGUI_SETTINGS_BIND_DEVICE_TYPE, 0);
          file_list_push(rgui->selection_buf, "Analog D-pad Mode", RGUI_SETTINGS_BIND_ANALOG_MODE, 0);
          file_list_push(rgui->selection_buf, "Bind All Buttons", RGUI_SETTINGS_CUSTOM_BIND_ALL, 0);

@@ -242,7 +242,7 @@ void config_set_defaults(void)
 
    for (i = 0; i < MAX_PLAYERS; i++)
    {
-      g_settings.input.device_mapping[i] = i;
+      g_settings.input.device_port[i] = i;
       g_settings.input.analog_dpad_mode[i] = ANALOG_DPAD_NONE;
       if (!g_extern.has_set_libretro_device[i])
          g_settings.input.libretro_device[i] = RETRO_DEVICE_JOYPAD;
@@ -760,7 +760,7 @@ bool config_load_file(const char *path)
    {
       char buf[64];
       snprintf(buf, sizeof(buf), "input_player%u_joypad_index", i + 1);
-      CONFIG_GET_INT(input.device_mapping[i], buf);
+      CONFIG_GET_INT(input.device_port[i], buf);
 
       snprintf(buf, sizeof(buf), "input_player%u_analog_dpad_mode", i + 1);
       CONFIG_GET_INT(input.analog_dpad_mode[i], buf);
@@ -873,16 +873,6 @@ static void config_read_keybinds_conf(config_file_t *conf)
    unsigned i;
    for (i = 0; i < MAX_PLAYERS; i++)
       read_keybinds_player(conf, i);
-}
-
-bool config_read_keybinds(const char *path)
-{
-   config_file_t *conf = config_file_new(path);
-   if (!conf)
-      return false;
-   config_read_keybinds_conf(conf);
-   config_file_free(conf);
-   return true;
 }
 
 static void save_keybind_key(config_file_t *conf, const char *prefix, const char *base,
@@ -1123,7 +1113,7 @@ bool config_save_file(const char *path)
       snprintf(cfg, sizeof(cfg), "input_device_p%u", i + 1);
       config_set_int(conf, cfg, g_settings.input.device[i]);
       snprintf(cfg, sizeof(cfg), "input_player%u_joypad_index", i + 1);
-      config_set_int(conf, cfg, g_settings.input.device_mapping[i]);
+      config_set_int(conf, cfg, g_settings.input.device_port[i]);
       snprintf(cfg, sizeof(cfg), "input_libretro_device_p%u", i + 1);
       config_set_int(conf, cfg, g_settings.input.libretro_device[i]);
       snprintf(cfg, sizeof(cfg), "input_player%u_analog_dpad_mode", i + 1);

@@ -187,7 +187,7 @@ struct settings
       unsigned analog_dpad_mode[MAX_PLAYERS];
 
       float axis_threshold;
-      int device_mapping[MAX_PLAYERS];
+      int device_port[MAX_PLAYERS];
       unsigned device[MAX_PLAYERS];
       char device_names[MAX_PLAYERS][64];
       bool debug_enable;
@@ -489,7 +489,6 @@ bool global_config_load_file(const char *path);
 bool global_config_save_file(const char *path);
 bool config_load_file(const char *path);
 bool config_save_file(const char *path);
-bool config_read_keybinds(const char *path);
 
 void rarch_game_reset(void);
 void rarch_main_clear_state(void);

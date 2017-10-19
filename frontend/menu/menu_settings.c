@@ -769,15 +769,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_PLAYER:
          if (action == RGUI_ACTION_LEFT)
             do rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;
-            while (!g_settings.input.device[g_settings.input.device_mapping[rgui->c_player]]);
+            while (!g_settings.input.device[g_settings.input.device_port[rgui->c_player]]);
          else if (action == RGUI_ACTION_RIGHT)
             do rgui->c_player = (rgui->c_player + 1) % MAX_PLAYERS;
-            while (!g_settings.input.device[g_settings.input.device_mapping[rgui->c_player]]);
+            while (!g_settings.input.device[g_settings.input.device_port[rgui->c_player]]);
 #ifdef HAVE_MENU
          if (port != rgui->c_player)
          {
             /* set the selected device to the selected player´s device */
-            rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
+            rgui->s_device = g_settings.input.device_port[rgui->c_player];
             rgui->need_refresh = true;
          }
 #endif
@@ -785,7 +785,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
       case RGUI_SETTINGS_BIND_DEVICE:
          if (action == RGUI_ACTION_START)
-            rgui->s_device = g_settings.input.device_mapping[rgui->c_player];
+            rgui->s_device = g_settings.input.device_port[rgui->c_player];
          else if (action == RGUI_ACTION_LEFT)
             do rgui->s_device = (rgui->s_device + MAX_PLAYERS - 1) % MAX_PLAYERS;
             while (g_settings.input.device_names[rgui->s_device][0] == '\0');
@@ -794,18 +794,18 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             while (g_settings.input.device_names[rgui->s_device][0] == '\0');
          else if (action == RGUI_ACTION_OK)
          {
-            unsigned o_device = g_settings.input.device_mapping[rgui->c_player];
+            unsigned o_device = g_settings.input.device_port[rgui->c_player];
             if (o_device != rgui->s_device)
             {
                unsigned p;
-               for (p = 0; rgui->s_device != g_settings.input.device_mapping[p] && p < MAX_PLAYERS; p++);
+               for (p = 0; rgui->s_device != g_settings.input.device_port[p] && p < MAX_PLAYERS; p++);
                if (p != rgui->c_player && p < MAX_PLAYERS)
                {
-                  g_settings.input.device_mapping[rgui->c_player] = rgui->s_device;
-                  g_settings.input.device_mapping[p] = o_device;
+                  g_settings.input.device_port[rgui->c_player] = rgui->s_device;
+                  g_settings.input.device_port[p] = o_device;
                   
                   char msg[50];
-                  snprintf(msg, sizeof(msg), "Player %d and Player %d devices has been switched", rgui->c_player, p);
+                  snprintf(msg, sizeof(msg), "Player %d and Player %d controllers swapped", rgui->c_player+1, p+1);
                   msg_queue_push(g_extern.msg_queue, msg, 1, 90);                  
                }
             }
