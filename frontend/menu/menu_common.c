@@ -551,12 +551,12 @@ uint64_t menu_input(void)
     g_settings.input.menu_binds,
     g_settings.input.menu_binds,
     g_settings.input.menu_binds,
-}; /* Make all players use the same menu binds */
+}; /* Make all controllers use the same menu binds */
 #else
    static const struct retro_keybind *binds[MAX_PLAYERS] = { g_settings.input.binds };
 #endif
    
-   /* read all players o just player 1 */
+   /* read all ports or port 1 only */
    players = g_settings.input.menu_all_players_enable ? MAX_PLAYERS : 1;
 
    for (p = 0; p < players; p++)

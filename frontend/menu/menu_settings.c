@@ -967,7 +967,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             rgui->binds.begin = setting;
             rgui->binds.last = setting;
             rgui->binds.target = bind;
-            rgui->binds.player = 0;
+            rgui->binds.port = 0;
             file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
             menu_poll_bind_get_rested_axes(&rgui->binds);
             menu_poll_bind_state(&rgui->binds);
@@ -1012,7 +1012,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             rgui->binds.begin = setting;
             rgui->binds.last = setting;
             rgui->binds.target = bind;
-            rgui->binds.player = port;
+            rgui->binds.port = port;
             file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
             menu_poll_bind_get_rested_axes(&rgui->binds);
             menu_poll_bind_state(&rgui->binds);

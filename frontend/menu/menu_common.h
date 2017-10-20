@@ -272,7 +272,7 @@ struct rgui_bind_state
    struct retro_keybind *target;
    unsigned begin;
    unsigned last;
-   unsigned player;
+   unsigned port;
    struct rgui_bind_state_port state[MAX_PLAYERS];
    struct rgui_bind_axis_state axis_state[MAX_PLAYERS];
    bool skip;

@@ -287,45 +287,48 @@ static void gx_input_poll(void *data)
 
    for (unsigned port = 0; port < GX_NUM_PADS; port++)
    {
-	  bool hotplug = false;
-	  uint64_t *state = &gx->pad_state[port];
+      bool hotplug = false;
+      uint64_t *state = &gx->pad_state[port];
 
       if (gxpad_avail(port))
       {
-	     *state = gxpad_buttons(port);
+         *state = gxpad_buttons(port);
 
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = gxpad_js_lx(port);
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = gxpad_js_ly(port);
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = gxpad_js_rx(port);
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = gxpad_js_ry(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = gxpad_js_lx(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = gxpad_js_ly(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = gxpad_js_rx(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = gxpad_js_ry(port);
 
-		 hotplug = (lt_active[port]) ? false : true;
-		 lt_active[port] = true;
+         hotplug = (lt_active[port]) ? false : true;
+         lt_active[port] = true;
       }
       else
       {
          *state = 0; /* reset the button state */
          for (uint8_t j = 0; j < 2; j++)
-		    for (uint8_t i = 0; i < 2; i++)
-			   gx->analog_state[port][j][i] = 0; /*  clear also all the analogs */
+            for (uint8_t i = 0; i < 2; i++)
+               gx->analog_state[port][j][i] = 0; /*  clear also all the analogs */
 
-		 hotplug = (lt_active[port]) ? true : false;
+         hotplug = (lt_active[port]) ? true : false;
          lt_active[port] = false;
-	  }
+      }
 
-	  if (hotplug)
-	  {
+      if (hotplug)
+      {
          /* show the pad change */
          char msg[128];
+         unsigned p;
+         for (p=0; g_settings.input.device_port[p]!=port && p<MAX_PLAYERS; p++);
+         
          if (lt_active[port])
-		    snprintf(msg, sizeof(msg), "%s plugged to player %u", gxpad_padname(port), port+1);
-		 else
-			snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], port+1);
+            snprintf(msg, sizeof(msg), "%s plugged to player %u", gxpad_padname(port), p+1);
+         else
+            snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], p+1);
          msg_queue_push(g_extern.msg_queue, msg, 0, 80);
 
-		 unsigned action = 1ULL << (g_settings.input.autodetect_enable ? KEYBINDS_ACTION_SET_DEFAULT_BINDS : KEYBINDS_ACTION_SET_PAD_NAME);
-       gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, action);
-	  }
+         unsigned action = 1ULL << (g_settings.input.autodetect_enable ? KEYBINDS_ACTION_SET_DEFAULT_BINDS : KEYBINDS_ACTION_SET_PAD_NAME);
+         gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, action);
+      }
    }
 
    /* poll mouse & lightgun data */
