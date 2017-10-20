@@ -55,32 +55,13 @@ static void rarch_get_environment_console(char *path)
 }
 #endif
 
-#define returntype int
-#define signature_expand() argc, argv
-#define returnfunc() return 0
-#define return_negative() return 1
-#define return_var(var) return var
-#define declare_argc()
-#define declare_argv()
-#define args_initial_ptr() NULL
-
-#define ra_preinited false
-
 #ifdef RARCH_CONSOLE
 #define attempt_load_game false
-#else
-#define attempt_load_game true
-#endif
-
-#if !defined(RARCH_CONSOLE)
-#define attempt_load_game_push_history true
-#else
 #define attempt_load_game_push_history false
-#endif
-
-#if defined(RARCH_CONSOLE)
 #define load_dummy_on_core_shutdown false
 #else
+#define attempt_load_game true
+#define attempt_load_game_push_history true
 #define load_dummy_on_core_shutdown true
 #endif
 
@@ -269,22 +250,16 @@ void main_exit(void* args)
       frontend_ctx->shutdown(false);
 }
 
-returntype main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-   declare_argc();
-   declare_argv();
-   void* args = (void*)args_initial_ptr();
-
+   void* args = NULL;
 
    frontend_ctx = (frontend_ctx_driver_t*)frontend_ctx_init_first();
    if (frontend_ctx && frontend_ctx->init)
       frontend_ctx->init(args);
 
-   if (!ra_preinited)
-   {
-      rarch_main_clear_state();
-      rarch_init_msg_queue();
-   }
+   rarch_main_clear_state();
+   rarch_init_msg_queue();
 
    if (frontend_ctx && frontend_ctx->environment_get)
    {
@@ -297,7 +272,8 @@ returntype main(int argc, char *argv[])
    if (attempt_load_game)
    {
       int init_ret;
-      if ((init_ret = rarch_main_init(argc, argv))) return_var(init_ret);
+      if ((init_ret = rarch_main_init(argc, argv))) 
+         return init_ret;
    }
 
 #if defined(HAVE_MENU)
@@ -318,12 +294,12 @@ returntype main(int argc, char *argv[])
          menu_rom_history_push_current();
    }
 
-   while (!main_entry_iterate(signature_expand(), args));
+   while (!main_entry_iterate(argc, argv, args));
 #else
    while ((g_extern.is_paused && !g_extern.is_oneshot) ? rarch_main_idle_iterate() : rarch_main_iterate());
 #endif
 
    main_exit(args);
 
-   returnfunc();
+   return 0;
 }

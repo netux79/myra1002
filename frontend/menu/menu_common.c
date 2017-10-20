@@ -1075,13 +1075,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
 #endif
-#ifndef RARCH_CONSOLE
-            else if (menu_type == RGUI_AUTOCONF_DIR_PATH)
-            {
-               strlcpy(g_settings.input.autoconfig_dir, dir, sizeof(g_settings.input.autoconfig_dir));
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
-            }
-#endif
             else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
             {
                strlcpy(g_extern.savestate_dir, dir, sizeof(g_extern.savestate_dir));
@@ -1719,9 +1712,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Savefile Path [G]", RGUI_SAVEFILE_DIR_PATH, 0);
 #ifdef HAVE_OVERLAY
          file_list_push(rgui->selection_buf, "Overlay Path [G]", RGUI_OVERLAY_DIR_PATH, 0);
-#endif
-#ifndef RARCH_CONSOLE
-         file_list_push(rgui->selection_buf, "Autoconfig Path [G]", RGUI_AUTOCONF_DIR_PATH, 0);
 #endif
          file_list_push(rgui->selection_buf, "System Path [G]", RGUI_SYSTEM_DIR_PATH, 0);
 #ifdef HAVE_SCREENSHOTS

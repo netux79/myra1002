@@ -179,13 +179,8 @@ struct settings
       struct retro_keybind menu_binds[RARCH_BIND_LIST_END];
 #endif
 
-      // Set by autoconfiguration in joypad_autoconfig_dir. Does not override main binds.
-      struct retro_keybind autoconf_binds[MAX_PLAYERS][RARCH_BIND_LIST_END];
-      bool autoconfigured[MAX_PLAYERS];
-
       unsigned libretro_device[MAX_PLAYERS];
       unsigned analog_dpad_mode[MAX_PLAYERS];
-
       float axis_threshold;
       int device_port[MAX_PLAYERS];
       unsigned device[MAX_PLAYERS];
@@ -200,9 +195,6 @@ struct settings
       char overlay[PATH_MAX];
       float overlay_opacity;
       float overlay_scale;
-#ifndef RARCH_CONSOLE
-      char autoconfig_dir[PATH_MAX];
-#endif
    } input;
 
    char core_options_path[PATH_MAX];

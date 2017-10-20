@@ -143,7 +143,7 @@ const char* winxinput_joypad_name (unsigned pad)
 
 static bool winxinput_joypad_init(void)
 {
-   unsigned i, autoconf_pad;
+   unsigned i;
    g_winxinput_dll = NULL;
 
    // Find the correct path to load the DLL from.
@@ -226,15 +226,6 @@ static bool winxinput_joypad_init(void)
    {
       g_xinput_block_pads = false;
       return false;
-   }
-
-   for (autoconf_pad = 0; autoconf_pad < MAX_PLAYERS; autoconf_pad++)
-   {
-      if (pad_index_to_xplayer_index(autoconf_pad) > -1)
-      {
-         strlcpy(g_settings.input.device_names[autoconf_pad], winxinput_joypad_name(autoconf_pad), sizeof(g_settings.input.device_names[autoconf_pad]));
-         input_config_autoconfigure_joypad(autoconf_pad, winxinput_joypad_name(autoconf_pad), winxinput_joypad.ident);
-      }
    }
 
    return true;

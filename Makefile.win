@@ -19,7 +19,6 @@ OBJ = frontend/frontend.o \
 		gfx/gfx_common.o \
 		input/input_common.o \
 		input/keyboard_line.o \
-		input/autoconf/builtin_win.o \
 		core_options.o \
 		compat/compat.o \
 		screenshot.o \
@@ -89,7 +88,7 @@ endif
 libretro ?= -lretro
 
 LIBS = -lm
-DEFINES = -I. -DHAVE_SCREENSHOTS -DHAVE_BUILTIN_AUTOCONFIG -DRARCH_INTERNAL
+DEFINES = -I. -DHAVE_SCREENSHOTS -DRARCH_INTERNAL
 LDFLAGS = -L. -static-libgcc
 
 ifeq ($(TDM_GCC),)

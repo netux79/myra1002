@@ -205,16 +205,6 @@ void config_set_defaults(void)
    for (i = 1; i < MAX_PLAYERS; i++)
       memcpy(g_settings.input.binds[i], retro_keybinds_rest, sizeof(retro_keybinds_rest));
 
-   for (i = 0; i < MAX_PLAYERS; i++)
-   {
-      for (j = 0; j < RARCH_BIND_LIST_END; j++)
-      {
-         g_settings.input.autoconf_binds[i][j].joykey = NO_BTN;
-         g_settings.input.autoconf_binds[i][j].joyaxis = AXIS_NONE;
-      }
-   }
-   memset(g_settings.input.autoconfigured, 0, sizeof(g_settings.input.autoconfigured));
-
    // Verify that binds are in proper order.
    for (i = 0; i < MAX_PLAYERS; i++)
       for (j = 0; j < RARCH_BIND_LIST_END; j++)
@@ -254,9 +244,6 @@ void config_set_defaults(void)
    *g_settings.game_history_path = '\0';
    *g_settings.screenshot_directory = '\0';
    *g_settings.system_directory = '\0';
-#ifndef RARCH_CONSOLE
-   *g_settings.input.autoconfig_dir = '\0';
-#endif
    *g_settings.input.overlay = '\0';
    *g_settings.content_directory = '\0';
    *g_settings.video.shader_path = '\0';
@@ -596,9 +583,6 @@ bool global_config_load_file(const char *path)
       *g_extern.overlay_dir = '\0';
 #endif
    CONFIG_GET_PATH(game_history_path, "game_history_path");
-#ifndef RARCH_CONSOLE
-   CONFIG_GET_PATH(input.autoconfig_dir, "joypad_autoconfig_dir");
-#endif
 
    if (!g_extern.has_set_save_path && config_get_path(conf, "savefile_directory", tmp_str, sizeof(tmp_str)))
    {
@@ -972,9 +956,6 @@ bool global_config_save_file(const char *path)
    config_set_path(conf, "rgui_config_directory", *g_settings.rgui_config_directory ? g_settings.rgui_config_directory : "default");
 #endif
    config_set_path(conf, "game_history_path", g_settings.game_history_path);
-#ifndef RARCH_CONSOLE
-   config_set_path(conf, "joypad_autoconfig_dir", g_settings.input.autoconfig_dir);
-#endif
 #ifdef HAVE_OVERLAY
    config_set_path(conf, "overlay_directory", *g_extern.overlay_dir ? g_extern.overlay_dir : "default");
 #endif
