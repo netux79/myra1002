@@ -248,8 +248,10 @@ INPUT
 /*============================================================
 STATE TRACKER
 ============================================================ */
+#ifndef RARCH_CONSOLE
 #ifndef DONT_HAVE_STATE_TRACKER
 #include "../gfx/state_tracker.c"
+#endif
 #endif
 
 #ifdef HAVE_PYTHON

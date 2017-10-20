@@ -591,7 +591,9 @@ void uninit_drivers(void)
    {
       input_overlay_free(driver.overlay);
       driver.overlay = NULL;
+#ifndef RARCH_CONSOLE      
       memset(&driver.overlay_state, 0, sizeof(driver.overlay_state));
+#endif
    }
 #endif
    
@@ -603,7 +605,7 @@ void uninit_drivers(void)
 
 #ifdef HAVE_SHADERS
    deinit_shader_dir();
-#endif   
+#endif
 }
 
 #ifdef HAVE_DYLIB

@@ -582,7 +582,7 @@ bool global_config_load_file(const char *path)
    CONFIG_GET_STRING(video.gl_context, "video_gl_context");
    CONFIG_GET_STRING(audio.driver, "audio_driver");
    CONFIG_GET_PATH(audio.dsp_plugin, "audio_dsp_plugin");
-   CONFIG_GET_STRING(audio.device, "audio_device");   
+   CONFIG_GET_STRING(audio.device, "audio_device");
    CONFIG_GET_STRING(audio.resampler, "audio_resampler");
    CONFIG_GET_STRING(input.driver, "input_driver");
    CONFIG_GET_STRING(input.joypad_driver, "input_joypad_driver");
@@ -602,13 +602,13 @@ bool global_config_load_file(const char *path)
    CONFIG_GET_BOOL(video.windowed_fullscreen, "video_windowed_fullscreen");
    CONFIG_GET_INT(video.monitor_index, "video_monitor_index");
    CONFIG_GET_BOOL(video.disable_composition, "video_disable_composition");
-   CONFIG_GET_BOOL(pause_nonactive, "pause_nonactive");   
-   CONFIG_GET_BOOL(video.threaded, "video_threaded");   
+   CONFIG_GET_BOOL(pause_nonactive, "pause_nonactive");
+   CONFIG_GET_BOOL(video.threaded, "video_threaded");
    CONFIG_GET_PATH(video.font_path, "video_font_path");
    CONFIG_GET_FLOAT(video.font_size, "video_font_size");
    CONFIG_GET_BOOL(video.font_enable, "video_font_enable");
    CONFIG_GET_BOOL(video.font_scale, "video_font_scale");
-   CONFIG_GET_BOOL(stdin_cmd_enable, "stdin_cmd_enable");   
+   CONFIG_GET_BOOL(stdin_cmd_enable, "stdin_cmd_enable");
 
    CONFIG_GET_PATH(video.shader_dir, "video_shader_dir");
    if (!strcmp(g_settings.video.shader_dir, "default"))
@@ -759,9 +759,6 @@ bool config_load_file(const char *path)
    for (i = 0; i < MAX_PLAYERS; i++)
    {
       char buf[64];
-      snprintf(buf, sizeof(buf), "input_player%u_joypad_index", i + 1);
-      CONFIG_GET_INT(input.device_port[i], buf);
-
       snprintf(buf, sizeof(buf), "input_player%u_analog_dpad_mode", i + 1);
       CONFIG_GET_INT(input.analog_dpad_mode[i], buf);
 
@@ -1110,10 +1107,6 @@ bool config_save_file(const char *path)
    for (i = 0; i < MAX_PLAYERS; i++)
    {
       char cfg[64];
-      snprintf(cfg, sizeof(cfg), "input_device_p%u", i + 1);
-      config_set_int(conf, cfg, g_settings.input.device[i]);
-      snprintf(cfg, sizeof(cfg), "input_player%u_joypad_index", i + 1);
-      config_set_int(conf, cfg, g_settings.input.device_port[i]);
       snprintf(cfg, sizeof(cfg), "input_libretro_device_p%u", i + 1);
       config_set_int(conf, cfg, g_settings.input.libretro_device[i]);
       snprintf(cfg, sizeof(cfg), "input_player%u_analog_dpad_mode", i + 1);

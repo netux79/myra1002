@@ -470,7 +470,9 @@ typedef struct driver
 
 #ifdef HAVE_OVERLAY
    input_overlay_t *overlay;
+#ifndef RARCH_CONSOLE
    input_overlay_state_t overlay_state;
+#endif
 #endif
 
    // Interface for "poking".

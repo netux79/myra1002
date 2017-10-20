@@ -355,7 +355,6 @@ void update_config_params()
 int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned action)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
-   unsigned port = rgui->c_player;
 
    switch (setting)
    {
@@ -767,6 +766,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif        
          // controllers
       case RGUI_SETTINGS_BIND_PLAYER:
+      {
+         unsigned o_player = rgui->c_player;
          if (action == RGUI_ACTION_LEFT)
             do rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;
             while (!g_settings.input.device[g_settings.input.device_port[rgui->c_player]]);
@@ -774,15 +775,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             do rgui->c_player = (rgui->c_player + 1) % MAX_PLAYERS;
             while (!g_settings.input.device[g_settings.input.device_port[rgui->c_player]]);
 #ifdef HAVE_MENU
-         if (port != rgui->c_player)
+         if (o_player != rgui->c_player)
          {
             /* set the selected device to the selected player´s device */
             rgui->s_device = g_settings.input.device_port[rgui->c_player];
             rgui->need_refresh = true;
          }
 #endif
-         port = rgui->c_player;
          break;
+      }
       case RGUI_SETTINGS_BIND_DEVICE:
          if (action == RGUI_ACTION_START)
             rgui->s_device = g_settings.input.device_port[rgui->c_player];
@@ -812,6 +813,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          break;
       case RGUI_SETTINGS_BIND_ANALOG_MODE:
+      {
+         unsigned port = g_settings.input.device_port[rgui->c_player];
          switch (action)
          {
             case RGUI_ACTION_START:
@@ -831,6 +834,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                break;
          }
          break;
+      }
       case RGUI_SETTINGS_BIND_DEVICE_TYPE:
          {
             unsigned current_device, current_index, i;
@@ -841,7 +845,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             devices[types++] = RETRO_DEVICE_JOYPAD;
             devices[types++] = RETRO_DEVICE_ANALOG;
 
-            const struct retro_controller_info *desc = port < g_extern.system.num_ports ? &g_extern.system.ports[port] : NULL;
+            const struct retro_controller_info *desc = rgui->c_player < g_extern.system.num_ports ? &g_extern.system.ports[rgui->c_player] : NULL;
             if (desc)
             {
                for (i = 0; i < desc->num_types; i++)
@@ -852,7 +856,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                }
             }
 
-            current_device = g_settings.input.libretro_device[port];
+            current_device = g_settings.input.libretro_device[rgui->c_player];
             current_index = 0;
             for (i = 0; i < types; i++)
             {
@@ -885,8 +889,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
             if (updated)
             {
-               g_settings.input.libretro_device[port] = current_device;
-               pretro_set_controller_port_device(port, current_device);
+               g_settings.input.libretro_device[rgui->c_player] = current_device;
+               pretro_set_controller_port_device(rgui->c_player, current_device);
             }
 
             break;
@@ -906,7 +910,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_CUSTOM_BIND_ALL:
          if (action == RGUI_ACTION_OK)
          {
-            rgui->binds.target = &g_settings.input.binds[port][0];
+            rgui->binds.target = &g_settings.input.binds[g_settings.input.device_port[rgui->c_player]][0];
             rgui->binds.begin = RGUI_SETTINGS_BIND_BEGIN;
             rgui->binds.last = RGUI_SETTINGS_BIND_LAST;
             file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
@@ -918,7 +922,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (action == RGUI_ACTION_OK)
          {
             unsigned i;
-            struct retro_keybind *target = &g_settings.input.binds[port][0];
+            struct retro_keybind *target = &g_settings.input.binds[g_settings.input.device_port[rgui->c_player]][0];
             rgui->binds.begin = RGUI_SETTINGS_BIND_BEGIN;
             rgui->binds.last = RGUI_SETTINGS_BIND_LAST;
             for (i = RGUI_SETTINGS_BIND_BEGIN; i <= RGUI_SETTINGS_BIND_LAST; i++, target++)
@@ -958,7 +962,26 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #ifdef HAVE_MENU
       case RGUI_SETTINGS_BIND_MENU_TOGGLE:
 #endif
-         port = 0; /* all the hotkeys always mapped to first port */
+      {
+         /* hotkeys use first controller, no matter the player */
+         struct retro_keybind *bind = &g_settings.input.binds[0][setting - RGUI_SETTINGS_BIND_BEGIN];
+         if (action == RGUI_ACTION_OK)
+         {
+            rgui->binds.begin = setting;
+            rgui->binds.last = setting;
+            rgui->binds.target = bind;
+            rgui->binds.player = 0;
+            file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
+            menu_poll_bind_get_rested_axes(&rgui->binds);
+            menu_poll_bind_state(&rgui->binds);
+         }
+         else if (action == RGUI_ACTION_START)
+         {
+            bind->joykey = NO_BTN;
+            bind->joyaxis = AXIS_NONE;
+         }
+         break;
+      }
       case RGUI_SETTINGS_BIND_UP:
       case RGUI_SETTINGS_BIND_DOWN:
       case RGUI_SETTINGS_BIND_LEFT:
@@ -983,38 +1006,27 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_X_MINUS:
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
-      case RGUI_SETTINGS_BIND_TURBO_ENABLE:      
-         if (driver.input->set_keybinds && !driver.input->get_joypad_driver)
+      case RGUI_SETTINGS_BIND_TURBO_ENABLE:
+      {    
+         unsigned port = g_settings.input.device_port[rgui->c_player];
+         struct retro_keybind *bind = &g_settings.input.binds[port][setting - RGUI_SETTINGS_BIND_BEGIN];
+         if (action == RGUI_ACTION_OK)
          {
-            unsigned keybind_action = KEYBINDS_ACTION_NONE;
-
-            if (action == RGUI_ACTION_START)
-               keybind_action = (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND);
-
-            if (keybind_action != KEYBINDS_ACTION_NONE)
-               driver.input->set_keybinds(driver.input_data, g_settings.input.device[port], port,
-                     setting - RGUI_SETTINGS_BIND_BEGIN, keybind_action);
+            rgui->binds.begin = setting;
+            rgui->binds.last = setting;
+            rgui->binds.target = bind;
+            rgui->binds.player = port;
+            file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
+            menu_poll_bind_get_rested_axes(&rgui->binds);
+            menu_poll_bind_state(&rgui->binds);
          }
-         else
+         else if (action == RGUI_ACTION_START)
          {
-            struct retro_keybind *bind = &g_settings.input.binds[port][setting - RGUI_SETTINGS_BIND_BEGIN];
-            if (action == RGUI_ACTION_OK)
-            {
-               rgui->binds.begin = setting;
-               rgui->binds.last = setting;
-               rgui->binds.target = bind;
-               rgui->binds.player = port;
-               file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
-               menu_poll_bind_get_rested_axes(&rgui->binds);
-               menu_poll_bind_state(&rgui->binds);
-            }
-            else if (action == RGUI_ACTION_START)
-            {
-               bind->joykey = NO_BTN;
-               bind->joyaxis = AXIS_NONE;
-            }
+            bind->joykey = NO_BTN;
+            bind->joyaxis = AXIS_NONE;
          }
          break;
+      }
       case RGUI_BROWSER_DIR_PATH:
          if (action == RGUI_ACTION_START)
             *g_settings.rgui_content_directory = '\0';
@@ -1856,8 +1868,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
 #ifdef HAVE_MENU
       case RGUI_SETTINGS_BIND_MENU_TOGGLE:
 #endif
-         input_get_bind_string(type_str, &g_settings.input.binds[0][type - RGUI_SETTINGS_BIND_BEGIN], 0, type_str_size);
-         break;    
+         /* always use first controller for hotkey bindings */
+         input_get_bind_string(type_str, &g_settings.input.binds[0][type - RGUI_SETTINGS_BIND_BEGIN], 0, type_str_size);      
+         break;
       case RGUI_SETTINGS_BIND_UP:
       case RGUI_SETTINGS_BIND_DOWN:
       case RGUI_SETTINGS_BIND_LEFT:
@@ -1883,9 +1896,11 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_PLUS:
       case RGUI_SETTINGS_BIND_ANALOG_RIGHT_Y_MINUS:
       case RGUI_SETTINGS_BIND_TURBO_ENABLE:
-         input_get_bind_string(type_str, &g_settings.input.binds[rgui->c_player][type - RGUI_SETTINGS_BIND_BEGIN], 
-               rgui->c_player, type_str_size);
+      {
+         unsigned port = g_settings.input.device_port[rgui->c_player];
+         input_get_bind_string(type_str, &g_settings.input.binds[port][type - RGUI_SETTINGS_BIND_BEGIN], port, type_str_size);
          break;
+      }
       case RGUI_SETTINGS_AUDIO_VOLUME:
          snprintf(type_str, type_str_size, "%.1f dB", g_extern.audio_data.volume_db);
          break;

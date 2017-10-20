@@ -51,7 +51,7 @@ static inline bool input_key_pressed_func(int key)
    if (!driver.block_hotkey)
       ret = ret || driver.input->key_pressed(driver.input_data, key);
 
-#ifdef HAVE_OVERLAY
+#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
    ret = ret || (driver.overlay_state.buttons & (1ULL << key));
 #endif
 

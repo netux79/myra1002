@@ -375,7 +375,7 @@ size_t audio_sample_batch(const int16_t *data, size_t frames)
    return frames;
 }
 
-#ifdef HAVE_OVERLAY
+#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
 static inline void input_poll_overlay(void)
 {
    input_overlay_state_t old_key_state;
@@ -479,7 +479,7 @@ void rarch_input_poll(void)
 {
    input_poll_func();
 
-#ifdef HAVE_OVERLAY
+#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
    if (driver.overlay) // Poll overlay state
       input_poll_overlay();
 #endif
@@ -514,11 +514,14 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index, unsig
       g_settings.input.binds[3],
    };
 
+   /* Change the port according to the mapping */
+   port = g_settings.input.device_port[port];
+
    int16_t res = 0;
    if (id < RARCH_FIRST_META_KEY || device == RETRO_DEVICE_KEYBOARD)
       res = input_input_state_func(binds, port, device, index, id);
 
-#ifdef HAVE_OVERLAY
+#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
    if (device == RETRO_DEVICE_JOYPAD && port == 0)
       res |= driver.overlay_state.buttons & (1ULL << id) ? 1 : 0;
    else if (device == RETRO_DEVICE_KEYBOARD && port == 0 && id < RETROK_LAST)
