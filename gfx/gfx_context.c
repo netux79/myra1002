@@ -41,12 +41,6 @@ static const gfx_ctx_driver_t *gfx_ctx_drivers[] = {
 #if defined(HAVE_KMS)
    &gfx_ctx_drm_egl,
 #endif
-#if defined(ANDROID)
-   &gfx_ctx_android,
-#endif
-#if defined(IOS) || defined(OSX) //< Don't use __APPLE__ as it breaks basic SDL builds
-   &gfx_ctx_apple,
-#endif
    NULL
 };
 

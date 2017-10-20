@@ -27,13 +27,7 @@
 #include "../config.h"
 #endif
 
-#if defined(IOS)
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#elif defined(__APPLE__) // Because they like to be "oh, so, special".
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#elif defined(HAVE_PSGL)
+#if defined(HAVE_PSGL)
 #include <PSGL/psgl.h>
 #include <GLES/glext.h>
 #elif defined(HAVE_OPENGL_MODERN)
@@ -141,7 +135,6 @@ static const char *glsl_prefixes[] = {
    "ruby",
 };
 
-// Need to duplicate these to work around broken stuff on Android.
 // Must enforce alpha = 1.0 or 32-bit games can potentially go black.
 static const char *stock_vertex_modern =
    "attribute vec2 TexCoord;\n"

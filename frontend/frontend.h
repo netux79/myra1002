@@ -18,20 +18,12 @@
 #ifndef _RARCH_FRONTEND_H
 #define _RARCH_FRONTEND_H
 
-#if defined(ANDROID)
-#define args_type() struct android_app*
-#define signature() void* data
-#else
-#define args_type() void*
-#define signature() int argc, char *argv[]
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int main_entry_iterate(signature(), args_type() args);
-void main_exit(args_type() args);
+int main_entry_iterate(int argc, char *argv[], void* args);
+void main_exit(void* args);
 
 #ifdef __cplusplus
 }

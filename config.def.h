@@ -51,7 +51,6 @@ enum
    AUDIO_ALSATHREAD,
    AUDIO_ROAR,
    AUDIO_AL,
-   AUDIO_SL,
    AUDIO_JACK,
    AUDIO_SDL,
    AUDIO_XAUDIO,
@@ -62,7 +61,6 @@ enum
    AUDIO_WII,
    AUDIO_NULL,
 
-   INPUT_ANDROID,
    INPUT_SDL,
    INPUT_X,
    INPUT_DINPUT,
@@ -70,7 +68,6 @@ enum
    INPUT_XINPUT,
    INPUT_UDEV,
    INPUT_LINUXRAW,
-   INPUT_APPLE,
    INPUT_NULL,
 };
 
@@ -86,7 +83,7 @@ enum
 #define VIDEO_DEFAULT_DRIVER VIDEO_XVIDEO
 #elif defined(HAVE_SDL)
 #define VIDEO_DEFAULT_DRIVER VIDEO_SDL
-#elif defined(HAVE_DYLIB) && !defined(ANDROID)
+#elif defined(HAVE_DYLIB)
 #define VIDEO_DEFAULT_DRIVER VIDEO_EXT
 #else
 #define VIDEO_DEFAULT_DRIVER VIDEO_NULL
@@ -108,8 +105,6 @@ enum
 #define AUDIO_DEFAULT_DRIVER AUDIO_COREAUDIO
 #elif defined(HAVE_AL)
 #define AUDIO_DEFAULT_DRIVER AUDIO_AL
-#elif defined(HAVE_SL)
-#define AUDIO_DEFAULT_DRIVER AUDIO_SL
 #elif defined(HAVE_DSOUND)
 #define AUDIO_DEFAULT_DRIVER AUDIO_DSOUND
 #elif defined(HAVE_SDL)
@@ -118,7 +113,7 @@ enum
 #define AUDIO_DEFAULT_DRIVER AUDIO_XAUDIO
 #elif defined(HAVE_ROAR)
 #define AUDIO_DEFAULT_DRIVER AUDIO_ROAR
-#elif defined(HAVE_DYLIB) && !defined(ANDROID)
+#elif defined(HAVE_DYLIB)
 #define AUDIO_DEFAULT_DRIVER AUDIO_EXT
 #else
 #define AUDIO_DEFAULT_DRIVER AUDIO_NULL
@@ -126,27 +121,23 @@ enum
 
 #if defined(HAVE_XINPUT2) || defined(HAVE_XINPUT_XBOX1)
 #define INPUT_DEFAULT_DRIVER INPUT_XINPUT
-#elif defined(ANDROID)
-#define INPUT_DEFAULT_DRIVER INPUT_ANDROID
 #elif defined(_WIN32)
 #define INPUT_DEFAULT_DRIVER INPUT_DINPUT
 #elif defined(GEKKO)
 #define INPUT_DEFAULT_DRIVER INPUT_WII
 #elif defined(HAVE_UDEV)
 #define INPUT_DEFAULT_DRIVER INPUT_UDEV
-#elif defined(__linux__) && !defined(ANDROID)
+#elif defined(__linux__)
 #define INPUT_DEFAULT_DRIVER INPUT_LINUXRAW
 #elif defined(HAVE_X11)
 #define INPUT_DEFAULT_DRIVER INPUT_X
-#elif defined(IOS) || defined(OSX)
-#define INPUT_DEFAULT_DRIVER INPUT_APPLE
 #elif defined(HAVE_SDL)
 #define INPUT_DEFAULT_DRIVER INPUT_SDL
 #else
 #define INPUT_DEFAULT_DRIVER INPUT_NULL
 #endif
 
-#if defined(GEKKO) || defined(ANDROID)
+#if defined(GEKKO)
 #define DEFAULT_ASPECT_RATIO 1.3333f
 #else
 #define DEFAULT_ASPECT_RATIO -1.0f
@@ -214,30 +205,12 @@ static bool config_save_on_exit = true;
 
 #ifdef HAVE_OVERLAY
 // Default overlay directory
-#if defined(ANDROID)
-static const char *default_overlay_dir = "/data/data/com.retroarch/overlays/";
-#elif defined(IOS)
-static const char *default_overlay_dir = ":/overlays";
-#else
 static const char *default_overlay_dir = NULL;
 #endif
-#endif
 
-#if defined(ANDROID)
-static const char *default_shader_dir = "/data/data/com.retroarch/shaders_glsl/";
-#elif defined(IOS)
-static const char *default_shader_dir = ":/shaders_glsl/";
-#else
 static const char *default_shader_dir = NULL;
-#endif
-
 static const char *default_config_path = NULL;
-
-#if defined(ANDROID)
-static const char *default_libretro_info_path = "/data/data/com.retroarch/info/";
-#else
 static const char *default_libretro_info_path = NULL;
-#endif
 
 // Crop overscanned frames.
 static const bool crop_overscan = true;
@@ -287,7 +260,7 @@ static const bool allow_rotate = true;
 static const bool audio_enable = true;
 
 // Output samplerate
-#if defined(GEKKO) || defined(ANDROID)
+#ifdef GEKKO
 static const unsigned out_rate = 32000;
 #else
 static const unsigned out_rate = 48000;

@@ -19,10 +19,6 @@
 #include "performance.h"
 #include "general.h"
 
-#ifdef ANDROID
-#include "performance/performance_android.h"
-#endif
-
 #if !defined(_WIN32) && !defined(RARCH_CONSOLE)
 #include <unistd.h>
 #endif
@@ -34,8 +30,7 @@
 
 #if defined(GEKKO)
 #define __mftb gettime
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(ANDROID)
-// POSIX_MONOTONIC_CLOCK is not being defined in Android headers despite support being present.
+#elif defined(_POSIX_MONOTONIC_CLOCK)
 #include <time.h>
 #endif
 
@@ -45,12 +40,6 @@
 
 #ifdef GEKKO
 #include <ogc/lwp_watchdog.h>
-#endif
-
-// OSX specific. OSX lacks clock_gettime().
-#ifdef __MACH__
-#include <mach/clock.h>
-#include <mach/mach.h>
 #endif
 
 #include <string.h>
@@ -163,14 +152,7 @@ retro_time_t rarch_get_time_usec(void)
    return count.QuadPart * 1000000 / freq.QuadPart;
 #elif defined(GEKKO)
    return ticks_to_microsecs(gettime());
-#elif defined(__MACH__) // OSX doesn't have clock_gettime ...
-   clock_serv_t cclock;
-   mach_timespec_t mts;
-   host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-   clock_get_time(cclock, &mts);
-   mach_port_deallocate(mach_task_self(), cclock);
-   return mts.tv_sec * INT64_C(1000000) + (mts.tv_nsec + 500) / 1000;
-#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(ANDROID)
+#elif defined(_POSIX_MONOTONIC_CLOCK)
    struct timespec tv;
    if (clock_gettime(CLOCK_MONOTONIC, &tv) < 0)
       return 0;
@@ -195,8 +177,6 @@ retro_time_t rarch_get_time_usec(void)
 #ifdef CPU_X86
 static void x86_cpuid(int func, int flags[4])
 {
-   // On Android, we compile RetroArch with PIC, and we are not allowed to clobber the ebx
-   // register.
 #ifdef __x86_64__
 #define REG_b "rbx"
 #define REG_S "rsi"
@@ -335,19 +315,6 @@ uint64_t rarch_get_cpu_features(void)
    RARCH_LOG("[CPUID]: SSE4.2: %u\n", !!(cpu & RETRO_SIMD_SSE42));
    RARCH_LOG("[CPUID]: AVX:    %u\n", !!(cpu & RETRO_SIMD_AVX));
    RARCH_LOG("[CPUID]: AVX2:   %u\n", !!(cpu & RETRO_SIMD_AVX2));
-#elif defined(ANDROID) && defined(ANDROID_ARM)
-   uint64_t cpu_flags = android_getCpuFeatures();
-   (void)cpu_flags;
-
-#ifdef HAVE_NEON
-   if (cpu_flags & ANDROID_CPU_ARM_FEATURE_NEON)
-   {
-      cpu |= RETRO_SIMD_NEON;
-      arm_enable_runfast_mode();
-   }
-#endif
-
-   RARCH_LOG("[CPUID]: NEON: %u\n", !!(cpu & RETRO_SIMD_NEON));
 #elif defined(HAVE_NEON)
    cpu |= RETRO_SIMD_NEON;
    arm_enable_runfast_mode();

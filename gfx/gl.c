@@ -195,7 +195,7 @@ static bool check_fbo_proc(gl_t *gl)
 #else
 #define check_fbo_proc(gl) (true)
 #endif
-#if defined(__APPLE__) || defined(HAVE_PSGL)
+#if defined(HAVE_PSGL)
 #define GL_RGBA32F GL_RGBA32F_ARB
 #endif
 #endif
@@ -347,14 +347,7 @@ void gl_shader_set_coords(void *data, const struct gl_coords *coords, const math
 #define gl_shader_num(gl) ((gl->shader) ? gl->shader->num_shaders() : 0)
 #define gl_shader_filter_type(gl, index, smooth) ((gl->shader) ? gl->shader->filter_type(index, smooth) : false)
 #define gl_shader_wrap_type(gl, index) ((gl->shader) ? gl->shader->wrap_type(index) : RARCH_WRAP_BORDER)
-
-#ifdef IOS
-// There is no default frame buffer on IOS.
-void apple_bind_game_view_fbo(void);
-#define gl_bind_backbuffer() apple_bind_game_view_fbo()
-#else
 #define gl_bind_backbuffer() glBindFramebuffer(GL_FRAMEBUFFER, 0)
-#endif
 
 #ifdef HAVE_FBO
 static void gl_shader_scale(void *data, unsigned index, struct gfx_fbo_scale *scale)
@@ -1367,10 +1360,6 @@ static bool gl_frame(void *data, const void *frame, unsigned width, unsigned hei
 
    if (gl->shader)
       gl->shader->use(gl, 1);
-
-#ifdef IOS // Apparently the viewport is lost each frame, thanks apple.
-   gl_set_viewport(gl, gl->win_width, gl->win_height, false, true);
-#endif
 
 #ifdef HAVE_FBO
    // Render to texture in first pass.

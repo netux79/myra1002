@@ -10,13 +10,7 @@
 #include <EGL/eglext.h>
 #endif
 
-#if defined(IOS)
-#include <OpenGLES/ES2/gl.h>
-#include <OpenGLES/ES2/glext.h>
-#elif defined(__APPLE__)
-#include <OpenGL/gl.h>
-#include <OpenGL/glext.h>
-#elif defined(HAVE_PSGL)
+#if defined(HAVE_PSGL)
 #include <PSGL/psgl.h>
 #include <GLES/glext.h>
 #elif defined(HAVE_OPENGL_MODERN)

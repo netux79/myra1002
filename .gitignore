@@ -22,9 +22,6 @@ ipch
 *.7z
 RetroArch-w32/
 RetroArch-w64/
-android/native/obj/
-android/phoenix/bin/
-android/phoenix/gen/
 .DS_Store
 */build/*
 */xcbuild/*
@@ -42,11 +39,6 @@ profile
 DerivedData
 .idea/
 *.hmap
-apple/tmp
-apple/modules/*.dylib
-apple/modules/*.info
-apple/*.mobileprovision
-apple/RetroArch_iOS.xcodeproj/project.xcworkspace/*
 /Cg/
 /GL/
 /SDL/

@@ -76,7 +76,7 @@ enum menu_enums
 #endif
    MODE_LOAD_GAME,
    MODE_MENU,
-#if !(defined(RARCH_CONSOLE) || defined(ANDROID))   
+#ifndef RARCH_CONSOLE
    MODE_EXIT,
 #endif
    MODE_MENU_PREINIT,
@@ -193,12 +193,7 @@ struct settings
       bool debug_enable;
       bool autodetect_enable;
       bool menu_all_players_enable;
-#ifdef ANDROID
-      unsigned back_behavior;
-      unsigned icade_profile[MAX_PLAYERS];
-      unsigned icade_count;
-#endif
-
+      
       unsigned turbo_period;
       unsigned turbo_duty_cycle;
 

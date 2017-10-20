@@ -47,8 +47,6 @@ const char *config_get_default_audio(void)
          return "coreaudio";
       case AUDIO_AL:
          return "openal";
-      case AUDIO_SL:
-         return "opensl";
       case AUDIO_SDL:
          return "sdl";
       case AUDIO_DSOUND:
@@ -97,8 +95,6 @@ const char *config_get_default_input(void)
 {
    switch (INPUT_DEFAULT_DRIVER)
    {
-      case INPUT_ANDROID:
-         return "android_input";
       case INPUT_SDL:
          return "sdl";
       case INPUT_DINPUT:
@@ -113,8 +109,6 @@ const char *config_get_default_input(void)
          return "linuxraw";
       case INPUT_UDEV:
          return "udev";
-      case INPUT_APPLE:
-         return "apple_input";
       case INPUT_NULL:
          return "null";
       default:
@@ -236,9 +230,6 @@ void config_set_defaults(void)
    g_settings.input.autodetect_enable = input_autodetect_enable;
    g_settings.input.menu_all_players_enable = menu_all_players_enable;   
    *g_settings.input.keyboard_layout = '\0';
-#ifdef ANDROID
-   g_settings.input.back_behavior = BACK_BUTTON_QUIT;
-#endif
 
    for (i = 0; i < MAX_PLAYERS; i++)
    {
@@ -303,9 +294,6 @@ void config_set_defaults(void)
    if (default_overlay_dir)
    {
       fill_pathname_expand_special(g_extern.overlay_dir, default_overlay_dir, sizeof(g_extern.overlay_dir));
-#ifdef IOS
-      fill_pathname_join(g_settings.input.overlay, g_extern.overlay_dir, "gamepads/snes/snes.cfg", sizeof(g_settings.input.overlay));
-#endif
    }
 #endif
 
@@ -441,42 +429,6 @@ static config_file_t *open_default_config_file(void)
 
    if (conf)
       strlcpy(g_extern.config_path, conf_path, sizeof(g_extern.config_path));
-#elif defined(OSX)
-   char conf_path[PATH_MAX];
-   const char *home = getenv("HOME");
-
-   if (!home)
-      return NULL;
-
-   fill_pathname_join(conf_path, home, "Library/Application Support/RetroArch", sizeof(conf_path));
-   path_mkdir(conf_path);
-      
-   fill_pathname_join(conf_path, conf_path, "retroarch.cfg", sizeof(conf_path));
-   conf = config_file_new(conf_path);
-
-   if (!conf)
-   {
-      conf = config_file_new(NULL);
-      bool saved = false;
-      if (conf)
-      {
-         config_set_bool(conf, "config_save_on_exit", true);
-         saved = config_file_write(conf, conf_path);
-      }
-      
-      if (saved)
-         RARCH_WARN("Created new config file in: \"%s\".\n", conf_path); // WARN here to make sure user has a good chance of seeing it.
-      else
-      {
-         RARCH_ERR("Failed to create new config file in: \"%s\".\n", conf_path);
-         config_file_free(conf);
-         conf = NULL;
-      }
-   }
-
-   if (conf)
-      strlcpy(g_extern.config_path, conf_path, sizeof(g_extern.config_path));
-
 #else
    char conf_path[PATH_MAX];
    const char *xdg  = getenv("XDG_CONFIG_HOME");
@@ -513,6 +465,7 @@ static config_file_t *open_default_config_file(void)
 
       char basedir[PATH_MAX];
       fill_pathname_basedir(basedir, conf_path, sizeof(basedir));
+
 
       if (path_mkdir(basedir))
       {
@@ -803,14 +756,6 @@ bool config_load_file(const char *path)
    CONFIG_GET_INT(input.turbo_duty_cycle, "input_duty_cycle");
    CONFIG_GET_BOOL(input.autodetect_enable, "input_autodetect_enable");
 
-#ifdef ANDROID
-   CONFIG_GET_INT(input.back_behavior, "input_back_behavior");
-   CONFIG_GET_INT(input.icade_profile[0], "input_autodetect_icade_profile_pad1");
-   CONFIG_GET_INT(input.icade_profile[1], "input_autodetect_icade_profile_pad2");
-   CONFIG_GET_INT(input.icade_profile[2], "input_autodetect_icade_profile_pad3");
-   CONFIG_GET_INT(input.icade_profile[3], "input_autodetect_icade_profile_pad4");
-#endif
-
    config_read_keybinds_conf(conf);
 
    config_file_free(conf);
@@ -1080,13 +1025,6 @@ bool config_save_file(const char *path)
    config_set_path(conf, "input_overlay", g_settings.input.overlay);
    config_set_float(conf, "input_overlay_opacity", g_settings.input.overlay_opacity);
    config_set_float(conf, "input_overlay_scale", g_settings.input.overlay_scale);
-#endif
-#ifdef ANDROID
-   config_set_int(conf, "input_back_behavior", g_settings.input.back_behavior);
-   config_set_int(conf, "input_autodetect_icade_profile_pad1", g_settings.input.icade_profile[0]);
-   config_set_int(conf, "input_autodetect_icade_profile_pad2", g_settings.input.icade_profile[1]);
-   config_set_int(conf, "input_autodetect_icade_profile_pad3", g_settings.input.icade_profile[2]);
-   config_set_int(conf, "input_autodetect_icade_profile_pad4", g_settings.input.icade_profile[3]);
 #endif
 #ifdef RARCH_CONSOLE
    config_set_int(conf, "gamma_correction", g_extern.console_screen.gamma_correction);

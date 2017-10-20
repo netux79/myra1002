@@ -228,73 +228,8 @@ typedef struct audio_driver
 
 enum input_devices
 {
-#if defined(ANDROID)
-   DEVICE_NONE = 0,
-   DEVICE_LOGITECH_RUMBLEPAD2,
-   DEVICE_LOGITECH_DUAL_ACTION,
-   DEVICE_LOGITECH_PRECISION_GAMEPAD,
-   DEVICE_ICONTROLPAD_HID_JOYSTICK,
-   DEVICE_ICONTROLPAD_BLUEZ_IME,
-   DEVICE_TTT_THT_ARCADE,
-   DEVICE_TOMMO_NEOGEOX_ARCADE,
-   DEVICE_MADCATZ_PC_USB_STICK,
-   DEVICE_LOGICOOL_RUMBLEPAD2,
-   DEVICE_IDROID_X360,
-   DEVICE_ZEEMOTE_STEELSERIES,
-   DEVICE_HUIJIA_USB_SNES,
-   DEVICE_SUPER_SMARTJOY,
-   DEVICE_SAITEK_RUMBLE_P480,
-   DEVICE_MS_SIDEWINDER_DUAL_STRIKE,
-   DEVICE_MS_SIDEWINDER,
-   DEVICE_MS_XBOX,
-   DEVICE_WISEGROUP_PLAYSTATION2,
-   DEVICE_JCPS102_PLAYSTATION2,
-   DEVICE_GENERIC_PLAYSTATION2_CONVERTER,
-   DEVICE_PSMOVE_NAVI,
-   DEVICE_JXD_S7300B,
-   DEVICE_JXD_S7800B,
-   DEVICE_IDROID_CON,
-   DEVICE_GENIUS_MAXFIRE_G08XU,
-   DEVICE_USB_2_AXIS_8_BUTTON_GAMEPAD,
-   DEVICE_BUFFALO_BGC_FC801,
-   DEVICE_RETROUSB_RETROPAD,
-   DEVICE_RETROUSB_SNES_RETROPORT,
-   DEVICE_CYPRESS_USB,
-   DEVICE_MAYFLASH_WII_CLASSIC,
-   DEVICE_SZMY_POWER_DUAL_BOX_WII,
-   DEVICE_ARCHOS_GAMEPAD,
-   DEVICE_JXD_S5110,
-   DEVICE_JXD_S5110_SKELROM,
-   DEVICE_XPERIA_PLAY,
-   DEVICE_BROADCOM_BLUETOOTH_HID,
-   DEVICE_THRUST_PREDATOR,
-   DEVICE_DRAGONRISE,
-   DEVICE_PLAYSTATION3_VERSION1,
-   DEVICE_PLAYSTATION3_VERSION2,
-   DEVICE_MOGA_IME,
-   DEVICE_NYKO_PLAYPAD_PRO,
-   DEVICE_TOODLES_2008_CHIMP,
-   DEVICE_MOGA,
-   DEVICE_SEGA_VIRTUA_STICK_HIGH_GRADE,
-   DEVICE_CCPCREATIONS_WIIUSE_IME,
-   DEVICE_KEYBOARD_RETROPAD,
-   DEVICE_OUYA,
-   DEVICE_ONLIVE_WIRELESS_CONTROLLER,
-   DEVICE_TOMEE_NES_USB,
-   DEVICE_THRUSTMASTER_T_MINI,
-   DEVICE_GAMEMID,
-   DEVICE_DEFENDER_GAME_RACER_CLASSIC,
-   DEVICE_HOLTEK_JC_U912F,
-   DEVICE_NVIDIA_SHIELD,
-   DEVICE_MUCH_IREADGO_I5,
-   DEVICE_WIKIPAD,
-   DEVICE_FC30_GAMEPAD,
-#elif defined(GEKKO)
+#if defined(GEKKO)
    DEVICE_GXPAD = 1,
-#elif defined(IOS)
-   DEVICE_NONE,
-   DEVICE_WIIMOTE,
-   DEVICE_SIXAXIS,
 #endif
    DEVICE_LAST
 };
@@ -414,7 +349,6 @@ enum rarch_display_type
    RARCH_DISPLAY_NONE = 0, // Non-bindable types like consoles, KMS, VideoCore, etc.
    RARCH_DISPLAY_X11, // video_display => Display*, video_window => Window
    RARCH_DISPLAY_WIN32, // video_display => N/A, video_window => HWND
-   RARCH_DISPLAY_OSX // ?!
 };
 
 typedef struct driver
@@ -527,7 +461,6 @@ extern const audio_driver_t audio_alsa;
 extern const audio_driver_t audio_alsathread;
 extern const audio_driver_t audio_roar;
 extern const audio_driver_t audio_openal;
-extern const audio_driver_t audio_opensl;
 extern const audio_driver_t audio_jack;
 extern const audio_driver_t audio_sdl;
 extern const audio_driver_t audio_xa;
@@ -543,7 +476,6 @@ extern const video_driver_t video_xvideo;
 extern const video_driver_t video_sdl;
 extern const video_driver_t video_vg;
 extern const video_driver_t video_null;
-extern const input_driver_t input_android;
 extern const input_driver_t input_sdl;
 extern const input_driver_t input_dinput;
 extern const input_driver_t input_x;
@@ -551,7 +483,6 @@ extern const input_driver_t input_gx;
 extern const input_driver_t input_xinput;
 extern const input_driver_t input_linuxraw;
 extern const input_driver_t input_udev;
-extern const input_driver_t input_apple;
 extern const input_driver_t input_null;
 
 #ifdef HAVE_SCALERS_BUILTIN

@@ -24,12 +24,6 @@ static const frontend_ctx_driver_t *frontend_ctx_drivers[] = {
 #if defined(GEKKO)
    &frontend_ctx_gx,
 #endif
-#if defined(IOS) || defined(OSX)
-   &frontend_ctx_apple,
-#endif
-#if defined(ANDROID)
-   &frontend_ctx_android,
-#endif
    NULL // zero length array is not valid
 };
 

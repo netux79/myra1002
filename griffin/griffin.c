@@ -46,11 +46,6 @@ RLAUNCH
 /*============================================================
 PERFORMANCE
 ============================================================ */
-
-#ifdef ANDROID
-#include "../performance/performance_android.c"
-#endif
-
 #include "../performance.c"
 
 /*============================================================
@@ -69,13 +64,6 @@ VIDEO CONTEXT
 ============================================================ */
 
 #include "../gfx/gfx_context.c"
-
-#if defined(ANDROID)
-#include "../gfx/context/androidegl_ctx.c"
-#elif defined(IOS) || defined(OSX)
-#include "../gfx/context/apple_gl_ctx.c"
-#endif
-
 
 #if defined(HAVE_OPENGL)
 
@@ -224,15 +212,9 @@ INPUT
 #include "../gx/gx_usbpad.c"
 #include "../gx/gx_hid_input.c"
 #endif
-#elif defined(ANDROID)
-#include "../android/native/jni/input_autodetect.c"
-#include "../android/native/jni/input_android.c"
-#elif defined(IOS) || defined(OSX)
-#include "../apple/common/apple_input.c"
-#include "../apple/common/apple_joypad.c"
 #endif
 
-#if defined(__linux__) && !defined(ANDROID)
+#if defined(__linux__)
 #include "../input/linuxraw_input.c"
 #include "../input/linuxraw_joypad.c"
 #endif
@@ -288,10 +270,6 @@ AUDIO
 
 #ifdef HAVE_DSOUND
 #include "../audio/dsound.c"
-#endif
-
-#ifdef HAVE_SL
-#include "../audio/opensl.c"
 #endif
 
 #ifdef HAVE_ALSA
@@ -388,10 +366,6 @@ FRONTEND
 #ifdef HW_RVL
 #include "../frontend/platform/platform_wii.c"
 #endif
-#elif defined(OSX) || defined(IOS)
-#include "../frontend/platform/platform_apple.c"
-#elif defined(ANDROID)
-#include "../frontend/platform/platform_android.c"
 #endif
 
 #include "../frontend/info/core_info.c"
@@ -468,14 +442,6 @@ XML
 #ifndef HAVE_LIBXML2
 #define RXML_LIBXML2_COMPAT
 #include "../compat/rxml/rxml.c"
-#endif
-/*============================================================
- APPLE EXTENSIONS
-============================================================ */
-
-#if defined(IOS) || defined(OSX)
-#include "../apple/common/setting_data.c"
-#include "../apple/common/core_info_ext.c"
 #endif
 
 #ifdef __cplusplus

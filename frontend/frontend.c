@@ -55,25 +55,6 @@ static void rarch_get_environment_console(char *path)
 }
 #endif
 
-#if defined(ANDROID)
-
-#define main_entry android_app_entry
-#define returntype void
-#define signature_expand() data
-#define returnfunc() exit(0)
-#define return_negative() return
-#define return_var(var) return
-#define declare_argc() int argc = 0;
-#define declare_argv() char *argv[1]
-#define args_initial_ptr() data
-#else
-
-#if defined(__APPLE__)
-#define main_entry rarch_main
-#else
-#define main_entry main
-#endif
-
 #define returntype int
 #define signature_expand() argc, argv
 #define returnfunc() return 0
@@ -83,13 +64,7 @@ static void rarch_get_environment_console(char *path)
 #define declare_argv()
 #define args_initial_ptr() NULL
 
-#endif
-
-#ifdef ANDROID
-#define ra_preinited true
-#else
 #define ra_preinited false
-#endif
 
 #ifdef RARCH_CONSOLE
 #define attempt_load_game false
@@ -97,19 +72,19 @@ static void rarch_get_environment_console(char *path)
 #define attempt_load_game true
 #endif
 
-#if !defined(RARCH_CONSOLE) && !defined(ANDROID)
+#if !defined(RARCH_CONSOLE)
 #define attempt_load_game_push_history true
 #else
 #define attempt_load_game_push_history false
 #endif
 
-#if defined(RARCH_CONSOLE) || defined(__APPLE__)
+#if defined(RARCH_CONSOLE)
 #define load_dummy_on_core_shutdown false
 #else
 #define load_dummy_on_core_shutdown true
 #endif
 
-int main_entry_iterate(signature(), args_type() args)
+int main_entry_iterate(int argc, char *argv[], void* args)
 {
    int i;
    static retro_keyboard_event_t key_event;
@@ -124,7 +99,7 @@ int main_entry_iterate(signature(), args_type() args)
 #endif
          return 1;
    }
-#if !(defined(RARCH_CONSOLE) || defined(ANDROID))
+#ifndef RARCH_CONSOLE
    else if (g_extern.lifecycle_state & (1ULL << MODE_EXIT))
    {
       return 1;
@@ -146,7 +121,7 @@ int main_entry_iterate(signature(), args_type() args)
       {
          /* If ROM load fails, we exit RetroArch. On console it 
           * makes more sense to go back to menu though ... */
-#if defined(RARCH_CONSOLE) || defined(ANDROID)         
+#ifdef RARCH_CONSOLE        
          g_extern.lifecycle_state = (1ULL << MODE_MENU_PREINIT);
 #else
          g_extern.lifecycle_state = (1ULL << MODE_EXIT);
@@ -253,7 +228,7 @@ int main_entry_iterate(signature(), args_type() args)
    return 0;
 }
 
-void main_exit(args_type() args)
+void main_exit(void* args)
 {
 #ifdef HAVE_MENU
    g_extern.system.core_shutdown = false;
@@ -294,11 +269,11 @@ void main_exit(args_type() args)
       frontend_ctx->shutdown(false);
 }
 
-returntype main_entry(signature())
+returntype main(int argc, char *argv[])
 {
    declare_argc();
    declare_argv();
-   args_type() args = (args_type())args_initial_ptr();
+   void* args = (void*)args_initial_ptr();
 
 
    frontend_ctx = (frontend_ctx_driver_t*)frontend_ctx_init_first();

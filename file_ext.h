@@ -20,8 +20,6 @@
 #ifdef HAVE_DYNAMIC
 #ifdef _WIN32
 #define EXT_EXECUTABLES "dll"
-#elif defined(__APPLE__) || defined(__MACH__)
-#define EXT_EXECUTABLES "dylib"
 #else
 #define EXT_EXECUTABLES "so"
 #endif
@@ -34,10 +32,6 @@
 #else
 #define PLATFORM_NAME   "ngc"
 #endif
-#elif defined(ANDROID)
-#define PLATFORM_NAME   "android"
-#elif defined(IOS)
-#define PLATFORM_NAME   "ios"
 #endif
 #endif
 

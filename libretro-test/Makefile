@@ -5,8 +5,6 @@ ifeq ($(shell uname -a),)
    platform = win
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
    platform = win
-else ifneq ($(findstring Darwin,$(shell uname -a)),)
-   platform = osx
 else ifneq ($(findstring win,$(shell uname -a)),)
    platform = win
 endif
@@ -18,16 +16,6 @@ ifeq ($(platform), unix)
    TARGET := $(TARGET_NAME)_libretro.so
    fpic := -fPIC
    SHARED := -shared -Wl,--version-script=link.T -Wl,--no-undefined
-else ifeq ($(platform), osx)
-   TARGET := $(TARGET_NAME)_libretro.dylib
-   fpic := -fPIC
-   SHARED := -dynamiclib
-else ifeq ($(platform), ios)
-   TARGET := $(TARGET_NAME)_libretro_ios.dylib
-	fpic := -fPIC
-	SHARED := -dynamiclib
-	DEFINES := -DIOS
-	CC = clang -arch armv7 -isysroot $(IOSSDK)
 else
    CC = gcc
    TARGET := $(TARGET_NAME)_retro.dll
