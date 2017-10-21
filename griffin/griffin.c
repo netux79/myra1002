@@ -111,7 +111,7 @@ VIDEO IMAGE
 ============================================================ */
 #include "../gfx/image/image.c"
 
-#if defined(WANT_RPNG) || defined(RARCH_MOBILE)
+#ifdef WANT_RPNG
 #include "../gfx/rpng/rpng.c"
 #endif
 

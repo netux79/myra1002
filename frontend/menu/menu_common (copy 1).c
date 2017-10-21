@@ -570,6 +570,9 @@ uint64_t menu_input(void)
 
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
    input_state |= input_key_pressed_func(RARCH_QUIT_KEY) ? (1ULL << RARCH_QUIT_KEY) : 0;
+   
+   /* Clear lifecycle_state from QUIT command to avoid further triggering */
+   g_extern.lifecycle_state &= ~(1ULL << RARCH_QUIT_KEY);
 
    rgui->trigger_state = input_state & ~rgui->old_input_state;
 
@@ -596,7 +599,9 @@ static int menu_custom_bind_iterate(void *data, void *video_data, unsigned actio
       menugui_driver->render(rgui, video_data);
 
    char msg[256];
-   snprintf(msg, sizeof(msg), "[%s]\npress joypad\n(RETURN to skip)", input_config_bind_map[rgui->binds.begin - RGUI_SETTINGS_BIND_BEGIN].desc);
+   const char *padname = g_settings.input.device_names[rgui->binds.port];
+   const char *keyname = input_config_bind_map[rgui->binds.begin - RGUI_SETTINGS_BIND_BEGIN].desc;
+   snprintf(msg, sizeof(msg), "[%s]\nPress Key On %s\n(RETURN to skip)", keyname, padname);
 
    if (video_data && menugui_driver && menugui_driver->render_messagebox)
       menugui_driver->render_messagebox(rgui, video_data, msg);
@@ -611,12 +616,13 @@ static int menu_custom_bind_iterate(void *data, void *video_data, unsigned actio
          binds.target++;
       else
          file_list_pop(rgui->menu_stack, &rgui->selection_ptr);
-
-      // Avoid new binds triggering things right away.
-      rgui->trigger_state = 0;
-      rgui->old_input_state = -1ULL;
    }
    rgui->binds = binds;
+   
+   /* Avoid binds triggering while awaiting. */
+   rgui->trigger_state = 0;
+   rgui->old_input_state = -1ULL;
+
    return 0;
 }
 
@@ -1192,18 +1198,13 @@ bool menu_iterate(void *video_data)
    static bool first_held = false;
    uint64_t input_state = 0;
 
-   if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
-   {
-      rgui->need_refresh = true;
-      g_extern.lifecycle_state &= ~(1ULL << MODE_MENU_PREINIT);
-      rgui->old_input_state |= 1ULL << RARCH_MENU_TOGGLE;
-   }
-
    rarch_check_block_hotkey();
    rarch_input_poll();
+
 #if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
    rarch_check_overlay();
 #endif
+
 #ifndef RARCH_CONSOLE
    rarch_check_fullscreen();
 #endif

@@ -904,18 +904,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else
             g_settings.input.menu_all_players_enable = menu_all_players_enable;
          break;                  
-      case RGUI_SETTINGS_CUSTOM_BIND_ALL:
-         if (action == RGUI_ACTION_OK)
-         {
-            rgui->binds.target = &g_settings.input.binds[g_settings.input.device_port[rgui->c_player]][0];
-            rgui->binds.begin = RGUI_SETTINGS_BIND_BEGIN;
-            rgui->binds.last = RGUI_SETTINGS_BIND_LAST;
-            file_list_push(rgui->menu_stack, "", RGUI_SETTINGS_CUSTOM_BIND, rgui->selection_ptr);
-            menu_poll_bind_get_rested_axes(&rgui->binds);
-            menu_poll_bind_state(&rgui->binds);
-         }
-         break;
-      case RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL:
+      case RGUI_SETTINGS_BIND_DEFAULT_ALL:
          if (action == RGUI_ACTION_OK)
          {
             unsigned i;
@@ -1748,8 +1737,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_OVERLAY_OPTIONS:
       case RGUI_SETTINGS_OPTIONS:
       case RGUI_SETTINGS_DRIVERS:
-      case RGUI_SETTINGS_CUSTOM_BIND_ALL:
-      case RGUI_SETTINGS_CUSTOM_BIND_DEFAULT_ALL:
+      case RGUI_SETTINGS_BIND_DEFAULT_ALL:
       case RGUI_SETTINGS_BIND_HOTKEYS:
       case RGUI_SETTINGS_BIND_PLAYER_KEYS:
          strlcpy(type_str, "...", type_str_size);
