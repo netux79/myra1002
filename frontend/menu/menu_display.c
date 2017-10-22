@@ -555,7 +555,7 @@ static int rgui_input_postprocess(void *data, uint64_t old_state)
    (void)old_state;
 
    /* check if we need to return to game */
-   if ((rgui->trigger_state & (1ULL << RARCH_MENU_TOGGLE)) 
+   if ((rgui->trigger_state & (1ULL << RARCH_MENU_TOGGLE))
          && g_extern.main_is_init && !g_extern.libretro_dummy)
    {
       g_extern.lifecycle_state |= (1ULL << MODE_GAME);

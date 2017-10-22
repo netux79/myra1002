@@ -130,9 +130,9 @@ static const gxpadsetup _gx_pad_config[] = {
 		{PAD_BUTTON_B, PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_BUTTON_START,
 		PAD_BUTTON_UP, PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT,
 		PAD_BUTTON_A, PAD_BUTTON_X, PAD_TRIGGER_L, PAD_TRIGGER_R,
-		GX_NO_BUTTON, GX_NO_BUTTON, PAD_BUTTON_START | PAD_TRIGGER_Z},
+		GX_NO_BUTTON, GX_NO_BUTTON, GX_NO_BUTTON},
 		{GX_B, GX_Y, GX_Z, GX_START, GX_UP, GX_DOWN, GX_LEFT, GX_RIGHT,
-		GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_HOME},
+		GX_A, GX_X, GX_L, GX_R, GX_NA, GX_NA, GX_NA},
 		4, WPAD_EXP_GAMECUBE, _gx_read_gc, _gx_rumble_gc},
 };
 
@@ -453,12 +453,9 @@ bool gxpad_buttonavail(uint8_t pad_idx, uint8_t b_idx) {
 	return false;
 }
 
-static char temp_name[32];
 const char *gxpad_padname(uint8_t pad_idx) {
    if (pad_idx < GX_MAX_PADS && _gx_list[pad_idx]) {
-      struct gxpad *p = _gx_list[pad_idx];
-      snprintf(temp_name, sizeof(temp_name), "%s [#%d]", p->config->name, p->p_slot+1);
-		return temp_name;
+		return _gx_list[pad_idx]->config->name;
 	}
 
 	return NULL;

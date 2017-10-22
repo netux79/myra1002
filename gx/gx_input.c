@@ -36,7 +36,6 @@ typedef struct gx_input
 
 extern const rarch_joypad_driver_t gx_joypad;
 
-static bool gx_reset_btn;
 #ifdef HW_RVL
 static void gx_power_cb(void)
 {
@@ -45,7 +44,7 @@ static void gx_power_cb(void)
 #endif
 static void gx_reset_cb(void)
 {
-   gx_reset_btn = true;
+   g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])
@@ -178,7 +177,7 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
       if (pad_name)
       {
          /* We are only supporting GXPAD devices */
-         g_settings.input.device[port] = DEVICE_GXPAD;
+         g_settings.input.device[port] = device;
          strlcpy(g_settings.input.device_names[port], pad_name, sizeof(g_settings.input.device_names[port]));
       }
       else /* Clear device */
@@ -312,39 +311,13 @@ static void gx_input_poll(void *data)
          hotplug = (lt_active[port]) ? true : false;
          lt_active[port] = false;
       }
-
-      if (hotplug)
-      {
-         /* show the pad change */
-         char msg[128];
-         unsigned p;
-         for (p=0; g_settings.input.device_port[p]!=port && p<MAX_PLAYERS; p++);
-         
-         if (lt_active[port])
-            snprintf(msg, sizeof(msg), "%s plugged to player %u", gxpad_padname(port), p+1);
-         else
-            snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], p+1);
-         msg_queue_push(g_extern.msg_queue, msg, 0, 80);
-
-         unsigned action = 1ULL << (g_settings.input.autodetect_enable ? KEYBINDS_ACTION_SET_DEFAULT_BINDS : KEYBINDS_ACTION_SET_PAD_NAME);
-         gx_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, action);
-      }
+      
+      /* show the pad change */
+      if (hotplug) input_joypad_hotplug(port, DEVICE_GXPAD, gxpad_padname(port), lt_active[port]);
    }
 
    /* poll mouse & lightgun data */
    gx_input_poll_ml(gx);
-
-   /* check if the user press the Wii's reset button, it works as the HOME button */
-   if (gx_reset_btn)
-   {
-      gx->pad_state[0] |= (1ULL << GX_GXPAD_HOME);
-      gx_reset_btn = false;/* clear the reset Wii button flag */
-   }
-   
-   if (gx->pad_state[0] & (1ULL << GX_GXPAD_HOME))
-      g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
-   else
-      g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_input_key_pressed(void *data, int key)

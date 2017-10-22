@@ -570,6 +570,10 @@ uint64_t menu_input(void)
 
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
    input_state |= input_key_pressed_func(RARCH_QUIT_KEY) ? (1ULL << RARCH_QUIT_KEY) : 0;
+   
+   /* Clear lifecycle_state from QUIT and MENU TOGGLE commands to avoid further triggering */
+   g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
+   g_extern.lifecycle_state &= ~(1ULL << RARCH_QUIT_KEY);
 
    rgui->trigger_state = input_state & ~rgui->old_input_state;
 
@@ -585,18 +589,19 @@ uint64_t menu_input(void)
    return input_state;
 }
 
-// This only makes sense for PC so far.
-// Consoles use set_keybind callbacks instead.
 static int menu_custom_bind_iterate(void *data, void *video_data, unsigned action)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
-   (void)action; // Have to ignore action here. Only bind that should work here is Quit RetroArch or something like that.
+   (void)action;
 
    if (video_data && menugui_driver && menugui_driver->render)
       menugui_driver->render(rgui, video_data);
 
    char msg[256];
-   snprintf(msg, sizeof(msg), "[%s]\npress joypad\n(RETURN to skip)", input_config_bind_map[rgui->binds.begin - RGUI_SETTINGS_BIND_BEGIN].desc);
+   const char *padname = g_settings.input.device_names[rgui->binds.port];
+   const char *keyname = input_config_bind_map[rgui->binds.begin - RGUI_SETTINGS_BIND_BEGIN].desc;
+   snprintf(msg, sizeof(msg), "[%s]\nPress a key on <%d:%s> to bind it\n(Press RESET button to abort)", 
+            keyname, rgui->binds.port, padname);
 
    if (video_data && menugui_driver && menugui_driver->render_messagebox)
       menugui_driver->render_messagebox(rgui, video_data, msg);
@@ -604,19 +609,20 @@ static int menu_custom_bind_iterate(void *data, void *video_data, unsigned actio
    struct rgui_bind_state binds = rgui->binds;
    menu_poll_bind_state(&binds);
 
-   if ((binds.skip && !rgui->binds.skip) || menu_poll_find_trigger(&rgui->binds, &binds))
+   if ((binds.abort) || menu_poll_find_trigger(&rgui->binds, &binds))
    {
       binds.begin++;
       if (binds.begin <= binds.last)
          binds.target++;
       else
          file_list_pop(rgui->menu_stack, &rgui->selection_ptr);
-
-      // Avoid new binds triggering things right away.
-      rgui->trigger_state = 0;
-      rgui->old_input_state = -1ULL;
    }
    rgui->binds = binds;
+   
+   /* Avoid binds triggering while awaiting. */
+   rgui->trigger_state = 0;
+   rgui->old_input_state = -1ULL;
+
    return 0;
 }
 
@@ -788,28 +794,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
    }
 
    file_list_get_last(rgui->menu_stack, &dir, &menu_type);
-
-   if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS)
-   {   
-      /* Need to check if the selected player's joypad
-       * is still available, it not, automatically
-       * switch to the previous player (if any) */            
-      unsigned attempts = 0;
-      while (!g_settings.input.device[g_settings.input.device_port[rgui->c_player]])
-      {
-         attempts++;
-         if (attempts < MAX_PLAYERS) 
-            rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;            
-         else
-         {
-            rgui->c_player = 0;
-            break;
-         }
-      }
-      /* ...also update the selected device. */
-      if (attempts) 
-         rgui->s_device = g_settings.input.device_port[rgui->c_player];
-   }
 
    if (rgui->need_refresh && !(menu_type == RGUI_FILE_DIRECTORY ||
             menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS||
@@ -1192,18 +1176,13 @@ bool menu_iterate(void *video_data)
    static bool first_held = false;
    uint64_t input_state = 0;
 
-   if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
-   {
-      rgui->need_refresh = true;
-      g_extern.lifecycle_state &= ~(1ULL << MODE_MENU_PREINIT);
-      rgui->old_input_state |= 1ULL << RARCH_MENU_TOGGLE;
-   }
-
    rarch_check_block_hotkey();
    rarch_input_poll();
+
 #if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
    rarch_check_overlay();
 #endif
+
 #ifndef RARCH_CONSOLE
    rarch_check_fullscreen();
 #endif
@@ -1295,9 +1274,12 @@ bool menu_iterate(void *video_data)
 
 void menu_poll_bind_state(struct rgui_bind_state *state)
 {
-   unsigned i, b, a, h;
+   unsigned p, b, a, h;
    memset(state->state, 0, sizeof(state->state));
-   state->skip = input_input_state_func(NULL, 0, RETRO_DEVICE_KEYBOARD, 0, RETROK_RETURN);
+   
+   /* if MENU TOGGLE is pressed, abort. */
+   state->abort = rgui->old_input_state & (1ULL << RARCH_MENU_TOGGLE);
+   if (state->abort) return;
 
    const rarch_joypad_driver_t *joypad = NULL;
    if (driver.input && driver.input_data && driver.input->get_joypad_driver)
@@ -1310,19 +1292,18 @@ void menu_poll_bind_state(struct rgui_bind_state *state)
    }
 
    input_joypad_poll(joypad);
-   for (i = 0; i < MAX_PLAYERS; i++)
+   p = state->port;
+   
+   for (b = 0; b < RGUI_MAX_BUTTONS; b++)
+      state->state[p].buttons[b] = input_joypad_button_raw(joypad, p, b);
+   for (a = 0; a < RGUI_MAX_AXES; a++)
+      state->state[p].axes[a] = input_joypad_axis_raw(joypad, p, a);
+   for (h = 0; h < RGUI_MAX_HATS; h++)
    {
-      for (b = 0; b < RGUI_MAX_BUTTONS; b++)
-         state->state[i].buttons[b] = input_joypad_button_raw(joypad, i, b);
-      for (a = 0; a < RGUI_MAX_AXES; a++)
-         state->state[i].axes[a] = input_joypad_axis_raw(joypad, i, a);
-      for (h = 0; h < RGUI_MAX_HATS; h++)
-      {
-         state->state[i].hats[h] |= input_joypad_hat_raw(joypad, i, HAT_UP_MASK, h) ? HAT_UP_MASK : 0;
-         state->state[i].hats[h] |= input_joypad_hat_raw(joypad, i, HAT_DOWN_MASK, h) ? HAT_DOWN_MASK : 0;
-         state->state[i].hats[h] |= input_joypad_hat_raw(joypad, i, HAT_LEFT_MASK, h) ? HAT_LEFT_MASK : 0;
-         state->state[i].hats[h] |= input_joypad_hat_raw(joypad, i, HAT_RIGHT_MASK, h) ? HAT_RIGHT_MASK : 0;
-      }
+      state->state[p].hats[h] |= input_joypad_hat_raw(joypad, p, HAT_UP_MASK, h) ? HAT_UP_MASK : 0;
+      state->state[p].hats[h] |= input_joypad_hat_raw(joypad, p, HAT_DOWN_MASK, h) ? HAT_DOWN_MASK : 0;
+      state->state[p].hats[h] |= input_joypad_hat_raw(joypad, p, HAT_LEFT_MASK, h) ? HAT_LEFT_MASK : 0;
+      state->state[p].hats[h] |= input_joypad_hat_raw(joypad, p, HAT_RIGHT_MASK, h) ? HAT_RIGHT_MASK : 0;
    }
 }
 
@@ -1344,9 +1325,10 @@ void menu_poll_bind_get_rested_axes(struct rgui_bind_state *state)
          state->axis_state[i].rested_axes[a] = input_joypad_axis_raw(joypad, i, a);
 }
 
-static bool menu_poll_find_trigger_pad(struct rgui_bind_state *state, struct rgui_bind_state *new_state, unsigned p)
+bool menu_poll_find_trigger(struct rgui_bind_state *state, struct rgui_bind_state *new_state)
 {
    unsigned a, b, h;
+   unsigned p = state->port;
    const struct rgui_bind_state_port *n = &new_state->state[p];
    const struct rgui_bind_state_port *o = &state->state[p];
 
@@ -1403,17 +1385,6 @@ static bool menu_poll_find_trigger_pad(struct rgui_bind_state *state, struct rgu
       }
    }
 
-   return false;
-}
-
-bool menu_poll_find_trigger(struct rgui_bind_state *state, struct rgui_bind_state *new_state)
-{
-   unsigned i;
-   for (i = 0; i < MAX_PLAYERS; i++)
-   {
-      if (menu_poll_find_trigger_pad(state, new_state, i))
-         return true;
-   }
    return false;
 }
 

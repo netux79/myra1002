@@ -165,9 +165,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
          driver_set_rumble_state(i, RETRO_RUMBLE_WEAK, 0);
       }
 
-      // Override keyboard callback to redirect to menu instead.
-      // We'll use this later for something ...
-      // FIXME: This should probably be moved to menu_common somehow.
       key_event = g_extern.system.key_event;
       g_extern.system.key_event = menu_key_event;
 
@@ -175,7 +172,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
          audio_stop_func();
 
       rgui->need_refresh= true;
-      rgui->old_input_state |= 1ULL << RARCH_MENU_TOGGLE;
 
       g_extern.lifecycle_state &= ~(1ULL << MODE_MENU_PREINIT);
       g_extern.lifecycle_state |= (1ULL << MODE_MENU);

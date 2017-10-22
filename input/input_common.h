@@ -90,6 +90,7 @@ bool input_joypad_hat_raw(const rarch_joypad_driver_t *driver,
 
 void input_joypad_poll(const rarch_joypad_driver_t *driver);
 const char *input_joypad_name(const rarch_joypad_driver_t *driver, unsigned joypad);
+void input_joypad_hotplug(unsigned port, unsigned device_type, const char *padname, bool activated);
 
 extern const rarch_joypad_driver_t dinput_joypad;
 extern const rarch_joypad_driver_t linuxraw_joypad;

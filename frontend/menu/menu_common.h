@@ -274,7 +274,7 @@ struct rgui_bind_state
    unsigned port;
    struct rgui_bind_state_port state[MAX_PLAYERS];
    struct rgui_bind_axis_state axis_state[MAX_PLAYERS];
-   bool skip;
+   bool abort;
 };
 
 void menu_poll_bind_get_rested_axes(struct rgui_bind_state *state);

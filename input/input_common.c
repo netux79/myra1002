@@ -213,6 +213,28 @@ bool input_joypad_hat_raw(const rarch_joypad_driver_t *driver,
    return driver->button(joypad, HAT_MAP(hat, hat_dir));
 }
 
+void input_joypad_hotplug(unsigned port, unsigned device_type, const char *padname, bool activated)
+{
+   char msg[128];
+   unsigned p;
+
+   /* look for the associated player of the port */
+   for (p=0; g_settings.input.device_port[p]!=port && p<MAX_PLAYERS; p++);
+   
+   if (activated)
+      snprintf(msg, sizeof(msg), "%s plugged to player %u", padname, p+1);
+   else
+      snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], p+1);
+   
+   /* Notify the controller change */
+   msg_queue_push(g_extern.msg_queue, msg, 0, 80);
+   
+   /* Set controller's name and/or default binding */
+   unsigned action = 1ULL << (g_settings.input.autodetect_enable ? KEYBINDS_ACTION_SET_DEFAULT_BINDS : KEYBINDS_ACTION_SET_PAD_NAME);
+   if (driver.input && driver.input->set_keybinds)
+      driver.input->set_keybinds(NULL, device_type, port, 0, action);   
+}
+
 #ifndef IS_RETROLAUNCH
 bool input_translate_coord_viewport(int mouse_x, int mouse_y,
       int16_t *res_x, int16_t *res_y, int16_t *res_screen_x, int16_t *res_screen_y)
