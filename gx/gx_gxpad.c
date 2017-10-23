@@ -85,7 +85,7 @@ static const char* gx_labels[] = {
 	"ZL",
 	"ZR",
 	"Home",
-	"N/A",
+	"",
 };
 
 static void _gx_read_gc(uint8_t pad_idx);

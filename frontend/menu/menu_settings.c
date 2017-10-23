@@ -374,6 +374,11 @@ static void set_custom_bind(unsigned port, unsigned setting, unsigned action)
       bind->joykey = NO_BTN;
       bind->joyaxis = AXIS_NONE;
    }
+   else if (action == RGUI_ACTION_SELECT)
+   {
+      if (driver.input && driver.input->set_keybinds)
+            driver.input->set_keybinds(NULL, 0, port, setting - RGUI_SETTINGS_BIND_BEGIN, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND));
+   }
 }
 
 int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned action)
@@ -930,15 +935,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_DEFAULT_ALL:
          if (action == RGUI_ACTION_OK)
          {
-            unsigned i;
-            struct retro_keybind *target = &g_settings.input.binds[g_settings.input.device_port[rgui->c_player]][0];
-            rgui->binds.begin = RGUI_SETTINGS_BIND_BEGIN;
-            rgui->binds.last = RGUI_SETTINGS_BIND_LAST;
-            for (i = RGUI_SETTINGS_BIND_BEGIN; i <= RGUI_SETTINGS_BIND_LAST; i++, target++)
-            {
-               target->joykey = NO_BTN;
-               target->joyaxis = AXIS_NONE;
-            }
+            unsigned i, port = g_settings.input.device_port[rgui->c_player];
+
+            if (driver.input && driver.input->set_keybinds)
+               for (i = 0; i < RARCH_CUSTOM_BIND_LIST_END; i++)
+                  driver.input->set_keybinds(NULL, 0, port, i, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND));
          }
          break;
       case RGUI_SETTINGS_BIND_FAST_FORWARD_KEY:

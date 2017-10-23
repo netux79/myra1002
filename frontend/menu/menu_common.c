@@ -752,6 +752,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
       case RGUI_ACTION_RIGHT:
       case RGUI_ACTION_OK:
       case RGUI_ACTION_START:
+      case RGUI_ACTION_SELECT:
          if ((type == RGUI_SETTINGS_OPEN_FILEBROWSER || type == RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE)
                && action == RGUI_ACTION_OK)
          {
@@ -1241,6 +1242,8 @@ bool menu_iterate(void *video_data)
       action = RGUI_ACTION_OK;
    else if (rgui->trigger_state & (1ULL << RETRO_DEVICE_ID_JOYPAD_START))
       action = RGUI_ACTION_START;
+   else if (rgui->trigger_state & (1ULL << RETRO_DEVICE_ID_JOYPAD_SELECT))
+      action = RGUI_ACTION_SELECT;
 
    if (menugui_driver)
       if (menu_iterate_func(rgui, video_data, action))

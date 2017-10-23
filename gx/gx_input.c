@@ -164,10 +164,12 @@ static void gx_input_free_input(void *data)
 static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
       unsigned id, unsigned keybind_action)
 {
-   uint64_t *key = &g_settings.input.binds[port][id].joykey;
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND))
-      *key = g_settings.input.binds[port][id].def_joykey;
+   {
+      g_settings.input.binds[port][id].joykey = g_settings.input.binds[port][id].def_joykey;
+      g_settings.input.binds[port][id].joyaxis = g_settings.input.binds[port][id].def_joyaxis;
+   }
 
    /* Set the name when binding default keys too */
    if ((keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME)) || (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS)))
@@ -213,6 +215,7 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
+      g_settings.input.binds[port][RARCH_TURBO_ENABLE].def_joykey             = NO_BTN;
       g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
       g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
       g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
@@ -237,24 +240,21 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NEG(2);
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_POS(3);
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NEG(3);
+      g_settings.input.binds[port][RARCH_TURBO_ENABLE].def_joyaxis            = AXIS_NONE;
 
       /* Assign the default binding to the actual controller */
-      for (unsigned i = 0; i < RARCH_CUSTOM_BIND_LIST_END - 1; i++)
+      for (unsigned i = 0; i < RARCH_CUSTOM_BIND_LIST_END; i++)
       {
          g_settings.input.binds[port][i].id = i;
-		 g_settings.input.binds[port][i].joykey = g_settings.input.binds[port][i].def_joykey;
-		 g_settings.input.binds[port][i].joyaxis = g_settings.input.binds[port][i].def_joyaxis;
+         g_settings.input.binds[port][i].joykey = g_settings.input.binds[port][i].def_joykey;
+         g_settings.input.binds[port][i].joyaxis = g_settings.input.binds[port][i].def_joyaxis;
       }
    }
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_GET_BIND_LABEL))
    {
       struct platform_bind *ret = (struct platform_bind*)data;
-
-      if (ret->joykey == NO_BTN)
-         strlcpy(ret->desc, "No button", sizeof(ret->desc));
-	  else
-         strlcpy(ret->desc, gxpad_label(port, ret->joykey), sizeof(ret->desc));
+      strlcpy(ret->desc, gxpad_label(port, ret->joykey), sizeof(ret->desc));
    }
 }
 

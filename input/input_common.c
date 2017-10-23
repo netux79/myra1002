@@ -1022,32 +1022,22 @@ void input_config_parse_joy_axis(config_file_t *conf, const char *prefix,
 
 void input_get_bind_string(char *buf, const struct retro_keybind *bind, unsigned port, size_t size)
 {
-   *buf = '\0';
+   strlcpy(buf, "   -", size);/* By default, a centered dash indicating unassigned */
+
+   if (g_settings.input.device_names[port][0] == '\0' || 
+         (bind->joykey == NO_BTN && bind->joyaxis == AXIS_NONE))
+      return;/* Nothing to do if No Device or No Button assigned */
+   
    if (bind->joykey != NO_BTN)
    {
       if (driver.input->set_keybinds)
       {
          struct platform_bind key_label;
-         strlcpy(key_label.desc, "Unknown", sizeof(key_label.desc));
          key_label.joykey = bind->joykey;
          driver.input->set_keybinds(&key_label, 0, port, 0, (1ULL << KEYBINDS_ACTION_GET_BIND_LABEL));
-         snprintf(buf, size, "%s (btn) ", key_label.desc);
+         if (strcmp(key_label.desc, "") != 0)
+            snprintf(buf, size, "%s (btn) ", key_label.desc);
       }
-      else if (GET_HAT_DIR(bind->joykey))
-      {
-         const char *dir;
-         switch (GET_HAT_DIR(bind->joykey))
-         {
-            case HAT_UP_MASK: dir = "up"; break;
-            case HAT_DOWN_MASK: dir = "down"; break;
-            case HAT_LEFT_MASK: dir = "left"; break;
-            case HAT_RIGHT_MASK: dir = "right"; break;
-            default: dir = "?"; break;
-         }
-         snprintf(buf, size, "Hat #%u %s ", (unsigned)GET_HAT(bind->joykey), dir);
-      }
-      else
-         snprintf(buf, size, "%u (btn) ", (unsigned)bind->joykey);
    }
    else if (bind->joyaxis != AXIS_NONE)
    {
