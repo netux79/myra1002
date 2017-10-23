@@ -119,6 +119,9 @@ bool input_joypad_set_rumble(const rarch_joypad_driver_t *driver,
    if (!driver || !driver->set_rumble)
       return false;
 
+   /* redirect to the controller binded to the player */
+   port = g_settings.input.device_port[port];
+
    if (port < 0 || port >= MAX_PLAYERS)
       return false;
 

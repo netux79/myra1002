@@ -338,12 +338,8 @@ static uint64_t gx_input_get_capabilities(void *data)
 
 static bool gx_input_set_rumble(void *data, unsigned port, enum retro_rumble_effect effect, uint16_t strength)
 {
-   if (strength)
-      gxpad_rumbleon(port);
-   else
-      gxpad_rumbleoff(port);
-      
-   return true;
+   (void)data;
+   return input_joypad_set_rumble(&gx_joypad, port, effect, strength);
 }
 
 static const rarch_joypad_driver_t *gx_input_get_joypad_driver(void *data)
@@ -441,6 +437,18 @@ static void gx_joypad_destroy(void)
 {
 }
 
+static bool gx_joypad_set_rumble(unsigned port, enum retro_rumble_effect effect, uint16_t strength)
+{
+   (void)effect;
+   
+   if (strength)
+      gxpad_rumbleon(port);
+   else
+      gxpad_rumbleoff(port);
+      
+   return true;
+}
+
 const rarch_joypad_driver_t gx_joypad = {
    gx_joypad_init,
    gx_joypad_query_pad,
@@ -448,7 +456,7 @@ const rarch_joypad_driver_t gx_joypad = {
    gx_joypad_button,
    gx_joypad_axis,
    gx_joypad_poll,
-   NULL,
+   gx_joypad_set_rumble,
    gx_joypad_name,
    "gx",
 };
