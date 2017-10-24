@@ -26,7 +26,6 @@
 #include "rewind.h"
 #include "autosave.h"
 #include "dynamic.h"
-#include "audio/ext/rarch_dsp.h"
 #include "compat/strl.h"
 #include "performance.h"
 #include "core_options.h"
@@ -161,8 +160,6 @@ struct settings
       unsigned latency;
       bool sync;
 
-      char dsp_plugin[PATH_MAX];
-
       bool rate_control;
       float rate_control_delta;
       float volume; // dB scale
@@ -188,6 +185,7 @@ struct settings
       bool debug_enable;
       bool autodetect_enable;
       bool menu_all_players_enable;
+      unsigned quick_swap_players;
       
       unsigned turbo_period;
       unsigned turbo_duty_cycle;
@@ -357,10 +355,6 @@ struct global
       int16_t *rewind_buf;
       size_t rewind_ptr;
       size_t rewind_size;
-
-      dylib_t dsp_lib;
-      const rarch_dsp_plugin_t *dsp_plugin;
-      void *dsp_handle;
 
       bool rate_control;
       double orig_src_ratio;

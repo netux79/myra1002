@@ -125,11 +125,11 @@ static const struct cmd_map map[] = {
    { "VOLUME_DOWN",            RARCH_VOLUME_DOWN },
    { "DISK_EJECT_TOGGLE",      RARCH_DISK_EJECT_TOGGLE },
    { "DISK_NEXT",              RARCH_DISK_NEXT },
+   { "QUICK_SWAP",             RARCH_QUICK_SWAP },   
 #ifndef RARCH_CONSOLE
    { "FULLSCREEN_TOGGLE",      RARCH_FULLSCREEN_TOGGLE_KEY },
    { "SHADER_NEXT",            RARCH_SHADER_NEXT },
    { "SHADER_PREV",            RARCH_SHADER_PREV },
-   { "DSP_CONFIG",             RARCH_DSP_CONFIG },
    { "OVERLAY_NEXT",           RARCH_OVERLAY_NEXT },
    { "GRAB_MOUSE_TOGGLE",      RARCH_GRAB_MOUSE_TOGGLE },
 #endif

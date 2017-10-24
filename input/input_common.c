@@ -761,11 +761,11 @@ const struct input_bind_map input_config_bind_map[RARCH_BIND_LIST_END_NULL] = {
       DECLARE_META_BIND(2, volume_down,           RARCH_VOLUME_DOWN, "Volume -"),
       DECLARE_META_BIND(2, disk_eject_toggle,     RARCH_DISK_EJECT_TOGGLE, "Disk eject toggle"),
       DECLARE_META_BIND(2, disk_next,             RARCH_DISK_NEXT, "Disk next"),
+      DECLARE_META_BIND(2, quick_swap,            RARCH_QUICK_SWAP, "Controller Quick Swap"),
 #ifndef RARCH_CONSOLE
       DECLARE_META_BIND(2, toggle_fullscreen,     RARCH_FULLSCREEN_TOGGLE_KEY, "Fullscreen toggle"),
       DECLARE_META_BIND(2, shader_next,           RARCH_SHADER_NEXT, "Next shader"),
       DECLARE_META_BIND(2, shader_prev,           RARCH_SHADER_PREV, "Previous shader"),
-      DECLARE_META_BIND(2, dsp_config,            RARCH_DSP_CONFIG, "DSP config"),
       DECLARE_META_BIND(2, overlay_next,          RARCH_OVERLAY_NEXT, "Overlay next"),
       DECLARE_META_BIND(2, grab_mouse_toggle,     RARCH_GRAB_MOUSE_TOGGLE, "Grab mouse toggle"),
 #endif
@@ -1107,4 +1107,29 @@ void input_pop_analog_dpad(struct retro_keybind *binds)
    for (i = RETRO_DEVICE_ID_JOYPAD_UP; i <= RETRO_DEVICE_ID_JOYPAD_RIGHT; i++)
       binds[i].joyaxis = binds[i].orig_joyaxis;
 }
+
+void quick_swap_controllers(void)
+{
+   unsigned cp, np, t;
+
+   /* if first controller is No Device, we cannot proceed */
+   if (g_settings.input.device_names[0][0] == '\0')
+      return;
+
+   /* Look for the first controller player to calculate the next */
+   for (cp = 0; g_settings.input.device_port[cp]!=0 && cp < MAX_PLAYERS; cp++);
+   np = (cp < g_settings.input.quick_swap_players - 1) ? cp+1 : 0;
+
+   if (np != cp)
+   {
+      t = g_settings.input.device_port[np];
+      g_settings.input.device_port[np] = 0;
+      g_settings.input.device_port[cp] = t;
+
+      char msg[50];
+      snprintf(msg, sizeof(msg), "<%d:%s> switched to Player %d", 1, g_settings.input.device_names[0], np+1);
+      msg_queue_push(g_extern.msg_queue, msg, 1, 90);                  
+   }
+}
+
 

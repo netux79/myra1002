@@ -931,7 +931,16 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             g_settings.input.menu_all_players_enable = !g_settings.input.menu_all_players_enable;
          else
             g_settings.input.menu_all_players_enable = menu_all_players_enable;
-         break;                  
+         break;
+      case RGUI_SETTINGS_QUICK_SWAP_PLAYERS:
+         if (action == RGUI_ACTION_RIGHT)
+            g_settings.input.quick_swap_players += g_settings.input.quick_swap_players < MAX_PLAYERS ? 1 : 0;
+         else if (action == RGUI_ACTION_LEFT)
+            g_settings.input.quick_swap_players -= g_settings.input.quick_swap_players > 1 ? 1 : 0;
+         
+         /* If we disable it, we force a swap to return to player 1 */
+         if (g_settings.input.quick_swap_players == 1) quick_swap_controllers();
+         break;
       case RGUI_SETTINGS_BIND_DEFAULT_ALL:
          if (action == RGUI_ACTION_OK)
          {
@@ -961,11 +970,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_VOLUME_DOWN:
       case RGUI_SETTINGS_BIND_DISK_EJECT_TOGGLE:
       case RGUI_SETTINGS_BIND_DISK_NEXT:
+      case RGUI_SETTINGS_BIND_QUICK_SWAP:
 #ifndef RARCH_CONSOLE
       case RGUI_SETTINGS_BIND_FULLSCREEN_TOGGLE_KEY:
       case RGUI_SETTINGS_BIND_SHADER_NEXT:
       case RGUI_SETTINGS_BIND_SHADER_PREV:
-      case RGUI_SETTINGS_BIND_DSP_CONFIG:
       case RGUI_SETTINGS_BIND_OVERLAY_NEXT:
       case RGUI_SETTINGS_BIND_GRAB_MOUSE_TOGGLE:
 #endif
@@ -1803,7 +1812,13 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
       case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
          strlcpy(type_str, g_settings.input.menu_all_players_enable ? "ON" : "OFF", type_str_size);
-         break;         
+         break;
+      case RGUI_SETTINGS_QUICK_SWAP_PLAYERS:
+         if (g_settings.input.quick_swap_players < 2 || g_settings.input.quick_swap_players > MAX_PLAYERS)
+            strlcpy(type_str, "Disabled", type_str_size);
+         else
+            snprintf(type_str, type_str_size, "%d Players", g_settings.input.quick_swap_players);
+         break;
       case RGUI_SETTINGS_BIND_FAST_FORWARD_KEY:
       case RGUI_SETTINGS_BIND_FAST_FORWARD_HOLD_KEY:
       case RGUI_SETTINGS_BIND_LOAD_STATE_KEY:
@@ -1823,11 +1838,11 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_VOLUME_DOWN:
       case RGUI_SETTINGS_BIND_DISK_EJECT_TOGGLE:
       case RGUI_SETTINGS_BIND_DISK_NEXT:
+      case RGUI_SETTINGS_BIND_QUICK_SWAP:
 #ifndef RARCH_CONSOLE
       case RGUI_SETTINGS_BIND_FULLSCREEN_TOGGLE_KEY:
       case RGUI_SETTINGS_BIND_SHADER_NEXT:
       case RGUI_SETTINGS_BIND_SHADER_PREV:
-      case RGUI_SETTINGS_BIND_DSP_CONFIG:
       case RGUI_SETTINGS_BIND_OVERLAY_NEXT:
       case RGUI_SETTINGS_BIND_GRAB_MOUSE_TOGGLE:
 #endif

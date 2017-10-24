@@ -1697,6 +1697,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #endif
          file_list_push(rgui->selection_buf, "All P. Control Menu [G]", RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE, 0);
+         file_list_push(rgui->selection_buf, "Quick Swap", RGUI_SETTINGS_QUICK_SWAP_PLAYERS, 0);
          file_list_push(rgui->selection_buf, "Bind Player Keys", RGUI_SETTINGS_BIND_PLAYER_KEYS, 0);
          file_list_push(rgui->selection_buf, "Bind Hotkeys", RGUI_SETTINGS_BIND_HOTKEYS, 0);
          /* init the selected device to the current player's device */

@@ -157,6 +157,8 @@ void input_config_parse_joy_axis(config_file_t *conf, const char *prefix,
 void input_push_analog_dpad(struct retro_keybind *binds, unsigned mode);
 void input_pop_analog_dpad(struct retro_keybind *binds);
 
+void quick_swap_controllers(void);
+
 #ifdef __cplusplus
 }
 #endif

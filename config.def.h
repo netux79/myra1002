@@ -358,6 +358,10 @@ static const bool input_debug_enable = false;
 // Enable input auto-detect gamepads, plug-and-play style.
 static const bool input_autodetect_enable = true;
 
+// Number of players to rotate using the quick swap controller feature.
+// 1 means disabled.
+static const unsigned quick_swap_players = 1;
+
 /* Enable all players can control the menu */
 static const bool menu_all_players_enable = false;
 
@@ -432,11 +436,11 @@ static const bool menu_all_players_enable = false;
 #define RETRO_LBL_VOLUME_DOWN "Volume Down"
 #define RETRO_LBL_DISK_EJECT_TOGGLE "Disk Eject Toggle"
 #define RETRO_LBL_DISK_NEXT "Disk Swap Next"
+#define RETRO_LBL_QUICK_SWAP "Controller Quick Swap"
 #ifndef RARCH_CONSOLE
 #define RETRO_LBL_FULLSCREEN_TOGGLE_KEY "Fullscreen Toggle"
 #define RETRO_LBL_SHADER_NEXT "Next Shader"
 #define RETRO_LBL_SHADER_PREV "Previous Shader"
-#define RETRO_LBL_DSP_CONFIG "DSP Config"
 #define RETRO_LBL_OVERLAY_NEXT "Next Overlay"
 #define RETRO_LBL_GRAB_MOUSE_TOGGLE "Grab mouse toggle"
 #endif
@@ -493,12 +497,12 @@ static const struct retro_keybind retro_keybinds_1[] = {
    { true, RARCH_VOLUME_DOWN,              RETRO_LBL_VOLUME_DOWN,          RETROK_KP_MINUS,NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_DISK_EJECT_TOGGLE,        RETRO_LBL_DISK_EJECT_TOGGLE,    RETROK_UNKNOWN, NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_DISK_NEXT,                RETRO_LBL_DISK_NEXT,            RETROK_UNKNOWN, NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
+   { true, RARCH_QUICK_SWAP,               RETRO_LBL_QUICK_SWAP,           RETROK_c,       NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
 #ifndef RARCH_CONSOLE
    { true, RARCH_FULLSCREEN_TOGGLE_KEY,    RETRO_LBL_FULLSCREEN_TOGGLE_KEY,RETROK_f,       NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_SHADER_NEXT,              RETRO_LBL_SHADER_NEXT,          RETROK_m,       NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_SHADER_PREV,              RETRO_LBL_SHADER_PREV,          RETROK_n,       NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
-   { true, RARCH_DSP_CONFIG,               RETRO_LBL_DSP_CONFIG,           RETROK_c,       NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
-   { true, RARCH_OVERLAY_NEXT,             RETRO_LBL_OVERLAY_NEXT,         RETROK_UNKNOWN, NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },     
+   { true, RARCH_OVERLAY_NEXT,             RETRO_LBL_OVERLAY_NEXT,         RETROK_UNKNOWN, NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_GRAB_MOUSE_TOGGLE,        RETRO_LBL_GRAB_MOUSE_TOGGLE,    RETROK_F11,     NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
 #endif
 #ifdef HAVE_MENU
@@ -553,6 +557,7 @@ static const struct retro_keybind retro_keybinds_menu[] = {
    { true, RARCH_VOLUME_DOWN,              RETRO_LBL_VOLUME_DOWN,          RETROK_KP_MINUS,NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_DISK_EJECT_TOGGLE,        RETRO_LBL_DISK_EJECT_TOGGLE,    RETROK_UNKNOWN, NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_DISK_NEXT,                RETRO_LBL_DISK_NEXT,            RETROK_UNKNOWN, NO_BTN,                  0, AXIS_NONE },
+   { true, RARCH_QUICK_SWAP,               RETRO_LBL_QUICK_SWAP,           RETROK_c,       NO_BTN,                  0, AXIS_NONE },
 #ifdef HAVE_MENU
    { true, RARCH_MENU_TOGGLE,              RETRO_LBL_MENU_TOGGLE,          RETROK_UNKNOWN, CONSOLE_MENU_HOME,       0, AXIS_NONE },
 #endif

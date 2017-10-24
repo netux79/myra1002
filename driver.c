@@ -599,73 +599,6 @@ void uninit_drivers(void)
 #endif
 }
 
-#ifdef HAVE_DYLIB
-static void init_dsp_plugin(void)
-{
-   if (!(*g_settings.audio.dsp_plugin))
-      return;
-
-   rarch_dsp_info_t info = {0};
-
-   g_extern.audio_data.dsp_lib = dylib_load(g_settings.audio.dsp_plugin);
-   if (!g_extern.audio_data.dsp_lib)
-   {
-      RARCH_ERR("Failed to open DSP plugin: \"%s\" ...\n", g_settings.audio.dsp_plugin);
-      return;
-   }
-
-   const rarch_dsp_plugin_t* (RARCH_API_CALLTYPE *plugin_init)(void) =
-      (const rarch_dsp_plugin_t *(RARCH_API_CALLTYPE*)(void))dylib_proc(g_extern.audio_data.dsp_lib, "rarch_dsp_plugin_init");
-
-   if (!plugin_init)
-   {
-      RARCH_ERR("Failed to find symbol \"rarch_dsp_plugin_init\" in DSP plugin.\n");
-      goto error;
-   }
-
-   g_extern.audio_data.dsp_plugin = plugin_init();
-   if (!g_extern.audio_data.dsp_plugin)
-   {
-      RARCH_ERR("Failed to get a valid DSP plugin.\n");
-      goto error;
-   }
-
-   if (g_extern.audio_data.dsp_plugin->api_version != RARCH_DSP_API_VERSION)
-   {
-      RARCH_ERR("DSP plugin API mismatch. RetroArch: %d, Plugin: %d\n", RARCH_DSP_API_VERSION, g_extern.audio_data.dsp_plugin->api_version);
-      goto error;
-   }
-
-   RARCH_LOG("Loaded DSP plugin: \"%s\"\n", g_extern.audio_data.dsp_plugin->ident ? g_extern.audio_data.dsp_plugin->ident : "Unknown");
-
-   info.input_rate = g_settings.audio.in_rate;
-
-   g_extern.audio_data.dsp_handle = g_extern.audio_data.dsp_plugin->init(&info);
-   if (!g_extern.audio_data.dsp_handle)
-   {
-      RARCH_ERR("Failed to init DSP plugin.\n");
-      goto error;
-   }
-
-   return;
-
-error:
-   if (g_extern.audio_data.dsp_lib)
-      dylib_close(g_extern.audio_data.dsp_lib);
-   g_extern.audio_data.dsp_plugin = NULL;
-   g_extern.audio_data.dsp_lib = NULL;
-}
-
-static void deinit_dsp_plugin(void)
-{
-   if (g_extern.audio_data.dsp_lib && g_extern.audio_data.dsp_plugin)
-   {
-      g_extern.audio_data.dsp_plugin->free(g_extern.audio_data.dsp_handle);
-      dylib_close(g_extern.audio_data.dsp_lib);
-   }
-}
-#endif
-
 void init_audio(void)
 {
    // Resource leaks will follow if audio is initialized twice.
@@ -761,10 +694,6 @@ void init_audio(void)
          RARCH_WARN("Audio rate control was desired, but driver does not support needed features.\n");
    }
 
-#ifdef HAVE_DYLIB
-   init_dsp_plugin();
-#endif
-
    if (g_extern.audio_active && !g_extern.audio_data.mute && g_extern.system.audio_callback.callback) // Threaded driver is initially stopped.
       audio_start_func();
 }
@@ -797,10 +726,6 @@ void uninit_audio(void)
 
    free(g_extern.audio_data.outsamples);
    g_extern.audio_data.outsamples = NULL;
-
-#ifdef HAVE_DYLIB
-   deinit_dsp_plugin();
-#endif
 }
 
 static void deinit_pixel_converter(void)
