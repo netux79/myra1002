@@ -233,7 +233,9 @@ void input_joypad_hotplug(unsigned port, unsigned device_type, const char *padna
    msg_queue_push(g_extern.msg_queue, msg, 0, 80);
    
    /* Set controller's name and/or default binding */
-   unsigned action = 1ULL << (g_settings.input.autodetect_enable ? KEYBINDS_ACTION_SET_DEFAULT_BINDS : KEYBINDS_ACTION_SET_PAD_NAME);
+   unsigned action = (1ULL << KEYBINDS_ACTION_SET_PAD_NAME);
+   action |= g_settings.input.autoconf_buttons ? (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS) : 0;
+   
    if (driver.input && driver.input->set_keybinds)
       driver.input->set_keybinds(NULL, device_type, port, 0, action);   
 }

@@ -217,7 +217,7 @@ void config_set_defaults(void)
    g_settings.input.overlay_opacity = 0.7f;
    g_settings.input.overlay_scale = 1.0f;
    g_settings.input.debug_enable = input_debug_enable;
-   g_settings.input.autodetect_enable = input_autodetect_enable;
+   g_settings.input.autoconf_buttons = input_autoconf_buttons;
    g_settings.input.menu_all_players_enable = menu_all_players_enable;
    g_settings.input.quick_swap_players = quick_swap_players;
    *g_settings.input.keyboard_layout = '\0';
@@ -738,7 +738,7 @@ bool config_load_file(const char *path)
    CONFIG_GET_BOOL(savestate_auto_load, "savestate_auto_load");
    CONFIG_GET_INT(input.turbo_period, "input_turbo_period");
    CONFIG_GET_INT(input.turbo_duty_cycle, "input_duty_cycle");
-   CONFIG_GET_BOOL(input.autodetect_enable, "input_autodetect_enable");
+   CONFIG_GET_BOOL(input.autoconf_buttons, "input_autoconf_buttons");
    CONFIG_GET_INT(input.quick_swap_players, "quick_swap_players");
 
    config_read_keybinds_conf(conf);
@@ -1022,7 +1022,7 @@ bool config_save_file(const char *path)
    config_set_bool(conf, "savestate_auto_save", g_settings.savestate_auto_save);
    config_set_bool(conf, "savestate_auto_load", g_settings.savestate_auto_load);
    config_set_int(conf, "state_slot", g_extern.state_slot);
-   config_set_bool(conf, "input_autodetect_enable", g_settings.input.autodetect_enable);
+   config_set_bool(conf, "input_autoconf_buttons", g_settings.input.autoconf_buttons);
    config_set_int(conf, "quick_swap_players", g_settings.input.quick_swap_players);
    
    for (i = 0; i < MAX_PLAYERS; i++)

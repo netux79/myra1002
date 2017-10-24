@@ -62,7 +62,7 @@ static const char* blabels[] = {
 	"L3",
 	"R3",
 	"Home",		"PS",
-	"N/A",
+	"",
 };
 
 static const padsetup valid_pad_config[] = {
@@ -71,7 +71,7 @@ static const padsetup valid_pad_config[] = {
 		NO_BUTTON, NO_BUTTON, NO_BUTTON, NO_BUTTON,
 		{5, 0x20, B_A}, {5, 0x10, B_X}, {6, 0x01, B_L}, {6, 0x02, B_R},
 		NO_BUTTON, NO_BUTTON, NO_BUTTON, NO_BUTTON,
-		{6, 0x30, B_HOME},},
+		NO_BUTTON,},
 		{{0, A_STANDARD}, {1, A_STANDARD}, NO_AXIS, NO_AXIS,
 		NO_AXIS, NO_AXIS,}},
 	{0x0079, 0x0011, "NES USB Gamepad", MULTI_NOT_AVAIL, 2,
@@ -79,7 +79,7 @@ static const padsetup valid_pad_config[] = {
 		NO_BUTTON, NO_BUTTON, NO_BUTTON, NO_BUTTON,
 		{5, 0x20, B_A}, NO_BUTTON, NO_BUTTON, NO_BUTTON,
 		NO_BUTTON, NO_BUTTON, NO_BUTTON, NO_BUTTON,
-		{6, 0x30, B_HOME},},
+		NO_BUTTON,},
 		{{3, A_STANDARD}, {4, A_STANDARD}, NO_AXIS, NO_AXIS,
 		NO_AXIS, NO_AXIS,}},
 	{0x054C, 0x0268, "Playstation 3 Gamepad", MULTI_NOT_AVAIL, 4,

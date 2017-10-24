@@ -54,7 +54,6 @@ typedef struct gx_hid_input
 
 extern const rarch_joypad_driver_t gx_hid_joypad;
 
-static bool gx_reset_btn;
 #ifdef HW_RVL
 static void gx_hid_power_cb(void)
 {
@@ -63,7 +62,7 @@ static void gx_hid_power_cb(void)
 #endif
 static void gx_hid_reset_cb(void)
 {
-   gx_reset_btn = true;
+   g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_hid_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])
@@ -183,17 +182,28 @@ static void gx_hid_input_free_input(void *data)
 static void gx_hid_input_set_keybinds(void *data, unsigned device, unsigned port,
       unsigned id, unsigned keybind_action)
 {
-   uint64_t *key = &g_settings.input.binds[port][id].joykey;
-
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BIND))
-      *key = g_settings.input.binds[port][id].def_joykey;
-
-   /* Set the name when binding default keys too */
-   if ((keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME)) || (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS)))
    {
-      /* We are not supporting different devices but USBPAD */
-      g_settings.input.device[port] = DEVICE_GXPAD;
-      strlcpy(g_settings.input.device_names[port], usbpad_padname(port), sizeof(g_settings.input.device_names[port]));
+      g_settings.input.binds[port][id].joykey = g_settings.input.binds[port][id].def_joykey;
+      g_settings.input.binds[port][id].joyaxis = g_settings.input.binds[port][id].def_joyaxis;
+   }
+   
+    /* Set the name when binding default keys too */
+   if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME))
+   {
+      const char *pad_name = usbpad_padname(port);
+      
+      if (pad_name)
+      {
+         /* We are only supporting GXPAD devices */
+         g_settings.input.device[port] = device;
+         strlcpy(g_settings.input.device_names[port], pad_name, sizeof(g_settings.input.device_names[port]));
+      }
+      else /* Clear device */
+      {
+         g_settings.input.device[port] = 0;
+         g_settings.input.device_names[port][0] = '\0';
+      }
    }
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS))
@@ -222,6 +232,7 @@ static void gx_hid_input_set_keybinds(void *data, unsigned device, unsigned port
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joykey     = NO_BTN;
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joykey      = NO_BTN;
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joykey     = NO_BTN;
+      g_settings.input.binds[port][RARCH_TURBO_ENABLE].def_joykey             = NO_BTN;
       g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_B].def_joyaxis      = AXIS_NONE;
       g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_Y].def_joyaxis      = AXIS_NONE;
       g_settings.input.binds[port][RETRO_DEVICE_ID_JOYPAD_SELECT].def_joyaxis = AXIS_NONE;
@@ -246,25 +257,24 @@ static void gx_hid_input_set_keybinds(void *data, unsigned device, unsigned port
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_X_MINUS].def_joyaxis    = AXIS_NEG(2);
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_PLUS].def_joyaxis     = AXIS_POS(3);
       g_settings.input.binds[port][RARCH_ANALOG_RIGHT_Y_MINUS].def_joyaxis    = AXIS_NEG(3);
+      g_settings.input.binds[port][RARCH_TURBO_ENABLE].def_joyaxis            = AXIS_NONE;
 
       /* Assign the default binding to the actual controller */
-      for (unsigned i = 0; i < RARCH_CUSTOM_BIND_LIST_END - 1; i++)
+      for (unsigned i = 0; i < RARCH_CUSTOM_BIND_LIST_END; i++)
       {
          g_settings.input.binds[port][i].id = i;
-		 g_settings.input.binds[port][i].joykey = g_settings.input.binds[port][i].def_joykey;
-		 g_settings.input.binds[port][i].joyaxis = g_settings.input.binds[port][i].def_joyaxis;
-      }
+         g_settings.input.binds[port][i].joykey = g_settings.input.binds[port][i].def_joykey;
+         g_settings.input.binds[port][i].joyaxis = g_settings.input.binds[port][i].def_joyaxis;
+      }     
    }
 
    if (keybind_action & (1ULL << KEYBINDS_ACTION_GET_BIND_LABEL))
    {
       struct platform_bind *ret = (struct platform_bind*)data;
 
-      if (ret->joykey == NO_BTN)
-         strlcpy(ret->desc, "No button", sizeof(ret->desc));
-      else if (ret->joykey >= GX_HID_WIIMOTE_A && ret->joykey <= GX_HID_WIIMOTE_HOME)
-		 strlcpy(ret->desc, gx_hid_platform_keys[ret->joykey - GX_HID_WIIMOTE_A].desc, sizeof(ret->desc));
-	  else
+      if (ret->joykey >= GX_HID_WIIMOTE_A && ret->joykey <= GX_HID_WIIMOTE_HOME)
+         strlcpy(ret->desc, gx_hid_platform_keys[ret->joykey - GX_HID_WIIMOTE_A].desc, sizeof(ret->desc));
+      else
          strlcpy(ret->desc, usbpad_label(port, ret->joykey), sizeof(ret->desc));
    }
 }
@@ -316,58 +326,45 @@ static void gx_hid_input_poll(void *data)
 
    for (unsigned port = 0; port < NUM_PADS; port++)
    {
-	  bool hotplug = false;
-	  uint64_t *state = &gx->pad_state[port];
+      bool hotplug = false;
+      uint64_t *state = &gx->pad_state[port];
 
       if (usbpad_avail(port))
       {
-	     *state = usbpad_buttons(port);
+         *state = usbpad_buttons(port);
 
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = usbpad_js_lx(port);
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = usbpad_js_ly(port);
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = usbpad_js_rx(port);
-		 gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = usbpad_js_ry(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_X] = usbpad_js_lx(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_LEFT][RETRO_DEVICE_ID_ANALOG_Y] = usbpad_js_ly(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = usbpad_js_rx(port);
+         gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = usbpad_js_ry(port);
 
-		 if (usbpad_nanalogs(port) > 4)
-		 {
-		    /*  when having a 3rd analog we assume it is the hat control */
-		    int16_t js3x = usbpad_analog(port, 4);
-		    int16_t js3y = usbpad_analog(port, 5);
-		    if (js3x > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_RIGHT);
-		    if (js3x < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_LEFT);
-		    if (js3y > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_DOWN);
-		    if (js3y < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_UP);
-		 }
+         if (usbpad_nanalogs(port) > 4)
+         {
+            /*  when having a 3rd analog we assume it is the hat control */
+            int16_t js3x = usbpad_analog(port, 4);
+            int16_t js3y = usbpad_analog(port, 5);
+            if (js3x > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_RIGHT);
+            if (js3x < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_LEFT);
+            if (js3y > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_DOWN);
+            if (js3y < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_UP);
+         }
 
-		 hotplug = (lt_active[port]) ? false : true;
-		 lt_active[port] = true;
+         hotplug = (lt_active[port]) ? false : true;
+         lt_active[port] = true;
       }
       else
       {
          *state = 0; /* reset the button state */
          for (uint8_t j = 0; j < 2; j++)
-		    for (uint8_t i = 0; i < 2; i++)
-			   gx->analog_state[port][j][i] = 0; /*  clear also all the analogs */
+            for (uint8_t i = 0; i < 2; i++)
+               gx->analog_state[port][j][i] = 0; /*  clear also all the analogs */
 
-		 hotplug = (lt_active[port]) ? true : false;
+         hotplug = (lt_active[port]) ? true : false;
          lt_active[port] = false;
-	  }
+      }
 
-	  if (hotplug)
-	  {
-         /* show the pad change */
-         char msg[128];
-         if (lt_active[port])
-		    snprintf(msg, sizeof(msg), "%s plugged to player %u", usbpad_padname(port), port+1);
-		 else
-			snprintf(msg, sizeof(msg), "%s unplugged from player %u", g_settings.input.device_names[port], port+1);
-         msg_queue_push(g_extern.msg_queue, msg, 0, 80);
-
-		 if (g_settings.input.autodetect_enable)
-            gx_hid_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS));
-         else
-            gx_hid_input_set_keybinds(NULL, DEVICE_GXPAD, port, 0, (1ULL << KEYBINDS_ACTION_SET_PAD_NAME));
-	  }
+      /* show the pad change */
+      if (hotplug) input_joypad_hotplug(port, DEVICE_GXPAD, usbpad_padname(port), lt_active[port]);
    }
 
    uint64_t *state_p1 = &gx->pad_state[0];
@@ -382,9 +379,8 @@ static void gx_hid_input_poll(void *data)
    *state_p1 |= (down & WPAD_BUTTON_2) ? (1ULL << GX_HID_WIIMOTE_2) : 0;
    *state_p1 |= (down & WPAD_BUTTON_PLUS) ? (1ULL << GX_HID_WIIMOTE_PLUS) : 0;
    *state_p1 |= (down & WPAD_BUTTON_MINUS) ? (1ULL << GX_HID_WIIMOTE_MINUS) : 0;
-   /* check also if the user press the Wii's reset button, it works as the HOME button */
-   *state_p1 |= (down & WPAD_BUTTON_HOME) || gx_reset_btn ? (1ULL << GX_HID_WIIMOTE_HOME) : 0;
-   // rotated d-pad on Wiimote
+   *state_p1 |= (down & WPAD_BUTTON_HOME) ? (1ULL << GX_HID_WIIMOTE_HOME) : 0;
+   /* rotated d-pad on Wiimote */
    *state_p1 |= (down & WPAD_BUTTON_UP) ? (1ULL << GX_HID_WIIMOTE_LEFT) : 0;
    *state_p1 |= (down & WPAD_BUTTON_DOWN) ? (1ULL << GX_HID_WIIMOTE_RIGHT) : 0;
    *state_p1 |= (down & WPAD_BUTTON_LEFT) ? (1ULL << GX_HID_WIIMOTE_DOWN) : 0;
@@ -392,14 +388,6 @@ static void gx_hid_input_poll(void *data)
 
    /* poll mouse & lightgun data */
    gx_hid_input_poll_ml(gx);
-
-   if (*state_p1 & ((1ULL << GX_HID_WIIMOTE_HOME) | (1ULL << GX_HID_USBPAD_HOME)))
-   {
-      g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
-      gx_reset_btn = false;/* clear the reset Wii button flag */
-   }
-   else
-      g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
 }
 
 static bool gx_hid_input_key_pressed(void *data, int key)

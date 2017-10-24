@@ -172,7 +172,7 @@ static void gx_input_set_keybinds(void *data, unsigned device, unsigned port,
    }
 
    /* Set the name when binding default keys too */
-   if ((keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME)) || (keybind_action & (1ULL << KEYBINDS_ACTION_SET_DEFAULT_BINDS)))
+   if (keybind_action & (1ULL << KEYBINDS_ACTION_SET_PAD_NAME))
    {
       const char *pad_name = gxpad_padname(port);
       

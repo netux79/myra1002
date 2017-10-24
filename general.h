@@ -183,7 +183,7 @@ struct settings
       unsigned device[MAX_PLAYERS];
       char device_names[MAX_PLAYERS][64];
       bool debug_enable;
-      bool autodetect_enable;
+      bool autoconf_buttons;
       bool menu_all_players_enable;
       unsigned quick_swap_players;
       

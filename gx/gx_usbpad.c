@@ -374,7 +374,7 @@ const char *usbpad_padname(uint8_t pad_idx) {
 		return _pad_list[pad_idx]->config->name;
 	}
 
-	return "No pad in USB slot";
+	return NULL;
 }
 
 static inline int16_t _normalize_a(int16_t a_value, uint8_t axis_type) {

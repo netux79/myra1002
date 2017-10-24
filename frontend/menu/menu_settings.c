@@ -920,11 +920,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
             break;
          }
-      case RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE:
+      case RGUI_SETTINGS_DEVICE_AUTOCONF_BUTTONS:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
-            g_settings.input.autodetect_enable = !g_settings.input.autodetect_enable;
+            g_settings.input.autoconf_buttons = !g_settings.input.autoconf_buttons;
          else
-            g_settings.input.autodetect_enable = input_autodetect_enable;
+            g_settings.input.autoconf_buttons = input_autoconf_buttons;
          break;
       case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
@@ -1807,8 +1807,8 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          strlcpy(type_str, name, type_str_size);
          break;
       }
-      case RGUI_SETTINGS_DEVICE_AUTODETECT_ENABLE:
-         strlcpy(type_str, g_settings.input.autodetect_enable ? "ON" : "OFF", type_str_size);
+      case RGUI_SETTINGS_DEVICE_AUTOCONF_BUTTONS:
+         strlcpy(type_str, g_settings.input.autoconf_buttons ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
          strlcpy(type_str, g_settings.input.menu_all_players_enable ? "ON" : "OFF", type_str_size);
