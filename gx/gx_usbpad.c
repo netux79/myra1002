@@ -24,13 +24,14 @@ typedef struct _axisetup {
 } axisetup;
 
 typedef struct _padsetup {
-	uint16_t 	vid;
-	uint16_t 	pid;
-	char		name[MAX_NAME_LEN];
-	uint8_t		multipad;
-	uint8_t		num_analogs;
-	butsetup	buttons[BUTTON_SET];
-	axisetup	analogs[AXIS_SET];
+   uint16_t    vid;
+   uint16_t    pid;
+   char        name[MAX_NAME_LEN];
+   uint8_t     multipad;
+   uint8_t     num_analogs;
+   butsetup    buttons[BUTTON_SET];
+   axisetup    analogs[AXIS_SET];
+   void        (*rumble_pad)(uint8_t pad_idx, uint8_t action);
 } padsetup;
 
 struct usbpad {
@@ -162,6 +163,22 @@ static void _ps3_set_operational(struct usbpad *pad) {
 	do {
 		r = USB_WriteCtrlMsg(pad->fd, USB_REQTYPE_INTERFACE_SET, USB_REQ_SETREPORT, (USB_REPTYPE_FEATURE<<8) | 0xf4, 0x0, sizeof(buffer), buffer);
 	} while (r < 0);
+}
+
+static void _ps3_rumble(uint8_t pad_idx, uint8_t action) {
+   uint8_t ATTRIBUTE_ALIGN(32) ps3Data[] =
+   {
+      0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xFF, 0x27, 0x10, 0x00, 0x32, 
+      0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0x00, 
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+      0x00,
+   };
+   struct usbpad *pad = _pad_list[pad_idx];
+
+   ps3Data[3] = action == 1 ? 0xFF : 0x0;
+   ps3Data[5] = action == 1 ? 0xFF : 0x0;
+   
+   USB_WriteIntrMsg(pad->fd, 0x02, sizeof(ps3Data), ps3Data);
 }
 
 static void _gcwiiu_set_operational(struct usbpad *pad) {
@@ -407,6 +424,22 @@ int16_t usbpad_analog(uint8_t pad_idx, uint8_t a_idx) {
 	}
 
 	return 0;
+}
+
+void usbpad_rumbleoff(uint8_t pad_idx) {
+	if (pad_idx < _usbslots) {
+		struct usbpad *pad = _pad_list[pad_idx];
+		if (pad && pad->config->rumble_pad)
+            pad->config->rumble_pad(pad_idx, 0);
+	}
+}
+
+void usbpad_rumbleon(uint8_t pad_idx) {
+	if (pad_idx < _usbslots) {
+		struct usbpad *pad = _pad_list[pad_idx];
+		if (pad && pad->config->rumble_pad)
+            pad->config->rumble_pad(pad_idx, 1);
+	}
 }
 
 bool usbpad_avail(uint8_t pad_idx) {

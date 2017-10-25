@@ -406,6 +406,12 @@ static uint64_t gx_hid_input_get_capabilities(void *data)
    return caps;
 }
 
+static bool gx_hid_input_rumble(void *data, unsigned port, enum retro_rumble_effect effect, uint16_t strength)
+{
+   (void)data;
+   return input_joypad_set_rumble(&gx_hid_joypad, port, effect, strength);
+}
+
 static const rarch_joypad_driver_t *gx_hid_input_get_joypad_driver(void *data)
 {
    return &gx_hid_joypad;
@@ -423,7 +429,7 @@ const input_driver_t input_gx_hid = {
    gx_hid_input_get_capabilities,
    "usb",
    NULL,
-   NULL,
+   gx_hid_input_rumble,
    gx_hid_input_get_joypad_driver,
 };
 
@@ -501,6 +507,19 @@ static void gx_hid_joypad_destroy(void)
 {
 }
 
+static bool gx_hid_joypad_rumble(unsigned port, enum retro_rumble_effect effect, uint16_t strength)
+{
+   (void)effect;
+   
+   if (strength)
+      usbpad_rumbleon(port);
+   else
+      usbpad_rumbleoff(port);
+      
+   return true;
+}
+
+
 const rarch_joypad_driver_t gx_hid_joypad = {
    gx_hid_joypad_init,
    gx_hid_joypad_query_pad,
@@ -508,7 +527,7 @@ const rarch_joypad_driver_t gx_hid_joypad = {
    gx_hid_joypad_button,
    gx_hid_joypad_axis,
    gx_hid_joypad_poll,
-   NULL,
+   gx_hid_joypad_rumble,
    gx_hid_joypad_name,
    "gxhid joy",
 };
