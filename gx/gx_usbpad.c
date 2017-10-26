@@ -31,6 +31,7 @@ typedef struct _padsetup {
    uint8_t     num_analogs;
    butsetup    buttons[BUTTON_SET];
    axisetup    analogs[AXIS_SET];
+   void        (*set_operational)(void *data);
    void        (*rumble_pad)(uint8_t pad_idx, uint8_t action);
 } padsetup;
 
@@ -156,7 +157,8 @@ static bool _valid_pad_config(uint16_t vid, uint16_t pid, int16_t *cfg_idx) {
 	return false;
 }
 
-static void _ps3_set_operational(struct usbpad *pad) {
+static void _ps3_set_operational(void *data) {
+   struct usbpad *pad = (struct usbpad*)data;
 	int32_t r;
 	uint8_t ATTRIBUTE_ALIGN(32) buffer[4] = {0x42, 0x0c, 0x00, 0x00}; /* Special command to enable Sixaxis */
 	/* Sometimes it fails so we should keep trying until success */
@@ -168,20 +170,21 @@ static void _ps3_set_operational(struct usbpad *pad) {
 static void _ps3_rumble(uint8_t pad_idx, uint8_t action) {
    uint8_t ATTRIBUTE_ALIGN(32) ps3Data[] =
    {
-      0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xFF, 0x27, 0x10, 0x00, 0x32, 
+      0x01, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x27, 0x10, 0x00, 0x32, 
       0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0xFF, 0x27, 0x10, 0x00, 0x32, 0x00, 
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
       0x00,
    };
    struct usbpad *pad = _pad_list[pad_idx];
 
-   ps3Data[3] = action == 1 ? 0xFF : 0x0;
-   ps3Data[5] = action == 1 ? 0xFF : 0x0;
+   ps3Data[3] = action == 1 ? 0xFF : 0x00;
+   ps3Data[5] = action == 1 ? 0xFF : 0x00;
    
    USB_WriteIntrMsg(pad->fd, 0x02, sizeof(ps3Data), ps3Data);
 }
 
-static void _gcwiiu_set_operational(struct usbpad *pad) {
+static void _gcwiiu_set_operational(void *data) {
+   struct usbpad *pad = (struct usbpad*)data;
 	int32_t r;
 	uint8_t ATTRIBUTE_ALIGN(32) buffer[1] = {0x13}; /* Special command to enable reading */
 	/* Sometimes it fails so we should keep trying until success */
@@ -190,14 +193,20 @@ static void _gcwiiu_set_operational(struct usbpad *pad) {
 	} while (r < 0);
 }
 
-static void _apply_special_controller_hacks(struct usbpad *pad) {
-	/* PS3 - Sixaxis: Need to send special command to enable reading */
-	if ((pad->config->vid == 0x054C) && (pad->config->pid == 0x0268)) {
-		_ps3_set_operational(pad);
-	} else if ((pad->config->vid == 0x057E) && (pad->config->pid == 0x0337)) {
-		/* GC Adapter for Wii U */
-		_gcwiiu_set_operational(pad);
-	}
+static void _gcwiiu_rumble(uint8_t pad_idx, uint8_t action) {
+   uint8_t ATTRIBUTE_ALIGN(32) gcData[5];
+   struct usbpad *pad = _pad_list[pad_idx];
+
+   /* action may contain the bits of which
+    * control to turn on/off. We have 4
+    * starting from right to left */
+   gcData[0] = 0x11;
+   gcData[1] = action & 1;
+   /*gcData[2] = (action >> 1) & 1;
+   gcData[3] = (action >> 2) & 1;
+   gcData[4] = (action >> 3) & 1;*/
+
+   USB_WriteIntrMsg(pad->fd, 0x02, sizeof(gcData), gcData); 
 }
 
 static bool _new_hid_device(int32_t id) {
@@ -228,8 +237,10 @@ static int8_t _add_pad(int32_t device_id, int32_t fd, int16_t cfg_idx, uint8_t e
 				_pad_list[i]->config = &valid_pad_config[cfg_idx];
 				_pad_list[i]->hid_buffer = (uint8_t*)memalign(32, (mpSize > 32) ? MAX_HID_DATA_SIZE : 32);
 
-				/* extra stuff for special controllers */
-				_apply_special_controller_hacks(_pad_list[i]);
+				/* extra initialization for special controllers like PS3 */
+            if (_pad_list[i]->config->set_operational)
+               _pad_list[i]->config->set_operational(_pad_list[i]);
+
 				USB_DeviceRemovalNotifyAsync(_pad_list[i]->fd, &_removal_cb, &_pad_list[i]);
 
 				return i; /* return the slot which we added it */
