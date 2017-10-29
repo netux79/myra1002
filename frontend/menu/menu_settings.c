@@ -415,7 +415,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                action == RGUI_ACTION_RIGHT)
             g_settings.video.gpu_screenshot = !g_settings.video.gpu_screenshot;
          else if (action == RGUI_ACTION_START)
-            g_settings.video.gpu_screenshot = true;
+            g_settings.video.gpu_screenshot = gpu_screenshot;
          break;
 #endif
       case RGUI_SETTINGS_REWIND_GRANULARITY:

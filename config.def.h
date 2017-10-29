@@ -229,7 +229,7 @@ static const float message_pos_offset_y = 0.05;
 static const uint32_t message_color = 0xffff00; // RGB hex value.
 
 // Screenshots post-shaded GPU output if available.
-static const bool gpu_screenshot = true;
+static const bool gpu_screenshot = false;
 
 // OSD-messages
 static const bool font_enable = true;

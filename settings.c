@@ -28,8 +28,8 @@
 
 #include <ctype.h>
 
-struct settings g_settings;
-struct global g_extern;
+struct settings g_settings ATTRIBUTE_ALIGN(32);
+struct global g_extern ATTRIBUTE_ALIGN(32);
 
 const char *config_get_default_audio(void)
 {
@@ -104,7 +104,7 @@ const char *config_get_default_input(void)
       case INPUT_XINPUT:
          return "xinput";
       case INPUT_WII:
-         return "gx";
+         return "native";
       case INPUT_LINUXRAW:
          return "linuxraw";
       case INPUT_UDEV:
