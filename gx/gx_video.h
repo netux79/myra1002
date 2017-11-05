@@ -33,10 +33,11 @@ typedef struct gx_video
    float aspect_ratio;
    bool double_strike;
    bool rgb32;
-   uint32_t *menu_data; // FIXME: Should be const uint16_t*.
+   unsigned bpp;
+   unsigned scale;   
+   uint32_t *menu_data;
    bool rgui_texture_enable;
    rarch_viewport_t vp;
-   unsigned scale;
    bool scale_integer;
    bool force_aspect;
    unsigned orientation;

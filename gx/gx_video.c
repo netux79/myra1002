@@ -444,6 +444,7 @@ static void gx_alloc_textures(void *data, const video_info_t *video)
       }
 
       gx->rgb32 = video->rgb32;
+      gx->bpp = gx->rgb32 ? 4 : 2;
       gx->scale = video->input_scale;
    }
 }
@@ -461,7 +462,6 @@ static void gx_setup_textures(void *data, unsigned width, unsigned height)
       unsigned rgui_h = (rgui) ? rgui->height : 240;
       GX_InitTexObj(&menu_tex.obj, menu_tex.data, rgui_w, rgui_h, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
       GX_InitTexObjFilterMode(&menu_tex.obj, g_filter, g_filter);
-      GX_SetCurrentMtx(GX_PNMTX1);
       GX_LoadTexObj(&menu_tex.obj, GX_TEXMAP0);
    }
    else
@@ -470,7 +470,6 @@ static void gx_setup_textures(void *data, unsigned width, unsigned height)
       height &= ~3;
       GX_InitTexObj(&game_tex.obj, game_tex.data, width, height, (gx->rgb32) ? GX_TF_RGBA8 : GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
       GX_InitTexObjFilterMode(&game_tex.obj, g_filter, g_filter);
-      GX_SetCurrentMtx(GX_PNMTX0);
       GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
    }
 }
@@ -937,7 +936,6 @@ static void gx_overlay_render(void *data)
    if (!gx->overlay) return;
 
    GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
-   GX_SetCurrentMtx(GX_PNMTX1);
    GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
    GX_SetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -1056,7 +1054,7 @@ static bool gx_frame(void *data, const void *frame,
       else
          convert_texture16(frame, game_tex.data, width, height, pitch);
 
-      DCStoreRange(game_tex.data, height * (width << (gx->rgb32 ? 2 : 1)));
+      DCStoreRange(game_tex.data, height * width * gx->bpp);
    }
 
    GX_InvalidateTexAll();
@@ -1064,7 +1062,11 @@ static bool gx_frame(void *data, const void *frame,
 
 #ifdef HAVE_OVERLAY
    if (gx->overlay_enable)
+   {
       gx_overlay_render(gx);
+      /* restore game texture after overlay rendering */
+      GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
+   }
 #endif
 
    GX_DrawDone();

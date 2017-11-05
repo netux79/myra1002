@@ -2273,6 +2273,7 @@ static inline bool check_enter_rgui(void)
    bool rgui_toggle = input_key_pressed_func(RARCH_MENU_TOGGLE) || (g_extern.libretro_dummy && !old_rgui_toggle);
    /* Clear lifecycle_state from MENU TOGGLE command to avoid further triggering */
    g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
+   rgui->old_input_state |= (1ULL << RARCH_MENU_TOGGLE);
    
    if (rgui_toggle && !old_rgui_toggle)
    {
