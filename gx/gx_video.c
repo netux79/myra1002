@@ -799,54 +799,48 @@ static void gx_blit_line(void *data, unsigned x, unsigned y, const char *message
 {
    gx_video_t *gx = (gx_video_t*)data;
 
-   const GXColor c = {
-      .r = 0xff,
-      .g = 0xff,
-      .b = 0xff,
+   const GXColor d = {
+      .r = 0x00,
+      .g = 0x00,
+      .b = 0x00,
+      .a = 0x00
+   };
+   const GXColor l = {
+      .r = 0x00,
+      .g = 0xFF,
+      .b = 0xFF,
       .a = 0x00
    };
 
    if (!*message)
       return;
 
-   bool double_width = gx->vp.full_width > 400;
-   unsigned width = (double_width ? 2 : 1);
+   unsigned width = (gx->vp.full_width > 400 ? 2 : 1);
+   unsigned height = gx->double_strike ? 1 : 2;
 
    while (*message)
    {
       for (unsigned j = 0; j < FONT_HEIGHT; j++)
-      {
-         for (unsigned i = 0; i < FONT_WIDTH; i++)
+         for (unsigned i = 0; i < FONT_WIDTH_STRIDE; i++)
          {
-            uint8_t rem = 1 << ((i + j * FONT_WIDTH) & 7);
-            unsigned offset = (i + j * FONT_WIDTH) >> 3;
-
-            /* if blank pixel, skip it */
-            if (!(bitmap_bin[FONT_OFFSET((unsigned char) *message) + offset] & rem))
-               continue;
-
-            if (gx->double_strike)
+            GXColor c = d;
+            if (i < FONT_WIDTH)
             {
-               GX_PokeARGB(x + (i * width),     y + j, c);
-               if (double_width)
-               {
-                  GX_PokeARGB(x + (i * width) + 1, y + j, c);
-               }
+               uint8_t rem = 1 << ((i + j * FONT_WIDTH) & 7);
+               unsigned offset = (i + j * FONT_WIDTH) >> 3;
+
+               if (bitmap_bin[FONT_OFFSET((unsigned char) *message) + offset] & rem)
+                  c = l;
             }
-            else
-            {
-               GX_PokeARGB(x + (i * width),     y + (j * 2),     c);
-               if (double_width)
-               {
-                  GX_PokeARGB(x + (i * width) + 1, y + (j * 2),     c);
-                  GX_PokeARGB(x + (i * width) + 1, y + (j * 2) + 1, c);
-               }
-               GX_PokeARGB(x + (i * width),     y + (j * 2) + 1, c);
-            }
+
+            unsigned w = x + (i * width);
+            unsigned h = y + (j * height);
+            for (unsigned py = h; py < h + height; py++)
+               for (unsigned px = w; px < w + width; px++)
+                  GX_PokeARGB(px, py, c);
          }
-      }
 
-      x += FONT_WIDTH_STRIDE * (double_width ? 2 : 1);
+      x += FONT_WIDTH_STRIDE * width;
       message++;
    }
 }
