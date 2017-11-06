@@ -121,8 +121,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
                                                  g_extern.console_screen.resolution_idx,
                                                  g_settings.video.aspect_ratio_idx,
                                                  g_settings.video.scale_integer,
-                                                 g_settings.video.rotation,
-                                                 true);
+                                                 g_settings.video.rotation);
 
       g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
    }
@@ -156,7 +155,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
       // Change video resolution to the preferred mode
       if (driver.video_poke && driver.video_poke->update_screen_config)
          driver.video_poke->update_screen_config(driver.video_data, GX_RESOLUTIONS_AUTO, ASPECT_RATIO_4_3,
-                                                 false, ORIENTATION_NORMAL, false);
+                                                 false, ORIENTATION_NORMAL);
 #endif
       // Stop all rumbling when entering RGUI.
       for (i = 0; i < MAX_PLAYERS; i++)

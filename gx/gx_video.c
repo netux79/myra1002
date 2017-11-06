@@ -384,10 +384,8 @@ static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
 
 static void gx_overlay_enable(void *data, bool state)
 {
-   gx_video_t *gx = (gx_video_t*)data;
-   /* include the state of the system's overlay, 
-    * never enable it if it is not set */
-   gx->overlay_enable = (!driver.overlay) ? false : state;
+   (void)data;
+   (void)state;
 }
 
 static void gx_set_rotation(void *data, unsigned orientation)
@@ -396,7 +394,7 @@ static void gx_set_rotation(void *data, unsigned orientation)
    gx->orientation = orientation;
 }
 
-static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation, bool show_overlay)
+static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation)
 {
    gx_video_t *gx = (gx_video_t*)data;
    static unsigned actual_res_index = GX_RESOLUTIONS_AUTO;
@@ -414,9 +412,7 @@ static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspec
      actual_aspect_ratio_index = aspect_idx;
    }
 
-   gx_overlay_enable(data, show_overlay);
    gx_set_rotation(data, orientation);
-
    gx->scale_integer = scale_integer;
 
    /* reset FPS counting when switching 
@@ -926,9 +922,6 @@ static void gx_overlay_render(void *data)
 {
    gx_video_t *gx = (gx_video_t*)data;
 
-   /* Only render if an overlay is available */
-   if (!gx->overlay) return;
-
    GX_SetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
    GX_SetVtxDesc(GX_VA_POS, GX_DIRECT);
    GX_SetVtxDesc(GX_VA_TEX0, GX_DIRECT);
@@ -1031,43 +1024,42 @@ static bool gx_frame(void *data, const void *frame,
       ph = height;
       
       /* when returning from 
-       * menu force to sync */
+       * menu force syncing */
       g_vsync = g_vsync_state;
    }
+
+   GX_InvalidateTexAll();
    
    /* Load menu if enabled */
    if (gx->rgui_texture_enable && gx->menu_data)
    {
       convert_texture16(gx->menu_data, menu_tex.data, rgui->width, rgui->height, rgui->width * 2);
       DCStoreRange(menu_tex.data, rgui->width * rgui->height * 2);
+      GX_CallDispList(display_list, display_list_size);
    }
    else if (frame) /* Load the frame if any */
    {
-      if (gx->rgb32)
+      if (gx->rgb32) 
          convert_texture32(frame, game_tex.data, width, height, pitch);
-      else
+      else 
          convert_texture16(frame, game_tex.data, width, height, pitch);
-
       DCStoreRange(game_tex.data, height * width * gx->bpp);
-   }
-
-   GX_InvalidateTexAll();
-   GX_CallDispList(display_list, display_list_size);
-
+      GX_CallDispList(display_list, display_list_size);
 #ifdef HAVE_OVERLAY
-   if (gx->overlay_enable)
-   {
-      gx_overlay_render(gx);
-      /* restore game texture after overlay rendering */
-      GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
-   }
+      if (gx->overlay)
+      {
+         gx_overlay_render(gx);
+         /* restore game texture after overlay rendering */
+         GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
+      }
 #endif
+   }
 
    GX_DrawDone();
 
    /* OSD */
    gx_onscreen_display(gx, msg);
-   
+
    /* wait vertical sync */
    while (g_vsync == WAIT_VBLANK);
    g_vsync = g_vsync_state;

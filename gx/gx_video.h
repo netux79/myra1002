@@ -51,7 +51,6 @@ typedef struct gx_video
 #ifdef HAVE_OVERLAY
    struct gx_overlay_data *overlay;
    unsigned overlays;
-   bool overlay_enable;
 #endif
 } gx_video_t;
 
