@@ -145,8 +145,7 @@ void config_set_defaults(void)
    g_settings.video.force_aspect = force_aspect;
    g_settings.video.scale_integer = scale_integer;
    g_settings.video.crop_overscan = crop_overscan;
-   g_settings.video.aspect_ratio = aspect_ratio;
-   g_settings.video.aspect_ratio_auto = aspect_ratio_auto; // Let implementation decide if automatic, or 1:1 PAR.
+   g_settings.video.manual_aspect_ratio = aspect_ratio;
    g_settings.video.aspect_ratio_idx = aspect_ratio_idx;
    g_settings.video.shader_enable = shader_enable;
    g_settings.video.allow_rotate = allow_rotate;
@@ -261,7 +260,6 @@ void config_set_defaults(void)
 
    g_settings.video.msg_pos_x = 0.05f;
    g_settings.video.msg_pos_y = 0.90f;
-   g_settings.video.aspect_ratio = -1.0f;
 
    g_extern.config_type = CONFIG_PER_CORE;
 
@@ -656,9 +654,8 @@ bool config_load_file(const char *path)
    CONFIG_GET_BOOL(video.force_aspect, "video_force_aspect");
    CONFIG_GET_BOOL(video.scale_integer, "video_scale_integer");
    CONFIG_GET_BOOL(video.crop_overscan, "video_crop_overscan");
-   CONFIG_GET_FLOAT(video.aspect_ratio, "video_aspect_ratio");
+   CONFIG_GET_FLOAT(video.manual_aspect_ratio, "video_manual_aspect_ratio");
    CONFIG_GET_INT(video.aspect_ratio_idx, "aspect_ratio_index");
-   CONFIG_GET_BOOL(video.aspect_ratio_auto, "video_aspect_ratio_auto");
    CONFIG_GET_FLOAT(video.refresh_rate, "video_refresh_rate");
    CONFIG_GET_PATH(video.shader_path, "video_shader");
    CONFIG_GET_BOOL(video.shader_enable, "video_shader_enable");
@@ -984,7 +981,6 @@ bool config_save_file(const char *path)
    config_set_int(conf, "rewind_granularity", g_settings.rewind_granularity);
    config_set_path(conf, "video_shader", g_settings.video.shader_path);
    config_set_bool(conf, "video_shader_enable", g_settings.video.shader_enable);
-   config_set_float(conf, "video_aspect_ratio", g_settings.video.aspect_ratio);
    config_set_float(conf, "video_xscale", g_settings.video.xscale);
    config_set_float(conf, "video_yscale", g_settings.video.yscale);
    config_set_int(conf, "autosave_interval", g_settings.autosave_interval);

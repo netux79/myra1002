@@ -133,38 +133,38 @@ void gfx_set_dwm(void)
       RARCH_ERR("Failed to set composition state ...\n");
    dwm_composition_disabled = g_settings.video.disable_composition;
 }
+
 #endif
 
-void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height, float aspect_ratio, bool keep_aspect)
+#define SWAPU(a,b) unsigned t=a;a=b;b=t;
+void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height, unsigned aspect_ratio_idx, bool keep_aspect, unsigned orientation)
 {
    int padding_x = 0;
    int padding_y = 0;
+   unsigned base_height;
+   unsigned base_width;
+   bool rotated = (orientation == ORIENTATION_VERTICAL || orientation == ORIENTATION_FLIPPED_ROTATED); 
 
-   if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
+   if (aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
-      const struct rarch_viewport *custom =
-         &g_extern.console_screen.custom_vp;
+      base_width = g_extern.console_screen.custom_vp.width;
+      base_height = g_extern.console_screen.custom_vp.height;
+      if (rotated) SWAPU(base_width, base_height);
 
-      padding_x = width - custom->width;
-      padding_y = height - custom->height;
-      width = custom->width;
-      height = custom->height;
+      padding_x = width - base_width;
+      padding_y = height - base_height;
+      width = base_width;
+      height = base_height;
    }
    else
    {
-      // Use system reported sizes as these define the geometry for the "normal" case.
-      unsigned base_height = g_extern.system.av_info.geometry.base_height;
-      if (base_height == 0)
-         base_height = 1;
-      // Account for non-square pixels.
-      // This is sort of contradictory with the goal of integer scale,
-      // but it is desirable in some cases.
-      // If square pixels are used, base_height will be equal to g_extern.system.av_info.base_height.
-      unsigned base_width;
-      
-      if (aspect_ratio == 0) 
+      float aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
+            
+      if (aspect_ratio == 0)
          base_width = g_extern.system.av_info.geometry.base_width;
+         base_height = g_extern.system.av_info.geometry.base_height;    
       else
+         if (rotated) aspect_ratio =  1.0 / aspect_ratio;
          base_width = (unsigned)roundf(base_height * aspect_ratio);
 
       // Make sure that we don't get 0x scale ...
@@ -267,10 +267,10 @@ void gfx_set_core_viewport(void)
 
 void gfx_set_config_viewport(void)
 {
-   if (g_settings.video.aspect_ratio < 0.0f)
+   if (g_settings.video.manual_aspect_ratio < 0.0f)
    {
       const struct retro_game_geometry *geom = &g_extern.system.av_info.geometry;
-      if (geom->aspect_ratio > 0.0f && g_settings.video.aspect_ratio_auto)
+      if (geom->aspect_ratio > 0.0f)
          aspectratio_lut[ASPECT_RATIO_CONFIG].value = geom->aspect_ratio;
       else
       {
@@ -287,6 +287,6 @@ void gfx_set_config_viewport(void)
       }
    }
    else
-      aspectratio_lut[ASPECT_RATIO_CONFIG].value = g_settings.video.aspect_ratio;
+      aspectratio_lut[ASPECT_RATIO_CONFIG].value = g_settings.video.manual_aspect_ratio;
 }
 

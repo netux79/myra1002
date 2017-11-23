@@ -708,8 +708,8 @@ static void gx_resize_viewport(void *data)
    if (gx->scale_integer)
    {
       gfx_scale_integer(&gx->vp, gx->vp.width, gx->vp.height, 
-                       (gx->double_strike ? 0.0f : gx->aspect_ratio), 
-                        gx->force_aspect);
+                       (gx->double_strike ? ASPECT_RATIO_ORIGINAL : gx->aspect_ratio_idx), 
+                        gx->force_aspect, gx->orientation);
    }
    else if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {

@@ -137,11 +137,7 @@ enum
 #define INPUT_DEFAULT_DRIVER INPUT_NULL
 #endif
 
-#if defined(GEKKO)
-#define DEFAULT_ASPECT_RATIO 1.3333f
-#else
 #define DEFAULT_ASPECT_RATIO -1.0f
-#endif
 
 ////////////////
 // Video
@@ -192,13 +188,7 @@ static const bool scale_integer = false;
 
 // Controls aspect ratio handling.
 static const float aspect_ratio = DEFAULT_ASPECT_RATIO; // Automatic
-static const bool aspect_ratio_auto = false; // 1:1 PAR
-
-#if defined(RARCH_CONSOLE)
 static unsigned aspect_ratio_idx = ASPECT_RATIO_4_3;
-#else
-static unsigned aspect_ratio_idx = ASPECT_RATIO_CONFIG; // Use g_settings.video.aspect_ratio.
-#endif
 
 // Save configuration file on exit
 static bool config_save_on_exit = true;

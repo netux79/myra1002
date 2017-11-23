@@ -118,8 +118,7 @@ struct settings
       bool smooth;
       bool force_aspect;
       bool crop_overscan;
-      float aspect_ratio;
-      bool aspect_ratio_auto;
+      float manual_aspect_ratio;
       bool scale_integer;
       unsigned aspect_ratio_idx;
       unsigned rotation;
@@ -303,7 +302,6 @@ struct global
    {
       struct retro_system_info info;
       struct retro_system_av_info av_info;
-      float aspect_ratio;
 
       unsigned rotation;
       bool core_shutdown;

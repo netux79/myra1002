@@ -465,8 +465,9 @@ static bool d3d_initialize(void *data, const video_info_t *info)
 
    if (!ret)
       return ret;
-
-   d3d_calculate_rect(d3d, d3d->screen_width, d3d->screen_height, info->force_aspect, g_extern.system.aspect_ratio);
+   
+   float aspect_ratio = aspectratio_lut[g_settings.video.aspect_ratio_idx].value;
+   d3d_calculate_rect(d3d, d3d->screen_width, d3d->screen_height, info->force_aspect, aspect_ratio);
 
 #ifdef HAVE_SHADERS
    if (!d3d_init_shader(d3d))
@@ -651,7 +652,7 @@ static void d3d_calculate_rect(void *data, unsigned width, unsigned height,
    if (g_settings.video.scale_integer)
    {
       struct rarch_viewport vp = {0};
-      gfx_scale_integer(&vp, width, height, desired_aspect, keep);
+      gfx_scale_integer(&vp, width, height, g_settings.video.aspect_ratio_idx, keep, d3d->dev_rotation);
       d3d_set_viewport(d3d, vp.x, vp.y, vp.width, vp.height);
    }
    else if (!keep)
@@ -705,7 +706,8 @@ static bool d3d_frame(void *data, const void *frame,
 
    if (d3d->should_resize)
    {
-      d3d_calculate_rect(d3d, d3d->screen_width, d3d->screen_height, d3d->video_info.force_aspect, g_extern.system.aspect_ratio);
+      float aspect_ratio = aspectratio_lut[g_settings.video.aspect_ratio_idx].value;
+      d3d_calculate_rect(d3d, d3d->screen_width, d3d->screen_height, d3d->video_info.force_aspect, aspect_ratio);
       renderchain_set_final_viewport(d3d->chain, &d3d->final_viewport);
       d3d_recompute_pass_sizes(d3d);
 
@@ -1086,7 +1088,6 @@ static void d3d_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
          break;
    }
 
-   g_extern.system.aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
    d3d->video_info.force_aspect = true;
    d3d->should_resize = true;
    return;

@@ -797,8 +797,6 @@ void init_video_input(void)
          (float)custom_vp->width / custom_vp->height : default_aspect;
    }
 
-   g_extern.system.aspect_ratio = aspectratio_lut[g_settings.video.aspect_ratio_idx].value;
-
    unsigned width;
    unsigned height;
 #ifndef CONSOLE
@@ -812,7 +810,7 @@ void init_video_input(void)
       if (g_settings.video.force_aspect)
       {
          // Do rounding here to simplify integer scale correctness.
-         unsigned base_width = roundf(geom->base_height * g_extern.system.aspect_ratio);
+         unsigned base_width = roundf(geom->base_height * aspectratio_lut[g_settings.video.aspect_ratio_idx].value);
          width = roundf(base_width * g_settings.video.xscale);
          height = roundf(geom->base_height * g_settings.video.yscale);
       }
