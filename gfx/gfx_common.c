@@ -136,7 +136,6 @@ void gfx_set_dwm(void)
 
 #endif
 
-#define SWAPU(a,b) unsigned t=a;a=b;b=t;
 void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height, unsigned aspect_ratio_idx, bool keep_aspect, unsigned orientation)
 {
    int padding_x = 0;
@@ -159,28 +158,23 @@ void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned heigh
    else
    {
       float aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
-            
-      if (aspect_ratio == 0)
-         base_width = g_extern.system.av_info.geometry.base_width;
-         base_height = g_extern.system.av_info.geometry.base_height;    
-      else
-         if (rotated) aspect_ratio =  1.0 / aspect_ratio;
-         base_width = (unsigned)roundf(base_height * aspect_ratio);
+      
+      base_height = g_extern.system.av_info.geometry.base_height;
+      base_width = aspect_ratio ? (unsigned)roundf(base_height * aspect_ratio) : g_extern.system.av_info.geometry.base_width;
+      if (rotated) SWAPU(base_width, base_height);
 
-      // Make sure that we don't get 0x scale ...
-      if (width >= base_width && height >= base_height)
+      if (keep_aspect) // X/Y scale must be same.
       {
-         if (keep_aspect) // X/Y scale must be same.
-         {
-            unsigned max_scale = min(width / base_width, height / base_height);
-            padding_x = width - base_width * max_scale;
-            padding_y = height - base_height * max_scale;
-         }
-         else // X/Y can be independent, each scaled as much as possible.
-         {
-            padding_x = width % base_width;
-            padding_y = height % base_height;
-         }
+         unsigned max_scale = min(width / base_width, height / base_height);
+         if (max_scale == 0) max_scale = 1; /* ensure non-zero scale */
+
+         padding_x = width - base_width * max_scale;
+         padding_y = height - base_height * max_scale;
+      }
+      else // X/Y can be independent, each scaled as much as possible.
+      {
+         padding_x = (base_width > width) ? width - base_width : width % base_width;
+         padding_y = (base_height > height) ? height - base_height : height % base_height;
       }
 
       width     -= padding_x;

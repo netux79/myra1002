@@ -36,6 +36,8 @@ bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps);
 void gfx_set_dwm(void);
 #endif
 
+#define SWAPU(a,b) {unsigned t=a;a=b;b=t;}
+
 void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height,
       unsigned aspect_ratio_idx, bool keep_aspect, unsigned orientation);
 

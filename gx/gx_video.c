@@ -69,7 +69,7 @@ static unsigned gx_resolutions[][2] = {
     { 384, 480 },
     { 512, 480 },
     { 530, 480 },
-    { 576, 448 },
+    { 576, 480 },
     { 640, 480 },
     { 0, 0 },
 };
@@ -698,6 +698,7 @@ static void convert_texture32(const uint32_t *_src, uint32_t *_dst,
 static void gx_resize_viewport(void *data)
 {
    gx_video_t *gx = (gx_video_t*)data;
+   unsigned rotated = (gx->orientation == ORIENTATION_VERTICAL || gx->orientation == ORIENTATION_FLIPPED_ROTATED);
    
    /* Default to full screen size. */
    gx->vp.x      = 0;
@@ -725,6 +726,7 @@ static void gx_resize_viewport(void *data)
       gx->vp.y      = g_extern.console_screen.custom_vp.y;
       gx->vp.width  = g_extern.console_screen.custom_vp.width;
       gx->vp.height = g_extern.console_screen.custom_vp.height;
+      if (rotated) SWAPU(gx->vp.width, gx->vp.height);
    }
    else if (!gx->double_strike) /* Apply aspect ratio just to non-240p resolutions */
    {
@@ -735,8 +737,7 @@ static void gx_resize_viewport(void *data)
 #else
       float device_aspect = 4.0 / 3.0;
 #endif
-      if (gx->orientation == ORIENTATION_VERTICAL || gx->orientation == ORIENTATION_FLIPPED_ROTATED)
-         desired_aspect = 1.0 / desired_aspect;
+      if (rotated) desired_aspect = 1.0 / desired_aspect;
 
       if (fabs(device_aspect - desired_aspect) < 0.0001)
       {
