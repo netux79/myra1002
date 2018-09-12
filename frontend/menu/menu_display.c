@@ -303,7 +303,7 @@ static void rgui_render(void *data, void *video_data)
       snprintf(title, sizeof(title), "SHADER %s", dir);
 #endif
    else if (menu_type == RGUI_SETTINGS)
-      strlcpy(title, PACKAGE_VERSION, sizeof(title));
+      snprintf(title, sizeof(title), "%s | %s ", PACKAGE_VERSION, *g_extern.basename ? path_basename(g_extern.basename) : "No Game Loaded");
    else if (menu_type == RGUI_SETTINGS_OPEN_HISTORY)
       strlcpy(title, "LOAD RECENT", sizeof(title));
 #ifdef HAVE_OVERLAY
@@ -354,13 +354,13 @@ static void rgui_render(void *data, void *video_data)
    blit_line(rgui, RGUI_TERM_START_X + 15, 15, title_buf, true);
 
    char title_msg[64];
-   const char *core_name = rgui->info.library_name;
+   const char *core_name = rgui->core_info_current.display_name;
    if (!core_name)
       core_name = g_extern.system.info.library_name;
    if (!core_name)
       core_name = "No Core";
 
-   snprintf(title_msg, sizeof(title_msg), "Core: %s", core_name);
+   strlcpy(title_msg, core_name, sizeof(title_msg));
    blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, title_msg, true);
 
    /* get the time */
