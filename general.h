@@ -425,6 +425,7 @@ struct global
       rarch_viewport_t custom_vp;
       unsigned gamma_correction;
       bool soft_filter_enable;
+      bool interlaced_resolution_only;
    } console_screen;
 
    uint64_t lifecycle_state;

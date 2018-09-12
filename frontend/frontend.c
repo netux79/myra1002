@@ -154,7 +154,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 #ifdef GEKKO
       // Change video resolution to the preferred mode
       if (driver.video_poke && driver.video_poke->update_screen_config)
-         driver.video_poke->update_screen_config(driver.video_data, GX_RESOLUTIONS_AUTO, ASPECT_RATIO_4_3,
+         driver.video_poke->update_screen_config(driver.video_data, GX_RESOLUTIONS_RGUI, ASPECT_RATIO_4_3,
                                                  false, ORIENTATION_NORMAL);
 #endif
       // Stop all rumbling when entering RGUI.

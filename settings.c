@@ -267,8 +267,9 @@ void config_set_defaults(void)
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
    g_extern.console_screen.gamma_correction = DEFAULT_GAMMA;
    g_extern.console_screen.soft_filter_enable = true;
-
    g_extern.console_screen.resolution_idx = GX_RESOLUTIONS_AUTO;
+   g_extern.console_screen.interlaced_resolution_only = false;
+   
    strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
 
    g_extern.state_slot = 0;
@@ -672,6 +673,7 @@ bool config_load_file(const char *path)
    CONFIG_GET_INT_EXTERN(console_screen.gamma_correction, "gamma_correction");
    CONFIG_GET_BOOL_EXTERN(console_screen.soft_filter_enable, "soft_filter_enable");
    CONFIG_GET_INT_EXTERN(console_screen.resolution_idx, "current_resolution_id");
+   CONFIG_GET_BOOL_EXTERN(console_screen.interlaced_resolution_only, "interlaced_resolution_only");
 #endif
    CONFIG_GET_INT_EXTERN(state_slot, "state_slot");
 
@@ -1008,6 +1010,7 @@ bool config_save_file(const char *path)
    config_set_int(conf, "gamma_correction", g_extern.console_screen.gamma_correction);
    config_set_bool(conf, "soft_filter_enable", g_extern.console_screen.soft_filter_enable);
    config_set_int(conf, "current_resolution_id", g_extern.console_screen.resolution_idx);
+   config_set_bool(conf, "interlaced_resolution_only", g_extern.console_screen.interlaced_resolution_only);
 #endif
    config_set_int(conf, "custom_viewport_width", g_extern.console_screen.custom_vp.width);
    config_set_int(conf, "custom_viewport_height", g_extern.console_screen.custom_vp.height);

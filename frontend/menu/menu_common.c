@@ -1506,6 +1506,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_clear(rgui->selection_buf);
 #ifdef GEKKO
          file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
+         if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO)
+            file_list_push(rgui->selection_buf, "Interlaced Resolution Only", RGUI_SETTINGS_VIDEO_INTERLACED_ONLY, 0);
 #endif
          file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_DEBUG_TEXT, 0);
 #ifdef HAVE_SCALERS_BUILTIN

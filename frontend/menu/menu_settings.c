@@ -1271,7 +1271,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          unsigned old_index = g_extern.console_screen.resolution_idx;
          if (action == RGUI_ACTION_LEFT)
          {
-            if(g_extern.console_screen.resolution_idx > 0)
+            if(g_extern.console_screen.resolution_idx > GX_RESOLUTIONS_FIRST)
             {
                g_extern.console_screen.resolution_idx--;
             }
@@ -1290,14 +1290,29 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          else if (action == RGUI_ACTION_OK)
          {
             /* Display current game reported resolution */
-            char msg[64];
-            snprintf(msg, sizeof(msg), "Game internal resolution: %ux%u", g_extern.frame_cache.width, g_extern.frame_cache.height);
+            char msg[48];
+            
+            if (g_extern.frame_cache.width == 0)
+               strlcpy(msg, "No game is running", sizeof(msg));
+            else
+               snprintf(msg, sizeof(msg), "Game internal resolution: %ux%u", g_extern.frame_cache.width, g_extern.frame_cache.height);
+
             msg_queue_push(g_extern.msg_queue, msg, 0, 80);
          }
-         /* adjust refresh rate accordingly */
+
          if (old_index != g_extern.console_screen.resolution_idx)
+         {
+            /* on resolution AUTO call fnt to find out best matching resolution */
+            if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && g_extern.frame_cache.width != 0)
+               if (driver.video_poke && driver.video_poke->match_resolution_auto)
+                     driver.video_poke->match_resolution_auto(g_extern.frame_cache.width, g_extern.frame_cache.height);
+
+            /* adjust refresh rate accordingly */
             if (driver.video_poke && driver.video_poke->set_refresh_rate)
-                  driver.video_poke->set_refresh_rate(video_data, g_extern.console_screen.resolution_idx);            
+                  driver.video_poke->set_refresh_rate(video_data, g_extern.console_screen.resolution_idx);
+                  
+            rgui->need_refresh = true;
+         }
          break;
       }
 #endif
@@ -1307,6 +1322,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
          if (driver.video_poke && driver.video_poke->apply_state_changes)
             driver.video_poke->apply_state_changes(video_data);
+         break;
+         
+      case RGUI_SETTINGS_VIDEO_INTERLACED_ONLY:
+         g_extern.console_screen.interlaced_resolution_only=!g_extern.console_screen.interlaced_resolution_only;
+
+         /* on resolution AUTO call fnt to refresh the matching resolution */
+         if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && g_extern.frame_cache.width != 0)
+            if (driver.video_poke && driver.video_poke->match_resolution_auto)
+                  driver.video_poke->match_resolution_auto(g_extern.frame_cache.width, g_extern.frame_cache.height);
          break;
 #endif
 
@@ -1526,6 +1550,9 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
          snprintf(type_str, type_str_size, g_extern.console_screen.soft_filter_enable ? "ON" : "OFF");
          break;
+      case RGUI_SETTINGS_VIDEO_INTERLACED_ONLY:
+         snprintf(type_str, type_str_size, g_extern.console_screen.interlaced_resolution_only ? "ON" : "OFF");
+         break;
       case RGUI_SETTINGS_VIDEO_BILINEAR:
          strlcpy(type_str, g_settings.video.smooth ? "ON" : "OFF", type_str_size);
          break;
@@ -1595,10 +1622,19 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #if defined(GEKKO)
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
-         if (driver.video_poke && driver.video_poke->get_resolution)
-            snprintf(type_str, type_str_size, "%s %3.2fhz", driver.video_poke->get_resolution(g_extern.console_screen.resolution_idx), 
-                                                           g_settings.video.refresh_rate);
+      {
+         unsigned w, h;
+         if (driver.video_poke && driver.video_poke->get_resolution_size)
+            driver.video_poke->get_resolution_size(g_extern.console_screen.resolution_idx, &w, &h);
+         
+         if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && w == 0)
+            strlcpy(type_str, "AUTO", type_str_size);
+         else
+            snprintf(type_str, type_str_size, g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO ? 
+                     "AUTO (%ux%u %3.2fhz)": "%ux%u %3.2fhz",
+                     w, h, g_settings.video.refresh_rate);
          break;
+      }
 #endif
       case RGUI_FILE_PLAIN:
          strlcpy(type_str, "(FILE)", type_str_size);

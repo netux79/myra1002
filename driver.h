@@ -309,9 +309,9 @@ typedef struct video_poke_interface
    void (*grab_mouse_toggle)(void *data);
 #ifdef GEKKO
    void (*update_screen_config)(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation);
-   const char *(*get_resolution)(unsigned res_index);
    void (*get_resolution_size)(unsigned res_index, unsigned *width, unsigned *height);
    void (*set_refresh_rate)(void *data, unsigned res_index);
+   void (*match_resolution_auto)(unsigned fbWidth, unsigned fbLines);
 #endif
 } video_poke_interface_t;
 

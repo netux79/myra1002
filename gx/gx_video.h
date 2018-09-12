@@ -26,76 +26,36 @@ struct gx_overlay_data
    float alpha_mod;
 };
 
+struct gx_tvinfo
+{
+   unsigned tvmode;
+   unsigned max_width;
+   unsigned max_height;
+   bool progressive;
+};
+
 typedef struct gx_video
 {
-   bool should_resize;
-   unsigned aspect_ratio_idx;
    float aspect_ratio;
-   bool double_strike;
-   bool rgb32;
+   unsigned frame_w, frame_h; /* keep track of frame size */ 
+   unsigned resolution_idx;
+   unsigned aspect_ratio_idx;
    unsigned bpp;
-   unsigned scale;   
-   uint32_t *menu_data;
-   bool rgui_texture_enable;
-   rarch_viewport_t vp;
-   bool scale_integer;
-   bool force_aspect;
+   unsigned scale;
    unsigned orientation;
-   struct 
-   {
-      unsigned tvmode;
-      unsigned max_width;
-      unsigned max_height;
-      bool progressive;
-   } tvinfo;
+   unsigned *menu_data;
+   rarch_viewport_t vp;
 #ifdef HAVE_OVERLAY
    struct gx_overlay_data *overlay;
    unsigned overlays;
 #endif
+   struct gx_tvinfo tvinfo;
+   bool double_strike;
+   bool rgb32;
+   bool should_resize;
+   bool rgui_texture_enable;
+   bool scale_integer;
+   bool force_aspect;
 } gx_video_t;
-
-enum
-{
-   GX_RESOLUTIONS_256_192 = 0,
-   GX_RESOLUTIONS_299_200,
-   GX_RESOLUTIONS_320_200,
-   GX_RESOLUTIONS_170_224,
-   GX_RESOLUTIONS_192_224,
-   GX_RESOLUTIONS_224_224,
-   GX_RESOLUTIONS_240_224,
-   GX_RESOLUTIONS_256_224,
-   GX_RESOLUTIONS_304_224,
-   GX_RESOLUTIONS_320_224,
-   GX_RESOLUTIONS_340_224,
-   GX_RESOLUTIONS_384_224,
-   GX_RESOLUTIONS_512_224,
-   GX_RESOLUTIONS_256_232,
-   GX_RESOLUTIONS_256_236,
-   GX_RESOLUTIONS_192_240,
-   GX_RESOLUTIONS_256_240,
-   GX_RESOLUTIONS_265_240,
-   GX_RESOLUTIONS_288_240,
-   GX_RESOLUTIONS_320_240,
-   GX_RESOLUTIONS_512_384,
-   GX_RESOLUTIONS_598_400,
-   GX_RESOLUTIONS_640_400,
-   GX_RESOLUTIONS_340_448,
-   GX_RESOLUTIONS_384_448,
-   GX_RESOLUTIONS_400_448,
-   GX_RESOLUTIONS_448_448,
-   GX_RESOLUTIONS_480_448,
-   GX_RESOLUTIONS_512_448,
-   GX_RESOLUTIONS_608_448,
-   GX_RESOLUTIONS_640_448,
-   GX_RESOLUTIONS_512_464,
-   GX_RESOLUTIONS_512_472,
-   GX_RESOLUTIONS_384_480,
-   GX_RESOLUTIONS_512_480,
-   GX_RESOLUTIONS_530_480,
-   GX_RESOLUTIONS_576_480,
-   GX_RESOLUTIONS_640_480,
-   GX_RESOLUTIONS_AUTO,
-   GX_RESOLUTIONS_LAST = GX_RESOLUTIONS_AUTO,
-};
 
 #endif
