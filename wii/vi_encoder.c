@@ -50,41 +50,41 @@
  ****************************************************************************/
 
 #define _SHIFTL(v, s, w)	\
-    ((u32) (((u32)(v) & ((0x01 << (w)) - 1)) << (s)))
+    ((uint32_t) (((uint32_t)(v) & ((0x01 << (w)) - 1)) << (s)))
 #define _SHIFTR(v, s, w)	\
-    ((u32)(((u32)(v) >> (s)) & ((0x01 << (w)) - 1)))
+    ((uint32_t)(((uint32_t)(v) >> (s)) & ((0x01 << (w)) - 1)))
 
 extern void udelay(int us);
 
-static u32 i2cIdentFirst = 0;
-static u32 i2cIdentFlag = 1;
-static vu32* const _i2cReg = (u32*)0xCD800000;
+static uint32_t i2cIdentFirst = 0;
+static uint32_t i2cIdentFlag = 1;
+static volatile uint32_t* const _i2cReg = (uint32_t*)0xCD800000;
 
-static inline void __viOpenI2C(u32 channel)
+static inline void __viOpenI2C(uint32_t channel)
 {
-	u32 val = ((_i2cReg[49]&~0x8000)|0x4000);
+	uint32_t val = ((_i2cReg[49]&~0x8000)|0x4000);
 	val |= _SHIFTL(channel,15,1);
 	_i2cReg[49] = val;
 }
 
-static inline void __viSetSCL(u32 channel)
+static inline void __viSetSCL(uint32_t channel)
 {
-	u32 val = (_i2cReg[48]&~0x4000);
+	uint32_t val = (_i2cReg[48]&~0x4000);
 	val |= _SHIFTL(channel,14,1);
 	_i2cReg[48] = val;
 }
-static inline void __viSetSDA(u32 channel)
+static inline void __viSetSDA(uint32_t channel)
 {
-	u32 val = (_i2cReg[48]&~0x8000);
+	uint32_t val = (_i2cReg[48]&~0x8000);
 	val |= _SHIFTL(channel,15,1);
 	_i2cReg[48] = val;
 }
 
 #define __viGetSDA() (_SHIFTR(_i2cReg[50],15,1))
 
-static u32 __sendSlaveAddress(u8 addr)
+static uint32_t __sendSlaveAddress(uint8_t addr)
 {
-	u32 i;
+	uint32_t i;
 
 	__viSetSDA(i2cIdentFlag^1);
 	udelay(2);
@@ -119,10 +119,10 @@ static u32 __sendSlaveAddress(u8 addr)
 
 void VIDEO_SetTrapFilter(bool enable)
 {
-  u8 disable;
-  u8 data;
-  u8 reg;
-  u8 buf[2];
+  uint8_t disable;
+  uint8_t data;
+  uint8_t reg;
+  uint8_t buf[2];
 
   disable = !enable;
   data = !disable;
@@ -131,13 +131,13 @@ void VIDEO_SetTrapFilter(bool enable)
   buf[0] = reg;
   buf[1] = data;
 
-  u8 addr = 0xe0;
+  uint8_t addr = 0xe0;
   void* val = buf;
-  u32 len = 2;
+  uint32_t len = 2;
 
-  u8 c;
-  s32 i,j;
-  u32 level,ret;
+  uint8_t c;
+  int32_t i,j;
+  uint32_t level,ret;
 
   if(i2cIdentFirst==0)
   {
@@ -167,9 +167,9 @@ void VIDEO_SetTrapFilter(bool enable)
 
   __viOpenI2C(1);
   for(i=0;i<len;i++) {
-	  c = ((u8*)val)[i];
+	  c = ((uint8_t*)val)[i];
 	  for(j=0;j<8;j++) {
-                  u32 chan = i2cIdentFlag;
+                  uint32_t chan = i2cIdentFlag;
 		  if(c&0x80) {}
                   else
                     chan ^= 1;

@@ -18,7 +18,7 @@
 void app_booter_main(void)
 {
 	void *exeBuffer = (void *) EXECUTABLE_MEM_ADDR;
-	u32 exeEntryPointAddress = 0;
+	uint32_t exeEntryPointAddress = 0;
 	entrypoint exeEntryPoint;
 
 	if (valid_elf_image(exeBuffer) == 1)

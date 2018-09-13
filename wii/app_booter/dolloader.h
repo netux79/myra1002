@@ -3,6 +3,6 @@
 
 typedef void (*entrypoint) (void);
 
-u32 load_dol_image(const void *dolstart);
+uint32_t load_dol_image(const void *dolstart);
 
 #endif

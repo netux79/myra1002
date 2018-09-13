@@ -25,7 +25,7 @@
  * First looks at the ELF header magic field, the makes sure that it is
  * executable and makes sure that it is for a PowerPC.
  * ====================================================================== */
-s32 valid_elf_image (void *addr)
+int32_t valid_elf_image (void *addr)
 {
    Elf32_Ehdr *ehdr; /* Elf header structure pointer */
 
@@ -49,10 +49,10 @@ s32 valid_elf_image (void *addr)
  * entry point address.
  * ====================================================================== */
 
-u32 load_elf_image (void *elfstart) {
+uint32_t load_elf_image (void *elfstart) {
    Elf32_Ehdr *ehdr;
    Elf32_Phdr *phdrs;
-   u8 *image;
+   uint8_t *image;
    int i;
 
    ehdr = (Elf32_Ehdr *) elfstart;
@@ -79,7 +79,7 @@ u32 load_elf_image (void *elfstart) {
       if(!phdrs[i].p_filesz)
          continue;
 
-      image = (u8 *) (elfstart + phdrs[i].p_offset);
+      image = (uint8_t *) (elfstart + phdrs[i].p_offset);
       memcpy ((void *) phdrs[i].p_paddr, (const void *) image, phdrs[i].p_filesz);
 
       sync_before_exec ((void *) phdrs[i].p_paddr, phdrs[i].p_memsz);

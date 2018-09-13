@@ -414,7 +414,7 @@ bool gxpad_init(void) {
 		WPAD_SetDataFormat(WPAD_CHAN_0, WPAD_FMT_BTNS_ACC_IR); /* data from wiimote 1 */
 #endif
 		if (!_gx_thread_running) {
-			// start the polling thread
+			/* start the polling thread */
 			_gx_thread_quit = false;
 			if (LWP_CreateThread(&_gx_thread, _gx_pad_polling, NULL, NULL, 0, 65) < 0) {
 				_gx_thread_running = false;

@@ -80,7 +80,7 @@ static unsigned gx_resolutions[][2] = {
 #define DEFAULT_NON_INTERLACE_RES_H 240
 #define DEFAULT_INTERLACE_RES_W 640
 #define DEFAULT_INTERLACE_RES_H 480
-static unsigned first_interlaced = GX_RESOLUTIONS_LAST; // By default it is the last resolution avail.
+static unsigned first_interlaced = GX_RESOLUTIONS_LAST; /* By default it is the last resolution avail. */
 
 static void *g_fb[2];
 static unsigned g_curfb = 0;
@@ -122,14 +122,14 @@ static float vertex_ptr[8] ATTRIBUTE_ALIGN(32) = {
    1, 1,
 };
 
-static u8 color_ptr[16] ATTRIBUTE_ALIGN(32)  = {
+static uint8_t color_ptr[16] ATTRIBUTE_ALIGN(32)  = {
    0xFF, 0xFF, 0xFF, 0xFF,
    0xFF, 0xFF, 0xFF, 0xFF,
    0xFF, 0xFF, 0xFF, 0xFF,
    0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-static void vblank_cb(u32 retrace_count)
+static void vblank_cb(uint32_t retrace_count)
 {
    (void)retrace_count;
    g_vsync = NO_WAIT;
@@ -221,7 +221,7 @@ static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
 
    if (res_index == GX_RESOLUTIONS_RGUI)
    {
-      // Use default Wii mode for gui.
+      /* Use default Wii mode for gui. */
       GXRModeObj tmp_mode;
       VIDEO_GetPreferredMode(&tmp_mode);
       fbWidth = tmp_mode.fbWidth;
@@ -272,8 +272,8 @@ static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
    GX_SetDispCopySrc(0, 0, gx_mode.fbWidth, gx_mode.efbHeight);
 
    f32 y_scale = GX_GetYScaleFactor(gx_mode.efbHeight, gx_mode.xfbHeight);
-   u16 xfbWidth = VIDEO_PadFramebufferWidth(gx_mode.fbWidth);
-   u16 xfbHeight = GX_SetDispCopyYScale(y_scale);
+   uint16_t xfbWidth = VIDEO_PadFramebufferWidth(gx_mode.fbWidth);
+   uint16_t xfbHeight = GX_SetDispCopyYScale(y_scale);
    GX_SetDispCopyDst(xfbWidth, xfbHeight);
 
    GX_SetCopyFilter(gx_mode.aa, gx_mode.sample_pattern, (gx_mode.xfbMode == VI_XFBMODE_SF) ? GX_FALSE : GX_TRUE, gx_mode.vfilter);
@@ -429,18 +429,18 @@ static void gx_match_resolution_auto(unsigned fbWidth, unsigned fbLines)
    
    if (fbLines > DEFAULT_NON_INTERLACE_RES_H || g_extern.console_screen.interlaced_resolution_only)
    {
-      // Interlaced resolutions.   
-      // Default the resolution AUTO to the default interlaced.
+      /* Interlaced resolutions.   
+       * Default the resolution AUTO to the default interlaced. */
       gx_resolutions[GX_RESOLUTIONS_AUTO][0] = DEFAULT_INTERLACE_RES_W;
       gx_resolutions[GX_RESOLUTIONS_AUTO][1] = DEFAULT_INTERLACE_RES_H;
 
       for (i = first_interlaced; i <= GX_RESOLUTIONS_LAST; i++)
-         if (!(gx_resolutions[i][0] % fbWidth)) // does fbWidth fit exactly into res?
+         if (!(gx_resolutions[i][0] % fbWidth)) /* does fbWidth fit exactly into res? */
          {
             gx_resolutions[GX_RESOLUTIONS_AUTO][0] = gx_resolutions[i][0];
-            gx_resolutions[GX_RESOLUTIONS_AUTO][1] = 448; // If Y is not matched, use 448 instead of 480 as default
+            gx_resolutions[GX_RESOLUTIONS_AUTO][1] = 448; /* If Y is not matched, use 448 instead of 480 as default */
             
-            if (!(gx_resolutions[i][1] % fbLines)) // does fbLines fit exactly into res?
+            if (!(gx_resolutions[i][1] % fbLines)) /* does fbLines fit exactly into res? */
             {
                gx_resolutions[GX_RESOLUTIONS_AUTO][1] = gx_resolutions[i][1];
                matched = true;
@@ -450,15 +450,15 @@ static void gx_match_resolution_auto(unsigned fbWidth, unsigned fbLines)
    }
    else
    {
-      // Double-strike resolutions.
-      // Default the resolution AUTO to the default non-interlaced.
+      /* Double-strike resolutions.
+       * Default the resolution AUTO to the default non-interlaced. */
       gx_resolutions[GX_RESOLUTIONS_AUTO][0] = DEFAULT_NON_INTERLACE_RES_W;
       gx_resolutions[GX_RESOLUTIONS_AUTO][1] = DEFAULT_NON_INTERLACE_RES_H;
 
       for (i = GX_RESOLUTIONS_FIRST + 1; i < first_interlaced; i++)
          if (!(gx_resolutions[i][0] % fbWidth) && gx_resolutions[i][1] == fbLines)
          {
-            // Resolution matched.
+            /* Resolution matched. */
             gx_resolutions[GX_RESOLUTIONS_AUTO][0] = gx_resolutions[i][0];
             gx_resolutions[GX_RESOLUTIONS_AUTO][1] = gx_resolutions[i][1];
             matched = true;
@@ -528,7 +528,7 @@ static void gx_init_vtx(void)
    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
    GX_SetArray(GX_VA_POS, verts, 3 * sizeof(float));
    GX_SetArray(GX_VA_TEX0, vertex_ptr, 2 * sizeof(float));
-   GX_SetArray(GX_VA_CLR0, color_ptr, 4 * sizeof(u8));
+   GX_SetArray(GX_VA_CLR0, color_ptr, 4 * sizeof(uint8_t));
 
    GX_SetNumTexGens(1);
    GX_SetNumChans(1);
@@ -775,7 +775,7 @@ static void gx_resize_viewport(void *data)
    else if (!gx->double_strike) /* Apply aspect ratio just to non-240p resolutions */
    {
       float delta;
-      float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f; // 4:3
+      float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f; /* 4:3 */
 #ifdef HW_RVL
       float device_aspect = CONF_GetAspectRatio() == CONF_ASPECT_4_3 ? 4.0 / 3.0 : 16.0 / 9.0;
 #else
@@ -903,11 +903,11 @@ static void gx_overlay_vertex_geom(void *data, unsigned image, float x, float y,
    gx_video_t *gx = (gx_video_t*)data;
    struct gx_overlay_data *o = &gx->overlay[image];
 
-   // Flipped, so we preserve top-down semantics.
+   /* Flipped, so we preserve top-down semantics. */
    y = 1.0f - y;
    h = -h;
 
-   // expand from 0 - 1 to -1 - 1
+   /* expand from 0 - 1 to -1 - 1 */
    x = (x * 2.0f) - 1.0f;
    y = (y * 2.0f) - 1.0f;
    w = (w * 2.0f);
@@ -949,7 +949,7 @@ static bool gx_overlay_load(void *data, const struct texture_image *images, unsi
       GX_InitTexObj(&o->tex, images[i].pixels, images[i].width, images[i].height, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
       GX_InitTexObjFilterMode(&o->tex, g_filter, g_filter);
       DCFlushRange(images[i].pixels, images[i].width * images[i].height * sizeof(uint32_t));
-      gx_overlay_tex_geom(gx, i, 0, 0, 1, 1); // Default. Stretch to whole screen.
+      gx_overlay_tex_geom(gx, i, 0, 0, 1, 1); /* Default. Stretch to whole screen. */
       gx_overlay_vertex_geom(gx, i, 0, 0, 1, 1);
       gx->overlay[i].alpha_mod = 1.0f;
    }
@@ -978,19 +978,19 @@ static void gx_overlay_render(void *data)
 
       GX_Begin(GX_TRIANGLESTRIP, GX_VTXFMT0, 4);
       GX_Position3f32(gx->overlay[i].vertex_coord[0], gx->overlay[i].vertex_coord[1],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_Color4u8(255, 255, 255, (uint8_t)(gx->overlay[i].alpha_mod * 255.0f));
       GX_TexCoord2f32(gx->overlay[i].tex_coord[0], gx->overlay[i].tex_coord[1]);
 
       GX_Position3f32(gx->overlay[i].vertex_coord[2], gx->overlay[i].vertex_coord[3],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_Color4u8(255, 255, 255, (uint8_t)(gx->overlay[i].alpha_mod * 255.0f));
       GX_TexCoord2f32(gx->overlay[i].tex_coord[2], gx->overlay[i].tex_coord[3]);
 
       GX_Position3f32(gx->overlay[i].vertex_coord[4], gx->overlay[i].vertex_coord[5],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_Color4u8(255, 255, 255, (uint8_t)(gx->overlay[i].alpha_mod * 255.0f));
       GX_TexCoord2f32(gx->overlay[i].tex_coord[4], gx->overlay[i].tex_coord[5]);
 
       GX_Position3f32(gx->overlay[i].vertex_coord[6], gx->overlay[i].vertex_coord[7],  -0.5);
-      GX_Color4u8(255, 255, 255, (u8)(gx->overlay[i].alpha_mod * 255.0f));
+      GX_Color4u8(255, 255, 255, (uint8_t)(gx->overlay[i].alpha_mod * 255.0f));
       GX_TexCoord2f32(gx->overlay[i].tex_coord[6], gx->overlay[i].tex_coord[7]);
       GX_End();
    }
@@ -1199,7 +1199,7 @@ static void gx_set_filtering(void *data, unsigned index, bool smooth)
     (void)index;
     (void)smooth;
     
-    //It is applied on the resize method, so we just ensure it is called
+    /* It is applied on the resize method, so we just ensure it is called */
     gx->should_resize = true;
 }
 

@@ -42,11 +42,11 @@
 /*
  * These typedefs need to be handled better.
  */
-typedef u32	Elf32_Addr;	/* Unsigned program address */
-typedef u32	Elf32_Off;	/* Unsigned file offset */
-typedef s32	Elf32_Sword;	/* Signed large integer */
-typedef u32	Elf32_Word;	/* Unsigned large integer */
-typedef u16	Elf32_Half;	/* Unsigned medium integer */
+typedef uint32_t	Elf32_Addr;	/* Unsigned program address */
+typedef uint32_t	Elf32_Off;	/* Unsigned file offset */
+typedef int32_t	Elf32_Sword;	/* Signed large integer */
+typedef uint32_t	Elf32_Word;	/* Unsigned large integer */
+typedef uint16_t	Elf32_Half;	/* Unsigned medium integer */
 
 /* e_ident[] identification indexes */
 #define EI_MAG0		0		/* file ID */

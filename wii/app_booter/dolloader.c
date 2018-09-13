@@ -6,27 +6,27 @@
 #define ARENA1_HI_LIMIT 0x81800000
 
 typedef struct _dolheader {
-	u32 text_pos[7];
-	u32 data_pos[11];
-	u32 text_start[7];
-	u32 data_start[11];
-	u32 text_size[7];
-	u32 data_size[11];
-	u32 bss_start;
-	u32 bss_size;
-	u32 entry_point;
+	uint32_t text_pos[7];
+	uint32_t data_pos[11];
+	uint32_t text_start[7];
+	uint32_t data_start[11];
+	uint32_t text_size[7];
+	uint32_t data_size[11];
+	uint32_t bss_start;
+	uint32_t bss_size;
+	uint32_t entry_point;
 } dolheader;
 
-u32 load_dol_image(const void *dolstart)
+uint32_t load_dol_image(const void *dolstart)
 {
 	if(!dolstart)
 		return 0;
 
-	u32 i;
+	uint32_t i;
 	dolheader *dolfile = (dolheader *) dolstart;
 
 /* 	if (dolfile->bss_start > 0 && dolfile->bss_start < ARENA1_HI_LIMIT) {
-		u32 bss_size = dolfile->bss_size;
+		uint32_t bss_size = dolfile->bss_size;
 		if (dolfile->bss_start + bss_size > ARENA1_HI_LIMIT) {
 			bss_size = ARENA1_HI_LIMIT - dolfile->bss_start;
 		}

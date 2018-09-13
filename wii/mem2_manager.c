@@ -12,24 +12,24 @@
 #include "mem2_manager.h"
 
 // Forbid the use of MEM2 through malloc
-u32 MALLOC_MEM2 = 0;
+uint32_t MALLOC_MEM2 = 0;
 
 /*** from libogc (lwp_heap.inl) ****/
 
-static inline heap_block *__lwp_heap_blockat(heap_block *block, u32 offset)
+static inline heap_block *__lwp_heap_blockat(heap_block *block, uint32_t offset)
 {
    return (heap_block *) ((char *) block + offset);
 }
 
 static inline heap_block *__lwp_heap_usrblockat(void *ptr)
 {
-   u32 offset = *(((u32 *) ptr) - 1);
+   uint32_t offset = *(((uint32_t *) ptr) - 1);
    return __lwp_heap_blockat(ptr, -offset + -HEAP_BLOCK_USED_OVERHEAD);
 }
 
 static inline bool __lwp_heap_blockin(heap_cntrl *heap, heap_block *block)
 {
-   return ((u32) block >= (u32) heap->start && (u32) block <= (u32) heap->final);
+   return ((uint32_t) block >= (uint32_t) heap->start && (uint32_t) block <= (uint32_t) heap->final);
 }
 
 static inline bool __lwp_heap_blockfree(heap_block *block)
@@ -37,17 +37,17 @@ static inline bool __lwp_heap_blockfree(heap_block *block)
    return !(block->front_flag & HEAP_BLOCK_USED);
 }
 
-static inline u32 __lwp_heap_blocksize(heap_block *block)
+static inline uint32_t __lwp_heap_blocksize(heap_block *block)
 {
    return (block->front_flag & ~HEAP_BLOCK_USED);
 }
 
 /*** end from libogc (lwp_heap.inl)  ****/
 
-static u32 __lwp_heap_block_size(heap_cntrl *theheap, void *ptr)
+static uint32_t __lwp_heap_block_size(heap_cntrl *theheap, void *ptr)
 {
    heap_block *block;
-   u32 dsize, level;
+   uint32_t dsize, level;
    (void)level;
 
    _CPU_ISR_Disable(level);
@@ -64,13 +64,13 @@ static u32 __lwp_heap_block_size(heap_cntrl *theheap, void *ptr)
    return dsize;
 }
 
-#define ROUNDUP32(v) (((u32)(v) + 0x1f) & ~0x1f)
+#define ROUNDUP32(v) (((uint32_t)(v) + 0x1f) & ~0x1f)
 
 static heap_cntrl gx_mem2_heap;
 
 bool gx_init_mem2()  
 {
-   u32 level;
+   uint32_t level;
    _CPU_ISR_Disable(level);
 
    // BIG NOTE: MEM2 on the Wii is 64MB, but a portion of that is reserved for
@@ -82,9 +82,9 @@ bool gx_init_mem2()
    // shows that we can work with only 128KB, but we use 256KB becuse testing
    // has shown some stuff being iffy with only 128KB, mainly wiimote stuff.
    // If some stuff mysteriously stops working, try fiddling with this size.
-   u32 size = SYS_GetArena2Size() - 1024 * 256;
+   uint32_t size = SYS_GetArena2Size() - 1024 * 256;
 
-   void *heap_ptr = (void *) ROUNDUP32(((u32) SYS_GetArena2Hi() - size));
+   void *heap_ptr = (void *) ROUNDUP32(((uint32_t) SYS_GetArena2Hi() - size));
 
    SYS_SetArena2Hi(heap_ptr);
    __lwp_heap_init(&gx_mem2_heap, heap_ptr, size, 32);
@@ -92,7 +92,7 @@ bool gx_init_mem2()
    return true;
 }
 
-void *_mem2_memalign(u8 align, u32 size)
+void *_mem2_memalign(uint8_t align, uint32_t size)
 {
    void *ptr;
 
@@ -107,7 +107,7 @@ void *_mem2_memalign(u8 align, u32 size)
    return ptr;
 }
 
-void *_mem2_malloc(u32 size)
+void *_mem2_malloc(uint32_t size)
 {
    return _mem2_memalign(32, size);
 }
@@ -120,7 +120,7 @@ void _mem2_free(void *ptr)
    __lwp_heap_free(&gx_mem2_heap, ptr);
  }
 
-void *_mem2_realloc(void *ptr, u32 newsize)
+void *_mem2_realloc(void *ptr, uint32_t newsize)
 {
    void *newptr = NULL;
 
@@ -133,7 +133,7 @@ void *_mem2_realloc(void *ptr, u32 newsize)
       return NULL;
    }
 
-   u32 size = __lwp_heap_block_size(&gx_mem2_heap, ptr);
+   uint32_t size = __lwp_heap_block_size(&gx_mem2_heap, ptr);
 
    if (size > newsize)
       size = newsize;
@@ -148,7 +148,7 @@ void *_mem2_realloc(void *ptr, u32 newsize)
    return newptr;
 }
 
-void *_mem2_calloc(u32 num, u32 size)
+void *_mem2_calloc(uint32_t num, uint32_t size)
 {
    void *ptr = _mem2_malloc(num * size);
 
@@ -185,14 +185,14 @@ char *_mem2_strndup(const char *s, size_t n)
     return ptr;
 }
 
-u32 gx_mem2_used()
+uint32_t gx_mem2_used()
 {
    heap_iblock info;
    __lwp_heap_getinfo(&gx_mem2_heap, &info);
    return info.used_size;
 }
 
-u32 gx_mem2_total()
+uint32_t gx_mem2_total()
 {
    heap_iblock info;
    __lwp_heap_getinfo(&gx_mem2_heap, &info);
@@ -237,7 +237,7 @@ __attribute__ ((used)) void __wrap_free(void *p)
    if (!p)
       return;
 
-   if (((u32) p & 0x10000000) != 0)
+   if (((uint32_t) p & 0x10000000) != 0)
       _mem2_free(p);
    else
       __real_free(p);
@@ -247,7 +247,7 @@ __attribute__ ((used)) void *__wrap_realloc(void *p, size_t size)
 {
    void *n;
    // ptr from mem2
-   if (((u32) p & 0x10000000) != 0)
+   if (((uint32_t) p & 0x10000000) != 0)
    {
       n = _mem2_realloc(p, size);
       if (n != 0)
@@ -297,7 +297,7 @@ __attribute__ ((used)) void *__wrap_strndup(const char *s, size_t n)
 
 __attribute__ ((used)) size_t __wrap_malloc_usable_size(void *p)
 {
-   if (((u32) p & 0x10000000) != 0)
+   if (((uint32_t) p & 0x10000000) != 0)
       return __lwp_heap_block_size(&gx_mem2_heap, p);
    return __real_malloc_usable_size(p);
 }

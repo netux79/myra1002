@@ -356,7 +356,7 @@ bool usbpad_init(uint8_t slots, bool skip_usb) {
 		memset(_pad_list, 0, sizeof(_pad_list));
 
 		if (!_pad_thread_running) {
-			// start the polling thread
+			/* start the polling thread */
 			_pad_thread_quit = false;
 			if (LWP_CreateThread(&_pad_thread, _pad_polling, NULL, NULL, 0, 65) < 0) {
 				_pad_thread_running = false;

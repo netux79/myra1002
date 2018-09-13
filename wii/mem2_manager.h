@@ -11,7 +11,7 @@
 #define _MEM2_MANAGER_H
  
 bool gx_init_mem2();
-u32 gx_mem2_used();
-u32 gx_mem2_total();
+uint32_t gx_mem2_used();
+uint32_t gx_mem2_total();
 
 #endif

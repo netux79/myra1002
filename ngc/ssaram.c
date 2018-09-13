@@ -27,20 +27,20 @@ static char aramfix[2048] ATTRIBUTE_ALIGN(32);
 ****************************************************************************/
 void ARAMPut(char *src, char *dst, int len)
 {
-  u32 misalignaddress;
-  u32 misalignedbytes;
-  u32 misalignedbytestodo;
+  uint32_t misalignaddress;
+  uint32_t misalignedbytes;
+  uint32_t misalignedbytestodo;
 
   int i, block;
   int offset = 0;
 
   /*** Check destination alignment ***/
-  if ((u32) dst & 0x1f)
+  if ((uint32_t) dst & 0x1f)
   {
     /*** Retrieve previous 32 byte section ***/
-    misalignaddress = ((u32) dst & ~0x1f);
-    misalignedbytestodo = 32 - ((u32) dst & 0x1f);
-    misalignedbytes = ((u32) dst & 0x1f);
+    misalignaddress = ((uint32_t) dst & ~0x1f);
+    misalignedbytestodo = 32 - ((uint32_t) dst & 0x1f);
+    misalignedbytes = ((uint32_t) dst & 0x1f);
     ARAMFetch(aramfix, (char *) misalignaddress, 32);
 
     /*** Update from source ***/
@@ -48,13 +48,13 @@ void ARAMPut(char *src, char *dst, int len)
 
     /*** Put it back ***/
     DCFlushRange(aramfix, 32);
-    AR_StartDMA(ARAM_WRITE, (u32) aramfix, (u32) dst & ~0x1f, 32);
+    AR_StartDMA(ARAM_WRITE, (uint32_t) aramfix, (uint32_t) dst & ~0x1f, 32);
     while (AR_GetDMAStatus());
 
     /*** Update pointers ***/
     src += misalignedbytestodo;
     len -= misalignedbytestodo;
-    dst = (char *) (((u32) dst & ~0x1f) + 32);
+    dst = (char *) (((uint32_t) dst & ~0x1f) + 32);
   }
 
   /*** Move 2k blocks - saves aligning source buffer ***/
@@ -63,7 +63,7 @@ void ARAMPut(char *src, char *dst, int len)
   {
     memcpy(aramfix, src + offset, 2048);
     DCFlushRange(aramfix, 2048);
-    AR_StartDMA(ARAM_WRITE, (u32) aramfix, (u32) dst + offset, 2048);
+    AR_StartDMA(ARAM_WRITE, (uint32_t) aramfix, (uint32_t) dst + offset, 2048);
     while (AR_GetDMAStatus());
     offset += 2048;
   }
@@ -75,7 +75,7 @@ void ARAMPut(char *src, char *dst, int len)
     block = len & 0x1f;		/*** Is length aligned ? ***/
     memcpy(aramfix, src + offset, len & ~0x1f);
     DCFlushRange(aramfix, len & ~0x1f);
-    AR_StartDMA(ARAM_WRITE, (u32) aramfix, (u32) dst + offset, len & ~0x1f);
+    AR_StartDMA(ARAM_WRITE, (uint32_t) aramfix, (uint32_t) dst + offset, len & ~0x1f);
     while (AR_GetDMAStatus());
 
     if (block)
@@ -87,7 +87,7 @@ void ARAMPut(char *src, char *dst, int len)
       ARAMFetch(aramfix, dst + offset, 32);
       memcpy(aramfix, src + offset, misalignedbytes);
       DCFlushRange(aramfix, 32);
-      AR_StartDMA(ARAM_WRITE, (u32) aramfix, (u32) dst + offset, 32);
+      AR_StartDMA(ARAM_WRITE, (uint32_t) aramfix, (uint32_t) dst + offset, 32);
       while (AR_GetDMAStatus());
     }
   }
@@ -99,6 +99,6 @@ void ARAMPut(char *src, char *dst, int len)
 void ARAMFetch(char *dst, char *src, int len)
 {
     DCInvalidateRange(dst, len);
-    AR_StartDMA(ARAM_READ, (u32) dst, (u32) src, len);
+    AR_StartDMA(ARAM_READ, (uint32_t) dst, (uint32_t) src, len);
     while (AR_GetDMAStatus());
 }
