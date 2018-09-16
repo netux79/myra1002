@@ -1167,6 +1167,9 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
 
       case RGUI_SETTINGS_VIDEO_ASPECT_RATIO:
+      {
+         unsigned old_aspect_ratio_idx = g_settings.video.aspect_ratio_idx;
+         
          if (action == RGUI_ACTION_START)
             g_settings.video.aspect_ratio_idx = aspect_ratio_idx;
          else if (action == RGUI_ACTION_LEFT)
@@ -1179,11 +1182,17 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.video.aspect_ratio_idx < LAST_ASPECT_RATIO)
                g_settings.video.aspect_ratio_idx++;
          }
+         
+         if (old_aspect_ratio_idx != g_settings.video.aspect_ratio_idx)
+         {
+            rgui->need_refresh = true;
 #ifndef GEKKO
-         if (driver.video_poke && driver.video_poke->set_aspect_ratio)
-            driver.video_poke->set_aspect_ratio(video_data, g_settings.video.aspect_ratio_idx);
+            if (driver.video_poke && driver.video_poke->set_aspect_ratio)
+               driver.video_poke->set_aspect_ratio(video_data, g_settings.video.aspect_ratio_idx);
 #endif
+         }
          break;
+      }
 
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_X:
          if (action == RGUI_ACTION_START)
@@ -1332,6 +1341,35 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (driver.video_poke && driver.video_poke->match_resolution_auto)
                   driver.video_poke->match_resolution_auto(g_extern.frame_cache.width, g_extern.frame_cache.height);
          break;
+         
+      case RGUI_SETTINGS_VIDEO_SCREEN_POS_X:
+      case RGUI_SETTINGS_VIDEO_SCREEN_POS_Y:
+      {
+         int *pos = setting == RGUI_SETTINGS_VIDEO_SCREEN_POS_X ? &g_extern.console_screen.pos_x : &g_extern.console_screen.pos_y;
+
+         switch (action)
+         {
+            case RGUI_ACTION_START:
+               *pos = 0;
+               break;
+
+            case RGUI_ACTION_LEFT:
+               *pos -= 1;
+               break;
+
+            case RGUI_ACTION_RIGHT:
+               *pos += 1;
+               break;
+
+            default:
+               break;
+         }
+         
+         if (*pos > 16) *pos = 16;
+         else if (*pos < -16) *pos = -16;
+
+         break;
+      }         
 #endif
 
       case RGUI_SETTINGS_VIDEO_VSYNC:
@@ -1553,6 +1591,12 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_INTERLACED_ONLY:
          snprintf(type_str, type_str_size, g_extern.console_screen.interlaced_resolution_only ? "ON" : "OFF");
          break;
+      case RGUI_SETTINGS_VIDEO_SCREEN_POS_X:
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.pos_x);
+         break;
+      case RGUI_SETTINGS_VIDEO_SCREEN_POS_Y:
+         snprintf(type_str, type_str_size, "%d", g_extern.console_screen.pos_y);
+         break;         
       case RGUI_SETTINGS_VIDEO_BILINEAR:
          strlcpy(type_str, g_settings.video.smooth ? "ON" : "OFF", type_str_size);
          break;

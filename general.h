@@ -422,6 +422,8 @@ struct global
    struct
    {
       unsigned resolution_idx;
+      int pos_x;
+      int pos_y;
       rarch_viewport_t custom_vp;
       unsigned gamma_correction;
       bool soft_filter_enable;

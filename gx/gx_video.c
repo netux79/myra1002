@@ -259,8 +259,8 @@ static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
    gx_mode.viWidth = 640;
 #endif
    gx_mode.viHeight = gx_mode.xfbHeight * (modetype == VI_NON_INTERLACE ? 2 : 1);
-   gx_mode.viXOrigin = (gx->tvinfo.max_width - gx_mode.viWidth) / 2;
-   gx_mode.viYOrigin = (gx->tvinfo.max_height - gx_mode.viHeight) / (2 * (modetype == VI_NON_INTERLACE ? 2 : 1));
+   gx_mode.viXOrigin = (gx->tvinfo.max_width - gx_mode.viWidth) / 2 + g_extern.console_screen.pos_x;
+   gx_mode.viYOrigin = (gx->tvinfo.max_height - gx_mode.viHeight) / (2 * (modetype == VI_NON_INTERLACE ? 2 : 1)) + g_extern.console_screen.pos_y;
    gx_mode.xfbMode = modetype == VI_INTERLACE ? VI_XFBMODE_DF : VI_XFBMODE_SF;
    gx_mode.field_rendering = gx_mode.aa = GX_FALSE;
    

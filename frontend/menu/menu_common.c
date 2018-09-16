@@ -1508,6 +1508,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
          if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO)
             file_list_push(rgui->selection_buf, "Interlaced Resolution Only", RGUI_SETTINGS_VIDEO_INTERLACED_ONLY, 0);
+         file_list_push(rgui->selection_buf, "Screen Position X", RGUI_SETTINGS_VIDEO_SCREEN_POS_X, 0);
+         file_list_push(rgui->selection_buf, "Screen Position Y", RGUI_SETTINGS_VIDEO_SCREEN_POS_Y, 0);
 #endif
          file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_DEBUG_TEXT, 0);
 #ifdef HAVE_SCALERS_BUILTIN
@@ -1525,10 +1527,13 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "VSync", RGUI_SETTINGS_VIDEO_VSYNC, 0);
          file_list_push(rgui->selection_buf, "Crop Overscan", RGUI_SETTINGS_VIDEO_CROP_OVERSCAN, 0);
          file_list_push(rgui->selection_buf, "Aspect Ratio", RGUI_SETTINGS_VIDEO_ASPECT_RATIO, 0);
-         file_list_push(rgui->selection_buf, "Custom Viewport X", RGUI_SETTINGS_CUSTOM_VIEWPORT_X, 0);
-         file_list_push(rgui->selection_buf, "Custom Viewport Y", RGUI_SETTINGS_CUSTOM_VIEWPORT_Y, 0);
-         file_list_push(rgui->selection_buf, "Custom Viewport Width", RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH, 0);
-         file_list_push(rgui->selection_buf, "Custom Viewport Height", RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT, 0);
+         if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
+         {
+            file_list_push(rgui->selection_buf, "Custom Viewport X", RGUI_SETTINGS_CUSTOM_VIEWPORT_X, 0);
+            file_list_push(rgui->selection_buf, "Custom Viewport Y", RGUI_SETTINGS_CUSTOM_VIEWPORT_Y, 0);
+            file_list_push(rgui->selection_buf, "Custom Viewport Width", RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH, 0);
+            file_list_push(rgui->selection_buf, "Custom Viewport Height", RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT, 0);
+         }
          file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
          file_list_push(rgui->selection_buf, "Force Aspect", RGUI_SETTINGS_VIDEO_FORCE_ASPECT, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
