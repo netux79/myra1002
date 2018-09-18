@@ -222,24 +222,28 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
 #ifdef HAVE_SCALERS_BUILTIN
    if (g_extern.filter.filter && *g_extern.basename) /* only use filter if game is running */
    {
-      unsigned owidth = 0;
-      unsigned oheight = 0;
-      unsigned opitch = 0;
       rarch_softfilter_get_output_size(g_extern.filter.filter,
-            &owidth, &oheight, width, height);
+            &g_extern.frame.width, &g_extern.frame.height, width, height);
 
-      opitch = owidth * g_extern.filter.out_bpp;
-
+      g_extern.frame.pitch = g_extern.frame.width * g_extern.filter.out_bpp;
+      
       rarch_softfilter_process(g_extern.filter.filter,
-            g_extern.filter.buffer, opitch,
+            g_extern.filter.buffer, g_extern.frame.pitch,
             data, width, height, pitch);
 
-      if (!video_frame_func(g_extern.filter.buffer, owidth, oheight, opitch, msg))
-         g_extern.video_active = false;
+      g_extern.frame.data = g_extern.filter.buffer;
    }
    else 
 #endif
-   if (!video_frame_func(data, width, height, pitch, msg))
+   {
+      g_extern.frame.data   = data;
+      g_extern.frame.width  = width;
+      g_extern.frame.height = height;
+      g_extern.frame.pitch  = pitch;
+   }
+   
+   if (!video_frame_func(g_extern.frame.data, g_extern.frame.width, 
+                         g_extern.frame.height, g_extern.frame.pitch, msg))
       g_extern.video_active = false;
 }
 
@@ -249,9 +253,6 @@ void rarch_render_cached_frame(void)
    if (frame == RETRO_HW_FRAME_BUFFER_VALID)
       frame = NULL; // Dupe
 
-   // Not 100% safe, since the library might have
-   // freed the memory, but no known implementations do this :D
-   // It would be really stupid at any rate ...
    video_frame(frame,
          g_extern.frame_cache.width,
          g_extern.frame_cache.height,

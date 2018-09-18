@@ -172,7 +172,7 @@ static const bool video_threaded = false;
 static const bool video_smooth = true;
 
 // On resize and fullscreen, rendering area will stay 4:3
-static const bool force_aspect = true;
+static const bool force_aspect = false;
 
 // Enable use of shaders.
 #ifdef RARCH_CONSOLE
@@ -188,7 +188,7 @@ static const bool scale_integer = false;
 
 // Controls aspect ratio handling.
 static const float aspect_ratio = DEFAULT_ASPECT_RATIO; // Automatic
-static unsigned aspect_ratio_idx = ASPECT_RATIO_4_3;
+static unsigned aspect_ratio_idx = ASPECT_RATIO_ORIGINAL;
 
 // Save configuration file on exit
 static bool config_save_on_exit = true;

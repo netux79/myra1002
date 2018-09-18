@@ -470,7 +470,8 @@ static void gx_match_resolution_auto(unsigned fbWidth, unsigned fbLines)
    if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && !matched)
    {
       char msg[64];
-      snprintf(msg, sizeof(msg), "Resolution not available, using: %ux%u", gx_resolutions[GX_RESOLUTIONS_AUTO][0], gx_resolutions[GX_RESOLUTIONS_AUTO][1]);
+      snprintf(msg, sizeof(msg), "Resolution %ux%u not available, using %ux%u", fbWidth, fbLines, 
+               gx_resolutions[GX_RESOLUTIONS_AUTO][0], gx_resolutions[GX_RESOLUTIONS_AUTO][1]);
       msg_queue_push(g_extern.msg_queue, msg, 0, 80);
    }
 }

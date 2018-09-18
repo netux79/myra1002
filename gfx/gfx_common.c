@@ -159,8 +159,8 @@ void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned heigh
    {
       float aspect_ratio = aspectratio_lut[aspect_ratio_idx].value;
       
-      base_height = g_extern.system.av_info.geometry.base_height;
-      base_width = aspect_ratio ? (unsigned)roundf(base_height * aspect_ratio) : g_extern.system.av_info.geometry.base_width;
+      base_height = g_extern.frame.height;
+      base_width = aspect_ratio ? (unsigned)roundf(base_height * aspect_ratio) : g_extern.frame.width;
       if (rotated) SWAPU(base_width, base_height);
 
       if (keep_aspect) // X/Y scale must be same.

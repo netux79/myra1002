@@ -773,24 +773,30 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                if ((g_settings.video.filter_idx + 1) != softfilter_get_last_idx())
                   g_settings.video.filter_idx++;
                break;
-            case RGUI_ACTION_OK:
-               rarch_reset_drivers();
-               rgui->need_refresh = true;
-               break;
-            case RGUI_ACTION_START:
+            case RGUI_ACTION_START: /* this falls thru OK action */
                g_settings.video.filter_idx = 0;
+            case RGUI_ACTION_OK:
+            {
                rarch_reset_drivers();
+               
+               /* needed to get new frame size after filter so we refresh size. */
+               if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
+                  driver.video_poke->set_texture_enable(video_data, true, false);             
+               rarch_render_cached_frame();
+               
+               /* on resolution AUTO call fnt to refresh the matching resolution */
+               if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && *g_extern.basename)
+                  if (driver.video_poke && driver.video_poke->match_resolution_auto)
+                        driver.video_poke->match_resolution_auto(g_extern.frame.width, g_extern.frame.height);
+               
+               char msg[48] = "Soft scaler removed";
+               const char *filter_name = rarch_softfilter_get_name(g_settings.video.filter_idx);
+               if (filter_name)
+                  snprintf(msg, sizeof(msg), "%s applied", filter_name);
+               msg_queue_push(g_extern.msg_queue, msg, 1, 90);
                break;
+            }
          }
-         
-         if (action == RGUI_ACTION_OK || action == RGUI_ACTION_START)
-         {
-            char msg[48] = "Soft scaler removed";
-            const char *filter_name = rarch_softfilter_get_name(g_settings.video.filter_idx);
-            if (filter_name)
-               snprintf(msg, sizeof(msg), "%s applied", filter_name);
-            msg_queue_push(g_extern.msg_queue, msg, 1, 90);
-         }    
          break;
 #endif        
       /* controllers */
@@ -1301,7 +1307,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             /* Display current game reported resolution */
             char msg[48];
             
-            if (g_extern.frame_cache.width == 0)
+            if (!*g_extern.basename)
                strlcpy(msg, "No game is running", sizeof(msg));
             else
                snprintf(msg, sizeof(msg), "Game internal resolution: %ux%u", g_extern.frame_cache.width, g_extern.frame_cache.height);
@@ -1312,9 +1318,9 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (old_index != g_extern.console_screen.resolution_idx)
          {
             /* on resolution AUTO call fnt to find out best matching resolution */
-            if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && g_extern.frame_cache.width != 0)
+            if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && *g_extern.basename)
                if (driver.video_poke && driver.video_poke->match_resolution_auto)
-                     driver.video_poke->match_resolution_auto(g_extern.frame_cache.width, g_extern.frame_cache.height);
+                     driver.video_poke->match_resolution_auto(g_extern.frame.width, g_extern.frame.height);
 
             /* adjust refresh rate accordingly */
             if (driver.video_poke && driver.video_poke->set_refresh_rate)
@@ -1337,9 +1343,9 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          g_extern.console_screen.interlaced_resolution_only=!g_extern.console_screen.interlaced_resolution_only;
 
          /* on resolution AUTO call fnt to refresh the matching resolution */
-         if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && g_extern.frame_cache.width != 0)
+         if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && *g_extern.basename)
             if (driver.video_poke && driver.video_poke->match_resolution_auto)
-                  driver.video_poke->match_resolution_auto(g_extern.frame_cache.width, g_extern.frame_cache.height);
+                  driver.video_poke->match_resolution_auto(g_extern.frame.width, g_extern.frame.height);
          break;
          
       case RGUI_SETTINGS_VIDEO_SCREEN_POS_X:

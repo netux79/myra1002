@@ -317,6 +317,7 @@ FILTERS
 #include "../gfx/filters/supereagle.c"
 #include "../gfx/filters/super2xsai.c"
 #include "../gfx/filters/hq2x.c"
+#include "../gfx/filters/scanlines.c"
 #ifndef GEKKO
 #include "../gfx/filters/scale2x.c"
 #include "../gfx/filters/lq2x.c"

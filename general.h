@@ -249,6 +249,14 @@ typedef struct rarch_viewport
    unsigned full_height;
 } rarch_viewport_t;
 
+typedef struct
+{
+   const void *data;
+   unsigned width;
+   unsigned height;
+   size_t pitch;
+} frame_t;
+
 // All run-time- / command line flag-related globals go here.
 struct global
 {
@@ -400,14 +408,9 @@ struct global
    // Autosave support.
    autosave_t *autosave[2];
 
-   struct
-   {
-      const void *data;
-      unsigned width;
-      unsigned height;
-      size_t pitch;
-   } frame_cache;
-
+   frame_t frame_cache;
+   frame_t frame;
+   
    unsigned frame_count;
    uint32_t start_frame_time;
    char title_buf[64];
