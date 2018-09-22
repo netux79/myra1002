@@ -17,7 +17,7 @@
 #ifndef __MENU_DISPLAY_H
 #define __MENU_DISPLAY_H
 
-#include "../../boolean.h"
+#include <stdbool.h>
 #include "../../driver.h"
 
 #ifdef HAVE_CONFIG_H

@@ -15,7 +15,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "boolean.h"
+#include <stdbool.h>
 #include "libretro.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,15 +32,8 @@
 #include "compat/strl.h"
 #include "screenshot.h"
 #include "compat/getopt_rarch.h"
-#include "compat/posix_string.h"
-#include "input/keyboard_line.h"
 #include "input/input_common.h"
 #include "git_version.h"
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
 
 // To avoid continous switching if we hold the button down, we require that the button must go from pressed,
 // unpressed back to pressed to be able to toggle between then.
@@ -67,45 +60,6 @@ static void check_fast_forward_button(void)
 }
 
 #if defined(HAVE_SCREENSHOTS)
-static bool take_screenshot_viewport(void)
-{
-   struct rarch_viewport vp = {0};
-   video_viewport_info_func(&vp);
-
-   if (!vp.width || !vp.height)
-      return false;
-
-   uint8_t *buffer = (uint8_t*)malloc(vp.width * vp.height * 3);
-   if (!buffer)
-      return false;
-
-   if (!video_read_viewport_func(buffer))
-   {
-      free(buffer);
-      return false;
-   }
-
-   const char *screenshot_dir = g_settings.screenshot_directory;
-   char screenshot_path[PATH_MAX];
-   if (!*g_settings.screenshot_directory)
-   {
-      fill_pathname_basedir(screenshot_path, g_extern.basename, sizeof(screenshot_path));
-      screenshot_dir = screenshot_path;
-   }
-
-   // Data read from viewport is in bottom-up order, suitable for BMP.
-   if (!screenshot_dump(screenshot_dir,
-         buffer,
-         vp.width, vp.height, vp.width * 3, true))
-   {
-      free(buffer);
-      return false;
-   }
-
-   free(buffer);
-   return true;
-}
-
 static bool take_screenshot_raw(void)
 {
    const void *data = g_extern.frame_cache.data;
@@ -134,29 +88,14 @@ void rarch_take_screenshot(void)
       return;
 
    bool ret = false;
-   bool viewport_read = (g_settings.video.gpu_screenshot ||
-         g_extern.system.hw_render_callback.context_type != RETRO_HW_CONTEXT_NONE) &&
-      driver.video->read_viewport &&
-      driver.video->viewport_info;
 
    // Clear out message queue to avoid OSD fonts to appear on screenshot.
    msg_queue_clear(g_extern.msg_queue);
 
-   if (viewport_read)
-   {
-      // Avoid taking screenshot of GUI overlays.
-      if (driver.video_poke && driver.video_poke->set_texture_enable)
-         driver.video_poke->set_texture_enable(driver.video_data, false, false);
-      if (driver.video)
-         rarch_render_cached_frame();
-   }
-
-   if (viewport_read)
-      ret = take_screenshot_viewport();
-   else if (g_extern.frame_cache.data && (g_extern.frame_cache.data != RETRO_HW_FRAME_BUFFER_VALID))
+   if (g_extern.frame_cache.data)
       ret = take_screenshot_raw();
    else
-      RARCH_ERR("Cannot take screenshot. GPU rendering is used and read_viewport is not supported.\n");
+      RARCH_ERR("Cannot take screenshot. GPU rendering is being used.\n");
 
    const char *msg = NULL;
    if (ret)
@@ -202,20 +141,6 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
    g_extern.frame_cache.height = height;
    g_extern.frame_cache.pitch  = pitch;
 
-   if (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_0RGB1555 && data && data != RETRO_HW_FRAME_BUFFER_VALID)
-   {
-      driver.scaler.in_width = width;
-      driver.scaler.in_height = height;
-      driver.scaler.out_width = width;
-      driver.scaler.out_height = height;
-      driver.scaler.in_stride = pitch;
-      driver.scaler.out_stride = width * sizeof(uint16_t);
-
-      scaler_ctx_scale(&driver.scaler, driver.scaler_out, data);
-      data = driver.scaler_out;
-      pitch = driver.scaler.out_stride;
-   }
-
    const char *msg = msg_queue_pull(g_extern.msg_queue);
    driver.current_msg = msg;
 
@@ -249,11 +174,7 @@ static void video_frame(const void *data, unsigned width, unsigned height, size_
 
 void rarch_render_cached_frame(void)
 {
-   const void *frame = g_extern.frame_cache.data;
-   if (frame == RETRO_HW_FRAME_BUFFER_VALID)
-      frame = NULL; // Dupe
-
-   video_frame(frame,
+   video_frame(g_extern.frame_cache.data,
          g_extern.frame_cache.width,
          g_extern.frame_cache.height,
          g_extern.frame_cache.pitch);
@@ -363,114 +284,9 @@ size_t audio_sample_batch(const int16_t *data, size_t frames)
    return frames;
 }
 
-#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
-static inline void input_poll_overlay(void)
-{
-   input_overlay_state_t old_key_state;
-   memcpy(old_key_state.keys, driver.overlay_state.keys, sizeof(driver.overlay_state.keys));
-   memset(&driver.overlay_state, 0, sizeof(driver.overlay_state));
-
-   unsigned device = input_overlay_full_screen(driver.overlay) ?
-      RARCH_DEVICE_POINTER_SCREEN : RETRO_DEVICE_POINTER;
-
-   bool polled = false;
-   unsigned i, j;
-   for (i = 0;
-         input_input_state_func(NULL, 0, device, i, RETRO_DEVICE_ID_POINTER_PRESSED);
-         i++)
-   {
-      int16_t x = input_input_state_func(NULL, 0,
-            device, i, RETRO_DEVICE_ID_POINTER_X);
-      int16_t y = input_input_state_func(NULL, 0,
-            device, i, RETRO_DEVICE_ID_POINTER_Y);
-
-      input_overlay_state_t polled_data;
-      input_overlay_poll(driver.overlay, &polled_data, x, y);
-
-      driver.overlay_state.buttons |= polled_data.buttons;
-
-      for (j = 0; j < ARRAY_SIZE(driver.overlay_state.keys); j++)
-         driver.overlay_state.keys[j] |= polled_data.keys[j];
-
-      // Fingers pressed later take prio and matched up with overlay poll priorities.
-      for (j = 0; j < 4; j++)
-         if (polled_data.analog[j])
-            driver.overlay_state.analog[j] = polled_data.analog[j];
-
-      polled = true;
-   }
-
-   uint16_t key_mod = 0;
-   key_mod |= (OVERLAY_GET_KEY(&driver.overlay_state, RETROK_LSHIFT) ||
-         OVERLAY_GET_KEY(&driver.overlay_state, RETROK_RSHIFT)) ? RETROKMOD_SHIFT : 0;
-   key_mod |= (OVERLAY_GET_KEY(&driver.overlay_state, RETROK_LCTRL) ||
-         OVERLAY_GET_KEY(&driver.overlay_state, RETROK_RCTRL)) ? RETROKMOD_CTRL : 0;
-   key_mod |= (OVERLAY_GET_KEY(&driver.overlay_state, RETROK_LALT) ||
-         OVERLAY_GET_KEY(&driver.overlay_state, RETROK_RALT)) ? RETROKMOD_ALT : 0;
-   key_mod |= (OVERLAY_GET_KEY(&driver.overlay_state, RETROK_LMETA) ||
-         OVERLAY_GET_KEY(&driver.overlay_state, RETROK_RMETA)) ? RETROKMOD_META : 0;
-   // CAPSLOCK SCROLLOCK NUMLOCK
-   for (i = 0; i < ARRAY_SIZE(driver.overlay_state.keys); i++)
-   {
-      if (driver.overlay_state.keys[i] != old_key_state.keys[i])
-      {
-         uint32_t orig_bits = old_key_state.keys[i];
-         uint32_t new_bits = driver.overlay_state.keys[i];
-
-         for (j = 0; j < 32; j++)
-            if ((orig_bits & (1 << j)) != (new_bits & (1 << j)))
-               input_keyboard_event(new_bits & (1 << j), i * 32 + j, 0, key_mod);
-      }
-   }
-
-   // Map "analog" buttons to analog axes like regular input drivers do.
-   for (j = 0; j < 4; j++)
-   {
-      if (!driver.overlay_state.analog[j])
-      {
-         unsigned bind_plus  = RARCH_ANALOG_LEFT_X_PLUS + 2 * j;
-         unsigned bind_minus = bind_plus + 1;
-         driver.overlay_state.analog[j] += (driver.overlay_state.buttons & (1ULL << bind_plus)) ? 0x7fff : 0;
-         driver.overlay_state.analog[j] -= (driver.overlay_state.buttons & (1ULL << bind_minus)) ? 0x7fff : 0;
-      }
-   }
-
-   // Check for analog_dpad_mode. Map analogs to d-pad buttons when configured.
-   switch (g_settings.input.analog_dpad_mode[0])
-   {
-      case ANALOG_DPAD_LSTICK:
-      case ANALOG_DPAD_RSTICK:
-      {
-         unsigned analog_base = g_settings.input.analog_dpad_mode[0] == ANALOG_DPAD_LSTICK ?
-            0 : 2;
-         float analog_x = (float)driver.overlay_state.analog[analog_base + 0] / 0x7fff;
-         float analog_y = (float)driver.overlay_state.analog[analog_base + 1] / 0x7fff;
-         driver.overlay_state.buttons |= (analog_x <= -g_settings.input.axis_threshold) ? (1ULL << RETRO_DEVICE_ID_JOYPAD_LEFT) : 0;
-         driver.overlay_state.buttons |= (analog_x >=  g_settings.input.axis_threshold) ? (1ULL << RETRO_DEVICE_ID_JOYPAD_RIGHT) : 0;
-         driver.overlay_state.buttons |= (analog_y <= -g_settings.input.axis_threshold) ? (1ULL << RETRO_DEVICE_ID_JOYPAD_UP) : 0;
-         driver.overlay_state.buttons |= (analog_y >=  g_settings.input.axis_threshold) ? (1ULL << RETRO_DEVICE_ID_JOYPAD_DOWN) : 0;
-         break;
-      }
-
-      default:
-         break;
-   }
-
-   if (polled)
-      input_overlay_post_poll(driver.overlay);
-   else
-      input_overlay_poll_clear(driver.overlay);
-}
-#endif
-
 void rarch_input_poll(void)
 {
    input_poll_func();
-
-#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
-   if (driver.overlay) // Poll overlay state
-      input_poll_overlay();
-#endif
 }
 
 // Turbo scheme: If turbo button is held, all buttons pressed except for D-pad will go into
@@ -504,22 +320,8 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index, unsig
    port = g_settings.input.device_port[port];
 
    int16_t res = 0;
-   if (id < RARCH_FIRST_META_KEY || device == RETRO_DEVICE_KEYBOARD)
+   if (id < RARCH_FIRST_META_KEY)
       res = input_input_state_func(binds, port, device, index, id);
-
-#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
-   if (device == RETRO_DEVICE_JOYPAD && port == 0)
-      res |= driver.overlay_state.buttons & (1ULL << id) ? 1 : 0;
-   else if (device == RETRO_DEVICE_KEYBOARD && port == 0 && id < RETROK_LAST)
-      res |= OVERLAY_GET_KEY(&driver.overlay_state, id) ? 1 : 0;
-   else if (device == RETRO_DEVICE_ANALOG && port == 0)
-   {
-      unsigned base = (index == RETRO_DEVICE_INDEX_ANALOG_RIGHT) ? 2 : 0;
-      base += (id == RETRO_DEVICE_ID_ANALOG_Y) ? 1 : 0;
-      if (driver.overlay_state.analog[base])
-         res = driver.overlay_state.analog[base];
-   }
-#endif
 
    // Don't allow turbo for D-pad.
    if (device == RETRO_DEVICE_JOYPAD && (id < RETRO_DEVICE_ID_JOYPAD_UP || id > RETRO_DEVICE_ID_JOYPAD_RIGHT))
@@ -528,14 +330,10 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index, unsig
    return res;
 }
 
-#ifdef _WIN32
-#define RARCH_DEFAULT_CONF_PATH_STR "\n\t\tDefaults to retroarch.cfg in same directory as retroarch.exe.\n\t\tIf a default config is not found, RetroArch will attempt to create one."
-#else
 #ifndef GLOBAL_CONFIG_DIR
 #define GLOBAL_CONFIG_DIR "/etc"
 #endif
 #define RARCH_DEFAULT_CONF_PATH_STR "\n\t\tBy default looks for config in $XDG_CONFIG_HOME/retroarch/retroarch.cfg,\n\t\t$HOME/.config/retroarch/retroarch.cfg,\n\t\tand $HOME/.retroarch.cfg.\n\t\tIf a default config is not found, RetroArch will attempt to create one based on the skeleton config (" GLOBAL_CONFIG_DIR "/retroarch.cfg)."
-#endif
 
 #include "config.features.h"
 
@@ -544,49 +342,14 @@ static void print_features(void)
 {
    puts("");
    puts("Features:");
-   _PSUPP(sdl, "SDL", "SDL drivers");
-   _PSUPP(thread, "Threads", "Threading support");
-   _PSUPP(opengl, "OpenGL", "OpenGL driver");
-   _PSUPP(kms, "KMS", "KMS/EGL context support");
-   _PSUPP(udev, "UDEV", "UDEV/EVDEV input driver support");
-   _PSUPP(egl, "EGL", "EGL context support");
-   _PSUPP(vg, "OpenVG", "OpenVG output support");
-   _PSUPP(xvideo, "XVideo", "XVideo output");
-   _PSUPP(alsa, "ALSA", "audio driver");
-   _PSUPP(oss, "OSS", "audio driver");
-   _PSUPP(jack, "Jack", "audio driver");
-   _PSUPP(roar, "RoarAudio", "audio driver");
-   _PSUPP(pulse, "PulseAudio", "audio driver");
-   _PSUPP(dsound, "DirectSound", "audio driver");
-   _PSUPP(xaudio, "XAudio2", "audio driver");
    _PSUPP(zlib, "zlib", "PNG encode/decode and .zip extraction");
-   _PSUPP(al, "OpenAL", "audio driver");
-   _PSUPP(dylib, "External", "External filter and plugin support");
-   _PSUPP(cg, "Cg", "Cg pixel shaders");
-   _PSUPP(libxml2, "libxml2", "libxml2 XML parsing");
-   _PSUPP(sdl_image, "SDL_image", "SDL_image image loading");
-   _PSUPP(fbo, "FBO", "OpenGL render-to-texture (multi-pass shaders)");
-   _PSUPP(dynamic, "Dynamic", "Dynamic run-time loading of libretro library");
-   _PSUPP(freetype, "FreeType", "TTF font rendering with FreeType");
-   _PSUPP(python, "Python", "Script support in shaders");
 }
 #undef _PSUPP
 
 static void print_compiler(FILE *file)
 {
    fprintf(file, "Compiler: ");
-#if defined(_MSC_VER)
-   fprintf(file, "MSVC (%d) %u-bit\n", _MSC_VER, (unsigned)(CHAR_BIT * sizeof(size_t)));
-#elif defined(__SNC__)
-   fprintf(file, "SNC (%d) %u-bit\n",
-      __SN_VER__, (unsigned)(CHAR_BIT * sizeof(size_t)));
-#elif defined(_WIN32) && defined(__GNUC__)
-   fprintf(file, "MinGW (%d.%d.%d) %u-bit\n",
-      __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__, (unsigned)(CHAR_BIT * sizeof(size_t)));
-#elif defined(__clang__)
-   fprintf(file, "Clang/LLVM (%s) %u-bit\n",
-      __clang_version__, (unsigned)(CHAR_BIT * sizeof(size_t)));
-#elif defined(__GNUC__)
+#if defined(__GNUC__)
    fprintf(file, "GCC (%d.%d.%d) %u-bit\n",
       __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__, (unsigned)(CHAR_BIT * sizeof(size_t)));
 #else
@@ -612,14 +375,10 @@ static void print_help(void)
    puts("\t\tIf no arguments are passed to RetroArch, it is equivalent to using --menu as only argument.");
    puts("\t--features: Prints available features compiled into RetroArch.");
    puts("\t-s/--save: Path for save file (*.srm).");
-   puts("\t-f/--fullscreen: Start RetroArch in fullscreen regardless of config settings.");
    puts("\t-S/--savestate: Path to use for save states. If not selected, *.state will be assumed.");
    puts("\t-c/--config: Path for config file." RARCH_DEFAULT_CONF_PATH_STR);
    puts("\t--appendconfig: Extra config files are loaded in, and take priority over config selected in -c (or default).");
    puts("\t\tMultiple configs are delimited by ','.");
-#ifdef HAVE_DYNAMIC
-   puts("\t-L/--libretro: Path to libretro implementation. Overrides any config setting.");
-#endif
    puts("\t-g/--gameboy: Path to Gameboy ROM. Load SuperGameBoy as the regular rom.");
    puts("\t-b/--bsx: Path to BSX rom. Load BSX BIOS as the regular rom.");
    puts("\t-B/--bsxslot: Path to BSX slotted rom. Load BSX BIOS as the regular rom.");
@@ -693,13 +452,9 @@ static void parse_input(int argc, char *argv[])
    int val = 0;
 
    const struct option opts[] = {
-#ifdef HAVE_DYNAMIC
-      { "libretro", 1, NULL, 'L' },
-#endif
       { "menu", 0, &val, 'M' },
       { "help", 0, NULL, 'h' },
       { "save", 1, NULL, 's' },
-      { "fullscreen", 0, NULL, 'f' },
       { "verbose", 0, NULL, 'v' },
       { "gameboy", 1, NULL, 'g' },
       { "config", 1, NULL, 'c' },
@@ -717,13 +472,7 @@ static void parse_input(int argc, char *argv[])
       { NULL, 0, NULL, 0 }
    };
 
-#ifdef HAVE_DYNAMIC
-#define DYNAMIC_ARG "L:"
-#else
-#define DYNAMIC_ARG
-#endif
-
-   const char *optstring = "hs:fvS:A:g:b:c:B:Y:Z:U:DN:d:" DYNAMIC_ARG;
+   const char *optstring = "hs:fvS:A:g:b:c:B:Y:Z:U:DN:d:" ;
 
    for (;;)
    {
@@ -776,10 +525,6 @@ static void parse_input(int argc, char *argv[])
             g_extern.has_set_save_path = true;
             break;
 
-         case 'f':
-            g_extern.force_fullscreen = true;
-            break;
-
          case 'g':
             strlcpy(g_extern.gb_rom_path, optarg, sizeof(g_extern.gb_rom_path));
             g_extern.game_type = RARCH_CART_SGB;
@@ -830,15 +575,7 @@ static void parse_input(int argc, char *argv[])
             strlcpy(g_extern.config_path, optarg, sizeof(g_extern.config_path));
             break;
 
-#ifdef HAVE_DYNAMIC
-         case 'L':
-            strlcpy(g_settings.libretro, optarg, sizeof(g_settings.libretro));
-            break;
-#endif
          case 'D':
-#if defined(_WIN32)
-            FreeConsole();
-#endif
             break;
 
          case 0:
@@ -1016,12 +753,6 @@ void rarch_init_rewind(void)
    if (!g_settings.rewind_enable || g_extern.state_manager)
       return;
 
-   if (g_extern.system.audio_callback.callback)
-   {
-      RARCH_ERR("Implementation uses threaded audio. Cannot use rewind.\n");
-      return;
-   }
-
    g_extern.state_size = pretro_serialize_size();
    if (!g_extern.state_size)
    {
@@ -1048,35 +779,6 @@ void rarch_deinit_rewind(void)
    g_extern.state_manager = NULL;
 }
 
-#ifdef HAVE_COMMAND
-static void init_command(void)
-{
-   if (!g_settings.stdin_cmd_enable)
-      return;
-
-   if (g_settings.stdin_cmd_enable && driver.stdin_claimed)
-   {
-      RARCH_WARN("stdin command interface is desired, but input driver has already claimed stdin.\n"
-            "Cannot use this command interface.\n");
-   }
-
-   driver.command = rarch_cmd_new(g_settings.stdin_cmd_enable && !driver.stdin_claimed,
-         false, 0);
-
-   if (!driver.command)
-      RARCH_ERR("Failed to initialize command interface.\n");
-}
-
-static void deinit_command(void)
-{
-   if (driver.command)
-   {
-      rarch_cmd_free(driver.command);
-      driver.command = NULL;
-   }
-}
-#endif
-
 static void init_libretro_cbs_plain(void)
 {
    pretro_set_video_refresh(video_frame);
@@ -1090,73 +792,6 @@ static void init_libretro_cbs(void)
 {
    init_libretro_cbs_plain();
 }
-
-#if defined(HAVE_THREADS)
-void rarch_init_autosave(void)
-{
-   int ram_types[2] = {-1, -1};
-   const char *ram_paths[2] = {NULL, NULL};
-
-   switch (g_extern.game_type)
-   {
-      case RARCH_CART_BSX:
-      case RARCH_CART_BSX_SLOTTED:
-         ram_types[0] = RETRO_MEMORY_SNES_BSX_RAM;
-         ram_types[1] = RETRO_MEMORY_SNES_BSX_PRAM;
-         ram_paths[0] = g_extern.savefile_name_srm;
-         ram_paths[1] = g_extern.savefile_name_psrm;
-         break;
-
-      case RARCH_CART_SUFAMI:
-         ram_types[0] = RETRO_MEMORY_SNES_SUFAMI_TURBO_A_RAM;
-         ram_types[1] = RETRO_MEMORY_SNES_SUFAMI_TURBO_B_RAM;
-         ram_paths[0] = g_extern.savefile_name_asrm;
-         ram_paths[1] = g_extern.savefile_name_bsrm;
-         break;
-
-      case RARCH_CART_SGB:
-         ram_types[0] = RETRO_MEMORY_SNES_GAME_BOY_RAM;
-         ram_types[1] = RETRO_MEMORY_SNES_GAME_BOY_RTC;
-         ram_paths[0] = g_extern.savefile_name_srm;
-         ram_paths[1] = g_extern.savefile_name_rtc;
-         break;
-
-      default:
-         ram_types[0] = RETRO_MEMORY_SAVE_RAM;
-         ram_types[1] = RETRO_MEMORY_RTC;
-         ram_paths[0] = g_extern.savefile_name_srm;
-         ram_paths[1] = g_extern.savefile_name_rtc;
-   }
-
-   if (g_settings.autosave_interval > 0)
-   {
-      unsigned i;
-      for (i = 0; i < sizeof(g_extern.autosave) / sizeof(g_extern.autosave[0]); i++)
-      {
-         if (ram_paths[i] && *ram_paths[i] && pretro_get_memory_size(ram_types[i]) > 0)
-         {
-            g_extern.autosave[i] = autosave_new(ram_paths[i],
-                  pretro_get_memory_data(ram_types[i]),
-                  pretro_get_memory_size(ram_types[i]),
-                  g_settings.autosave_interval);
-            if (!g_extern.autosave[i])
-               RARCH_WARN("Could not initialize autosave.\n");
-         }
-      }
-   }
-}
-
-void rarch_deinit_autosave(void)
-{
-   unsigned i;
-   for (i = 0; i < ARRAY_SIZE(g_extern.autosave); i++)
-   {
-      if (g_extern.autosave[i])
-         autosave_free(g_extern.autosave[i]);
-      g_extern.autosave[i] = NULL;
-   }
-}
-#endif
 
 static void set_savestate_auto_index(void)
 {
@@ -1402,34 +1037,14 @@ static void check_savestates(bool immutable)
 
 void rarch_reset_drivers(void)
 {
-   driver.video_cache_context = g_extern.system.hw_render_callback.cache_context;
-   driver.video_cache_context_ack = false;
    uninit_drivers();
    init_drivers();
-   driver.video_cache_context = false;
 
    // Poll input to avoid possibly stale data to corrupt things.
    if (driver.input)
       input_poll_func();
 }
-#ifndef RARCH_CONSOLE
-bool rarch_check_fullscreen(void)
-{
-   // If we go fullscreen we drop all drivers and reinit to be safe.
-   static bool was_pressed = false;
-   bool pressed = input_key_pressed_func(RARCH_FULLSCREEN_TOGGLE_KEY);
-   bool toggle = pressed && !was_pressed;
 
-   if (toggle)
-   {
-      g_settings.video.fullscreen = !g_settings.video.fullscreen;
-      rarch_reset_drivers();
-   }
-
-   was_pressed = pressed;
-   return toggle;
-}
-#endif
 void rarch_state_slot_increase(void)
 {
    g_extern.state_slot++;
@@ -1579,13 +1194,7 @@ static void check_pause(void)
    // FRAMEADVANCE will set us into pause mode.
    new_state |= !g_extern.is_paused && input_key_pressed_func(RARCH_FRAMEADVANCE);
 
-   static bool old_focus = true;
-   bool focus = true;
-
-   if (g_settings.pause_nonactive)
-      focus = video_focus_func();
-
-   if (focus && new_state && !old_state)
+   if (new_state && !old_state)
    {
       g_extern.is_paused = !g_extern.is_paused;
 
@@ -1608,25 +1217,7 @@ static void check_pause(void)
          }
       }
    }
-   else if (focus && !old_focus)
-   {
-      RARCH_LOG("Unpaused.\n");
-      g_extern.is_paused = false;
-      if (driver.audio_data && !g_extern.audio_data.mute && !audio_start_func())
-      {
-         RARCH_ERR("Failed to resume audio driver. Will continue without audio.\n");
-         g_extern.audio_active = false;
-      }
-   }
-   else if (!focus && old_focus)
-   {
-      RARCH_LOG("Paused.\n");
-      g_extern.is_paused = true;
-      if (driver.audio_data)
-         audio_stop_func();
-   }
-
-   old_focus = focus;
+   
    old_state = new_state;
 }
 
@@ -1680,64 +1271,7 @@ static void check_turbo(void)
       g_extern.turbo_frame_enable[i] =
          input_input_state_func(binds, i, RETRO_DEVICE_JOYPAD, 0, RARCH_TURBO_ENABLE);
 }
-#ifndef RARCH_CONSOLE
-static void check_shader_dir(void)
-{
-   static bool old_pressed_next;
-   static bool old_pressed_prev;
 
-   if (!g_extern.shader_dir.list || !driver.video->set_shader)
-      return;
-
-   bool should_apply = false;
-   bool pressed_next = input_key_pressed_func(RARCH_SHADER_NEXT);
-   bool pressed_prev = input_key_pressed_func(RARCH_SHADER_PREV);
-   if (pressed_next && !old_pressed_next)
-   {
-      should_apply = true;
-      g_extern.shader_dir.ptr = (g_extern.shader_dir.ptr + 1) % g_extern.shader_dir.list->size;
-   }
-   else if (pressed_prev && !old_pressed_prev)
-   {
-      should_apply = true;
-      if (g_extern.shader_dir.ptr == 0)
-         g_extern.shader_dir.ptr = g_extern.shader_dir.list->size - 1;
-      else
-         g_extern.shader_dir.ptr--;
-   }
-
-   if (should_apply)
-   {
-      const char *shader          = g_extern.shader_dir.list->elems[g_extern.shader_dir.ptr].data;
-      enum rarch_shader_type type = RARCH_SHADER_NONE;
-
-      const char *ext = strrchr(shader, '.');
-      if (ext)
-      {
-         if (strcmp(ext, ".shader") == 0)
-            type = RARCH_SHADER_GLSL;
-         else if (strcmp(ext, ".cg") == 0 || strcmp(ext, ".cgp") == 0)
-            type = RARCH_SHADER_CG;
-      }
-
-      if (type == RARCH_SHADER_NONE)
-         return;
-
-      msg_queue_clear(g_extern.msg_queue);
-
-      char msg[512];
-      snprintf(msg, sizeof(msg), "Shader #%u: \"%s\".", (unsigned)g_extern.shader_dir.ptr, shader);
-      msg_queue_push(g_extern.msg_queue, msg, 1, 120);
-      RARCH_LOG("Applying shader \"%s\".\n", shader);
-
-      if (!video_set_shader_func(type, shader))
-         RARCH_WARN("Failed to apply shader.\n");
-   }
-
-   old_pressed_next = pressed_next;
-   old_pressed_prev = pressed_prev;
-}
-#endif
 void rarch_disk_control_append_image(const char *path)
 {
    const struct retro_disk_control_callback *control = &g_extern.system.disk_control;
@@ -1761,10 +1295,6 @@ void rarch_disk_control_append_image(const char *path)
    msg_queue_clear(g_extern.msg_queue);
    msg_queue_push(g_extern.msg_queue, msg, 0, 180);
 
-#if defined(HAVE_THREADS)
-   rarch_deinit_autosave();
-#endif
-
    // Update paths for our new image.
    // If we actually use append_image,
    // we assume that we started out in a single disk case,
@@ -1772,12 +1302,7 @@ void rarch_disk_control_append_image(const char *path)
    set_paths(path);
    fill_pathnames();
 
-#if defined(HAVE_THREADS)
-   rarch_init_autosave();
-#endif
-
    rarch_disk_control_set_eject(false, false);
-
 }
 
 void rarch_disk_control_set_eject(bool new_state, bool log)
@@ -1981,49 +1506,11 @@ void rarch_check_block_hotkey(void)
    // If we haven't bound anything to this,
    // always allow hotkeys.
    static const struct retro_keybind *bind = &g_settings.input.binds[0][RARCH_ENABLE_HOTKEY];
-   if (!driver.block_hotkey && bind->key == RETROK_UNKNOWN && bind->joykey == NO_BTN && bind->joyaxis == AXIS_NONE)
+   if (!driver.block_hotkey && bind->joykey == NO_BTN && bind->joyaxis == AXIS_NONE)
       return;
 
    driver.block_hotkey = driver.block_input || !input_key_pressed_func(RARCH_ENABLE_HOTKEY);
 }
-
-#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
-void rarch_check_overlay(void)
-{
-   if (!driver.overlay)
-      return;
-
-   static bool old_pressed;
-   bool pressed = input_key_pressed_func(RARCH_OVERLAY_NEXT);
-   if (pressed && !old_pressed)
-      input_overlay_next(driver.overlay);
-
-   old_pressed = pressed;
-}
-#endif
-
-#ifndef RARCH_CONSOLE
-static void check_grab_mouse_toggle(void)
-{
-   static bool old_pressed;
-   bool pressed = input_key_pressed_func(RARCH_GRAB_MOUSE_TOGGLE) &&
-      driver.input->grab_mouse;
-
-   static bool grab_mouse_state;
-
-   if (pressed && !old_pressed)
-   {
-      grab_mouse_state = !grab_mouse_state;
-      RARCH_LOG("Grab mouse state: %s.\n", grab_mouse_state ? "yes" : "no");
-      driver.input->grab_mouse(driver.input_data, grab_mouse_state);
-
-      if (driver.video_poke && driver.video_poke->show_mouse)
-         driver.video_poke->show_mouse(driver.video_data, !grab_mouse_state);
-   }
-
-   old_pressed = pressed;
-}
-#endif
 
 static void do_state_checks(void)
 {
@@ -2035,20 +1522,10 @@ static void do_state_checks(void)
    check_mute();
    check_volume();
    check_turbo();
-#ifndef RARCH_CONSOLE
-   check_grab_mouse_toggle();
-#endif
-#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
-   rarch_check_overlay();
-#endif
    check_pause();
    check_oneshot();
 
-   if (
-#ifndef RARCH_CONSOLE
-   rarch_check_fullscreen() && 
-#endif   
-   g_extern.is_paused)
+   if ( g_extern.is_paused)
       rarch_render_cached_frame();
 
    if (g_extern.is_paused && !g_extern.is_oneshot)
@@ -2059,9 +1536,6 @@ static void do_state_checks(void)
    check_savestates(false);
    check_rewind();
    check_slowmotion();
-#ifndef RARCH_CONSOLE
-   check_shader_dir();
-#endif
    check_disk();
    check_quick_swap();
    check_reset();
@@ -2121,13 +1595,9 @@ void rarch_init_system_info(void)
    if (!info->library_version)
       info->library_version = "v0";
 
-#ifdef RARCH_CONSOLE
    snprintf(g_extern.title_buf, sizeof(g_extern.title_buf), "%s %s",
          info->library_name, info->library_version);
-#else
-   snprintf(g_extern.title_buf, sizeof(g_extern.title_buf), "RetroArch : %s %s",
-         info->library_name, info->library_version);
-#endif
+
    strlcpy(g_extern.system.valid_extensions, info->valid_extensions ? info->valid_extensions : DEFAULT_EXT,
          sizeof(g_extern.system.valid_extensions));
    g_extern.system.block_extract = info->block_extract;
@@ -2159,19 +1629,6 @@ static void validate_cpu_features(void)
    RARCH_ERR(simd_type " code is compiled in, but CPU does not support this feature. Cannot continue.\n"); \
    rarch_fail(1, "validate_cpu_features()"); \
 } while(0)
-
-#ifdef __SSE__
-   if (!(cpu & RETRO_SIMD_SSE))
-      FAIL_CPU("SSE");
-#endif
-#ifdef __SSE2__
-   if (!(cpu & RETRO_SIMD_SSE2))
-      FAIL_CPU("SSE2");
-#endif
-#ifdef __AVX__
-   if (!(cpu & RETRO_SIMD_AVX))
-      FAIL_CPU("AVX");
-#endif
 }
 
 int rarch_main_init(int argc, char *argv[])
@@ -2184,7 +1641,6 @@ int rarch_main_init(int argc, char *argv[])
       RARCH_ERR("Fatal error received in: \"%s\"\n", g_extern.error_string);
       return sjlj_ret;
    }
-   g_extern.error_in_init = true;
    parse_input(argc, argv);
 
    if (g_extern.verbose)
@@ -2234,10 +1690,6 @@ int rarch_main_init(int argc, char *argv[])
    find_drivers();   
    init_drivers();
 
-#ifdef HAVE_COMMAND
-   init_command();
-#endif
-
    rarch_init_rewind();
 
    init_controllers();
@@ -2247,12 +1699,6 @@ int rarch_main_init(int argc, char *argv[])
    if (!g_extern.use_sram)
       RARCH_LOG("SRAM will not be saved.\n");
 
-#if defined(HAVE_THREADS)
-   if (g_extern.use_sram)
-      rarch_init_autosave();
-#endif
-
-   g_extern.error_in_init = false;
    g_extern.main_is_init  = true;
    return 0;
 
@@ -2338,7 +1784,7 @@ bool rarch_main_iterate(void)
       return false;
 
    // Time to drop?
-   if (input_key_pressed_func(RARCH_QUIT_KEY) || !video_alive_func())
+   if (input_key_pressed_func(RARCH_QUIT_KEY))
       return false;
 
    if (check_enter_rgui())
@@ -2350,18 +1796,8 @@ bool rarch_main_iterate(void)
       return false;
    }
 
-#ifdef HAVE_COMMAND
-   if (driver.command)
-      rarch_cmd_pre_frame(driver.command);
-#endif
-
-   // Checks for stuff like fullscreen, save states, etc.
+   // Checks for stuff like save states, etc.
    do_state_checks();
-
-   // Run libretro for one frame.
-#if defined(HAVE_THREADS)
-   lock_autosave();
-#endif
 
    // Update binds for analog dpad modes.
    for (i = 0; i < MAX_PLAYERS; i++)
@@ -2374,25 +1810,11 @@ bool rarch_main_iterate(void)
    for (i = 0; i < MAX_PLAYERS; i++)
       input_pop_analog_dpad(g_settings.input.binds[i]);
 
-#if defined(HAVE_THREADS)
-   unlock_autosave();
-#endif
-
    return true;
 }
 
 void rarch_main_deinit(void)
 {
-
-#ifdef HAVE_COMMAND
-   deinit_command();
-#endif
-
-#if defined(HAVE_THREADS)
-   if (g_extern.use_sram)
-      rarch_deinit_autosave();
-#endif
-
    if (g_extern.use_sram)
       save_files();
 
@@ -2461,14 +1883,6 @@ int rarch_main_init_wrap(const struct rarch_main_wrap *args)
       argv[argc++] = strdup(args->config_path);
    }
 
-#ifdef HAVE_DYNAMIC
-   if (args->libretro_path)
-   {
-      argv[argc++] = strdup("-L");
-      argv[argc++] = strdup(args->libretro_path);
-   }
-#endif
-
    if (args->verbose)
       argv[argc++] = strdup("-v");
 
@@ -2488,12 +1902,7 @@ int rarch_main_init_wrap(const struct rarch_main_wrap *args)
 
 bool rarch_main_idle_iterate(void)
 {
-#ifdef HAVE_COMMAND
-   if (driver.command)
-      rarch_cmd_pre_frame(driver.command);
-#endif
-
-   if (input_key_pressed_func(RARCH_QUIT_KEY) || !video_alive_func())
+   if (input_key_pressed_func(RARCH_QUIT_KEY))
       return false;
 
    do_state_checks();

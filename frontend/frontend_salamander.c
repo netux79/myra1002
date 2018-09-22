@@ -15,20 +15,16 @@
  */
 
 #include <stdint.h>
-#include "../boolean.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "../file_ext.h"
 #include "frontend_salamander.h"
 #include "frontend_context.h"
-
-
-#ifdef GEKKO
 #include "platform/platform_gx.c"
 #ifdef HW_RVL
 #include "platform/platform_wii.c"
-#endif
 #endif
 
 default_paths_t default_paths;
@@ -96,9 +92,6 @@ int main(int argc, char *argv[])
 
    if (frontend_ctx && frontend_ctx->salamander_init)
       frontend_ctx->salamander_init();
-
-   if (frontend_ctx && frontend_ctx->deinit)
-      frontend_ctx->deinit(args);
 
    if (frontend_ctx && frontend_ctx->exitspawn)
       frontend_ctx->exitspawn();

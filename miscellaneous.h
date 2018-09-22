@@ -17,17 +17,7 @@
 #ifndef __RARCH_MISCELLANEOUS_H
 #define __RARCH_MISCELLANEOUS_H
 
-#ifdef GEKKO
 #include <unistd.h>
-#else
-#include <time.h>
-#endif
-
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
 #include "retroarch_logger.h"
 
 // Some platforms do not set this value.
@@ -55,16 +45,7 @@
 
 static inline void rarch_sleep(unsigned msec)
 {
-#if defined(_WIN32)
-   Sleep(msec);
-#elif defined(GEKKO)
    usleep(1000 * msec);
-#else
-   struct timespec tv = {0};
-   tv.tv_sec = msec / 1000;
-   tv.tv_nsec = (msec % 1000) * 1000000;
-   nanosleep(&tv, NULL);
-#endif
 }
 
 static inline uint32_t next_pow2(uint32_t v)

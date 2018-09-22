@@ -21,9 +21,7 @@
 #endif
 
 static const frontend_ctx_driver_t *frontend_ctx_drivers[] = {
-#if defined(GEKKO)
    &frontend_ctx_gx,
-#endif
    NULL // zero length array is not valid
 };
 

@@ -14,8 +14,7 @@
  */
 
 #include "history.h"
-#include "../../compat/posix_string.h"
-#include "../../boolean.h"
+#include <stdbool.h>
 #include "../../general.h"
 #include "../../file.h"
 

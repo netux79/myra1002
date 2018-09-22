@@ -17,7 +17,7 @@
 #define __RARCH_IMAGE_H
 
 #include <stdint.h>
-#include "../../boolean.h"
+#include <stdbool.h>
 
 struct texture_image
 {

@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-#include "../../boolean.h"
+#include <stdbool.h>
 
 struct item_file;
 typedef struct file_list

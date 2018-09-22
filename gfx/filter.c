@@ -36,7 +36,7 @@ static const softfilter_implementation_t *softfilter_drivers[] =
    &blargg_ntsc_rf_implementation,
    &blargg_ntsc_composite_implementation,
    &blargg_ntsc_monochrome_implementation,
-#ifndef GEKKO
+#ifdef HAVE_ALL_SCALERS
    &blargg_ntsc_rgb_implementation,
    &blargg_ntsc_svideo_implementation,
 #endif
@@ -47,7 +47,7 @@ static const softfilter_implementation_t *softfilter_drivers[] =
    &epxsmooth_implementation,
    &hq2x_implementation,
    &scanlines_implementation,
-#ifndef GEKKO
+#ifdef HAVE_ALL_SCALERS
    &lq2x_implementation,
    &scale2x_implementation,
    &twoxbr_implementation,

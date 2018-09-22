@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <math.h>
-#include "../boolean.h"
+#include <stdbool.h>
 
 // M_PI is left out of ISO C99 :(
 #ifndef M_PI

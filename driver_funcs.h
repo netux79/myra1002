@@ -31,12 +31,8 @@
 #define video_init_func(data, video_info, input, input_data) driver.video->init(data, video_info, input, input_data)
 #define video_frame_func(data, width, height, pitch, msg) driver.video->frame(driver.video_data, data, width, height, pitch, msg)
 #define video_set_nonblock_state_func(state) driver.video->set_nonblock_state(driver.video_data, state)
-#define video_alive_func() driver.video->alive(driver.video_data)
-#define video_focus_func() driver.video->focus(driver.video_data)
-#define video_set_shader_func(type, path) driver.video->set_shader(driver.video_data, type, path)
 #define video_set_rotation_func(rotate) driver.video->set_rotation(driver.video_data, rotate)
 #define video_viewport_info_func(info) driver.video->viewport_info(driver.video_data, info)
-#define video_read_viewport_func(buffer) driver.video->read_viewport(driver.video_data, buffer)
 #define video_overlay_interface_func(iface) driver.video->overlay_interface(driver.video_data, iface)
 #define video_free_func() driver.video->free(driver.video_data)
 #define input_init_func() driver.input->init()
@@ -50,15 +46,6 @@ static inline bool input_key_pressed_func(int key)
 
    if (!driver.block_hotkey)
       ret = ret || driver.input->key_pressed(driver.input_data, key);
-
-#if defined(HAVE_OVERLAY) && !defined(RARCH_CONSOLE)
-   ret = ret || (driver.overlay_state.buttons & (1ULL << key));
-#endif
-
-#ifdef HAVE_COMMAND
-   if (driver.command)
-      ret = ret || rarch_cmd_get(driver.command, key);
-#endif
 
    return ret;
 }

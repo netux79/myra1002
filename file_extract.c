@@ -19,9 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <zlib.h>
-
 #include "hash.h"
 
 // File backends. Can be fleshed out later, but keep it simple for now.
@@ -34,77 +32,6 @@ struct zlib_file_backend
    void (*free)(void *handle); // Closes, unmaps and frees.
 };
 
-#ifdef HAVE_MMAP
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-typedef struct
-{
-   int fd;
-   void *data;
-   size_t size;
-} zlib_file_data_t;
-
-static void zlib_file_free(void *handle)
-{
-   zlib_file_data_t *data = (zlib_file_data_t*)handle;
-   if (data->data)
-      munmap(data->data, data->size);
-   if (data->fd >= 0)
-      close(data->fd);
-   free(data);
-}
-
-static const uint8_t *zlib_file_data(void *handle)
-{
-   zlib_file_data_t *data = (zlib_file_data_t*)handle;
-   return (const uint8_t*)data->data;
-}
-
-static size_t zlib_file_size(void *handle)
-{
-   zlib_file_data_t *data = (zlib_file_data_t*)handle;
-   return data->size;
-}
-
-static void *zlib_file_open(const char *path)
-{
-   zlib_file_data_t *data = (zlib_file_data_t*)calloc(1, sizeof(*data));
-   if (!data)
-      return NULL;
-   data->fd = open(path, O_RDONLY);
-   if (data->fd < 0)
-   {
-      RARCH_ERR("Failed to open archive: %s (%s).\n",
-            path, strerror(errno));
-      goto error;
-   }
-
-   struct stat fds;
-   if (fstat(data->fd, &fds) < 0)
-      goto error;
-
-   data->size = fds.st_size;
-   if (!data->size)
-      return data;
-
-   data->data = mmap(NULL, data->size, PROT_READ, MAP_SHARED, data->fd, 0);
-   if (data->data == MAP_FAILED)
-   {
-      data->data = NULL;
-      RARCH_ERR("Failed to mmap() file: %s (%s).\n", path, strerror(errno));
-      goto error;
-   }
-
-   return data;
-
-error:
-   zlib_file_free(data);
-   return NULL;
-}
-#else
 typedef struct
 {
    void *data;
@@ -152,7 +79,6 @@ error:
    zlib_file_free(data);
    return NULL;
 }
-#endif
 
 static const struct zlib_file_backend zlib_backend = {
    zlib_file_open,

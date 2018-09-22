@@ -23,14 +23,11 @@
 #include "frontend_context.h"
 frontend_ctx_driver_t *frontend_ctx;
 
-#if defined(HAVE_MENU)
-#include "menu/menu_input_line_cb.h"
+#ifdef HAVE_MENU
 #include "menu/menu_common.h"
 #endif
 
 #include "../file_ext.h"
-
-#ifdef RARCH_CONSOLE
 #include "../config.def.h"
 
 default_paths_t default_paths;
@@ -53,22 +50,14 @@ static void rarch_get_environment_console(char *path)
 
    global_init_drivers();
 }
-#endif
 
-#ifdef RARCH_CONSOLE
 #define attempt_load_game false
 #define attempt_load_game_push_history false
 #define load_dummy_on_core_shutdown false
-#else
-#define attempt_load_game true
-#define attempt_load_game_push_history true
-#define load_dummy_on_core_shutdown true
-#endif
 
 int main_entry_iterate(int argc, char *argv[], void* args)
 {
    int i;
-   static retro_keyboard_event_t key_event;
 
    if (g_extern.system.core_shutdown)
    {
@@ -80,39 +69,22 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 #endif
          return 1;
    }
-#ifndef RARCH_CONSOLE
-   else if (g_extern.lifecycle_state & (1ULL << MODE_EXIT))
-   {
-      return 1;
-   }
-#endif
    else if (g_extern.lifecycle_state & (1ULL << MODE_LOAD_GAME))
    {
       load_menu_game_prepare(driver.video_data);
 
       if (load_menu_game())
-      {
          g_extern.lifecycle_state |= (1ULL << MODE_GAME);
-#ifndef GEKKO
-         if (driver.video_poke && driver.video_poke->set_aspect_ratio)
-            driver.video_poke->set_aspect_ratio(driver.video_data, g_settings.video.aspect_ratio_idx);
-#endif
-      }
       else
       {
          /* If ROM load fails, we exit RetroArch. On console it 
           * makes more sense to go back to menu though ... */
-#ifdef RARCH_CONSOLE        
          g_extern.lifecycle_state = (1ULL << MODE_MENU_PREINIT);
-#else
-         g_extern.lifecycle_state = (1ULL << MODE_EXIT);
-#endif         
       }
 
       g_extern.lifecycle_state &= ~(1ULL << MODE_LOAD_GAME);
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_GAME))
-#ifdef GEKKO
    {
       g_extern.lifecycle_state |= (1ULL << MODE_GAME_RUN);
       // setup the screen for the current core
@@ -126,46 +98,30 @@ int main_entry_iterate(int argc, char *argv[], void* args)
       g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_GAME_RUN))
-#endif
    {
-      bool r;
+      bool success;
       if (g_extern.is_paused && !g_extern.is_oneshot)
-         r = rarch_main_idle_iterate();
+         success = rarch_main_idle_iterate();
       else
-         r = rarch_main_iterate();
+         success = rarch_main_iterate();
 
-      if (r)
-      {
-         if (frontend_ctx && frontend_ctx->process_events)
-            frontend_ctx->process_events(args);
-      }
-      else
-#ifdef GEKKO
-         g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
-#else
-         g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
-#endif
+      if (!success) g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
    }
 #ifdef HAVE_MENU
    else if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
    {
       // Menu should always run with vsync on.
       video_set_nonblock_state_func(false);
-#ifdef GEKKO
       // Change video resolution to the preferred mode
       if (driver.video_poke && driver.video_poke->update_screen_config)
          driver.video_poke->update_screen_config(driver.video_data, GX_RESOLUTIONS_RGUI, ASPECT_RATIO_4_3,
                                                  false, ORIENTATION_NORMAL);
-#endif
       // Stop all rumbling when entering RGUI.
       for (i = 0; i < MAX_PLAYERS; i++)
       {
          driver_set_rumble_state(i, RETRO_RUMBLE_STRONG, 0);
          driver_set_rumble_state(i, RETRO_RUMBLE_WEAK, 0);
       }
-
-      key_event = g_extern.system.key_event;
-      g_extern.system.key_event = menu_key_event;
 
       if (driver.audio_data)
          audio_stop_func();
@@ -177,12 +133,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_MENU))
    {
-      if (menu_iterate(driver.video_data))
-      {
-         if (frontend_ctx && frontend_ctx->process_events)
-            frontend_ctx->process_events(args);
-      }
-      else
+      if (!menu_iterate(driver.video_data))
       {
          g_extern.lifecycle_state &= ~(1ULL << MODE_MENU);
          driver_set_nonblock_state(driver.nonblock_state);
@@ -192,9 +143,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
             RARCH_ERR("Failed to resume audio driver. Will continue without audio.\n");
             g_extern.audio_active = false;
          }
-
-         /* Restore libretro keyboard callback. */
-         g_extern.system.key_event = key_event;
       }
    }
 #endif
@@ -232,17 +180,11 @@ void main_exit(void* args)
    rarch_perf_log();
 #endif
 
-   if (frontend_ctx && frontend_ctx->deinit)
-      frontend_ctx->deinit(args);
-
    if (g_extern.lifecycle_state & (1ULL << MODE_EXITSPAWN) && frontend_ctx
          && frontend_ctx->exitspawn)
       frontend_ctx->exitspawn();
 
    rarch_main_clear_state();
-
-   if (frontend_ctx && frontend_ctx->shutdown)
-      frontend_ctx->shutdown(false);
 }
 
 int main(int argc, char *argv[])
@@ -259,9 +201,7 @@ int main(int argc, char *argv[])
    if (frontend_ctx && frontend_ctx->environment_get)
    {
       frontend_ctx->environment_get(argc, argv, args);
-#ifdef RARCH_CONSOLE
       rarch_get_environment_console(argv[0]);
-#endif
    }
 
    if (attempt_load_game)
@@ -271,7 +211,7 @@ int main(int argc, char *argv[])
          return init_ret;
    }
 
-#if defined(HAVE_MENU)
+#ifdef HAVE_MENU
    menu_init(driver.video_data);
 
    if (frontend_ctx && frontend_ctx->process_args)

@@ -15,28 +15,16 @@
 
 #include "file_path.h"
 #include <stdlib.h>
-#include "boolean.h"
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 #include <errno.h>
 #include "compat/strl.h"
-#include "compat/posix_string.h"
 #include "general.h"
-
-#if defined(_WIN32)
-#ifdef _MSC_VER
-#define setmode _setmode
-#endif
-#include <io.h>
-#include <fcntl.h>
-#include <direct.h>
-#include <windows.h>
-#else
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
-#endif
 
 // Dump stuff to file.
 bool write_file(const char *path, const void *data, size_t size)
@@ -326,67 +314,6 @@ void dir_list_sort(struct string_list *list, bool dir_first)
          dir_first ? qstrcmp_dir : qstrcmp_plain);
 }
 
-#ifdef _WIN32 // Because the API is just fucked up ...
-struct string_list *dir_list_new(const char *dir, const char *ext, bool include_dirs)
-{
-   struct string_list *list = string_list_new();
-   if (!list)
-      return NULL;
-
-   HANDLE hFind = INVALID_HANDLE_VALUE;
-   WIN32_FIND_DATA ffd;
-
-   char path_buf[PATH_MAX];
-   snprintf(path_buf, sizeof(path_buf), "%s\\*", dir);
-
-   struct string_list *ext_list = NULL;
-   if (ext)
-      ext_list = string_split(ext, "|");
-
-   hFind = FindFirstFile(path_buf, &ffd);
-   if (hFind == INVALID_HANDLE_VALUE)
-      goto error;
-
-   do
-   {
-      const char *name     = ffd.cFileName;
-      const char *file_ext = path_get_extension(name);
-      bool is_dir          = ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-
-      if (!include_dirs && is_dir)
-         continue;
-
-      if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
-         continue;
-
-      if (!is_dir && ext_list && !string_list_find_elem_prefix(ext_list, ".", file_ext))
-         continue;
-
-      char file_path[PATH_MAX];
-      fill_pathname_join(file_path, dir, name, sizeof(file_path));
-
-      union string_list_elem_attr attr;
-      attr.b = is_dir;
-
-      if (!string_list_append(list, file_path, attr))
-         goto error;
-   }
-   while (FindNextFile(hFind, &ffd) != 0);
-
-   FindClose(hFind);
-   string_list_free(ext_list);
-   return list;
-
-error:
-   RARCH_ERR("Failed to open directory: \"%s\"\n", dir);
-   if (hFind != INVALID_HANDLE_VALUE)
-      FindClose(hFind);
-   
-   string_list_free(list);
-   string_list_free(ext_list);
-   return NULL;
-}
-#else
 static bool dirent_is_directory(const char *path, const struct dirent *entry)
 {
 #ifdef DT_DIR
@@ -459,7 +386,6 @@ error:
    string_list_free(ext_list);
    return NULL;
 }
-#endif
 
 void dir_list_free(struct string_list *list)
 {
@@ -468,35 +394,22 @@ void dir_list_free(struct string_list *list)
 
 static bool path_char_is_slash(char c)
 {
-#ifdef _WIN32
-   return (c == '/') || (c == '\\');
-#else
    return c == '/';
-#endif
 }
 
 static const char *path_default_slash(void)
 {
-#ifdef _WIN32
-   return "\\";
-#else
    return "/";
-#endif
 }
 
 
 bool path_is_directory(const char *path)
 {
-#ifdef _WIN32
-   DWORD ret = GetFileAttributes(path);
-   return (ret & FILE_ATTRIBUTE_DIRECTORY) && (ret != INVALID_FILE_ATTRIBUTES);
-#else
    struct stat buf;
    if (stat(path, &buf) < 0)
       return false;
 
    return S_ISDIR(buf.st_mode);
-#endif
 }
 
 bool path_file_exists(const char *path)
@@ -532,11 +445,6 @@ void fill_pathname_noext(char *out_path, const char *in_path, const char *replac
 static char *find_last_slash(const char *str)
 {
    const char *slash = strrchr(str, '/');
-#ifdef _WIN32
-   const char *backslash = strrchr(str, '\\');
-   if (backslash && ((slash && backslash > slash) || !slash))
-      slash = backslash;
-#endif
 
    return (char*)slash;
 }
@@ -632,45 +540,13 @@ const char *path_basename(const char *path)
 
 bool path_is_absolute(const char *path)
 {
-#ifdef _WIN32
-   // Many roads lead to Rome ...
-   return path[0] == '/' || (strstr(path, "\\\\") == path) || strstr(path, ":/") || strstr(path, ":\\") || strstr(path, ":\\\\");
-#else
    return path[0] == '/';
-#endif
-}
-
-void path_resolve_realpath(char *buf, size_t size)
-{
-#ifndef RARCH_CONSOLE
-   char tmp[PATH_MAX];
-   strlcpy(tmp, buf, sizeof(tmp));
-
-#ifdef _WIN32
-   if (!_fullpath(buf, tmp, size))
-      strlcpy(buf, tmp, size);
-#else
-   rarch_assert(size >= PATH_MAX);
-   // NOTE: realpath() expects at least PATH_MAX bytes in buf.
-   // Technically, PATH_MAX needn't be defined, but we rely on it anyways.
-   // POSIX 2008 can automatically allocate for you, but don't rely on that.
-   if (!realpath(tmp, buf))
-      strlcpy(buf, tmp, size);
-#endif
-
-#else
-   (void)buf;
-   (void)size;
-#endif
 }
 
 static bool path_mkdir_norecurse(const char *dir)
 {
-#if defined(_WIN32)
-   int ret = _mkdir(dir);
-#else
    int ret = mkdir(dir, 0750);
-#endif
+   
    if (ret < 0 && errno == EEXIST && path_is_directory(dir)) // Don't treat this as an error.
       ret = 0;
    if (ret < 0)
@@ -741,114 +617,10 @@ void fill_pathname_join(char *out_path, const char *dir, const char *path, size_
 
 void fill_pathname_expand_special(char *out_path, const char *in_path, size_t size)
 {
-#if !defined(RARCH_CONSOLE)
-   if (*in_path == '~')
-   {
-      const char *home = getenv("HOME");
-      if (home)
-      {
-         size_t src_size = strlcpy(out_path, home, size);
-         rarch_assert(src_size < size);
-
-         out_path  += src_size;
-         size -= src_size;
-         in_path++;
-      }
-   }
-   else if ((in_path[0] == ':') &&
-#ifdef _WIN32
-         ((in_path[1] == '/') || (in_path[1] == '\\')))
-#else
-         (in_path[1] == '/'))
-#endif
-   {
-      char application_dir[PATH_MAX];
-      fill_pathname_application_path(application_dir, sizeof(application_dir));
-      path_basedir(application_dir);
-
-      size_t src_size = strlcpy(out_path, application_dir, size);
-      rarch_assert(src_size < size);
-
-      out_path  += src_size;
-      size -= src_size;
-      in_path += 2;
-   }
-#endif
-
    rarch_assert(strlcpy(out_path, in_path, size) < size);
 }
 
 void fill_pathname_abbreviate_special(char *out_path, const char *in_path, size_t size)
 {
-#if !defined(RARCH_CONSOLE)
-   unsigned i;
-
-   const char *home = getenv("HOME");
-   char application_dir[PATH_MAX];
-   fill_pathname_application_path(application_dir, sizeof(application_dir));
-   path_basedir(application_dir);
-
-   // application_dir could be zero-string. Safeguard against this.
-
-   // Keep application dir in front of home, moving app dir to a new location inside
-   // home would break otherwise.
-   const char *candidates[3] = { application_dir, home, NULL };
-   const char *notations[3] = { ":", "~", NULL };
-   
-   for (i = 0; candidates[i]; i++)
-   {
-      if (*candidates[i] && strstr(in_path, candidates[i]) == in_path)
-      {
-         size_t src_size = strlcpy(out_path, notations[i], size);
-         rarch_assert(src_size < size);
-      
-         out_path += src_size;
-         size -= src_size;
-         in_path += strlen(candidates[i]);
-      
-         if (!path_char_is_slash(*in_path))
-         {
-            rarch_assert(strlcpy(out_path, path_default_slash(), size) < size);
-            out_path++;
-            size--;
-         }
-
-         break; // Don't allow more abbrevs to take place.
-      }
-   }
-#endif
-
    rarch_assert(strlcpy(out_path, in_path, size) < size);
 }
-
-#ifndef RARCH_CONSOLE
-void fill_pathname_application_path(char *buf, size_t size)
-{
-   size_t i;
-   (void)i;
-   if (!size)
-      return;
-
-#ifdef _WIN32
-   DWORD ret = GetModuleFileName(GetModuleHandle(NULL), buf, size - 1);
-   buf[ret] = '\0';
-#else
-   *buf = '\0';
-   pid_t pid = getpid(); 
-   char link_path[PATH_MAX];
-   static const char *exts[] = { "exe", "file", "path/a.out" }; // Linux, BSD and Solaris paths. Not standardized.
-   for (i = 0; i < ARRAY_SIZE(exts); i++)
-   {
-      snprintf(link_path, sizeof(link_path), "/proc/%u/%s", (unsigned)pid, exts[i]);
-      ssize_t ret = readlink(link_path, buf, size - 1);
-      if (ret >= 0)
-      {
-         buf[ret] = '\0';
-         return;
-      }
-   }
-   
-   RARCH_ERR("Cannot resolve application path! This should not happen.\n");
-#endif
-}
-#endif

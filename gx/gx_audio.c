@@ -16,7 +16,7 @@
 
 #include "../driver.h"
 #include <stdlib.h>
-#include "../boolean.h"
+#include <stdbool.h>
 #include "../general.h"
 #include <malloc.h>
 #include <string.h>

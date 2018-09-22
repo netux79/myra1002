@@ -17,14 +17,13 @@
 #ifndef __RARCH_GENERAL_H
 #define __RARCH_GENERAL_H
 
-#include "boolean.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <limits.h>
 #include <setjmp.h>
 #include "driver.h"
 #include "message_queue.h"
 #include "rewind.h"
-#include "autosave.h"
 #include "dynamic.h"
 #include "compat/strl.h"
 #include "performance.h"
@@ -43,22 +42,8 @@
 #define PACKAGE_VERSION "MyRA1002"
 #endif
 
-// Platform-specific headers
-// Windows
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
 // Wii - for usleep (among others)
-#ifdef GEKKO
 #include <unistd.h>
-#endif
-
-#ifdef HAVE_COMMAND
-#include "command.h"
-#endif
-
 #include "audio/resampler.h"
 
 #ifdef __cplusplus
@@ -70,26 +55,12 @@ extern "C" {
 enum menu_enums
 {
    MODE_GAME = 0,
-#ifdef GEKKO
    MODE_GAME_RUN,
-#endif
    MODE_LOAD_GAME,
    MODE_MENU,
-#ifndef RARCH_CONSOLE
-   MODE_EXIT,
-#endif
    MODE_MENU_PREINIT,
    MODE_EXITSPAWN,
    MODE_EXITSPAWN_START_GAME,
-};
-
-enum sound_mode_enums
-{
-   SOUND_MODE_NORMAL = 0,
-#ifdef HAVE_HEADSET
-   SOUND_MODE_HEADSET,
-#endif
-   SOUND_MODE_LAST
 };
 
 enum config_type_enums
@@ -105,16 +76,7 @@ struct settings
    struct
    {
       char driver[32];
-      char gl_context[32];
-      float xscale;
-      float yscale;
-      bool fullscreen;
-      bool windowed_fullscreen;
-      unsigned monitor_index;
-      unsigned fullscreen_x;
-      unsigned fullscreen_y;
       bool vsync;
-      unsigned swap_interval;
       bool smooth;
       bool force_aspect;
       bool crop_overscan;
@@ -123,28 +85,10 @@ struct settings
       unsigned aspect_ratio_idx;
       unsigned rotation;
 
-      char shader_path[PATH_MAX];
-      bool shader_enable;
-
 #ifdef HAVE_SCALERS_BUILTIN
       unsigned filter_idx;
 #endif
       float refresh_rate;
-      bool threaded;
-
-      char shader_dir[PATH_MAX];
-      char font_path[PATH_MAX];
-      float font_size;
-      bool font_enable;
-      bool font_scale;
-      float msg_pos_x;
-      float msg_pos_y;
-      float msg_color_r;
-      float msg_color_g;
-      float msg_color_b;
-
-      bool disable_composition;
-      bool gpu_screenshot;
       bool allow_rotate;
    } video;
 
@@ -155,7 +99,6 @@ struct settings
       unsigned out_rate;
       unsigned block_frames;
       float in_rate;
-      char device[PATH_MAX];
       unsigned latency;
       bool sync;
 
@@ -169,11 +112,8 @@ struct settings
    {
       char driver[32];
       char joypad_driver[32];
-      char keyboard_layout[64];
       struct retro_keybind binds[MAX_PLAYERS][RARCH_BIND_LIST_END];
-#ifdef RARCH_CONSOLE
       struct retro_keybind menu_binds[RARCH_BIND_LIST_END];
-#endif
 
       unsigned libretro_device[MAX_PLAYERS];
       unsigned analog_dpad_mode[MAX_PLAYERS];
@@ -181,7 +121,6 @@ struct settings
       int device_port[MAX_PLAYERS];
       unsigned device[MAX_PLAYERS];
       char device_names[MAX_PLAYERS][64];
-      bool debug_enable;
       bool autoconf_buttons;
       bool menu_all_players_enable;
       unsigned quick_swap_players;
@@ -199,7 +138,6 @@ struct settings
    unsigned game_history_size;
 
    char libretro[PATH_MAX];
-   unsigned libretro_log_level;
    char libretro_info_path[PATH_MAX];
 
    char screenshot_directory[PATH_MAX];
@@ -212,17 +150,11 @@ struct settings
    float slowmotion_ratio;
    float fastforward_ratio;
 
-   bool pause_nonactive;
-   unsigned autosave_interval;
-
    bool block_sram_overwrite;
    bool savestate_auto_index;
    bool savestate_auto_save;
    bool savestate_auto_load;
 
-   bool stdin_cmd_enable;
-
-   char content_directory[PATH_MAX];
 #if defined(HAVE_MENU)
    char rgui_content_directory[PATH_MAX];
    char rgui_config_directory[PATH_MAX];
@@ -263,7 +195,6 @@ struct global
    bool verbose;
    bool audio_active;
    bool video_active;
-   bool force_fullscreen;
 
    bool rom_file_temporary;
    char last_rom[PATH_MAX];
@@ -280,7 +211,6 @@ struct global
    // Config associated with global and specific config.
    char config_path[PATH_MAX];
    char specific_config_path[PATH_MAX];   
-   char input_config_path[PATH_MAX];
    char basename[PATH_MAX];
    char fullpath[PATH_MAX];
    char savefile_name_srm[PATH_MAX];
@@ -322,12 +252,7 @@ struct global
       const char *input_desc_btn[MAX_PLAYERS][RARCH_FIRST_CUSTOM_BIND];
       char valid_extensions[PATH_MAX];
 
-      retro_keyboard_event_t key_event;
-
-      struct retro_audio_callback audio_callback;
-
       struct retro_disk_control_callback disk_control;
-      struct retro_hw_render_callback hw_render_callback;
 
       struct retro_frame_time_callback frame_time;
       retro_usec_t frame_time_last;
@@ -405,21 +330,12 @@ struct global
    uint16_t turbo_enable[MAX_PLAYERS];
    unsigned turbo_count;
 
-   // Autosave support.
-   autosave_t *autosave[2];
-
    frame_t frame_cache;
    frame_t frame;
    
    unsigned frame_count;
    uint32_t start_frame_time;
    char title_buf[64];
-
-   struct
-   {
-      struct string_list *list;
-      size_t ptr;
-   } shader_dir;
 
    // Settings and/or global state that is specific to a console-style implementation.
    struct
@@ -441,12 +357,9 @@ struct global
 #endif
 
    bool main_is_init;
-   bool error_in_init;
    bool config_save_on_exit;
    char error_string[1024];
    jmp_buf error_sjlj_context;
-   unsigned menu_toggle_behavior;
-
    bool libretro_no_rom;
    bool libretro_dummy;
 };
@@ -488,16 +401,10 @@ void rarch_render_cached_frame(void);
 void rarch_init_msg_queue(void);
 void rarch_deinit_msg_queue(void);
 void rarch_input_poll(void);
-#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
-void rarch_check_overlay(void);
-#endif
 void rarch_check_block_hotkey(void);
 void rarch_init_rewind(void);
 void rarch_deinit_rewind(void);
 void rarch_reset_drivers(void);
-#ifndef RARCH_CONSOLE
-bool rarch_check_fullscreen(void);
-#endif
 void rarch_disk_control_set_eject(bool state, bool log);
 void rarch_disk_control_set_index(unsigned index);
 void rarch_disk_control_append_image(const char *path);
@@ -530,8 +437,6 @@ static inline void rarch_fail(int error_code, const char *error)
 {
    // We cannot longjmp unless we're in rarch_main_init().
    // If not, something went very wrong, and we should just exit right away.
-   rarch_assert(g_extern.error_in_init);
-
    strlcpy(g_extern.error_string, error, sizeof(g_extern.error_string));
    longjmp(g_extern.error_sjlj_context, error_code);
 }

@@ -17,11 +17,7 @@
 #ifndef CONSOLE_EXT_H__
 #define CONSOLE_EXT_H__
 
-#ifdef _WIN32
-#define MAXIMUM_PATH 260
-#else
 #define MAXIMUM_PATH 512
-#endif
 
 typedef struct
 {

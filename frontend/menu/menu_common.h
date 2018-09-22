@@ -26,27 +26,14 @@
 #include "../../performance.h"
 #include "../info/core_info.h"
 #include "menu_display.h"
-
-#ifdef HAVE_MENU
-#define MENU_TEXTURE_FULLSCREEN false
-#endif
-
-#include "../../boolean.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "file_list.h"
-
-#if defined(HAVE_CG) || defined(HAVE_HLSL) || defined(HAVE_GLSL)
-#define HAVE_SHADER_MANAGER
-#include "../../gfx/shader_parse.h"
-#endif
-
 #include "history.h"
-
-#define RGUI_MAX_SHADERS 8
 
 typedef enum
 {
@@ -75,30 +62,11 @@ typedef enum
    RGUI_SETTINGS_CUSTOM_VIEWPORT_Y,
    RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH,
    RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT,
-   RGUI_SETTINGS_TOGGLE_FULLSCREEN,
-   RGUI_SETTINGS_WINDOWED_FULLSCREEN,
-   RGUI_SETTINGS_VIDEO_THREADED,
    RGUI_SETTINGS_VIDEO_ROTATION,
    RGUI_SETTINGS_VIDEO_VSYNC,
-   RGUI_SETTINGS_VIDEO_SWAP_INTERVAL,
-   RGUI_SETTINGS_VIDEO_WINDOW_SCALE_X,
-   RGUI_SETTINGS_VIDEO_WINDOW_SCALE_Y,
    RGUI_SETTINGS_VIDEO_CROP_OVERSCAN,
-   RGUI_SETTINGS_VIDEO_REFRESH_RATE,
    RGUI_SETTINGS_VIDEO_SOFT_SCALER,
    
-   // Shader stuff
-   RGUI_SETTINGS_SHADER_OPTIONS,
-   RGUI_SETTINGS_SHADER_FILTER,
-   RGUI_SETTINGS_SHADER_PRESET,
-   RGUI_SETTINGS_SHADER_APPLY,
-   RGUI_SETTINGS_SHADER_PASSES,
-   RGUI_SETTINGS_SHADER_0,
-   RGUI_SETTINGS_SHADER_0_FILTER,
-   RGUI_SETTINGS_SHADER_0_SCALE,
-   RGUI_SETTINGS_SHADER_LAST = RGUI_SETTINGS_SHADER_0_SCALE + (3 * (RGUI_MAX_SHADERS - 1)),
-   RGUI_SETTINGS_SHADER_PRESET_SAVE,
-
    // settings options are done here too
    RGUI_SETTINGS_OPEN_FILEBROWSER,
    RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE,
@@ -126,19 +94,14 @@ typedef enum
    RGUI_SETTINGS_DISK_APPEND,
    RGUI_SETTINGS_DRIVER_VIDEO,
    RGUI_SETTINGS_DRIVER_AUDIO,
-   RGUI_SETTINGS_DRIVER_AUDIO_DEVICE,
    RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER,
    RGUI_SETTINGS_DRIVER_INPUT,
    RGUI_SETTINGS_SCREENSHOT,
-   RGUI_SETTINGS_GPU_SCREENSHOT,
    RGUI_SETTINGS_SAVESTATE_AUTO_SAVE,
    RGUI_SETTINGS_SAVESTATE_AUTO_LOAD,
    RGUI_SETTINGS_BLOCK_SRAM_OVERWRITE,
-   RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE,
-   RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST,
    RGUI_SCREENSHOT_DIR_PATH,
    RGUI_BROWSER_DIR_PATH,
-   RGUI_SHADER_DIR_PATH,
    RGUI_SAVESTATE_DIR_PATH,
    RGUI_SAVEFILE_DIR_PATH,
    RGUI_LIBRETRO_DIR_PATH,
@@ -219,13 +182,6 @@ typedef enum
    RGUI_SETTINGS_BIND_DISK_EJECT_TOGGLE,
    RGUI_SETTINGS_BIND_DISK_NEXT,
    RGUI_SETTINGS_BIND_QUICK_SWAP,
-#ifndef RARCH_CONSOLE
-   RGUI_SETTINGS_BIND_FULLSCREEN_TOGGLE_KEY,
-   RGUI_SETTINGS_BIND_SHADER_NEXT,
-   RGUI_SETTINGS_BIND_SHADER_PREV,
-   RGUI_SETTINGS_BIND_OVERLAY_NEXT,
-   RGUI_SETTINGS_BIND_GRAB_MOUSE_TOGGLE,
-#endif
 #ifdef HAVE_MENU
    RGUI_SETTINGS_BIND_MENU_TOGGLE,
 #endif
@@ -329,9 +285,6 @@ typedef struct
    struct retro_system_info info;
    bool load_no_rom;
 
-#ifdef HAVE_SHADER_MANAGER
-   struct gfx_shader shader;
-#endif
    unsigned c_player;
    unsigned s_device;
 
@@ -339,12 +292,6 @@ typedef struct
    retro_time_t last_time; // Used to throttle RGUI in case VSync is broken.
 
    struct rgui_bind_state binds;
-   struct
-   {
-      const char **buffer;
-      const char *label;
-      bool display;
-   } keyboard;
 } rgui_handle_t;
 
 extern rgui_handle_t *rgui;
@@ -352,15 +299,6 @@ extern rgui_handle_t *rgui;
 void menu_init(void *data);
 bool menu_iterate(void *data);
 void menu_free(void *data);
-
-#ifdef HAVE_SHADER_MANAGER
-void shader_manager_init(void *data);
-void shader_manager_get_str(struct gfx_shader *shader,
-      char *type_str, size_t type_str_size, unsigned type);
-void shader_manager_set_preset(struct gfx_shader *shader,
-      enum rarch_shader_type type, const char *path);
-void shader_manager_save_preset(void *data, const char *basename, bool apply);
-#endif
 
 void menu_ticker_line(char *buf, size_t len, unsigned tick, const char *str, bool selected);
 

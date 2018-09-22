@@ -70,11 +70,6 @@ extern "C" {
 // The frontend must make sure not to interfere with its own hardware mouse pointer.
 #define RETRO_DEVICE_MOUSE        2
 
-// KEYBOARD device lets one poll for raw key pressed.
-// It is poll based, so input callback will return with the current pressed state.
-// For event/text based keyboard input, see RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK.
-#define RETRO_DEVICE_KEYBOARD     3
-
 // Lightgun X/Y coordinates are reported relatively to last poll, similar to mouse.
 #define RETRO_DEVICE_LIGHTGUN     4
 
@@ -191,157 +186,6 @@ extern "C" {
 #define RETRO_GAME_TYPE_SUFAMI_TURBO    0x103
 #define RETRO_GAME_TYPE_SUPER_GAME_BOY  0x104
 
-// Keysyms used for ID in input state callback when polling RETRO_KEYBOARD.
-enum retro_key
-{
-   RETROK_UNKNOWN        = 0,
-   RETROK_FIRST          = 0,
-   RETROK_BACKSPACE      = 8,
-   RETROK_TAB            = 9,
-   RETROK_CLEAR          = 12,
-   RETROK_RETURN         = 13,
-   RETROK_PAUSE          = 19,
-   RETROK_ESCAPE         = 27,
-   RETROK_SPACE          = 32,
-   RETROK_EXCLAIM        = 33,
-   RETROK_QUOTEDBL       = 34,
-   RETROK_HASH           = 35,
-   RETROK_DOLLAR         = 36,
-   RETROK_AMPERSAND      = 38,
-   RETROK_QUOTE          = 39,
-   RETROK_LEFTPAREN      = 40,
-   RETROK_RIGHTPAREN     = 41,
-   RETROK_ASTERISK       = 42,
-   RETROK_PLUS           = 43,
-   RETROK_COMMA          = 44,
-   RETROK_MINUS          = 45,
-   RETROK_PERIOD         = 46,
-   RETROK_SLASH          = 47,
-   RETROK_0              = 48,
-   RETROK_1              = 49,
-   RETROK_2              = 50,
-   RETROK_3              = 51,
-   RETROK_4              = 52,
-   RETROK_5              = 53,
-   RETROK_6              = 54,
-   RETROK_7              = 55,
-   RETROK_8              = 56,
-   RETROK_9              = 57,
-   RETROK_COLON          = 58,
-   RETROK_SEMICOLON      = 59,
-   RETROK_LESS           = 60,
-   RETROK_EQUALS         = 61,
-   RETROK_GREATER        = 62,
-   RETROK_QUESTION       = 63,
-   RETROK_AT             = 64,
-   RETROK_LEFTBRACKET    = 91,
-   RETROK_BACKSLASH      = 92,
-   RETROK_RIGHTBRACKET   = 93,
-   RETROK_CARET          = 94,
-   RETROK_UNDERSCORE     = 95,
-   RETROK_BACKQUOTE      = 96,
-   RETROK_a              = 97,
-   RETROK_b              = 98,
-   RETROK_c              = 99,
-   RETROK_d              = 100,
-   RETROK_e              = 101,
-   RETROK_f              = 102,
-   RETROK_g              = 103,
-   RETROK_h              = 104,
-   RETROK_i              = 105,
-   RETROK_j              = 106,
-   RETROK_k              = 107,
-   RETROK_l              = 108,
-   RETROK_m              = 109,
-   RETROK_n              = 110,
-   RETROK_o              = 111,
-   RETROK_p              = 112,
-   RETROK_q              = 113,
-   RETROK_r              = 114,
-   RETROK_s              = 115,
-   RETROK_t              = 116,
-   RETROK_u              = 117,
-   RETROK_v              = 118,
-   RETROK_w              = 119,
-   RETROK_x              = 120,
-   RETROK_y              = 121,
-   RETROK_z              = 122,
-   RETROK_DELETE         = 127,
-
-   RETROK_KP0            = 256,
-   RETROK_KP1            = 257,
-   RETROK_KP2            = 258,
-   RETROK_KP3            = 259,
-   RETROK_KP4            = 260,
-   RETROK_KP5            = 261,
-   RETROK_KP6            = 262,
-   RETROK_KP7            = 263,
-   RETROK_KP8            = 264,
-   RETROK_KP9            = 265,
-   RETROK_KP_PERIOD      = 266,
-   RETROK_KP_DIVIDE      = 267,
-   RETROK_KP_MULTIPLY    = 268,
-   RETROK_KP_MINUS       = 269,
-   RETROK_KP_PLUS        = 270,
-   RETROK_KP_ENTER       = 271,
-   RETROK_KP_EQUALS      = 272,
-
-   RETROK_UP             = 273,
-   RETROK_DOWN           = 274,
-   RETROK_RIGHT          = 275,
-   RETROK_LEFT           = 276,
-   RETROK_INSERT         = 277,
-   RETROK_HOME           = 278,
-   RETROK_END            = 279,
-   RETROK_PAGEUP         = 280,
-   RETROK_PAGEDOWN       = 281,
-
-   RETROK_F1             = 282,
-   RETROK_F2             = 283,
-   RETROK_F3             = 284,
-   RETROK_F4             = 285,
-   RETROK_F5             = 286,
-   RETROK_F6             = 287,
-   RETROK_F7             = 288,
-   RETROK_F8             = 289,
-   RETROK_F9             = 290,
-   RETROK_F10            = 291,
-   RETROK_F11            = 292,
-   RETROK_F12            = 293,
-   RETROK_F13            = 294,
-   RETROK_F14            = 295,
-   RETROK_F15            = 296,
-
-   RETROK_NUMLOCK        = 300,
-   RETROK_CAPSLOCK       = 301,
-   RETROK_SCROLLOCK      = 302,
-   RETROK_RSHIFT         = 303,
-   RETROK_LSHIFT         = 304,
-   RETROK_RCTRL          = 305,
-   RETROK_LCTRL          = 306,
-   RETROK_RALT           = 307,
-   RETROK_LALT           = 308,
-   RETROK_RMETA          = 309,
-   RETROK_LMETA          = 310,
-   RETROK_LSUPER         = 311,
-   RETROK_RSUPER         = 312,
-   RETROK_MODE           = 313,
-   RETROK_COMPOSE        = 314,
-
-   RETROK_HELP           = 315,
-   RETROK_PRINT          = 316,
-   RETROK_SYSREQ         = 317,
-   RETROK_BREAK          = 318,
-   RETROK_MENU           = 319,
-   RETROK_POWER          = 320,
-   RETROK_EURO           = 321,
-   RETROK_UNDO           = 322,
-
-   RETROK_LAST,
-
-   RETROK_DUMMY          = INT_MAX // Ensure sizeof(enum) == sizeof(int)
-};
-
 enum retro_mod
 {
    RETROKMOD_NONE       = 0x0000,
@@ -411,22 +255,11 @@ enum retro_mod
                                            // It is up to the frontend to present this in a usable way.
                                            // The array is terminated by retro_input_descriptor::description being set to NULL.
                                            // This function can be called at any time, but it is recommended to call it as early as possible.
-#define RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK 12
-                                           // const struct retro_keyboard_callback * --
-                                           // Sets a callback function used to notify core about keyboard events.
-                                           //
 #define RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE 13
                                            // const struct retro_disk_control_callback * --
                                            // Sets an interface which frontend can use to eject and insert disk images.
                                            // This is used for games which consist of multiple images and must be manually
                                            // swapped out by the user (e.g. PSX).
-#define RETRO_ENVIRONMENT_SET_HW_RENDER 14
-                                           // struct retro_hw_render_callback * --
-                                           // Sets an interface to let a libretro core render with hardware acceleration.
-                                           // Should be called in retro_load_game().
-                                           // If successful, libretro cores will be able to render to a frontend-provided framebuffer.
-                                           // The size of this framebuffer will be at least as large as max_width/max_height provided in get_av_info().
-                                           // If HW rendering is used, pass only RETRO_HW_FRAME_BUFFER_VALID or NULL to retro_video_refresh_t.
 #define RETRO_ENVIRONMENT_GET_VARIABLE 15
                                            // struct retro_variable * --
                                            // Interface to acquire user-defined information from environment
@@ -508,13 +341,6 @@ enum retro_mod
                                            // Devices which are not handled or recognized always return 0 in retro_input_state_t.
                                            // Example bitmask: caps = (1 << RETRO_DEVICE_JOYPAD) | (1 << RETRO_DEVICE_ANALOG).
                                            // Should only be called in retro_run().
-                                           //
-#define RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE (25 | RETRO_ENVIRONMENT_EXPERIMENTAL)
-                                           // struct retro_sensor_interface * --
-                                           // Gets access to the sensor interface.
-                                           // The purpose of this interface is to allow
-                                           // setting state related to sensors such as polling rate, enabling/disable it entirely, etc.
-                                           // Reading sensor state is done via the normal input_state_callback API.
                                            //
 #define RETRO_ENVIRONMENT_GET_LOG_INTERFACE 27
                                            // struct retro_log_callback * --
@@ -620,20 +446,6 @@ struct retro_log_callback
 // Performance related functions
 //
 // ID values for SIMD CPU features
-#define RETRO_SIMD_SSE      (1 << 0)
-#define RETRO_SIMD_SSE2     (1 << 1)
-#define RETRO_SIMD_VMX      (1 << 2)
-#define RETRO_SIMD_VMX128   (1 << 3)
-#define RETRO_SIMD_AVX      (1 << 4)
-#define RETRO_SIMD_NEON     (1 << 5)
-#define RETRO_SIMD_SSE3     (1 << 6)
-#define RETRO_SIMD_SSSE3    (1 << 7)
-#define RETRO_SIMD_MMX      (1 << 8)
-#define RETRO_SIMD_MMXEXT   (1 << 9)
-#define RETRO_SIMD_SSE4     (1 << 10)
-#define RETRO_SIMD_SSE42    (1 << 11)
-#define RETRO_SIMD_AVX2     (1 << 12)
-#define RETRO_SIMD_VFPU     (1 << 13)
 #define RETRO_SIMD_PS       (1 << 14)
 
 typedef uint64_t retro_perf_tick_t;
@@ -724,15 +536,6 @@ enum retro_sensor_action
 #define RETRO_SENSOR_ACCELEROMETER_X 0
 #define RETRO_SENSOR_ACCELEROMETER_Y 1
 #define RETRO_SENSOR_ACCELEROMETER_Z 2
-
-typedef bool (*retro_set_sensor_state_t)(unsigned port, enum retro_sensor_action action, unsigned rate);
-typedef float (*retro_sensor_get_input_t)(unsigned port, unsigned id);
-struct retro_sensor_interface
-{
-   retro_set_sensor_state_t set_sensor_state;
-   retro_sensor_get_input_t get_sensor_input;
-};
-////
 
 enum retro_camera_buffer
 {
@@ -864,74 +667,6 @@ struct retro_frame_time_callback
 {
    retro_frame_time_callback_t callback;
    retro_usec_t reference; // Represents the time of one frame. It is computed as 1000000 / fps, but the implementation will resolve the rounding to ensure that framestepping, etc is exact.
-};
-
-// Pass this to retro_video_refresh_t if rendering to hardware.
-// Passing NULL to retro_video_refresh_t is still a frame dupe as normal.
-#define RETRO_HW_FRAME_BUFFER_VALID ((void*)-1)
-
-// Invalidates the current HW context.
-// Any GL state is lost, and must not be deinitialized explicitly. If explicit deinitialization is desired by the libretro core,
-// it should implement context_destroy callback.
-// If called, all GPU resources must be reinitialized.
-// Usually called when frontend reinits video driver.
-// Also called first time video driver is initialized, allowing libretro core to init resources.
-typedef void (*retro_hw_context_reset_t)(void);
-// Gets current framebuffer which is to be rendered to. Could change every frame potentially.
-typedef uintptr_t (*retro_hw_get_current_framebuffer_t)(void);
-
-// Get a symbol from HW context.
-typedef void (*retro_proc_address_t)(void);
-typedef retro_proc_address_t (*retro_hw_get_proc_address_t)(const char *sym);
-
-enum retro_hw_context_type
-{
-   RETRO_HW_CONTEXT_NONE = 0,
-   RETRO_HW_CONTEXT_OPENGL, // OpenGL 2.x. Latest version available before 3.x+. Driver can choose to use latest compatibility context.
-   RETRO_HW_CONTEXT_OPENGLES2, // GLES 2.0
-   RETRO_HW_CONTEXT_OPENGL_CORE, // Modern desktop core GL context. Use major/minor fields to set GL version.
-   RETRO_HW_CONTEXT_OPENGLES3, // GLES 3.0
-
-   RETRO_HW_CONTEXT_DUMMY = INT_MAX
-};
-
-struct retro_hw_render_callback
-{
-   enum retro_hw_context_type context_type; // Which API to use. Set by libretro core.
-   retro_hw_context_reset_t context_reset; // Called when a context has been created or when it has been reset.
-   retro_hw_get_current_framebuffer_t get_current_framebuffer; // Set by frontend.
-   retro_hw_get_proc_address_t get_proc_address; // Set by frontend.
-   bool depth; // Set if render buffers should have depth component attached.
-   bool stencil; // Set if stencil buffers should be attached.
-   // If depth and stencil are true, a packed 24/8 buffer will be added. Only attaching stencil is invalid and will be ignored.
-   bool bottom_left_origin; // Use conventional bottom-left origin convention. Is false, standard libretro top-left origin semantics are used.
-   unsigned version_major; // Major version number for core GL context.
-   unsigned version_minor; // Minor version number for core GL context.
-
-   bool cache_context; // If this is true, the frontend will go very far to avoid resetting context in scenarios like toggling fullscreen, etc.
-   // The reset callback might still be called in extreme situations such as if the context is lost beyond recovery.
-   // For optimal stability, set this to false, and allow context to be reset at any time.
-   retro_hw_context_reset_t context_destroy; // A callback to be called before the context is destroyed. Resources can be deinitialized at this step. This can be set to NULL, in which resources will just be destroyed without any notification.
-   bool debug_context; // Creates a debug context.
-};
-
-// Callback type passed in RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK. Called by the frontend in response to keyboard events.
-// down is set if the key is being pressed, or false if it is being released.
-// keycode is the RETROK value of the char.
-// character is the text character of the pressed key. (UTF-32).
-// key_modifiers is a set of RETROKMOD values or'ed together.
-//
-// The pressed/keycode state can be indepedent of the character.
-// It is also possible that multiple characters are generated from a single keypress.
-// Keycode events should be treated separately from character events.
-// However, when possible, the frontend should try to synchronize these.
-// If only a character is posted, keycode should be RETROK_UNKNOWN.
-// Similarily if only a keycode event is generated with no corresponding character, character should be 0.
-typedef void (*retro_keyboard_event_t)(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
-
-struct retro_keyboard_callback
-{
-   retro_keyboard_event_t callback;
 };
 
 // Callbacks for RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE.

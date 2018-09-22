@@ -22,7 +22,7 @@ ELF_TARGET := app_booter.elf
 INCLUDE := -I. -I$(DEVKITPRO)/libogc/include
 LIBDIRS := -L$(DEVKITPRO)/libogc/lib/wii
 
-MACHDEP := -DHW_RVL -DGEKKO -mno-eabi -mno-sdata -mcpu=750
+MACHDEP := -DHW_RVL -mno-eabi -mno-sdata -mcpu=750
 # todo: find out why -Os spits out linker errors
 CFLAGS += -Wall -O2 -ffreestanding -std=gnu99 $(MACHDEP) $(INCLUDE)
 

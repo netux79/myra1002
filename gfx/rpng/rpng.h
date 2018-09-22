@@ -17,8 +17,7 @@
 #define RPNG_H__
 
 #include <stdint.h>
-
-#include "../../boolean.h"
+#include <stdbool.h>
 
 #ifdef HAVE_CONFIG_H
 #include "../../config.h"

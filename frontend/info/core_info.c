@@ -121,11 +121,9 @@ core_info_list_t *core_info_list_new(const char *modules_path)
       fill_pathname_base(info_path_base, contents->elems[i].data, sizeof(info_path_base));
       path_remove_extension(info_path_base);
 
-#ifdef RARCH_CONSOLE
       char *substr = strrchr(info_path_base, '_');
       if (substr)
          *substr = '\0';
-#endif
 
       strlcat(info_path_base, ".info", sizeof(info_path_base));
 

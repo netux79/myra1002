@@ -22,7 +22,7 @@ extern "C" {
 
 #include <stddef.h>
 #include "../general.h"
-#include "../boolean.h"
+#include <stdbool.h>
 
 #ifdef HAVE_CONFIG_H
 #include "../config.h"
@@ -31,10 +31,6 @@ extern "C" {
 // bufs gets a string suitable for Window title, buf_fps for raw FPS only.
 // buf_fps is optional.
 bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps);
-
-#ifdef _WIN32
-void gfx_set_dwm(void);
-#endif
 
 #define SWAPU(a,b) {unsigned t=a;a=b;b=t;}
 

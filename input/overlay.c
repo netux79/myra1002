@@ -19,7 +19,6 @@
 #include "../libretro.h"
 #include "../gfx/image/image.h"
 #include "../conf/config_file.h"
-#include "../compat/posix_string.h"
 #include "input_common.h"
 #include "../file.h"
 #include <stddef.h>
@@ -35,8 +34,7 @@ enum overlay_type
 {
    OVERLAY_TYPE_BUTTONS = 0,
    OVERLAY_TYPE_ANALOG_LEFT,
-   OVERLAY_TYPE_ANALOG_RIGHT,
-   OVERLAY_TYPE_KEYBOARD
+   OVERLAY_TYPE_ANALOG_RIGHT
 };
 
 struct overlay_desc
@@ -246,11 +244,6 @@ static bool input_overlay_load_desc(input_overlay_t *ol, config_file_t *conf, st
       desc->type = OVERLAY_TYPE_ANALOG_LEFT;
    else if (strcmp(key, "analog_right") == 0)
       desc->type = OVERLAY_TYPE_ANALOG_RIGHT;
-   else if (strstr(key, "retrok_") == key)
-   {
-      desc->type = OVERLAY_TYPE_KEYBOARD;
-      desc->key_mask = input_translate_str_to_rk(key + 7);
-   }
    else
    {
       const char *tmp;
@@ -260,14 +253,6 @@ static bool input_overlay_load_desc(input_overlay_t *ol, config_file_t *conf, st
          if (strcmp(tmp, "nul") != 0)
             desc->key_mask |= 1ULL << input_translate_str_to_bind_id(tmp);
       }
-#ifndef RARCH_CONSOLE
-      if (desc->key_mask & (1ULL << RARCH_OVERLAY_NEXT))
-      {
-         char overlay_target_key[64];
-         snprintf(overlay_target_key, sizeof(overlay_target_key), "overlay%u_desc%u_next_target", ol_index, desc_index);
-         config_get_array(conf, overlay_target_key, desc->next_index_name, sizeof(desc->next_index_name));
-      }
-#endif
    }
 
    float width_mod = by_pixel ? (1.0f / width) : 1.0f;
@@ -604,11 +589,7 @@ input_overlay_t *input_overlay_new(const char *overlay)
       goto error;
 
    ol->active = &ol->overlays[0];
-
    input_overlay_load_active(ol);
-#ifndef GEKKO /* don´t want enabled by default when selecting it, it will be enabled at game run time */
-   ol->iface->enable(ol->iface_data, true);
-#endif
    ol->enable = true;
 
    input_overlay_set_alpha_mod(ol, g_settings.input.overlay_opacity);
@@ -628,28 +609,6 @@ void input_overlay_enable(input_overlay_t *ol, bool enable)
    ol->iface->enable(ol->iface_data, enable);
 }
 
-static bool inside_hitbox(const struct overlay_desc *desc, float x, float y)
-{
-   switch (desc->hitbox)
-   {
-      case OVERLAY_HITBOX_RADIAL:
-      {
-         // Ellipsis.
-         float x_dist = (x - desc->x) / desc->range_x_mod;
-         float y_dist = (y - desc->y) / desc->range_y_mod;
-         float sq_dist = x_dist * x_dist + y_dist * y_dist;
-         return sq_dist <= 1.0f;
-      }
-
-      case OVERLAY_HITBOX_RECT:
-         return (fabs(x - desc->x) <= desc->range_x_mod) &&
-            (fabs(y - desc->y) <= desc->range_y_mod);
-
-      default:
-         return false;
-   }
-}
-
 static inline float clamp(float val, float lower, float upper)
 {
    if (val < lower)
@@ -658,140 +617,6 @@ static inline float clamp(float val, float lower, float upper)
       return upper;
    else
       return val;
-}
-
-void input_overlay_poll(input_overlay_t *ol, input_overlay_state_t *out, int16_t norm_x, int16_t norm_y)
-{
-   size_t i;
-   memset(out, 0, sizeof(*out));
-
-   if (!ol->enable)
-   {
-      ol->blocked = false;
-      return;
-   }
-
-   // norm_x and norm_y is in [-0x7fff, 0x7fff] range, like RETRO_DEVICE_POINTER.
-   float x = (float)(norm_x + 0x7fff) / 0xffff;
-   float y = (float)(norm_y + 0x7fff) / 0xffff;
-
-   x -= ol->active->mod_x;
-   y -= ol->active->mod_y;
-   x /= ol->active->mod_w;
-   y /= ol->active->mod_h;
-
-   for (i = 0; i < ol->active->size; i++)
-   {
-      struct overlay_desc *desc = &ol->active->descs[i];
-      if (!inside_hitbox(desc, x, y))
-         continue;
-
-      desc->updated = true;
-
-      if (desc->type == OVERLAY_TYPE_BUTTONS)
-      {
-         uint64_t mask = desc->key_mask;
-         out->buttons |= mask;
-#ifndef RARCH_CONSOLE
-         if (mask & (1ULL << RARCH_OVERLAY_NEXT))
-            ol->next_index = desc->next_index;
-#endif
-      }
-      else if (desc->type == OVERLAY_TYPE_KEYBOARD)
-      {
-         if (desc->key_mask < RETROK_LAST)
-            OVERLAY_SET_KEY(out, desc->key_mask);
-      }
-      else
-      {
-         float x_dist = x - desc->x;
-         float y_dist = y - desc->y;
-         float x_val = x_dist / desc->range_x;
-         float y_val = y_dist / desc->range_y;
-         float x_val_sat = x_val / desc->analog_saturate_pct;
-         float y_val_sat = y_val / desc->analog_saturate_pct;
-
-         unsigned int base = (desc->type == OVERLAY_TYPE_ANALOG_RIGHT) ? 2 : 0;
-         out->analog[base + 0] = clamp(x_val_sat, -1.0f, 1.0f) * 32767.0f;
-         out->analog[base + 1] = clamp(y_val_sat, -1.0f, 1.0f) * 32767.0f;
-      }
-
-      if (desc->movable)
-      {
-         float x_dist = x - desc->x;
-         float y_dist = y - desc->y;
-         desc->delta_x = clamp(x_dist, -desc->range_x, desc->range_x) * ol->active->mod_w;
-         desc->delta_y = clamp(y_dist, -desc->range_y, desc->range_y) * ol->active->mod_h;
-      }
-   }
-
-   if (!out->buttons)
-      ol->blocked = false;
-   else if (ol->blocked)
-      memset(out, 0, sizeof(*out));
-}
-
-static void input_overlay_update_desc_geom(input_overlay_t *ol, struct overlay_desc *desc)
-{
-   if (desc->image.pixels && desc->movable)
-   {
-      ol->iface->vertex_geom(ol->iface_data, desc->image_index,
-            desc->mod_x + desc->delta_x, desc->mod_y + desc->delta_y,
-            desc->mod_w, desc->mod_h);
-
-      desc->delta_x = 0.0f;
-      desc->delta_y = 0.0f;
-   }
-}
-
-void input_overlay_post_poll(input_overlay_t *ol)
-{
-   size_t i;
-
-   input_overlay_set_alpha_mod(ol, g_settings.input.overlay_opacity);
-
-   for (i = 0; i < ol->active->size; i++)
-   {
-      struct overlay_desc *desc = &ol->active->descs[i];
-
-      if (desc->updated)
-      {
-         // If pressed this frame, change the hitbox.
-         desc->range_x_mod = desc->range_x * desc->range_mod;
-         desc->range_y_mod = desc->range_y * desc->range_mod;
-
-         if (desc->image.pixels)
-            ol->iface->set_alpha(ol->iface_data, desc->image_index,
-                  desc->alpha_mod * g_settings.input.overlay_opacity);
-      }
-      else
-      {
-         desc->range_x_mod = desc->range_x;
-         desc->range_y_mod = desc->range_y;
-      }
-
-      input_overlay_update_desc_geom(ol, desc);
-      desc->updated = false;
-   }
-}
-
-void input_overlay_poll_clear(input_overlay_t *ol)
-{
-   size_t i;
-   ol->blocked = false;
-   input_overlay_set_alpha_mod(ol, g_settings.input.overlay_opacity);
-
-   for (i = 0; i < ol->active->size; i++)
-   {
-      struct overlay_desc *desc = &ol->active->descs[i];
-      desc->range_x_mod = desc->range_x;
-      desc->range_y_mod = desc->range_y;
-      desc->updated = false;
-
-      desc->delta_x = 0.0f;
-      desc->delta_y = 0.0f;
-      input_overlay_update_desc_geom(ol, desc);
-   }
 }
 
 void input_overlay_next(input_overlay_t *ol)

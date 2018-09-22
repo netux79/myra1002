@@ -16,20 +16,13 @@
 #include "file.h"
 #include "general.h"
 #include <stdlib.h>
-#include "boolean.h"
+#include <stdbool.h>
 #include "libretro.h"
 #include <string.h>
 #include <time.h>
 #include "dynamic.h"
 #include "compat/strl.h"
-#include "hash.h"
 #include "file_extract.h"
-
-#ifdef _WIN32
-#include <io.h>
-#include <fcntl.h>
-#include <windows.h>
-#endif
 
 static const char *ramtype2str(int type)
 {
@@ -60,11 +53,7 @@ static const char *ramtype2str(int type)
 // Attempt to save valuable RAM data somewhere ...
 static void dump_to_file_desperate(const void *data, size_t size, int type)
 {
-#if defined(_WIN32)
-   const char *base = getenv("APPDATA");
-#else
    const char *base = getenv("HOME");
-#endif
 
    if (!base)
       goto error;

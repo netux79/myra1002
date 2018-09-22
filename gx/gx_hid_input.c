@@ -424,11 +424,8 @@ const input_driver_t input_gx_hid = {
    gx_hid_input_key_pressed,
    gx_hid_input_free_input,
    gx_hid_input_set_keybinds,
-   NULL,
-   NULL,
    gx_hid_input_get_capabilities,
    "usb",
-   NULL,
    gx_hid_input_rumble,
    gx_hid_input_get_joypad_driver,
 };

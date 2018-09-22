@@ -18,20 +18,15 @@
 #define __DRIVER__H
 
 #include <sys/types.h>
-#include "boolean.h"
+#include <stdbool.h>
 #include "libretro_private.h"
 #include <stdlib.h>
 #include <stdint.h>
-#include "gfx/scaler/scaler.h"
 #include "gfx/image/image.h"
 #include "input/overlay.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#ifdef HAVE_COMMAND
-#include "command.h"
 #endif
 
 #ifdef HAVE_SCALERS_BUILTIN
@@ -96,13 +91,6 @@ enum // RetroArch specific bind IDs.
    RARCH_DISK_EJECT_TOGGLE,
    RARCH_DISK_NEXT,
    RARCH_QUICK_SWAP,
-#ifndef RARCH_CONSOLE
-   RARCH_FULLSCREEN_TOGGLE_KEY,
-   RARCH_SHADER_NEXT,
-   RARCH_SHADER_PREV,
-   RARCH_OVERLAY_NEXT,   
-   RARCH_GRAB_MOUSE_TOGGLE,
-#endif
 #ifdef HAVE_MENU
    RARCH_MENU_TOGGLE,
 #endif
@@ -110,7 +98,6 @@ enum // RetroArch specific bind IDs.
    RARCH_BIND_LIST_END_NULL
 };
 
-#ifdef RARCH_CONSOLE
 enum // Console specific menu bind IDs.
 {
    CONSOLE_MENU_FIRST      = 61,
@@ -133,14 +120,12 @@ enum // Console specific menu bind IDs.
    CONSOLE_MENU_HOME       = 77,
    CONSOLE_MENU_LAST       = CONSOLE_MENU_HOME,
 };
-#endif
 
 struct retro_keybind
 {
    bool valid;
    unsigned id;
    const char *desc;
-   enum retro_key key;
 
    // PC only uses lower 16-bits.
    // Full 64-bit can be used for port-specific purposes, like simplifying multiple binds, etc.
@@ -161,25 +146,8 @@ struct platform_bind
    char desc[64];
 };
 
-enum rarch_shader_type
-{
-   RARCH_SHADER_CG,
-   RARCH_SHADER_HLSL,
-   RARCH_SHADER_GLSL,
-   RARCH_SHADER_NONE
-};
-
-#if defined(HAVE_OPENGLES2)
-#define DEFAULT_SHADER_TYPE RARCH_SHADER_GLSL
-#else
-#define DEFAULT_SHADER_TYPE RARCH_SHADER_NONE
-#endif
-
 typedef struct video_info
 {
-   unsigned width;
-   unsigned height;
-   bool fullscreen;
    bool vsync;
    bool force_aspect;
    bool smooth;
@@ -193,7 +161,7 @@ typedef struct audio_driver
    ssize_t (*write)(void *data, const void *buf, size_t size);
    bool (*stop)(void *data);
    bool (*start)(void *data);
-   void (*set_nonblock_state)(void *data, bool toggle); // Should we care about blocking in audio thread? Fast forwarding.
+   void (*set_nonblock_state)(void *data, bool toggle);
    void (*free)(void *data);
    bool (*use_float)(void *data); // Defines if driver will take standard floating point samples, or int16_t samples.
    const char *ident;
@@ -228,9 +196,7 @@ typedef struct audio_driver
 
 enum input_devices
 {
-#if defined(GEKKO)
    DEVICE_GXPAD = 1,
-#endif
    DEVICE_LAST
 };
 
@@ -263,12 +229,8 @@ typedef struct input_driver
    bool (*key_pressed)(void *data, int key);
    void (*free)(void *data);
    void (*set_keybinds)(void *data, unsigned device, unsigned port, unsigned id, unsigned keybind_action);
-   bool (*set_sensor_state)(void *data, unsigned port, enum retro_sensor_action action, unsigned rate);
-   float (*get_sensor_input)(void *data, unsigned port, unsigned id);
    uint64_t (*get_capabilities)(void *data);
    const char *ident;
-
-   void (*grab_mouse)(void *data, bool state);
    bool (*set_rumble)(void *data, unsigned port, enum retro_rumble_effect effect, uint16_t state);
    const rarch_joypad_driver_t *(*get_joypad_driver)(void *data);
 } input_driver_t;
@@ -292,10 +254,6 @@ typedef struct video_overlay_interface
 typedef struct video_poke_interface
 {
    void (*set_filtering)(void *data, unsigned index, bool smooth);
-#ifdef HAVE_FBO
-   uintptr_t (*get_current_framebuffer)(void *data);
-   retro_proc_address_t (*get_proc_address)(void *data, const char *sym);
-#endif
    void (*set_aspect_ratio)(void *data, unsigned aspectratio_index);
    void (*apply_state_changes)(void *data);
 
@@ -303,16 +261,10 @@ typedef struct video_poke_interface
    void (*set_texture_frame)(void *data, const void *frame, bool rgb32, unsigned width, unsigned height, float alpha); // Update texture.
    void (*set_texture_enable)(void *data, bool enable, bool full_screen); // Enable/disable rendering.
 #endif
-   void (*set_osd_msg)(void *data, const char *msg, void *userdata);
-
-   void (*show_mouse)(void *data, bool state);
-   void (*grab_mouse_toggle)(void *data);
-#ifdef GEKKO
    void (*update_screen_config)(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation);
    void (*get_resolution_size)(unsigned res_index, unsigned *width, unsigned *height);
    void (*set_refresh_rate)(void *data, unsigned res_index);
    void (*match_resolution_auto)(unsigned fbWidth, unsigned fbLines);
-#endif
 } video_poke_interface_t;
 
 typedef struct video_driver
@@ -322,30 +274,15 @@ typedef struct video_driver
    // The video init might preinitialize an input driver to override the settings in case the video driver relies on input driver for event handling, e.g.
    bool (*frame)(void *data, const void *frame, unsigned width, unsigned height, unsigned pitch, const char *msg); // msg is for showing a message on the screen along with the video frame.
    void (*set_nonblock_state)(void *data, bool toggle); // Should we care about syncing to vblank? Fast forwarding.
-   bool (*alive)(void *data); // Is the window still active?
-   bool (*focus)(void *data); // Does the window have focus?
-   bool (*set_shader)(void *data, enum rarch_shader_type type, const char *path); // Sets shader. Might not be implemented. Will be moved to poke_interface later.
    void (*free)(void *data);
    const char *ident;
-
    void (*set_rotation)(void *data, unsigned rotation);
    void (*viewport_info)(void *data, struct rarch_viewport *vp);
-
-   // Reads out in BGR byte order (24bpp).
-   bool (*read_viewport)(void *data, uint8_t *buffer);
-
 #ifdef HAVE_OVERLAY
    void (*overlay_interface)(void *data, const video_overlay_interface_t **iface);
 #endif
    void (*poke_interface)(void *data, const video_poke_interface_t **iface);
 } video_driver_t;
-
-enum rarch_display_type
-{
-   RARCH_DISPLAY_NONE = 0, // Non-bindable types like consoles, KMS, VideoCore, etc.
-   RARCH_DISPLAY_X11, // video_display => Display*, video_window => Window
-   RARCH_DISPLAY_WIN32, // video_display => N/A, video_window => HWND
-};
 
 typedef struct driver
 {
@@ -356,14 +293,7 @@ typedef struct driver
    void *video_data;
    void *input_data;
 
-   bool threaded_video;
-
-   // If set during context deinit, the driver should keep
-   // graphics context alive to avoid having to reset all context state.
-   bool video_cache_context;
-   bool video_cache_context_ack; // Set to true by driver if context caching succeeded.
-
-   // Set if the respective handles are owned by RetroArch driver core.
+  // Set if the respective handles are owned by RetroArch driver core.
    // Consoles upper logic will generally intialize the drivers before
    // the driver core initializes. It will then be up to upper logic
    // to finally free() up the driver handles.
@@ -371,38 +301,12 @@ typedef struct driver
    // these calls should be seen as "reinit() + ref_count++" and "ref_count--"
    // respectively.
    bool video_input_locked;
-
-#ifdef HAVE_COMMAND
-   rarch_cmd_t *command;
-#endif
-   bool stdin_claimed;
    bool block_hotkey;
    bool block_input;
    bool nonblock_state;
 
-   // Opaque handles to currently running window.
-   // Used by e.g. input drivers which bind to a window.
-   // Drivers are responsible for setting these if an input driver
-   // could potentially make use of this.
-   uintptr_t video_display;
-   uintptr_t video_window;
-   enum rarch_display_type display_type;
-
-   // Used for 15-bit -> 16-bit conversions that take place before being passed to video driver.
-   struct scaler_ctx scaler;
-   void *scaler_out;
-
-   // Graphics driver requires RGBA byte order data (ABGR on little-endian) for 32-bit.
-   // This takes effect for overlay and shader cores that wants to load data into graphics driver.
-   // Kinda hackish to place it here, it is only used for GLES.
-   // TODO: Refactor this better.
-   bool gfx_use_rgba;
-
 #ifdef HAVE_OVERLAY
    input_overlay_t *overlay;
-#ifndef RARCH_CONSOLE
-   input_overlay_state_t overlay_state;
-#endif
 #endif
 
    // Interface for "poking".
@@ -436,15 +340,8 @@ void find_next_resampler_driver(void);
 void driver_set_monitor_refresh_rate(float hz);
 void driver_set_nonblock_state(bool nonblock);
 
-// Used by RETRO_ENVIRONMENT_SET_HW_RENDER.
-uintptr_t driver_get_current_framebuffer(void);
-retro_proc_address_t driver_get_proc_address(const char *sym);
-
 // Used by RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE
 bool driver_set_rumble_state(unsigned port, enum retro_rumble_effect effect, uint16_t strength);
-// Used by RETRO_ENVIRONMENT_GET_SENSOR_INTERFACE
-bool driver_set_sensor_state(unsigned port, enum retro_sensor_action action, unsigned rate);
-float driver_sensor_get_input(unsigned port, unsigned action);
 
 // Used by RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO
 bool driver_update_system_av_info(const struct retro_system_av_info *info);
@@ -452,35 +349,6 @@ bool driver_update_system_av_info(const struct retro_system_av_info *info);
 extern driver_t driver;
 
 //////////////////////////////////////////////// Backends
-extern const audio_driver_t audio_oss;
-extern const audio_driver_t audio_alsa;
-extern const audio_driver_t audio_alsathread;
-extern const audio_driver_t audio_roar;
-extern const audio_driver_t audio_openal;
-extern const audio_driver_t audio_jack;
-extern const audio_driver_t audio_sdl;
-extern const audio_driver_t audio_xa;
-extern const audio_driver_t audio_pulse;
-extern const audio_driver_t audio_dsound;
-extern const audio_driver_t audio_coreaudio;
-extern const audio_driver_t audio_gx;
-extern const audio_driver_t audio_null;
-extern const video_driver_t video_gl;
-extern const video_driver_t video_d3d;
-extern const video_driver_t video_gx;
-extern const video_driver_t video_xvideo;
-extern const video_driver_t video_sdl;
-extern const video_driver_t video_vg;
-extern const video_driver_t video_null;
-extern const input_driver_t input_sdl;
-extern const input_driver_t input_dinput;
-extern const input_driver_t input_x;
-extern const input_driver_t input_gx;
-extern const input_driver_t input_xinput;
-extern const input_driver_t input_linuxraw;
-extern const input_driver_t input_udev;
-extern const input_driver_t input_null;
-
 #ifdef HAVE_SCALERS_BUILTIN
 extern const softfilter_implementation_t blargg_ntsc_rf_implementation;
 extern const softfilter_implementation_t blargg_ntsc_composite_implementation;
@@ -492,7 +360,7 @@ extern const softfilter_implementation_t supereagle_implementation;
 extern const softfilter_implementation_t supertwoxsai_implementation;
 extern const softfilter_implementation_t hq2x_implementation;
 extern const softfilter_implementation_t scanlines_implementation;
-#ifndef GEKKO
+#ifdef HAVE_ALL_SCALERS
 extern const softfilter_implementation_t lq2x_implementation;
 extern const softfilter_implementation_t twoxbr_implementation;
 extern const softfilter_implementation_t scale2x_implementation;

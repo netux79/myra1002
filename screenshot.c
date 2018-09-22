@@ -17,12 +17,11 @@
 #include "compat/strl.h"
 #include <stdio.h>
 #include <time.h>
-#include "boolean.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include "general.h"
 #include "file.h"
-#include "gfx/scaler/scaler.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -155,48 +154,11 @@ bool screenshot_dump(const char *folder, const void *frame,
    char filename[PATH_MAX];
    char shotname[PATH_MAX];
 
-#ifdef HAVE_ZLIB_DEFLATE
-#define IMG_EXT "png"
-#else
 #define IMG_EXT "bmp"
-#endif
 
    fill_dated_filename(shotname, IMG_EXT, sizeof(shotname));
    fill_pathname_join(filename, folder, shotname, sizeof(filename));
 
-#ifdef HAVE_ZLIB_DEFLATE
-   uint8_t *out_buffer = (uint8_t*)malloc(width * height * 3);
-   if (!out_buffer)
-      return false;
-
-   struct scaler_ctx scaler = {0};
-   scaler.in_width   = width;
-   scaler.in_height  = height;
-   scaler.out_width  = width;
-   scaler.out_height = height;
-   scaler.in_stride  = -pitch;
-   scaler.out_stride = width * 3;
-   scaler.out_fmt = SCALER_FMT_BGR24;
-   scaler.scaler_type = SCALER_TYPE_POINT;
-
-   if (bgr24)
-      scaler.in_fmt = SCALER_FMT_BGR24;
-   else if (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888)
-      scaler.in_fmt = SCALER_FMT_ARGB8888;
-   else
-      scaler.in_fmt = SCALER_FMT_RGB565;
-
-   scaler_ctx_gen_filter(&scaler);
-   scaler_ctx_scale(&scaler, out_buffer, (const uint8_t*)frame + ((int)height - 1) * pitch);
-   scaler_ctx_gen_reset(&scaler);
-
-   RARCH_LOG("Using RPNG for PNG screenshots.\n");
-   bool ret = rpng_save_image_bgr24(filename, out_buffer, width, height, width * 3);
-   if (!ret)
-      RARCH_ERR("Failed to take screenshot.\n");
-   free(out_buffer);
-   return ret;
-#else
    FILE *file = fopen(filename, "wb");
    if (!file)
    {
@@ -213,6 +175,5 @@ bool screenshot_dump(const char *folder, const void *frame,
 
    fclose(file);
    return ret;
-#endif
 }
 

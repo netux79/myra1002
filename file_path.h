@@ -16,7 +16,7 @@
 #ifndef __RARCH_FILE_PATH_H
 #define __RARCH_FILE_PATH_H
 
-#include "boolean.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -84,10 +84,6 @@ void path_basedir(char *path);
 // Assumes that path is a directory. Keeps trailing '/'.
 void path_parent_dir(char *path);
 
-// Turns relative paths into absolute path.
-// If relative, rebases on current working dir.
-void path_resolve_realpath(char *buf, size_t size);
-
 bool path_is_absolute(const char *path);
 
 // Path-name operations.
@@ -138,10 +134,6 @@ void fill_pathname_join(char *out_path, const char *dir, const char *path, size_
 
 void fill_pathname_expand_special(char *out_path, const char *in_path, size_t size);
 void fill_pathname_abbreviate_special(char *out_path, const char *in_path, size_t size);
-
-#ifndef RARCH_CONSOLE
-void fill_pathname_application_path(char *buf, size_t size);
-#endif
 
 #ifdef __cplusplus
 }

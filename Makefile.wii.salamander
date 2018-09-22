@@ -26,7 +26,7 @@ ELF_TARGET := retroarch-salamander_wii.elf
 INCLUDE := -I. -I$(DEVKITPRO)/libogc/include
 LIBDIRS := -L$(DEVKITPRO)/libogc/lib/wii -L.
 
-MACHDEP := -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float
+MACHDEP := -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float
 CFLAGS += -Wall -std=gnu99 $(MACHDEP) $(INCLUDE)
 LDFLAGS := $(MACHDEP) -Wl,-Map,$(notdir $(ELF_TARGET)).map
 LIBS := -lfat -lwiiuse -logc -lbte
@@ -39,7 +39,7 @@ ifeq ($(HAVE_FILE_LOGGER), 1)
 CFLAGS		+= -DHAVE_FILE_LOGGER
 endif
 
-CFLAGS += -std=gnu99 -DIS_SALAMANDER -DRARCH_CONSOLE -DHAVE_RARCH_EXEC -DGEKKO -Wno-char-subscripts 
+CFLAGS += -std=gnu99 -DIS_SALAMANDER -DHAVE_RARCH_EXEC -Wno-char-subscripts 
 
 ifeq ($(DEBUG), 1)
    CFLAGS += -O0 -g

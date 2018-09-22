@@ -30,8 +30,6 @@
 #include "../../file_ext.h"
 #include "../../input/input_common.h"
 
-#include "../../compat/posix_string.h"
-
 rgui_handle_t *rgui;
 const menu_driver_t *menugui_driver;
 
@@ -41,194 +39,28 @@ static void menu_update_system_info(void *data, bool *load_no_rom)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
 
-#ifdef HAVE_DYNAMIC
-   libretro_free_system_info(&rgui->info);
-   if (!path_is_directory(g_settings.libretro))
+   // Keep track of info for the currently selected core.
+   if (rgui->core_info)
    {
-      libretro_get_system_info(g_settings.libretro, &rgui->info, load_no_rom);
-#endif
-      // Keep track of info for the currently selected core.
-      if (rgui->core_info)
+      if (core_info_list_get_info(rgui->core_info, &rgui->core_info_current, g_settings.libretro))
       {
-         if (core_info_list_get_info(rgui->core_info, &rgui->core_info_current, g_settings.libretro))
-         {
-            const core_info_t *info = &rgui->core_info_current;
+         const core_info_t *info = &rgui->core_info_current;
 
-            RARCH_LOG("[Core Info]:\n");
-            if (info->display_name)
-               RARCH_LOG("  Display Name: %s\n", info->display_name);
-            if (info->supported_extensions)
-               RARCH_LOG("  Supported Extensions: %s\n", info->supported_extensions);
-            if (info->authors)
-               RARCH_LOG("  Authors: %s\n", info->authors);
-            if (info->permissions)
-               RARCH_LOG("  Permissions: %s\n", info->permissions);
-         }
+         RARCH_LOG("[Core Info]:\n");
+         if (info->display_name)
+            RARCH_LOG("  Display Name: %s\n", info->display_name);
+         if (info->supported_extensions)
+            RARCH_LOG("  Supported Extensions: %s\n", info->supported_extensions);
+         if (info->authors)
+            RARCH_LOG("  Authors: %s\n", info->authors);
+         if (info->permissions)
+            RARCH_LOG("  Permissions: %s\n", info->permissions);
       }
-#ifdef HAVE_DYNAMIC
    }
-#endif
 }
 
 //forward decl
 static int menu_iterate_func(void *data, void *video_data, unsigned action);
-
-#ifdef HAVE_SHADER_MANAGER
-void shader_manager_init(void *data)
-{
-   rgui_handle_t *rgui = (rgui_handle_t*)data;
-   memset(&rgui->shader, 0, sizeof(rgui->shader));
-   config_file_t *conf = NULL;
-
-   const char *config_path = NULL;
-   if (*g_extern.specific_config_path)
-      config_path = g_extern.specific_config_path;
-   else if (*g_extern.config_path)
-      config_path = g_extern.config_path;
-
-   // In a multi-config setting, we can't have conflicts on rgui.cgp/rgui.glslp.
-   if (config_path)
-   {
-      fill_pathname_base(rgui->default_glslp, config_path, sizeof(rgui->default_glslp));
-      path_remove_extension(rgui->default_glslp);
-      strlcat(rgui->default_glslp, ".glslp", sizeof(rgui->default_glslp));
-      fill_pathname_base(rgui->default_cgp, config_path, sizeof(rgui->default_cgp));
-      path_remove_extension(rgui->default_cgp);
-      strlcat(rgui->default_cgp, ".cgp", sizeof(rgui->default_cgp));
-   }
-   else
-   {
-      strlcpy(rgui->default_glslp, "rgui.glslp", sizeof(rgui->default_glslp));
-      strlcpy(rgui->default_cgp, "rgui.cgp", sizeof(rgui->default_cgp));
-   }
-
-   char cgp_path[PATH_MAX];
-
-   const char *ext = path_get_extension(g_settings.video.shader_path);
-   if (strcmp(ext, "glslp") == 0 || strcmp(ext, "cgp") == 0)
-   {
-      conf = config_file_new(g_settings.video.shader_path);
-      if (conf)
-      {
-         if (gfx_shader_read_conf_cgp(conf, &rgui->shader))
-            gfx_shader_resolve_relative(&rgui->shader, g_settings.video.shader_path);
-         config_file_free(conf);
-      }
-   }
-   else if (strcmp(ext, "glsl") == 0 || strcmp(ext, "cg") == 0)
-   {
-      strlcpy(rgui->shader.pass[0].source.cg, g_settings.video.shader_path,
-            sizeof(rgui->shader.pass[0].source.cg));
-      rgui->shader.passes = 1;
-   }
-   else
-   {
-      const char *shader_dir = *g_settings.video.shader_dir ?
-         g_settings.video.shader_dir : g_settings.system_directory;
-
-      fill_pathname_join(cgp_path, shader_dir, "rgui.glslp", sizeof(cgp_path));
-      conf = config_file_new(cgp_path);
-
-      if (!conf)
-      {
-         fill_pathname_join(cgp_path, shader_dir, "rgui.cgp", sizeof(cgp_path));
-         conf = config_file_new(cgp_path);
-      }
-
-      if (conf)
-      {
-         if (gfx_shader_read_conf_cgp(conf, &rgui->shader))
-            gfx_shader_resolve_relative(&rgui->shader, cgp_path);
-         config_file_free(conf);
-      }
-   }
-}
-
-void shader_manager_set_preset(struct gfx_shader *shader, enum rarch_shader_type type, const char *path)
-{
-   RARCH_LOG("Setting RGUI shader: %s.\n", path ? path : "N/A (stock)");
-   bool ret = video_set_shader_func(type, path);
-   if (ret)
-   {
-      // Makes sure that we use RGUI CGP shader on driver reinit.
-      // Only do this when the cgp actually works to avoid potential errors.
-      strlcpy(g_settings.video.shader_path, path ? path : "",
-            sizeof(g_settings.video.shader_path));
-      g_settings.video.shader_enable = true;
-
-      if (path && shader)
-      {
-         // Load stored CGP into RGUI menu on success.
-         // Used when a preset is directly loaded.
-         // No point in updating when the CGP was created from RGUI itself.
-         config_file_t *conf = config_file_new(path);
-         if (conf)
-         {
-            gfx_shader_read_conf_cgp(conf, shader);
-            gfx_shader_resolve_relative(shader, path);
-            config_file_free(conf);
-         }
-
-         rgui->need_refresh = true;
-      }
-   }
-   else
-   {
-      RARCH_ERR("Setting RGUI CGP failed.\n");
-      g_settings.video.shader_enable = false;
-   }
-}
-
-void shader_manager_get_str(struct gfx_shader *shader,
-      char *type_str, size_t type_str_size, unsigned type)
-{
-   if (type == RGUI_SETTINGS_SHADER_APPLY)
-      *type_str = '\0';
-   else if (type == RGUI_SETTINGS_SHADER_PASSES)
-      snprintf(type_str, type_str_size, "%u", shader->passes);
-   else
-   {
-      unsigned pass = (type - RGUI_SETTINGS_SHADER_0) / 3;
-      switch ((type - RGUI_SETTINGS_SHADER_0) % 3)
-      {
-         case 0:
-            if (*shader->pass[pass].source.cg)
-               fill_pathname_base(type_str,
-                     shader->pass[pass].source.cg, type_str_size);
-            else
-               strlcpy(type_str, "N/A", type_str_size);
-            break;
-
-         case 1:
-            switch (shader->pass[pass].filter)
-            {
-               case RARCH_FILTER_LINEAR:
-                  strlcpy(type_str, "Linear", type_str_size);
-                  break;
-
-               case RARCH_FILTER_NEAREST:
-                  strlcpy(type_str, "Nearest", type_str_size);
-                  break;
-
-               case RARCH_FILTER_UNSPEC:
-                  strlcpy(type_str, "Don't care", type_str_size);
-                  break;
-            }
-            break;
-
-         case 2:
-         {
-            unsigned scale = shader->pass[pass].fbo.scale_x;
-            if (!scale)
-               strlcpy(type_str, "Don't care", type_str_size);
-            else
-               snprintf(type_str, type_str_size, "%ux", scale);
-            break;
-         }
-      }
-   }
-}
-#endif
 
 void menu_rom_history_push(const char *path,
       const char *core_path,
@@ -252,9 +84,6 @@ void menu_rom_history_push_current(void)
    else
       strlcpy(tmp, g_extern.fullpath, sizeof(tmp));
 
-   if (*tmp)
-      path_resolve_realpath(tmp, sizeof(tmp));
-
    if (g_extern.system.no_game || *tmp)
       menu_rom_history_push(*tmp ? tmp : NULL,
             g_settings.libretro,
@@ -276,12 +105,9 @@ void load_menu_game_prepare(void *video_data)
          msg_queue_push(g_extern.msg_queue, str, 1, 1);
       }
 
-#ifdef RARCH_CONSOLE
       if (g_extern.system.no_game || *g_extern.fullpath)
-#endif
       menu_rom_history_push(*g_extern.fullpath ? g_extern.fullpath : NULL,
-            g_settings.libretro,
-            rgui->info.library_name ? rgui->info.library_name : "");
+            g_settings.libretro, rgui->info.library_name ? rgui->info.library_name : "");
    }
 
 #ifdef HAVE_MENU
@@ -296,25 +122,17 @@ void load_menu_game_prepare(void *video_data)
 
    // Draw frame for loading message
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, MENU_TEXTURE_FULLSCREEN);
+      driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, false);
 
    if (driver.video)
       rarch_render_cached_frame();
 
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, false,
-            MENU_TEXTURE_FULLSCREEN);
+      driver.video_poke->set_texture_enable(video_data, false, false);
 }
 
 bool load_menu_game_new_core(const char* gamepath, const char* corepath)
 {
-#ifdef HAVE_DYNAMIC
-   strlcpy(g_extern.fullpath, gamepath, sizeof(g_extern.fullpath));
-   strlcpy(g_settings.libretro, corepath, sizeof(g_settings.libretro));
-   menu_update_system_info(rgui, &rgui->load_no_rom);
-   g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
-   return true;
-#else
    /* If the core is the one actually loaded, no need 
     * to load it again, just launch the game! */
    if (strcmp(g_settings.libretro, corepath) == 0)
@@ -332,7 +150,6 @@ bool load_menu_game_new_core(const char* gamepath, const char* corepath)
       rarch_environment_cb(RETRO_ENVIRONMENT_EXEC, (void*)gamepath);
       return true;
    }
-#endif
 }
 
 void load_menu_game_history(unsigned game_index)
@@ -375,18 +192,8 @@ static void menu_update_libretro_info(void)
 {
    *rgui->libretro_dir = '\0';
 
-#if defined(RARCH_CONSOLE)
    strlcpy(rgui->libretro_dir, default_paths.core_dir, sizeof(rgui->libretro_dir));
-#else
-   if (path_is_directory(g_settings.libretro))
-      strlcpy(rgui->libretro_dir, g_settings.libretro, sizeof(rgui->libretro_dir));
-   else if (*g_settings.libretro)
-      fill_pathname_basedir(rgui->libretro_dir, g_settings.libretro, sizeof(rgui->libretro_dir));
-#endif
-
-#ifndef HAVE_DYNAMIC
    retro_get_system_info(&rgui->info);
-#endif
 
    memset(&rgui->core_info_current, 0, sizeof(rgui->core_info_current));
    core_info_list_free(rgui->core_info);
@@ -430,9 +237,7 @@ bool load_menu_game(void)
       // Update menu state which depends on config.
       menu_update_libretro_info();
       menu_init_history();
-#ifdef HAVE_SHADER_MANAGER
-      shader_manager_init(rgui);
-#endif
+
       return true;
    }
    else
@@ -474,10 +279,6 @@ void menu_init(void *video_data)
 
    menu_update_libretro_info();
 
-#ifdef HAVE_SHADER_MANAGER
-   shader_manager_init(rgui);
-#endif
-
    menu_init_history();
    rgui->last_time = rarch_get_time_usec();
 }
@@ -486,10 +287,6 @@ void menu_free(void *video_data)
 {
    if (menugui_driver && menugui_driver->free)
       menugui_driver->free(rgui);
-
-#ifdef HAVE_DYNAMIC
-   libretro_free_system_info(&rgui->info);
-#endif
 
    file_list_free(rgui->menu_stack);
    file_list_free(rgui->selection_buf);
@@ -545,16 +342,12 @@ uint64_t menu_input(void)
    unsigned p, i, players;
    uint64_t input_state = 0;
 
-#ifdef RARCH_CONSOLE
    static const struct retro_keybind *binds[MAX_PLAYERS] = { 
     g_settings.input.menu_binds,
     g_settings.input.menu_binds,
     g_settings.input.menu_binds,
     g_settings.input.menu_binds,
 }; /* Make all controllers use the same menu binds */
-#else
-   static const struct retro_keybind *binds[MAX_PLAYERS] = { g_settings.input.binds };
-#endif
    
    /* read all ports or port 1 only */
    players = g_settings.input.menu_all_players_enable ? MAX_PLAYERS : 1;
@@ -562,11 +355,6 @@ uint64_t menu_input(void)
    for (p = 0; p < players; p++)
       for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R; i++)
          input_state |= input_input_state_func(binds, p, RETRO_DEVICE_JOYPAD, 0, i) ? (1ULL << i) : 0;
-
-#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
-   for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R; i++)
-      input_state |= (driver.overlay_state.buttons & (1ULL << i)) ? (1ULL << i) : 0;
-#endif
 
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
    input_state |= input_key_pressed_func(RARCH_QUIT_KEY) ? (1ULL << RARCH_QUIT_KEY) : 0;
@@ -706,9 +494,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
 
    if (type == RGUI_SETTINGS_CORE)
    {
-#if defined(HAVE_DYNAMIC)
-      label = rgui->libretro_dir;
-#elif defined(HAVE_LIBRETRO_MANAGEMENT)
+#ifdef HAVE_LIBRETRO_MANAGEMENT
       label = default_paths.core_dir;
 #else
       label = ""; // Shouldn't happen ...
@@ -797,7 +583,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
    file_list_get_last(rgui->menu_stack, &dir, &menu_type);
 
    if (rgui->need_refresh && !(menu_type == RGUI_FILE_DIRECTORY ||
-            menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_CORE ||
@@ -818,7 +603,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             || menu_type == RGUI_SETTINGS_CONFIG_OPTIONS
             || menu_type == RGUI_SETTINGS_SAVE_OPTIONS
             || menu_type == RGUI_SETTINGS_VIDEO_OPTIONS
-            || menu_type == RGUI_SETTINGS_SHADER_OPTIONS
             || menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS
             || menu_type == RGUI_SETTINGS_BIND_HOTKEYS
             )
@@ -927,7 +711,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
          file_list_get_at_offset(rgui->selection_buf, rgui->selection_ptr, &path, &type);
 
          if (
-               menu_type_is(type) == RGUI_SETTINGS_SHADER_OPTIONS ||
                menu_type_is(type) == RGUI_FILE_DIRECTORY ||
                type == RGUI_SETTINGS_OVERLAY_PRESET ||
                type == RGUI_SETTINGS_CORE ||
@@ -943,28 +726,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
          }
          else
          {
-#ifdef HAVE_SHADER_MANAGER
-            if (menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)
-            {
-               if (menu_type == RGUI_SETTINGS_SHADER_PRESET)
-               {
-                  char shader_path[PATH_MAX];
-                  fill_pathname_join(shader_path, dir, path, sizeof(shader_path));
-                  shader_manager_set_preset(&rgui->shader, gfx_shader_parse_type(shader_path, RARCH_SHADER_NONE),
-                        shader_path);
-               }
-               else
-               {
-                  unsigned pass = (menu_type - RGUI_SETTINGS_SHADER_0) / 3;
-                  fill_pathname_join(rgui->shader.pass[pass].source.cg,
-                        dir, path, sizeof(rgui->shader.pass[pass].source.cg));
-               }
-
-               // Pop stack until we hit shader manager again.
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_SHADER_OPTIONS);
-            }
-            else
-#endif
             if (menu_type == RGUI_SETTINGS_DEFERRED_CORE)
             {
                if (!load_menu_game_new_core(rgui->deferred_path, path))
@@ -974,25 +735,9 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
             }
             else if (menu_type == RGUI_SETTINGS_CORE)
             {
-#if defined(HAVE_DYNAMIC)
-               fill_pathname_join(g_settings.libretro, dir, path, sizeof(g_settings.libretro));
-               menu_update_system_info(rgui, &rgui->load_no_rom);
-
-               // No ROM needed for this core, load game immediately.
-               if (rgui->load_no_rom)
-               {
-                  g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
-                  *g_extern.fullpath = '\0';
-                  rgui->msg_force = true;
-                  ret = -1;
-               }
-
-               // Core selection on non-console just updates directory listing.
-               // Will take affect on new ROM load.
-#elif defined(RARCH_CONSOLE)
                rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)path);
 
-#if defined(GEKKO) && defined(HW_RVL)
+#ifdef HW_RVL
                fill_pathname_join(g_extern.fullpath, default_paths.core_dir,
                      SALAMANDER_FILE, sizeof(g_extern.fullpath));
 #else
@@ -1001,7 +746,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
                g_extern.lifecycle_state |= (1ULL << MODE_EXITSPAWN);
                ret = -1;
-#endif
 
                menu_flush_stack_type(rgui, RGUI_SETTINGS);
             }
@@ -1071,22 +815,10 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                menu_init_core_info(rgui);
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
-#ifdef HAVE_DYNAMIC
-            else if (menu_type == RGUI_CONFIG_DIR_PATH)
-            {
-               strlcpy(g_settings.rgui_config_directory, dir, sizeof(g_settings.rgui_config_directory));
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
-            }
-#endif
             else if (menu_type == RGUI_LIBRETRO_INFO_DIR_PATH)
             {
                strlcpy(g_settings.libretro_info_path, dir, sizeof(g_settings.libretro_info_path));
                menu_init_core_info(rgui);
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
-            }
-            else if (menu_type == RGUI_SHADER_DIR_PATH)
-            {
-               strlcpy(g_settings.video.shader_dir, dir, sizeof(g_settings.video.shader_dir));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
             else if (menu_type == RGUI_SYSTEM_DIR_PATH)
@@ -1151,7 +883,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
    file_list_get_last(rgui->menu_stack, &dir, &menu_type);
 
    if (rgui->need_refresh && (menu_type == RGUI_FILE_DIRECTORY ||
-            menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS ||
             menu_type_is(menu_type) == RGUI_FILE_DIRECTORY ||
             menu_type == RGUI_SETTINGS_OVERLAY_PRESET ||
             menu_type == RGUI_SETTINGS_DEFERRED_CORE ||
@@ -1179,14 +910,6 @@ bool menu_iterate(void *video_data)
 
    rarch_check_block_hotkey();
    rarch_input_poll();
-
-#if defined (HAVE_OVERLAY) && !defined (RARCH_CONSOLE)
-   rarch_check_overlay();
-#endif
-
-#ifndef RARCH_CONSOLE
-   rarch_check_fullscreen();
-#endif
 
    input_state = menu_input();
 
@@ -1250,7 +973,7 @@ bool menu_iterate(void *video_data)
          return false;
 
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, MENU_TEXTURE_FULLSCREEN);
+      driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, false);
 
    rarch_render_cached_frame();
 
@@ -1264,8 +987,7 @@ bool menu_iterate(void *video_data)
    rgui->last_time = rarch_get_time_usec();
 
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, false,
-            MENU_TEXTURE_FULLSCREEN);
+      driver.video_poke->set_texture_enable(video_data, false, false);
 
    if (menugui_driver && menugui_driver->input_postprocess)
       if (menugui_driver->input_postprocess(rgui, rgui->old_input_state))
@@ -1454,37 +1176,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
    char tmp[256];
    switch (menu_type)
    {
-#ifdef HAVE_SHADER_MANAGER
-      case RGUI_SETTINGS_SHADER_OPTIONS:
-         file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Apply Shader Changes",
-               RGUI_SETTINGS_SHADER_APPLY, 0);
-         file_list_push(rgui->selection_buf, "Default Filter", RGUI_SETTINGS_SHADER_FILTER, 0);
-         file_list_push(rgui->selection_buf, "Load Shader Preset",
-               RGUI_SETTINGS_SHADER_PRESET, 0);
-         file_list_push(rgui->selection_buf, "Save As Shader Preset",
-               RGUI_SETTINGS_SHADER_PRESET_SAVE, 0);
-         file_list_push(rgui->selection_buf, "Shader Passes",
-               RGUI_SETTINGS_SHADER_PASSES, 0);
-
-         for (i = 0; i < rgui->shader.passes; i++)
-         {
-            char buf[64];
-
-            snprintf(buf, sizeof(buf), "Shader #%u", i);
-            file_list_push(rgui->selection_buf, buf,
-                  RGUI_SETTINGS_SHADER_0 + 3 * i, 0);
-
-            snprintf(buf, sizeof(buf), "Shader #%u Filter", i);
-            file_list_push(rgui->selection_buf, buf,
-                  RGUI_SETTINGS_SHADER_0_FILTER + 3 * i, 0);
-
-            snprintf(buf, sizeof(buf), "Shader #%u Scale", i);
-            file_list_push(rgui->selection_buf, buf,
-                  RGUI_SETTINGS_SHADER_0_SCALE + 3 * i, 0);
-         }
-         break;
-#endif
       case RGUI_SETTINGS_CONFIG_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Save Config On Exit [G]", RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT, 0);
@@ -1496,32 +1187,23 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Rewind", RGUI_SETTINGS_REWIND_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Rewind Granularity", RGUI_SETTINGS_REWIND_GRANULARITY, 0);
          file_list_push(rgui->selection_buf, "SRAM Block Overwrite", RGUI_SETTINGS_BLOCK_SRAM_OVERWRITE, 0);
-#if defined(HAVE_THREADS)
-         file_list_push(rgui->selection_buf, "SRAM Autosave", RGUI_SETTINGS_SRAM_AUTOSAVE, 0);
-#endif
          file_list_push(rgui->selection_buf, "Savestate Autosave On Exit", RGUI_SETTINGS_SAVESTATE_AUTO_SAVE, 0);
-         file_list_push(rgui->selection_buf, "Savestate Autoload", RGUI_SETTINGS_SAVESTATE_AUTO_LOAD, 0);
+         file_list_push(rgui->selection_buf, "Savestate Autoload", RGUI_SETTINGS_SAVESTATE_AUTO_LOAD, 0); 
       break;
       case RGUI_SETTINGS_VIDEO_OPTIONS:
          file_list_clear(rgui->selection_buf);
-#ifdef GEKKO
          file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
          if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO)
             file_list_push(rgui->selection_buf, "Interlaced Resolution Only", RGUI_SETTINGS_VIDEO_INTERLACED_ONLY, 0);
          file_list_push(rgui->selection_buf, "Screen Position X", RGUI_SETTINGS_VIDEO_SCREEN_POS_X, 0);
          file_list_push(rgui->selection_buf, "Screen Position Y", RGUI_SETTINGS_VIDEO_SCREEN_POS_Y, 0);
-#endif
          file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_DEBUG_TEXT, 0);
 #ifdef HAVE_SCALERS_BUILTIN
          file_list_push(rgui->selection_buf, "Soft Scaling", RGUI_SETTINGS_VIDEO_SOFT_SCALER, 0);
 #endif
-#ifndef HAVE_SHADER_MANAGER
          file_list_push(rgui->selection_buf, "Bilinear Filtering", RGUI_SETTINGS_VIDEO_BILINEAR, 0);
-#endif
 #ifdef HW_RVL
          file_list_push(rgui->selection_buf, "VI Trap filtering", RGUI_SETTINGS_VIDEO_VITRAP_FILTER, 0);
-#endif
-#if defined(HW_RVL)
          file_list_push(rgui->selection_buf, "Gamma", RGUI_SETTINGS_VIDEO_GAMMA, 0);
 #endif
          file_list_push(rgui->selection_buf, "VSync", RGUI_SETTINGS_VIDEO_VSYNC, 0);
@@ -1537,24 +1219,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
          file_list_push(rgui->selection_buf, "Force Aspect", RGUI_SETTINGS_VIDEO_FORCE_ASPECT, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
-#ifndef GEKKO
-         file_list_push(rgui->selection_buf, "VSync Swap Interval", RGUI_SETTINGS_VIDEO_SWAP_INTERVAL, 0);
-#if defined(HAVE_THREADS)
-         file_list_push(rgui->selection_buf, "Threaded Driver [G]", RGUI_SETTINGS_VIDEO_THREADED, 0);
-#endif
-#endif
-#ifndef RARCH_CONSOLE
-         file_list_push(rgui->selection_buf, "Toggle Fullscreen [G]", RGUI_SETTINGS_TOGGLE_FULLSCREEN, 0);
-         file_list_push(rgui->selection_buf, "Use Windowed Fullscreen [G]", RGUI_SETTINGS_WINDOWED_FULLSCREEN, 0);
-         file_list_push(rgui->selection_buf, "Windowed Scale (X)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_X, 0);
-         file_list_push(rgui->selection_buf, "Windowed Scale (Y)", RGUI_SETTINGS_VIDEO_WINDOW_SCALE_Y, 0);
-         file_list_push(rgui->selection_buf, "Window Compositing [G]", RGUI_SETTINGS_WINDOW_COMPOSITING_ENABLE, 0);
-         file_list_push(rgui->selection_buf, "Window Unfocus Pause [G]", RGUI_SETTINGS_PAUSE_IF_WINDOW_FOCUS_LOST, 0);
-         file_list_push(rgui->selection_buf, "Screen Refresh Rate", RGUI_SETTINGS_VIDEO_REFRESH_RATE, 0);         
-#endif
-#if defined(HAVE_SCREENSHOTS) && !defined(GEKKO)
-         file_list_push(rgui->selection_buf, "GPU Screenshots [G]", RGUI_SETTINGS_GPU_SCREENSHOT, 0);
-#endif
          break;
       case RGUI_SETTINGS_CORE_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -1644,9 +1308,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
       case RGUI_SETTINGS_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Video", RGUI_SETTINGS_VIDEO_OPTIONS, 0);
-#ifdef HAVE_SHADER_MANAGER
-         file_list_push(rgui->selection_buf, "Shaders", RGUI_SETTINGS_SHADER_OPTIONS, 0);
-#endif
          file_list_push(rgui->selection_buf, "Input", RGUI_SETTINGS_INPUT_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Audio", RGUI_SETTINGS_AUDIO_OPTIONS, 0);
 #ifdef HAVE_OVERLAY
@@ -1660,9 +1321,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
             if (g_extern.system.disk_control.get_num_images)
                file_list_push(rgui->selection_buf, "Disks", RGUI_SETTINGS_DISK_OPTIONS, 0);
          }
-#ifndef RARCH_CONSOLE
-         file_list_push(rgui->selection_buf, "Drivers", RGUI_SETTINGS_DRIVERS, 0);
-#endif
          file_list_push(rgui->selection_buf, "Help", RGUI_HELP_SCREEN, 0);
          break;
       case RGUI_SETTINGS_DISK_OPTIONS:
@@ -1679,14 +1337,8 @@ void menu_populate_entries(void *data, unsigned menu_type)
       case RGUI_SETTINGS_PATH_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Games Path [G]", RGUI_BROWSER_DIR_PATH, 0);
-#ifdef HAVE_DYNAMIC
-         file_list_push(rgui->selection_buf, "Config Path [G]", RGUI_CONFIG_DIR_PATH, 0);
-#endif
          file_list_push(rgui->selection_buf, "Core Path [G]", RGUI_LIBRETRO_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Core Info Path [G]", RGUI_LIBRETRO_INFO_DIR_PATH, 0);
-#ifdef HAVE_SHADER_MANAGER
-         file_list_push(rgui->selection_buf, "Shader Path [G]", RGUI_SHADER_DIR_PATH, 0);
-#endif
          file_list_push(rgui->selection_buf, "Savestate Path [G]", RGUI_SAVESTATE_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Savefile Path [G]", RGUI_SAVEFILE_DIR_PATH, 0);
 #ifdef HAVE_OVERLAY
@@ -1699,9 +1351,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
          file_list_clear(rgui->selection_buf);
-#ifdef RARCH_CONSOLE
          file_list_push(rgui->selection_buf, "Input Type (Restart) [G]", RGUI_SETTINGS_DRIVER_INPUT, 0);
-#endif
          file_list_push(rgui->selection_buf, "All P. Control Menu [G]", RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTOCONF_BUTTONS, 0);
          file_list_push(rgui->selection_buf, "Quick Swap", RGUI_SETTINGS_QUICK_SWAP_PLAYERS, 0);
@@ -1736,7 +1386,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Video Driver [G]", RGUI_SETTINGS_DRIVER_VIDEO, 0);
          file_list_push(rgui->selection_buf, "Audio Driver [G]", RGUI_SETTINGS_DRIVER_AUDIO, 0);
-         file_list_push(rgui->selection_buf, "Audio Device [G]", RGUI_SETTINGS_DRIVER_AUDIO_DEVICE, 0);
          file_list_push(rgui->selection_buf, "Audio Resampler [G]", RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER, 0);
          file_list_push(rgui->selection_buf, "Input Driver [G]", RGUI_SETTINGS_DRIVER_INPUT, 0);
          break;
@@ -1770,14 +1419,12 @@ void menu_populate_entries(void *data, unsigned menu_type)
             file_list_push(rgui->selection_buf, load_game_core_msg, RGUI_SETTINGS_OPEN_FILEBROWSER, 0);
          }
 
-#if defined(HAVE_DYNAMIC) || defined(HAVE_LIBRETRO_MANAGEMENT)
+#if defined(HAVE_LIBRETRO_MANAGEMENT)
          file_list_push(rgui->selection_buf, "Select Core", RGUI_SETTINGS_CORE, 0);
 #endif
          file_list_push(rgui->selection_buf, "Core Information", RGUI_SETTINGS_CORE_INFO, 0);
          file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
-#ifndef HAVE_DYNAMIC
          file_list_push(rgui->selection_buf, "Restart RetroArch", RGUI_SETTINGS_RESTART_EMULATOR, 0);
-#endif
          file_list_push(rgui->selection_buf, "Quit RetroArch", RGUI_SETTINGS_QUIT_RARCH, 0);
          break;
    }
@@ -1838,28 +1485,15 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
 
             if (!*dir)
             {
-#if defined(GEKKO)
 #ifdef HW_RVL
                file_list_push(rgui->selection_buf, "sd:/", menu_type, 0);
                file_list_push(rgui->selection_buf, "usb:/", menu_type, 0);
 #endif
                file_list_push(rgui->selection_buf, "carda:/", menu_type, 0);
                file_list_push(rgui->selection_buf, "cardb:/", menu_type, 0);
-#elif defined(_WIN32)
-               unsigned drives = GetLogicalDrives();
-               char drive[] = " :\\";
-               for (i = 0; i < 32; i++)
-               {
-                  drive[0] = 'A' + i;
-                  if (drives & (1 << i))
-                     file_list_push(rgui->selection_buf, drive, menu_type, 0);
-               }
-#else
-               file_list_push(rgui->selection_buf, "/", menu_type, 0);
-#endif
                return;
             }
-#if defined(GEKKO) && defined(HW_RVL)
+#ifdef HW_RVL
             LWP_MutexLock(gx_device_mutex);
             int dev = gx_get_device_from_path(dir);
 
@@ -1873,10 +1507,6 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
             char ext_buf[1024];
             if (menu_type == RGUI_SETTINGS_CORE)
                exts = EXT_EXECUTABLES;
-            else if (menu_type == RGUI_SETTINGS_SHADER_PRESET)
-               exts = "cgp|glslp";
-            else if (menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)
-               exts = "cg|glsl";
             else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
                exts = "cfg";
             else if (menu_type_is(menu_type) == RGUI_FILE_DIRECTORY)
@@ -1989,4 +1619,5 @@ void menu_init_core_info(void *data)
    rgui->core_info = NULL;
    if (*rgui->libretro_dir)
       rgui->core_info = core_info_list_new(rgui->libretro_dir);
+   menu_update_system_info(rgui, NULL);
 }

@@ -17,22 +17,12 @@
 #ifndef _FILE_EXT_H
 #define _FILE_EXT_H
 
-#ifdef HAVE_DYNAMIC
-#ifdef _WIN32
-#define EXT_EXECUTABLES "dll"
-#else
-#define EXT_EXECUTABLES "so"
-#endif
-#else
-#if defined(GEKKO)
 #define EXT_EXECUTABLES "dol|DOL"
 #define SALAMANDER_FILE "boot.dol"
 #ifdef HW_RVL
 #define PLATFORM_NAME   "wii"
 #else
 #define PLATFORM_NAME   "ngc"
-#endif
-#endif
 #endif
 
 #endif

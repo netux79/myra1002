@@ -28,17 +28,11 @@
 #include "../../config.def.h"
 #include "../../file.h"
 #include "../../dynamic.h"
-#include "../../compat/posix_string.h"
-#include "../../gfx/shader_parse.h"
 #include "../../performance.h"
 #include "../../input/input_common.h"
 
 #include "../../screenshot.h"
 #include "../../gfx/fonts/bitmap.h"
-
-#if defined(HAVE_CG) || defined(HAVE_GLSL) || defined(HAVE_HLSL)
-#define HAVE_SHADER_MANAGER
-#endif
 
 static uint16_t menu_framebuf[400 * 240];
 
@@ -70,26 +64,12 @@ static void rgui_copy_glyph(uint8_t *glyph, const uint8_t *buf)
 
 static uint16_t gray_filler(unsigned x, unsigned y)
 {
-#ifdef GEKKO
    return 0x7210; /* Maroon */
-#else
-   x >>= 1;
-   y >>= 1;
-   unsigned col = ((x + y) & 1) + 1;
-   return (col << 13) | (col << 9) | (col << 5) | (12 << 0);
-#endif
 }
 
 static uint16_t green_filler(unsigned x, unsigned y)
 {
-#ifdef GEKKO
    return 0x7040; /* Light green */
-#else
-   x >>= 1;
-   y >>= 1;
-   unsigned col = ((x + y) & 1) + 1;
-   return (col << 13) | (col << 10) | (col << 5) | (12 << 0);
-#endif
 }
 
 static void fill_rect(uint16_t *buf, unsigned pitch,
@@ -118,14 +98,7 @@ static void blit_line(rgui_handle_t *rgui,
             bool col = (rgui->font[FONT_OFFSET((unsigned char)*message) + offset] & rem);
 
             if (col)
-            {
-               rgui->frame_buf[(y + j) * (rgui->frame_buf_pitch >> 1) + (x + i)] = green ?
-#ifdef GEKKO
-               0x70C0 : 0x7FFF;
-#else
-               (15 << 0) | (7 << 4) | (15 << 8) | (7 << 12) : 0xFFFF;
-#endif
-            }
+               rgui->frame_buf[(y + j) * (rgui->frame_buf_pitch >> 1) + (x + i)] = green ? 0x70C0 : 0x7FFF;
          }
       }
 
@@ -282,10 +255,6 @@ static void rgui_render(void *data, void *video_data)
       strlcpy(title, "SETTINGS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_DRIVERS)
       strlcpy(title, "DRIVER OPTIONS", sizeof(title));
-#ifdef HAVE_SHADER_MANAGER
-   else if (menu_type == RGUI_SETTINGS_SHADER_OPTIONS)
-      strlcpy(title, "SHADER OPTIONS", sizeof(title));
-#endif
    else if (menu_type == RGUI_SETTINGS_CONFIG_OPTIONS)
       strlcpy(title, "CONFIG OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_SAVE_OPTIONS)
@@ -298,10 +267,6 @@ static void rgui_render(void *data, void *video_data)
       strlcpy(title, "CORE SETUP", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CORE_INFO)
       strlcpy(title, "CORE INFO", sizeof(title));
-#ifdef HAVE_SHADER_MANAGER
-   else if (menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)
-      snprintf(title, sizeof(title), "SHADER %s", dir);
-#endif
    else if (menu_type == RGUI_SETTINGS)
       snprintf(title, sizeof(title), "%s | %s ", PACKAGE_VERSION, *g_extern.basename ? path_basename(g_extern.basename) : "No Game Loaded");
    else if (menu_type == RGUI_SETTINGS_OPEN_HISTORY)
@@ -320,8 +285,6 @@ static void rgui_render(void *data, void *video_data)
    else if (menu_type == RGUI_SCREENSHOT_DIR_PATH)
       snprintf(title, sizeof(title), "SCREENSHOT PATH %s", dir);
 #endif
-   else if (menu_type == RGUI_SHADER_DIR_PATH)
-      snprintf(title, sizeof(title), "SHADER PATH %s", dir);
    else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
       snprintf(title, sizeof(title), "SAVESTATE PATH %s", dir);
    else if (menu_type == RGUI_CONFIG_DIR_PATH)
@@ -356,7 +319,7 @@ static void rgui_render(void *data, void *video_data)
    char title_msg[64];
    const char *core_name = rgui->core_info_current.display_name;
    if (!core_name)
-      core_name = g_extern.system.info.library_name;
+      core_name = rgui->info.library_name;
    if (!core_name)
       core_name = "No Core";
 
@@ -393,28 +356,6 @@ static void rgui_render(void *data, void *video_data)
       else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
          w = 24;
 
-#ifdef HAVE_SHADER_MANAGER
-      if (type >= RGUI_SETTINGS_SHADER_FILTER &&
-            type <= RGUI_SETTINGS_SHADER_LAST)
-      {
-         // HACK. Work around that we're using the menu_type as dir type to propagate state correctly.
-         if ((menu_type_is(menu_type) == RGUI_SETTINGS_SHADER_OPTIONS)
-               && (menu_type_is(type) == RGUI_SETTINGS_SHADER_OPTIONS))
-         {
-            type = RGUI_FILE_DIRECTORY;
-            strlcpy(type_str, "(DIR)", sizeof(type_str));
-            w = 5;
-         }
-         else if (type == RGUI_SETTINGS_SHADER_OPTIONS || type == RGUI_SETTINGS_SHADER_PRESET)
-            strlcpy(type_str, "...", sizeof(type_str));
-         else if (type == RGUI_SETTINGS_SHADER_FILTER)
-            snprintf(type_str, sizeof(type_str), "%s",
-                  g_settings.video.smooth ? "Linear" : "Nearest");
-         else
-            shader_manager_get_str(&rgui->shader, type_str, sizeof(type_str), type);
-      }
-      else
-#endif
       // Pretty-print libretro cores from menu.
       if (menu_type == RGUI_SETTINGS_CORE || menu_type == RGUI_SETTINGS_DEFERRED_CORE)
       {
@@ -489,7 +430,6 @@ static void rgui_render(void *data, void *video_data)
       blit_line(rgui, x, y, message, selected);
    }
 
-#ifdef GEKKO
    const char *message_queue;
 
    if (rgui->msg_force)
@@ -501,17 +441,6 @@ static void rgui_render(void *data, void *video_data)
       message_queue = driver.current_msg;
 
    rgui_render_messagebox(rgui, video_data, message_queue);
-#endif
-
-   if (rgui->keyboard.display)
-   {
-      char msg[1024];
-      const char *str = *rgui->keyboard.buffer;
-      if (!str)
-         str = "";
-      snprintf(msg, sizeof(msg), "%s\n%s", rgui->keyboard.label, str);
-      rgui_render_messagebox(rgui, video_data, msg);
-   }
 }
 
 static void *rgui_init(void *video_data)
@@ -563,8 +492,7 @@ static int rgui_input_postprocess(void *data, uint64_t old_state)
    }
    
    /* Check if we need to exit */
-   if ((rgui->trigger_state & (1ULL << RARCH_QUIT_KEY))
-         || !video_alive_func())
+   if (rgui->trigger_state & (1ULL << RARCH_QUIT_KEY))
       return 1;
 
    return 0;

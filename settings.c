@@ -19,7 +19,6 @@
 #include "compat/strl.h"
 #include "config.def.h"
 #include "file.h"
-#include "compat/posix_string.h"
 #include "input/input_common.h"
 
 #ifdef HAVE_CONFIG_H
@@ -35,32 +34,8 @@ const char *config_get_default_audio(void)
 {
    switch (AUDIO_DEFAULT_DRIVER)
    {
-      case AUDIO_OSS:
-         return "oss";
-      case AUDIO_ALSA:
-         return "alsa";
-      case AUDIO_ALSATHREAD:
-         return "alsathread";
-      case AUDIO_ROAR:
-         return "roar";
-      case AUDIO_COREAUDIO:
-         return "coreaudio";
-      case AUDIO_AL:
-         return "openal";
-      case AUDIO_SDL:
-         return "sdl";
-      case AUDIO_DSOUND:
-         return "dsound";
-      case AUDIO_XAUDIO:
-         return "xaudio";
-      case AUDIO_PULSE:
-         return "pulse";
-      case AUDIO_EXT:
-         return "ext";
       case AUDIO_WII:
          return "gx";
-      case AUDIO_NULL:
-         return "null";
       default:
          return NULL;
    }
@@ -70,22 +45,8 @@ const char *config_get_default_video(void)
 {
    switch (VIDEO_DEFAULT_DRIVER)
    {
-      case VIDEO_GL:
-         return "gl";
       case VIDEO_WII:
          return "gx";
-      case VIDEO_D3D9:
-         return "d3d";
-      case VIDEO_XVIDEO:
-         return "xvideo";
-      case VIDEO_SDL:
-         return "sdl";
-      case VIDEO_EXT:
-         return "ext";
-      case VIDEO_VG:
-         return "vg";
-      case VIDEO_NULL:
-         return "null";
       default:
          return NULL;
    }
@@ -95,22 +56,8 @@ const char *config_get_default_input(void)
 {
    switch (INPUT_DEFAULT_DRIVER)
    {
-      case INPUT_SDL:
-         return "sdl";
-      case INPUT_DINPUT:
-         return "dinput";
-      case INPUT_X:
-         return "x";
-      case INPUT_XINPUT:
-         return "xinput";
       case INPUT_WII:
          return "native";
-      case INPUT_LINUXRAW:
-         return "linuxraw";
-      case INPUT_UDEV:
-         return "udev";
-      case INPUT_NULL:
-         return "null";
       default:
          return NULL;
    }
@@ -130,46 +77,21 @@ void config_set_defaults(void)
    if (def_input)
       strlcpy(g_settings.input.driver, def_input, sizeof(g_settings.input.driver));
 
-   g_settings.video.xscale = xscale;
-   g_settings.video.yscale = yscale;
-   g_settings.video.fullscreen = g_extern.force_fullscreen ? true : fullscreen;
-   g_settings.video.windowed_fullscreen = windowed_fullscreen;
-   g_settings.video.monitor_index = monitor_index;
-   g_settings.video.fullscreen_x = fullscreen_x;
-   g_settings.video.fullscreen_y = fullscreen_y;
-   g_settings.video.disable_composition = disable_composition;
    g_settings.video.vsync = vsync;
-   g_settings.video.swap_interval = swap_interval;
-   g_settings.video.threaded = video_threaded;
    g_settings.video.smooth = video_smooth;
    g_settings.video.force_aspect = force_aspect;
    g_settings.video.scale_integer = scale_integer;
    g_settings.video.crop_overscan = crop_overscan;
    g_settings.video.manual_aspect_ratio = aspect_ratio;
    g_settings.video.aspect_ratio_idx = aspect_ratio_idx;
-   g_settings.video.shader_enable = shader_enable;
    g_settings.video.allow_rotate = allow_rotate;
-
-   g_settings.video.font_enable = font_enable;
-   g_settings.video.font_size = font_size;
-   g_settings.video.font_scale = font_scale;
-   g_settings.video.msg_pos_x = message_pos_offset_x;
-   g_settings.video.msg_pos_y = message_pos_offset_y;
-   
-   g_settings.video.msg_color_r = ((message_color >> 16) & 0xff) / 255.0f;
-   g_settings.video.msg_color_g = ((message_color >>  8) & 0xff) / 255.0f;
-   g_settings.video.msg_color_b = ((message_color >>  0) & 0xff) / 255.0f;
-
    g_settings.video.refresh_rate = refresh_rate;
-   g_settings.video.gpu_screenshot = gpu_screenshot;
    g_settings.video.rotation = ORIENTATION_NORMAL;
 
    g_settings.audio.enable = audio_enable;
    g_settings.audio.out_rate = out_rate;
    g_settings.audio.block_frames = 0;
    g_settings.audio.in_rate = out_rate;
-   if (audio_device)
-      strlcpy(g_settings.audio.device, audio_device, sizeof(g_settings.audio.device));
    g_settings.audio.latency = out_latency;
    g_settings.audio.sync = audio_sync;
    g_settings.audio.rate_control = rate_control;
@@ -184,23 +106,17 @@ void config_set_defaults(void)
    g_settings.rewind_granularity = rewind_granularity;
    g_settings.slowmotion_ratio = slowmotion_ratio;
    g_settings.fastforward_ratio = fastforward_ratio;
-   g_settings.pause_nonactive = pause_nonactive;
-   g_settings.autosave_interval = autosave_interval;
 
    g_settings.block_sram_overwrite = block_sram_overwrite;
    g_settings.savestate_auto_index = savestate_auto_index;
    g_settings.savestate_auto_save  = savestate_auto_save;
    g_settings.savestate_auto_load  = savestate_auto_load;
-   g_settings.stdin_cmd_enable     = stdin_cmd_enable;
    g_settings.game_history_size    = game_history_size;
-   g_settings.libretro_log_level   = libretro_log_level;
 
    rarch_assert(sizeof(g_settings.input.binds[0]) >= sizeof(retro_keybinds_1));
    rarch_assert(sizeof(g_settings.input.binds[1]) >= sizeof(retro_keybinds_rest));
    memcpy(g_settings.input.binds[0], retro_keybinds_1, sizeof(retro_keybinds_1));
-#ifdef RARCH_CONSOLE
    memcpy(g_settings.input.menu_binds, retro_keybinds_menu, sizeof(retro_keybinds_menu));
-#endif
    for (i = 1; i < MAX_PLAYERS; i++)
       memcpy(g_settings.input.binds[i], retro_keybinds_rest, sizeof(retro_keybinds_rest));
 
@@ -215,11 +131,9 @@ void config_set_defaults(void)
    g_settings.input.turbo_duty_cycle = turbo_duty_cycle;
    g_settings.input.overlay_opacity = 0.7f;
    g_settings.input.overlay_scale = 1.0f;
-   g_settings.input.debug_enable = input_debug_enable;
    g_settings.input.autoconf_buttons = input_autoconf_buttons;
    g_settings.input.menu_all_players_enable = menu_all_players_enable;
    g_settings.input.quick_swap_players = quick_swap_players;
-   *g_settings.input.keyboard_layout = '\0';
 
    for (i = 0; i < MAX_PLAYERS; i++)
    {
@@ -245,25 +159,13 @@ void config_set_defaults(void)
    *g_settings.screenshot_directory = '\0';
    *g_settings.system_directory = '\0';
    *g_settings.input.overlay = '\0';
-   *g_settings.content_directory = '\0';
-   *g_settings.video.shader_path = '\0';
-   *g_settings.video.shader_dir = '\0';
 #ifdef HAVE_MENU
    *g_settings.rgui_content_directory = '\0';
    *g_settings.rgui_config_directory = '\0';
 #endif
-
-#ifdef RARCH_CONSOLE
    g_extern.lifecycle_state |= (1ULL << MODE_MENU_PREINIT);
-
    strlcpy(g_settings.system_directory, default_paths.system_dir, sizeof(g_settings.system_directory));
-
-   g_settings.video.msg_pos_x = 0.05f;
-   g_settings.video.msg_pos_y = 0.90f;
-
    g_extern.config_type = CONFIG_PER_CORE;
-
-   // g_extern
    strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
    g_extern.console_screen.gamma_correction = DEFAULT_GAMMA;
    g_extern.console_screen.soft_filter_enable = true;
@@ -271,13 +173,10 @@ void config_set_defaults(void)
    g_extern.console_screen.interlaced_resolution_only = false;
    g_extern.console_screen.pos_x = 0;
    g_extern.console_screen.pos_y = 0;
-   
    strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
-
    g_extern.state_slot = 0;
    g_extern.audio_data.mute = 0;
    g_extern.verbose = true;
-#endif
    
 #ifdef HAVE_OVERLAY
    if (default_overlay_dir)
@@ -285,9 +184,6 @@ void config_set_defaults(void)
       fill_pathname_expand_special(g_extern.overlay_dir, default_overlay_dir, sizeof(g_extern.overlay_dir));
    }
 #endif
-
-   if (default_shader_dir)
-      fill_pathname_expand_special(g_settings.video.shader_dir, default_shader_dir, sizeof(g_settings.video.shader_dir));
 
    if (default_libretro_info_path)
       fill_pathname_expand_special(g_settings.libretro_info_path, default_libretro_info_path, sizeof(g_settings.libretro_info_path));
@@ -304,10 +200,7 @@ static void calculate_specific_config_path(const char *in_basename)
 {
 #ifdef HAVE_MENU
    if (*g_settings.rgui_config_directory)
-   {
-      path_resolve_realpath(g_settings.rgui_config_directory, sizeof(g_settings.rgui_config_directory));
       strlcpy(g_extern.specific_config_path, g_settings.rgui_config_directory, sizeof(g_extern.specific_config_path));
-   }
    else
 #endif
    {
@@ -376,49 +269,6 @@ static config_file_t *open_default_config_file(void)
 {
    config_file_t *conf = NULL;
 
-#if defined(_WIN32)
-   char conf_path[PATH_MAX];
-
-   char app_path[PATH_MAX];
-   fill_pathname_application_path(app_path, sizeof(app_path));
-   fill_pathname_resolve_relative(conf_path, app_path, "retroarch.cfg", sizeof(conf_path));
-
-   conf = config_file_new(conf_path);
-   if (!conf)
-   {
-      const char *appdata = getenv("APPDATA");
-      if (appdata)
-      {
-         fill_pathname_join(conf_path, appdata, "retroarch.cfg", sizeof(conf_path));
-         conf = config_file_new(conf_path);
-      }
-   }
-
-   // Try to create a new config file.
-   if (!conf)
-   {
-      conf = config_file_new(NULL);
-      bool saved = false;
-      if (conf) // Since this is a clean config file, we can safely use config_save_on_exit.
-      {
-         fill_pathname_resolve_relative(conf_path, app_path, "retroarch.cfg", sizeof(conf_path));
-         config_set_bool(conf, "config_save_on_exit", true);
-         saved = config_file_write(conf, conf_path);
-      }
-
-      if (saved)
-         RARCH_WARN("Created new config file in: \"%s\".\n", conf_path); // WARN here to make sure user has a good chance of seeing it.
-      else
-      {
-         RARCH_ERR("Failed to create new config file in: \"%s\".\n", conf_path);
-         config_file_free(conf);
-         conf = NULL;
-      }
-   }
-
-   if (conf)
-      strlcpy(g_extern.config_path, conf_path, sizeof(g_extern.config_path));
-#else
    char conf_path[PATH_MAX];
    const char *xdg  = getenv("XDG_CONFIG_HOME");
    const char *home = getenv("HOME");
@@ -489,7 +339,6 @@ static config_file_t *open_default_config_file(void)
 
    if (conf)
       strlcpy(g_extern.config_path, conf_path, sizeof(g_extern.config_path));
-#endif
    
    return conf;
 }
@@ -521,39 +370,15 @@ bool global_config_load_file(const char *path)
    }*/
 
    CONFIG_GET_STRING(video.driver, "video_driver");
-   CONFIG_GET_STRING(video.gl_context, "video_gl_context");
    CONFIG_GET_STRING(audio.driver, "audio_driver");
-   CONFIG_GET_STRING(audio.device, "audio_device");
    CONFIG_GET_STRING(audio.resampler, "audio_resampler");
    CONFIG_GET_STRING(input.driver, "input_driver");
    CONFIG_GET_STRING(input.joypad_driver, "input_joypad_driver");
-   CONFIG_GET_STRING(input.keyboard_layout, "input_keyboard_layout");
 
-   CONFIG_GET_INT(libretro_log_level, "libretro_log_level");
    CONFIG_GET_BOOL_EXTERN(config_save_on_exit, "config_save_on_exit");
-   CONFIG_GET_BOOL(video.gpu_screenshot, "video_gpu_screenshot");
    CONFIG_GET_BOOL(input.menu_all_players_enable, "menu_all_players_enable");
-   CONFIG_GET_BOOL(input.debug_enable, "input_debug_enable");
    CONFIG_GET_BOOL(fps_show, "fps_show");
    CONFIG_GET_INT(game_history_size, "game_history_size");
-   CONFIG_GET_INT(video.fullscreen_x, "video_fullscreen_x");
-   CONFIG_GET_INT(video.fullscreen_y, "video_fullscreen_y");
-   if (!g_extern.force_fullscreen)
-      CONFIG_GET_BOOL(video.fullscreen, "video_fullscreen");
-   CONFIG_GET_BOOL(video.windowed_fullscreen, "video_windowed_fullscreen");
-   CONFIG_GET_INT(video.monitor_index, "video_monitor_index");
-   CONFIG_GET_BOOL(video.disable_composition, "video_disable_composition");
-   CONFIG_GET_BOOL(pause_nonactive, "pause_nonactive");
-   CONFIG_GET_BOOL(video.threaded, "video_threaded");
-   CONFIG_GET_PATH(video.font_path, "video_font_path");
-   CONFIG_GET_FLOAT(video.font_size, "video_font_size");
-   CONFIG_GET_BOOL(video.font_enable, "video_font_enable");
-   CONFIG_GET_BOOL(video.font_scale, "video_font_scale");
-   CONFIG_GET_BOOL(stdin_cmd_enable, "stdin_cmd_enable");
-
-   CONFIG_GET_PATH(video.shader_dir, "video_shader_dir");
-   if (!strcmp(g_settings.video.shader_dir, "default"))
-      *g_settings.video.shader_dir = '\0';
    CONFIG_GET_PATH(libretro_info_path, "libretro_info_path");
    CONFIG_GET_PATH(core_options_path, "core_options_path");
    CONFIG_GET_PATH(screenshot_directory, "screenshot_directory");
@@ -567,9 +392,6 @@ bool global_config_load_file(const char *path)
          *g_settings.screenshot_directory = '\0';
       }
    }
-   CONFIG_GET_PATH(content_directory, "content_directory");
-   if (!strcmp(g_settings.content_directory, "default"))
-      *g_settings.content_directory = '\0';
 #ifdef HAVE_MENU
    CONFIG_GET_PATH(rgui_content_directory, "rgui_browser_directory");
    if (!strcmp(g_settings.rgui_content_directory, "default"))
@@ -647,12 +469,7 @@ bool config_load_file(const char *path)
       RARCH_LOG_OUTPUT("=== Config end ===\n");
    }
 
-   CONFIG_GET_FLOAT(video.xscale, "video_xscale");
-   CONFIG_GET_FLOAT(video.yscale, "video_yscale");
    CONFIG_GET_BOOL(video.vsync, "video_vsync");
-   CONFIG_GET_INT(video.swap_interval, "video_swap_interval");
-   g_settings.video.swap_interval = max(g_settings.video.swap_interval, 1);
-   g_settings.video.swap_interval = min(g_settings.video.swap_interval, 4);
    CONFIG_GET_BOOL(video.smooth, "video_smooth");
    CONFIG_GET_BOOL(video.force_aspect, "video_force_aspect");
    CONFIG_GET_BOOL(video.scale_integer, "video_scale_integer");
@@ -660,40 +477,22 @@ bool config_load_file(const char *path)
    CONFIG_GET_FLOAT(video.manual_aspect_ratio, "video_manual_aspect_ratio");
    CONFIG_GET_INT(video.aspect_ratio_idx, "aspect_ratio_index");
    CONFIG_GET_FLOAT(video.refresh_rate, "video_refresh_rate");
-   CONFIG_GET_PATH(video.shader_path, "video_shader");
-   CONFIG_GET_BOOL(video.shader_enable, "video_shader_enable");
    CONFIG_GET_BOOL(video.allow_rotate, "video_allow_rotate");
-   CONFIG_GET_FLOAT(video.msg_pos_x, "video_message_pos_x");
-   CONFIG_GET_FLOAT(video.msg_pos_y, "video_message_pos_y");
    CONFIG_GET_INT(video.rotation, "video_rotation");
-
 #ifdef HAVE_SCALERS_BUILTIN
    CONFIG_GET_INT(video.filter_idx, "filter_index");
 #endif
-
-#ifdef RARCH_CONSOLE
    CONFIG_GET_INT_EXTERN(console_screen.gamma_correction, "gamma_correction");
    CONFIG_GET_BOOL_EXTERN(console_screen.soft_filter_enable, "soft_filter_enable");
    CONFIG_GET_INT_EXTERN(console_screen.resolution_idx, "current_resolution_id");
    CONFIG_GET_BOOL_EXTERN(console_screen.interlaced_resolution_only, "interlaced_resolution_only");
    CONFIG_GET_INT_EXTERN(console_screen.pos_x, "screen_pos_x");
    CONFIG_GET_INT_EXTERN(console_screen.pos_y, "screen_pos_y");
-#endif
    CONFIG_GET_INT_EXTERN(state_slot, "state_slot");
-
    CONFIG_GET_INT_EXTERN(console_screen.custom_vp.x, "custom_viewport_x");
    CONFIG_GET_INT_EXTERN(console_screen.custom_vp.y, "custom_viewport_y");
    CONFIG_GET_INT_EXTERN(console_screen.custom_vp.width, "custom_viewport_width");
    CONFIG_GET_INT_EXTERN(console_screen.custom_vp.height, "custom_viewport_height");
-
-   unsigned msg_color = 0;
-   if (config_get_hex(conf, "video_message_color", &msg_color))
-   {
-      g_settings.video.msg_color_r = ((msg_color >> 16) & 0xff) / 255.0f;
-      g_settings.video.msg_color_g = ((msg_color >>  8) & 0xff) / 255.0f;
-      g_settings.video.msg_color_b = ((msg_color >>  0) & 0xff) / 255.0f;
-   }
-
    CONFIG_GET_FLOAT(input.axis_threshold, "input_axis_threshold");
 
    for (i = 0; i < MAX_PLAYERS; i++)
@@ -734,7 +533,6 @@ bool config_load_file(const char *path)
    if (g_settings.slowmotion_ratio < 1.0f)
       g_settings.slowmotion_ratio = 1.0f;
    CONFIG_GET_FLOAT(fastforward_ratio, "fastforward_ratio");
-   CONFIG_GET_INT(autosave_interval, "autosave_interval");
    CONFIG_GET_BOOL(block_sram_overwrite, "block_sram_overwrite");
    CONFIG_GET_BOOL(savestate_auto_index, "savestate_auto_index");
    CONFIG_GET_BOOL(savestate_auto_save, "savestate_auto_save");
@@ -748,17 +546,6 @@ bool config_load_file(const char *path)
 
    config_file_free(conf);
    return true;
-}
-
-static void read_keybinds_keyboard(config_file_t *conf, unsigned player, unsigned index,
-      struct retro_keybind *bind)
-{
-   if (input_config_bind_map[index].valid && input_config_bind_map[index].base)
-   {
-      const char *prefix = input_config_get_prefix(player, input_config_bind_map[index].meta);
-      if (prefix)
-         input_config_parse_key(conf, prefix, input_config_bind_map[index].base, bind);
-   }
 }
 
 static void read_keybinds_button(config_file_t *conf, unsigned player, unsigned index,
@@ -791,8 +578,7 @@ static void read_keybinds_player(config_file_t *conf, unsigned player)
       struct retro_keybind *bind = &g_settings.input.binds[player][i];
       if (!bind->valid)
          continue;
-
-      read_keybinds_keyboard(conf, player, i, bind);
+         
       read_keybinds_button(conf, player, i, bind);
       read_keybinds_axis(conf, player, i, bind);
    }
@@ -805,51 +591,6 @@ static void config_read_keybinds_conf(config_file_t *conf)
       read_keybinds_player(conf, i);
 }
 
-static void save_keybind_key(config_file_t *conf, const char *prefix, const char *base,
-      const struct retro_keybind *bind)
-{
-   char key[64];
-   snprintf(key, sizeof(key), "%s_%s", prefix, base);
-
-   char btn[64];
-   input_translate_rk_to_str(bind->key, btn, sizeof(btn));
-   config_set_string(conf, key, btn);
-}
-
-#ifndef RARCH_CONSOLE
-static void save_keybind_hat(config_file_t *conf, const char *key, const struct retro_keybind *bind)
-{
-   unsigned hat = GET_HAT(bind->joykey);
-   const char *dir = NULL;
-
-   switch (GET_HAT_DIR(bind->joykey))
-   {
-      case HAT_UP_MASK:
-         dir = "up";
-         break;
-
-      case HAT_DOWN_MASK:
-         dir = "down";
-         break;
-
-      case HAT_LEFT_MASK:
-         dir = "left";
-         break;
-
-      case HAT_RIGHT_MASK:
-         dir = "right";
-         break;
-
-      default:
-         rarch_assert(0);
-   }
-
-   char config[16];
-   snprintf(config, sizeof(config), "h%u%s", hat, dir);
-   config_set_string(conf, key, config);
-}
-#endif
-
 static void save_keybind_joykey(config_file_t *conf, const char *prefix, const char *base,
       const struct retro_keybind *bind)
 {
@@ -858,10 +599,6 @@ static void save_keybind_joykey(config_file_t *conf, const char *prefix, const c
 
    if (bind->joykey == NO_BTN)
       config_set_string(conf, key, "nul");
-#ifndef RARCH_CONSOLE // Consoles don't understand hats.
-   else if (GET_HAT_DIR(bind->joykey))
-      save_keybind_hat(conf, key, bind);
-#endif
    else
       config_set_uint64(conf, key, bind->joykey);
 }
@@ -902,7 +639,6 @@ static void save_keybind(config_file_t *conf, const char *prefix, const char *ba
    if (!bind->valid)
       return;
 
-   save_keybind_key(conf, prefix, base, bind);
    save_keybind_joykey(conf, prefix, base, bind);
    save_keybind_axis(conf, prefix, base, bind);
 }
@@ -931,30 +667,20 @@ bool global_config_save_file(const char *path)
    config_set_path(conf, "libretro_path", g_settings.libretro);
    config_set_path(conf, "libretro_info_path", g_settings.libretro_info_path);
    config_set_bool(conf, "config_save_on_exit", g_extern.config_save_on_exit);
-   config_set_int(conf, "libretro_log_level", g_settings.libretro_log_level);
    config_set_bool(conf, "fps_show", g_settings.fps_show);
-   config_set_bool(conf, "video_threaded", g_settings.video.threaded);
-   config_set_bool(conf, "video_fullscreen", g_settings.video.fullscreen);
-   config_set_bool(conf, "video_windowed_fullscreen", g_settings.video.windowed_fullscreen);
-   config_set_bool(conf, "video_gpu_screenshot", g_settings.video.gpu_screenshot);
    config_set_int(conf, "game_history_size", g_settings.game_history_size);
    config_set_bool(conf, "menu_all_players_enable", g_settings.input.menu_all_players_enable);
-   config_set_float(conf, "video_font_size", g_settings.video.font_size);
 
    config_set_string(conf, "video_driver", g_settings.video.driver);
-   config_set_string(conf, "audio_device", g_settings.audio.device);
    config_set_string(conf, "audio_driver", g_settings.audio.driver);
    config_set_string(conf, "audio_resampler", g_settings.audio.resampler);
    config_set_string(conf, "input_driver", g_settings.input.driver);
    config_set_string(conf, "input_joypad_driver", g_settings.input.joypad_driver);
-   config_set_string(conf, "input_keyboard_layout", g_settings.input.keyboard_layout);
    
    config_set_path(conf, "screenshot_directory", *g_settings.screenshot_directory ? g_settings.screenshot_directory : "default");
    config_set_path(conf, "system_directory", *g_settings.system_directory ? g_settings.system_directory : "default");
    config_set_path(conf, "savefile_directory", *g_extern.savefile_dir ? g_extern.savefile_dir : "default");
    config_set_path(conf, "savestate_directory", *g_extern.savestate_dir ? g_extern.savestate_dir : "default");
-   config_set_path(conf, "video_shader_dir", *g_settings.video.shader_dir ? g_settings.video.shader_dir : "default");
-   config_set_path(conf, "content_directory", *g_settings.content_directory ? g_settings.content_directory : "default");
 #ifdef HAVE_MENU
    config_set_path(conf, "rgui_browser_directory", *g_settings.rgui_content_directory ? g_settings.rgui_content_directory : "default");
    config_set_path(conf, "rgui_config_directory", *g_settings.rgui_config_directory ? g_settings.rgui_config_directory : "default");
@@ -985,18 +711,12 @@ bool config_save_file(const char *path)
    config_set_int(conf,   "filter_index",  g_settings.video.filter_idx);
 #endif
    config_set_int(conf, "rewind_granularity", g_settings.rewind_granularity);
-   config_set_path(conf, "video_shader", g_settings.video.shader_path);
-   config_set_bool(conf, "video_shader_enable", g_settings.video.shader_enable);
-   config_set_float(conf, "video_xscale", g_settings.video.xscale);
-   config_set_float(conf, "video_yscale", g_settings.video.yscale);
-   config_set_int(conf, "autosave_interval", g_settings.autosave_interval);
    config_set_bool(conf, "video_crop_overscan", g_settings.video.crop_overscan);
    config_set_bool(conf, "video_scale_integer", g_settings.video.scale_integer);
    config_set_bool(conf, "video_force_aspect", g_settings.video.force_aspect);
    config_set_bool(conf, "video_smooth", g_settings.video.smooth);
    config_set_float(conf, "video_refresh_rate", g_settings.video.refresh_rate);
    config_set_bool(conf, "video_vsync", g_settings.video.vsync);
-   config_set_int(conf, "video_swap_interval", g_settings.video.swap_interval);
    config_set_int(conf, "video_rotation", g_settings.video.rotation);
    config_set_int(conf, "aspect_ratio_index", g_settings.video.aspect_ratio_idx);
    config_set_bool(conf, "audio_rate_control", g_settings.audio.rate_control);
@@ -1010,14 +730,12 @@ bool config_save_file(const char *path)
    config_set_float(conf, "input_overlay_opacity", g_settings.input.overlay_opacity);
    config_set_float(conf, "input_overlay_scale", g_settings.input.overlay_scale);
 #endif
-#ifdef RARCH_CONSOLE
    config_set_int(conf, "gamma_correction", g_extern.console_screen.gamma_correction);
    config_set_bool(conf, "soft_filter_enable", g_extern.console_screen.soft_filter_enable);
    config_set_int(conf, "current_resolution_id", g_extern.console_screen.resolution_idx);
    config_set_bool(conf, "interlaced_resolution_only", g_extern.console_screen.interlaced_resolution_only);
    config_set_int(conf, "screen_pos_x", g_extern.console_screen.pos_x);
    config_set_int(conf, "screen_pos_y", g_extern.console_screen.pos_y);
-#endif
    config_set_int(conf, "custom_viewport_width", g_extern.console_screen.custom_vp.width);
    config_set_int(conf, "custom_viewport_height", g_extern.console_screen.custom_vp.height);
    config_set_int(conf, "custom_viewport_x", g_extern.console_screen.custom_vp.x);

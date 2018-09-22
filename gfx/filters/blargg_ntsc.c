@@ -93,7 +93,7 @@ static void *blargg_ntsc_generic_create(unsigned in_fmt, unsigned char ntsc_type
 static void *blargg_ntsc_rf_create(unsigned in_fmt) { return blargg_ntsc_generic_create(in_fmt, BLARGG_RF); }
 static void *blargg_ntsc_composite_create(unsigned in_fmt) { return blargg_ntsc_generic_create(in_fmt, BLARGG_COMPOSITE); }
 static void *blargg_ntsc_monochrome_create(unsigned in_fmt) { return blargg_ntsc_generic_create(in_fmt, BLARGG_MONOCHROME); }
-#ifndef GEKKO
+#ifdef HAVE_ALL_SCALERS
 static void *blargg_ntsc_rgb_create(unsigned in_fmt) { return blargg_ntsc_generic_create(in_fmt, BLARGG_RGB); }
 static void *blargg_ntsc_svideo_create(unsigned in_fmt) { return blargg_ntsc_generic_create(in_fmt, BLARGG_SVIDEO); }
 #endif
@@ -190,7 +190,7 @@ const softfilter_implementation_t blargg_ntsc_monochrome_implementation = {
    "Blargg NTSC Monochrome",
 };
 
-#ifndef GEKKO
+#ifdef HAVE_ALL_SCALERS
 const softfilter_implementation_t blargg_ntsc_rgb_implementation = {
    blargg_ntsc_generic_input_fmts,
    blargg_ntsc_generic_output_fmts,

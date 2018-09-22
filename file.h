@@ -16,7 +16,7 @@
 #ifndef __RARCH_FILE_H
 #define __RARCH_FILE_H
 
-#include "boolean.h"
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stddef.h>

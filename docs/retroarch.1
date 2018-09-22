@@ -61,12 +61,6 @@ If no arguments are passed to retroarch, it is equivalent to calling retroarch w
 \fB--features\fR
 Prints available features compiled into RetroArch, then exits.
 
-.TP
-\fB-L PATH, --libretro PATH\fR
-Path to a libretro implementation which is to be used.
-This option will override any setting in a config file.
-This option is only available if RetroArch is compiled with dynamic libretro loading.
-
 If PATH is a directory, RetroArch will try to find the first implementation that claims to support
 the extension of the ROM used, and use that libretro implementation.
 If two or more different implementations claim to support a certain ROM extension, there might be collisions.
@@ -83,10 +77,6 @@ Overrides the path used for save states.
 Without this flag, the save state path will be inferred from the rom path name, and put in the same directory as the rom file with the extention replace with '.state'.
 If PATH is a directory, RetroArch will treat this as the save state directory, where the state file name will be inferred from the rom name.
 Do note that save states are bound to the libretro implementation being used. Using a different libretro could invalidate the save state file.
-
-.TP
-\fB--fullscreen, -f\fR
-Always starts RetroArch in fullscreen. Disregards settings in configuration file.
 
 .TP
 \fB--config PATH, -c PATH\fR

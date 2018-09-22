@@ -31,10 +31,6 @@
 #define RARCH_LOG(...) fprintf(stderr, __VA_ARGS__)
 #endif
 
-#ifdef __SSE__
-#include <xmmintrin.h>
-#endif
-
 // Rough SNR values for upsampling:
 // LOWEST: 40 dB
 // LOWER: 55 dB
@@ -50,7 +46,6 @@
 #define SINC_COEFF_LERP 0
 #define SUBPHASE_BITS 10
 #define SIDELOBES 2
-#define ENABLE_AVX 0
 #elif defined(SINC_LOWER_QUALITY)
 #define SINC_WINDOW_LANCZOS
 #define CUTOFF 0.98
@@ -58,7 +53,6 @@
 #define SUBPHASE_BITS 10
 #define SINC_COEFF_LERP 0
 #define SIDELOBES 4
-#define ENABLE_AVX 0
 #elif defined(SINC_HIGHER_QUALITY)
 #define SINC_WINDOW_KAISER
 #define SINC_WINDOW_KAISER_BETA 10.5
@@ -67,7 +61,6 @@
 #define SUBPHASE_BITS 14
 #define SINC_COEFF_LERP 1
 #define SIDELOBES 32
-#define ENABLE_AVX 1
 #elif defined(SINC_HIGHEST_QUALITY)
 #define SINC_WINDOW_KAISER
 #define SINC_WINDOW_KAISER_BETA 14.5
@@ -76,7 +69,6 @@
 #define SUBPHASE_BITS 14
 #define SINC_COEFF_LERP 1
 #define SIDELOBES 128
-#define ENABLE_AVX 1
 #else
 #define SINC_WINDOW_KAISER
 #define SINC_WINDOW_KAISER_BETA 5.5
@@ -85,17 +77,12 @@
 #define SUBPHASE_BITS 16
 #define SINC_COEFF_LERP 1
 #define SIDELOBES 8
-#define ENABLE_AVX 0
 #endif
 
 // For the little amount of taps we're using,
 // SSE1 is faster than AVX for some reason.
 // AVX code is kept here though as by increasing number
 // of sinc taps, the AVX code is clearly faster than SSE1.
-
-#if defined(__AVX__) && ENABLE_AVX
-#include <immintrin.h>
-#endif
 
 #define PHASES (1 << (PHASE_BITS + SUBPHASE_BITS))
 
@@ -217,7 +204,6 @@ static void init_sinc_table(rarch_sinc_resampler_t *resamp, double cutoff,
    }
 }
 
-// No memalign() for us on Win32 ...
 static void *aligned_alloc__(size_t boundary, size_t size)
 {
    void *ptr = malloc(boundary + size + sizeof(uintptr_t));
@@ -237,7 +223,6 @@ static void aligned_free__(void *ptr)
    free(p[-1]);
 }
 
-#if !(defined(__AVX__) && ENABLE_AVX) && !defined(__SSE__)
 static inline void process_sinc_C(rarch_sinc_resampler_t *resamp, float *out_buffer)
 {
    unsigned i;
@@ -270,141 +255,9 @@ static inline void process_sinc_C(rarch_sinc_resampler_t *resamp, float *out_buf
    out_buffer[0] = sum_l;
    out_buffer[1] = sum_r;
 }
-#endif
 
-#if defined(__AVX__) && ENABLE_AVX
-#define process_sinc_func process_sinc
-static void process_sinc(rarch_sinc_resampler_t *resamp, float *out_buffer)
-{
-   unsigned i;
-   __m256 sum_l = _mm256_setzero_ps();
-   __m256 sum_r = _mm256_setzero_ps();
-
-   const float *buffer_l = resamp->buffer_l + resamp->ptr;
-   const float *buffer_r = resamp->buffer_r + resamp->ptr;
-
-   unsigned taps = resamp->taps;
-   unsigned phase = resamp->time >> SUBPHASE_BITS;
-#if SINC_COEFF_LERP
-   const float *phase_table = resamp->phase_table + phase * taps * 2;
-   const float *delta_table = phase_table + taps;
-   __m256 delta = _mm256_set1_ps((float)(resamp->time & SUBPHASE_MASK) * SUBPHASE_MOD);
-#else
-   const float *phase_table = resamp->phase_table + phase * taps;
-#endif
-
-   for (i = 0; i < taps; i += 8)
-   {
-      __m256 buf_l = _mm256_loadu_ps(buffer_l + i);
-      __m256 buf_r = _mm256_loadu_ps(buffer_r + i);
-
-#if SINC_COEFF_LERP
-      __m256 deltas = _mm256_load_ps(delta_table + i);
-      __m256 sinc = _mm256_add_ps(_mm256_load_ps(phase_table + i), _mm256_mul_ps(deltas, delta));
-#else
-      __m256 sinc = _mm256_load_ps(phase_table + i);
-#endif
-      sum_l       = _mm256_add_ps(sum_l, _mm256_mul_ps(buf_l, sinc));
-      sum_r       = _mm256_add_ps(sum_r, _mm256_mul_ps(buf_r, sinc));
-   }
-
-   // hadd on AVX is weird, and acts on low-lanes and high-lanes separately.
-   __m256 res_l = _mm256_hadd_ps(sum_l, sum_l);
-   __m256 res_r = _mm256_hadd_ps(sum_r, sum_r);
-   res_l = _mm256_hadd_ps(res_l, res_l);
-   res_r = _mm256_hadd_ps(res_r, res_r);
-   res_l = _mm256_add_ps(_mm256_permute2f128_ps(res_l, res_l, 1), res_l);
-   res_r = _mm256_add_ps(_mm256_permute2f128_ps(res_r, res_r, 1), res_r);
-
-   // This is optimized to mov %xmmN, [mem].
-   // There doesn't seem to be any _mm256_store_ss intrinsic.
-   _mm_store_ss(out_buffer + 0, _mm256_extractf128_ps(res_l, 0));
-   _mm_store_ss(out_buffer + 1, _mm256_extractf128_ps(res_r, 0));
-}
-#elif defined(__SSE__)
-#define process_sinc_func process_sinc
-static void process_sinc(rarch_sinc_resampler_t *resamp, float *out_buffer)
-{
-   unsigned i;
-   __m128 sum_l = _mm_setzero_ps();
-   __m128 sum_r = _mm_setzero_ps();
-
-   const float *buffer_l = resamp->buffer_l + resamp->ptr;
-   const float *buffer_r = resamp->buffer_r + resamp->ptr;
-
-   unsigned taps = resamp->taps;
-   unsigned phase = resamp->time >> SUBPHASE_BITS;
-#if SINC_COEFF_LERP
-   const float *phase_table = resamp->phase_table + phase * taps * 2;
-   const float *delta_table = phase_table + taps;
-   __m128 delta = _mm_set1_ps((float)(resamp->time & SUBPHASE_MASK) * SUBPHASE_MOD);
-#else
-   const float *phase_table = resamp->phase_table + phase * taps;
-#endif
-
-   for (i = 0; i < taps; i += 4)
-   {
-      __m128 buf_l = _mm_loadu_ps(buffer_l + i);
-      __m128 buf_r = _mm_loadu_ps(buffer_r + i);
-
-#if SINC_COEFF_LERP
-      __m128 deltas = _mm_load_ps(delta_table + i);
-      __m128 sinc = _mm_add_ps(_mm_load_ps(phase_table + i), _mm_mul_ps(deltas, delta));
-#else
-      __m128 sinc = _mm_load_ps(phase_table + i);
-#endif
-      sum_l       = _mm_add_ps(sum_l, _mm_mul_ps(buf_l, sinc));
-      sum_r       = _mm_add_ps(sum_r, _mm_mul_ps(buf_r, sinc));
-   }
-
-   // Them annoying shuffles :V
-   // sum_l = { l3, l2, l1, l0 }
-   // sum_r = { r3, r2, r1, r0 }
-
-   __m128 sum = _mm_add_ps(_mm_shuffle_ps(sum_l, sum_r, _MM_SHUFFLE(1, 0, 1, 0)),
-         _mm_shuffle_ps(sum_l, sum_r, _MM_SHUFFLE(3, 2, 3, 2)));
-
-   // sum   = { r1, r0, l1, l0 } + { r3, r2, l3, l2 }
-   // sum   = { R1, R0, L1, L0 }
-
-   sum = _mm_add_ps(_mm_shuffle_ps(sum, sum, _MM_SHUFFLE(3, 3, 1, 1)), sum);
-
-   // sum   = {R1, R1, L1, L1 } + { R1, R0, L1, L0 }
-   // sum   = { X,  R,  X,  L } 
-
-   // Store L
-   _mm_store_ss(out_buffer + 0, sum);
-
-   // movehl { X, R, X, L } == { X, R, X, R }
-   _mm_store_ss(out_buffer + 1, _mm_movehl_ps(sum, sum));
-}
-#elif defined(HAVE_NEON)
-
-#if SINC_COEFF_LERP
-#error "NEON asm does not support SINC lerp."
-#endif
-
-// Need to make this function pointer as Android doesn't have built-in targets
-// for NEON and plain ARMv7a.
-static void (*process_sinc_func)(rarch_sinc_resampler_t *resamp, float *out_buffer);
-
-// Assumes that taps >= 8, and that taps is a multiple of 8.
-void process_sinc_neon_asm(float *out, const float *left, const float *right, const float *coeff, unsigned taps);
-
-static void process_sinc_neon(rarch_sinc_resampler_t *resamp, float *out_buffer)
-{
-   const float *buffer_l = resamp->buffer_l + resamp->ptr;
-   const float *buffer_r = resamp->buffer_r + resamp->ptr;
-
-   unsigned phase = resamp->time >> SUBPHASE_BITS;
-   unsigned taps = resamp->taps;
-   const float *phase_table = resamp->phase_table + phase * taps;
-
-   process_sinc_neon_asm(out_buffer, buffer_l, buffer_r, phase_table, taps);
-}
-#else // Plain ol' C99
+// Plain ol' C99
 #define process_sinc_func process_sinc_C
-#endif
 
 static void resampler_sinc_process(void *re_, struct resampler_data *data)
 {
@@ -471,12 +324,7 @@ static void *resampler_sinc_new(double bandwidth_mod)
       re->taps = (unsigned)ceil(re->taps / bandwidth_mod);
    }
 
-   // Be SIMD-friendly.
-#if (defined(__AVX__) && ENABLE_AVX) || defined(HAVE_NEON)
-   re->taps = (re->taps + 7) & ~7;
-#else
    re->taps = (re->taps + 3) & ~3;
-#endif
 
    size_t phase_elems = (1 << PHASE_BITS) * re->taps;
 #if SINC_COEFF_LERP
@@ -494,18 +342,7 @@ static void *resampler_sinc_new(double bandwidth_mod)
 
    init_sinc_table(re, cutoff, re->phase_table, 1 << PHASE_BITS, re->taps, SINC_COEFF_LERP);
 
-#if defined(__AVX__) && ENABLE_AVX
-   RARCH_LOG("Sinc resampler [AVX]\n");
-#elif defined(__SSE__)
-   RARCH_LOG("Sinc resampler [SSE]\n");
-#elif defined(HAVE_NEON)
-   unsigned cpu = rarch_get_cpu_features();
-   process_sinc_func = cpu & RETRO_SIMD_NEON ? process_sinc_neon : process_sinc_C;
-   RARCH_LOG("Sinc resampler [%s]\n", cpu & RETRO_SIMD_NEON ? "NEON" : "C");
-#else
    RARCH_LOG("Sinc resampler [C]\n");
-#endif
-
    RARCH_LOG("SINC params (%u phase bits, %u taps).\n", PHASE_BITS, re->taps);
    return re;
 

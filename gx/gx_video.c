@@ -1132,18 +1132,6 @@ static void gx_set_nonblock_state(void *data, bool state)
    g_vsync_state = !state;
 }
 
-static bool gx_alive(void *data)
-{
-   (void)data;
-   return true;
-}
-
-static bool gx_focus(void *data)
-{
-   (void)data;
-   return true;
-}
-
 static void gx_free(void *data)
 {
    /* finish current job */
@@ -1210,9 +1198,6 @@ static const video_poke_interface_t gx_poke_interface = {
    gx_apply_state_changes,
    gx_set_texture_frame,
    gx_set_texture_enable,
-   NULL,
-   NULL,
-   NULL,
    gx_update_screen_config,
    gx_get_resolution_size,
    gx_set_refresh_rate,
@@ -1228,9 +1213,7 @@ static void gx_get_poke_interface(void *data, const video_poke_interface_t **ifa
 const video_driver_t video_gx = {
    .init = gx_init,
    .frame = gx_frame,
-   .alive = gx_alive,
    .set_nonblock_state = gx_set_nonblock_state,
-   .focus = gx_focus,
    .free = gx_free,
    .ident = "gx",
    .set_rotation = gx_set_rotation,

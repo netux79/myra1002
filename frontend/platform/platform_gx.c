@@ -15,7 +15,7 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../boolean.h"
+#include <stdbool.h>
 #include "../../driver.h"
 #include "../../general.h"
 #include "../../libretro_private.h"
@@ -293,12 +293,9 @@ static void system_exec(const char *path, bool should_load_game)
 const frontend_ctx_driver_t frontend_ctx_gx = {
    get_environment_settings,        /* get_environment_settings */
    system_init,                     /* init */
-   NULL,                            /* deinit */
    system_exitspawn,                /* exitspawn */
    system_process_args,             /* process_args */
-   NULL,                            /* process_events */
    system_exec,                     /* exec */
-   NULL,                            /* shutdown */
    "gx",
 #ifdef IS_SALAMANDER
    salamander_init,

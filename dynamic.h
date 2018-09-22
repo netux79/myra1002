@@ -16,17 +16,11 @@
 #ifndef __DYNAMIC_H
 #define __DYNAMIC_H
 
-#include "boolean.h"
+#include <stdbool.h>
 #include "libretro.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
-#if defined(HAVE_DYNAMIC) || defined(HAVE_DYLIB)
-#define NEED_DYNAMIC
-#else
-#undef NEED_DYNAMIC
 #endif
 
 #ifdef __cplusplus
@@ -37,13 +31,6 @@ void init_libretro_sym(bool dummy);
 void uninit_libretro_sym(void);
 
 typedef void *dylib_t;
-#ifdef NEED_DYNAMIC
-typedef void (*function_t)(void);
-
-dylib_t dylib_load(const char *path);
-void dylib_close(dylib_t lib);
-function_t dylib_proc(dylib_t lib, const char *proc);
-#endif
 
 // Sets environment callback in order to get statically known information from it.
 // Fetched via environment callbacks instead of retro_get_system_info(), as this info
@@ -53,13 +40,6 @@ function_t dylib_proc(dylib_t lib, const char *proc);
 //
 // For statically linked cores, pass retro_set_environment as argument.
 void libretro_get_environment_info(void (*)(retro_environment_t), bool *load_no_rom);
-
-#ifdef HAVE_DYNAMIC
-// Gets system info from an arbitrary lib.
-// The struct returned must be freed as strings are allocated dynamically.
-bool libretro_get_system_info(const char *path, struct retro_system_info *info, bool *load_no_rom);
-void libretro_free_system_info(struct retro_system_info *info);
-#endif
 
 // Transforms a library id to a name suitable as a pathname.
 void libretro_get_current_core_pathname(char *name, size_t size);
