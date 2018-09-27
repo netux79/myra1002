@@ -275,10 +275,8 @@ static void rgui_render(void *data, void *video_data)
    else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
       snprintf(title, sizeof(title), "OVERLAY %s", dir);
 #endif
-   else if (menu_type == RGUI_BROWSER_DIR_PATH)
+   else if (menu_type == RGUI_GAMES_DIR_PATH)
       snprintf(title, sizeof(title), "GAMES PATH %s", dir);
-   else if (menu_type == RGUI_LIBRETRO_DIR_PATH)
-      snprintf(title, sizeof(title), "CORE PATH %s", dir);
    else if (menu_type == RGUI_LIBRETRO_INFO_DIR_PATH)
       snprintf(title, sizeof(title), "CORE INFO PATH %s", dir);
 #ifdef HAVE_SCREENSHOTS
@@ -312,19 +310,13 @@ static void rgui_render(void *data, void *video_data)
       }
    }
 
-   char title_buf[256];
-   menu_ticker_line(title_buf, RGUI_TERM_WIDTH - 3, g_extern.frame_count / 15, title, true);
-   blit_line(rgui, RGUI_TERM_START_X + 15, 15, title_buf, true);
+   char buf[256];
+   menu_ticker_line(buf, RGUI_TERM_WIDTH - 3, g_extern.frame_count / 15, title, true);
+   blit_line(rgui, RGUI_TERM_START_X + 15, 15, buf, true);
 
-   char title_msg[64];
-   const char *core_name = rgui->core_info_current.display_name;
-   if (!core_name)
-      core_name = rgui->info.library_name;
-   if (!core_name)
-      core_name = "No Core";
-
-   strlcpy(title_msg, core_name, sizeof(title_msg));
-   blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, title_msg, true);
+   const char *core_name = rgui->core_info_current.data ? rgui->core_info_current.display_name : rgui->info.library_name;
+   strlcpy(buf, core_name, sizeof(buf));
+   blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, buf, true);
 
    /* get the time */
    time_t _time;

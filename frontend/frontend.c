@@ -23,10 +23,7 @@
 #include "frontend_context.h"
 frontend_ctx_driver_t *frontend_ctx;
 
-#ifdef HAVE_MENU
 #include "menu/menu_common.h"
-#endif
-
 #include "../file_ext.h"
 #include "../config.def.h"
 
@@ -61,12 +58,10 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 
    if (g_extern.system.core_shutdown)
    {
-#ifdef HAVE_MENU
       // Load dummy core instead of exiting RetroArch completely.
       if (load_dummy_on_core_shutdown)
          load_menu_game_prepare_dummy();
       else
-#endif
          return 1;
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_LOAD_GAME))
@@ -107,7 +102,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 
       if (!success) g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
    }
-#ifdef HAVE_MENU
    else if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
    {
       // Menu should always run with vsync on.
@@ -145,7 +139,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
          }
       }
    }
-#endif
    else
       return 1;
 
@@ -154,7 +147,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 
 void main_exit(void* args)
 {
-#ifdef HAVE_MENU
    g_extern.system.core_shutdown = false;
 
    menu_free(driver.video_data);
@@ -169,7 +161,6 @@ void main_exit(void* args)
       if(*g_extern.config_path)
          global_config_save_file(g_extern.config_path);
    }
-#endif
 
    if (g_extern.main_is_init)
       rarch_main_deinit();
@@ -211,7 +202,6 @@ int main(int argc, char *argv[])
          return init_ret;
    }
 
-#ifdef HAVE_MENU
    menu_init(driver.video_data);
 
    if (frontend_ctx && frontend_ctx->process_args)
@@ -230,9 +220,6 @@ int main(int argc, char *argv[])
    }
 
    while (!main_entry_iterate(argc, argv, args));
-#else
-   while ((g_extern.is_paused && !g_extern.is_oneshot) ? rarch_main_idle_iterate() : rarch_main_iterate());
-#endif
 
    main_exit(args);
 

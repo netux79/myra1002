@@ -568,7 +568,7 @@ static void gx_apply_state_changes(void *data)
    gx->force_aspect = g_settings.video.force_aspect;
 }
 
-static bool gx_init(void **data, const video_info_t *video, const input_driver_t **input, void **input_data)
+static bool gx_init(void **data, const video_info_t *video)
 {
    gx_video_t *gx = (gx_video_t*)*data;
    
@@ -606,12 +606,7 @@ static bool gx_init(void **data, const video_info_t *video, const input_driver_t
     * to the reported base core resolution */
    gx->frame_w = g_extern.system.av_info.geometry.base_width;
    gx->frame_h = g_extern.system.av_info.geometry.base_height;
-   
-   /* Set input driver to null so 
-    * the system set it up separately */
-   *input = NULL;
-   *input_data = NULL;   
-   
+
    return true;
 }
 

@@ -411,11 +411,6 @@ static void set_paths(const char *path)
 {
    set_basename(path);
 
-   if (!g_extern.has_set_save_path)
-      fill_pathname_noext(g_extern.savefile_name_srm, g_extern.basename, ".srm", sizeof(g_extern.savefile_name_srm));
-   if (!g_extern.has_set_state_path)
-      fill_pathname_noext(g_extern.savestate_name, g_extern.basename, ".state", sizeof(g_extern.savestate_name));
-
    if (path_is_directory(g_extern.savefile_name_srm))
    {
       fill_pathname_dir(g_extern.savefile_name_srm, g_extern.basename, ".srm", sizeof(g_extern.savefile_name_srm));
@@ -437,8 +432,6 @@ static void parse_input(int argc, char *argv[])
 {
    g_extern.libretro_no_rom = false;
    g_extern.libretro_dummy = false;
-   g_extern.has_set_save_path = false;
-   g_extern.has_set_state_path = false;
 
    if (argc < 2)
    {
@@ -522,7 +515,6 @@ static void parse_input(int argc, char *argv[])
 
          case 's':
             strlcpy(g_extern.savefile_name_srm, optarg, sizeof(g_extern.savefile_name_srm));
-            g_extern.has_set_save_path = true;
             break;
 
          case 'g':
@@ -552,7 +544,6 @@ static void parse_input(int argc, char *argv[])
 
          case 'S':
             strlcpy(g_extern.savestate_name, optarg, sizeof(g_extern.savestate_name));
-            g_extern.has_set_state_path = true;
             break;
 
          case 'v':
@@ -616,12 +607,6 @@ static void parse_input(int argc, char *argv[])
       set_paths(argv[optind]);
    else
       g_extern.libretro_no_rom = true;
-
-   // Copy SRM/state dirs used, so they can be reused on reentrancy.
-   if (g_extern.has_set_save_path && path_is_directory(g_extern.savefile_name_srm))
-      strlcpy(g_extern.savefile_dir, g_extern.savefile_name_srm, sizeof(g_extern.savefile_dir));
-   if (g_extern.has_set_state_path && path_is_directory(g_extern.savestate_name))
-      strlcpy(g_extern.savestate_dir, g_extern.savestate_name, sizeof(g_extern.savestate_dir));
 }
 
 static void init_controllers(void)
@@ -845,24 +830,18 @@ static void fill_pathnames(void)
       case RARCH_CART_BSX:
       case RARCH_CART_BSX_SLOTTED:
          // BSX PSRM
-         if (!g_extern.has_set_save_path)
-         {
-            fill_pathname(g_extern.savefile_name_srm,
-                  g_extern.bsx_rom_path, ".srm", sizeof(g_extern.savefile_name_srm));
-         }
+         fill_pathname(g_extern.savefile_name_srm,
+               g_extern.bsx_rom_path, ".srm", sizeof(g_extern.savefile_name_srm));
 
          fill_pathname(g_extern.savefile_name_psrm,
                g_extern.savefile_name_srm, ".psrm", sizeof(g_extern.savefile_name_psrm));
 
-         if (!g_extern.has_set_state_path)
-         {
-            fill_pathname(g_extern.savestate_name,
-                  g_extern.bsx_rom_path, ".state", sizeof(g_extern.savestate_name));
-         }
+         fill_pathname(g_extern.savestate_name,
+               g_extern.bsx_rom_path, ".state", sizeof(g_extern.savestate_name));
          break;
 
       case RARCH_CART_SUFAMI:
-         if (g_extern.has_set_save_path && *g_extern.sufami_rom_path[0] && *g_extern.sufami_rom_path[1])
+         if (*g_extern.sufami_rom_path[0] && *g_extern.sufami_rom_path[1])
             RARCH_WARN("Sufami Turbo SRAM paths will be inferred from their respective paths to avoid conflicts.\n");
 
          // SUFAMI ARAM
@@ -873,27 +852,18 @@ static void fill_pathnames(void)
          fill_pathname(g_extern.savefile_name_bsrm,
                g_extern.sufami_rom_path[1], ".srm", sizeof(g_extern.savefile_name_bsrm));
 
-         if (!g_extern.has_set_state_path)
-         {
-            fill_pathname(g_extern.savestate_name,
-                  *g_extern.sufami_rom_path[0] ?
-                     g_extern.sufami_rom_path[0] : g_extern.sufami_rom_path[1],
-                     ".state", sizeof(g_extern.savestate_name));
-         }
+         fill_pathname(g_extern.savestate_name,
+               *g_extern.sufami_rom_path[0] ?
+                  g_extern.sufami_rom_path[0] : g_extern.sufami_rom_path[1],
+                  ".state", sizeof(g_extern.savestate_name));
          break;
 
       case RARCH_CART_SGB:
-         if (!g_extern.has_set_save_path)
-         {
-            fill_pathname(g_extern.savefile_name_srm,
-                  g_extern.gb_rom_path, ".srm", sizeof(g_extern.savefile_name_srm));
-         }
+         fill_pathname(g_extern.savefile_name_srm,
+               g_extern.gb_rom_path, ".srm", sizeof(g_extern.savefile_name_srm));
 
-         if (!g_extern.has_set_state_path)
-         {
-            fill_pathname(g_extern.savestate_name,
-                  g_extern.gb_rom_path, ".state", sizeof(g_extern.savestate_name));
-         }
+         fill_pathname(g_extern.savestate_name,
+               g_extern.gb_rom_path, ".state", sizeof(g_extern.savestate_name));
 
          fill_pathname(g_extern.savefile_name_rtc,
                g_extern.savefile_name_srm, ".rtc", sizeof(g_extern.savefile_name_rtc));
@@ -1689,9 +1659,7 @@ int rarch_main_init(int argc, char *argv[])
    init_system_av_info();
    find_drivers();   
    init_drivers();
-
    rarch_init_rewind();
-
    init_controllers();
 
    g_extern.use_sram = g_extern.use_sram && !g_extern.sram_save_disable;

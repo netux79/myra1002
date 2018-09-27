@@ -91,9 +91,7 @@ enum // RetroArch specific bind IDs.
    RARCH_DISK_EJECT_TOGGLE,
    RARCH_DISK_NEXT,
    RARCH_QUICK_SWAP,
-#ifdef HAVE_MENU
    RARCH_MENU_TOGGLE,
-#endif
    RARCH_BIND_LIST_END,
    RARCH_BIND_LIST_END_NULL
 };
@@ -256,11 +254,8 @@ typedef struct video_poke_interface
    void (*set_filtering)(void *data, unsigned index, bool smooth);
    void (*set_aspect_ratio)(void *data, unsigned aspectratio_index);
    void (*apply_state_changes)(void *data);
-
-#ifdef HAVE_MENU
    void (*set_texture_frame)(void *data, const void *frame, bool rgb32, unsigned width, unsigned height, float alpha); // Update texture.
    void (*set_texture_enable)(void *data, bool enable, bool full_screen); // Enable/disable rendering.
-#endif
    void (*update_screen_config)(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation);
    void (*get_resolution_size)(unsigned res_index, unsigned *width, unsigned *height);
    void (*set_refresh_rate)(void *data, unsigned res_index);
@@ -269,7 +264,7 @@ typedef struct video_poke_interface
 
 typedef struct video_driver
 {
-   bool (*init)(void **data, const video_info_t *video, const input_driver_t **input, void **input_data);
+   bool (*init)(void **data, const video_info_t *video);
    // Should the video driver act as an input driver as well? :)
    // The video init might preinitialize an input driver to override the settings in case the video driver relies on input driver for event handling, e.g.
    bool (*frame)(void *data, const void *frame, unsigned width, unsigned height, unsigned pitch, const char *msg); // msg is for showing a message on the screen along with the video frame.

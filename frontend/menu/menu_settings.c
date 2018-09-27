@@ -58,9 +58,8 @@ unsigned menu_type_is(unsigned type)
       return ret;
    }
 
-   type_found = type == RGUI_BROWSER_DIR_PATH ||
+   type_found = type == RGUI_GAMES_DIR_PATH ||
       type == RGUI_SAVESTATE_DIR_PATH ||
-      type == RGUI_LIBRETRO_DIR_PATH ||
       type == RGUI_LIBRETRO_INFO_DIR_PATH ||
       type == RGUI_CONFIG_DIR_PATH ||
       type == RGUI_SAVEFILE_DIR_PATH ||
@@ -347,7 +346,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          break;
       }
-      case RGUI_SETTINGS_DEBUG_TEXT:
+      case RGUI_SETTINGS_SHOW_FRAMERATE:
          if (action == RGUI_ACTION_START)
             g_settings.fps_show = false;
          else if (action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
@@ -407,7 +406,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          switch (action)
          {
             case RGUI_ACTION_OK:
-               file_list_push(rgui->menu_stack, g_extern.overlay_dir, setting, rgui->selection_ptr);
+               file_list_push(rgui->menu_stack, g_settings.overlay_directory, setting, rgui->selection_ptr);
                menu_clear_navigation(rgui);
                rgui->need_refresh = true;
                break;
@@ -416,7 +415,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                if (driver.overlay)
                   input_overlay_free(driver.overlay);
                driver.overlay = NULL;
-               *g_settings.input.overlay = '\0';
+               *g_settings.input.overlay_path = '\0';
                break;
 
             default:
@@ -540,14 +539,13 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;
          else if (action == RGUI_ACTION_RIGHT)
             rgui->c_player = (rgui->c_player + 1) % MAX_PLAYERS;
-#ifdef HAVE_MENU
+
          if (o_player != rgui->c_player)
          {
             /* set the selected device to the selected player´s device */
             rgui->s_device = g_settings.input.device_port[rgui->c_player];
             rgui->need_refresh = true;
          }
-#endif
          break;
       }
       case RGUI_SETTINGS_BIND_DEVICE:
@@ -710,9 +708,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_BIND_DISK_EJECT_TOGGLE:
       case RGUI_SETTINGS_BIND_DISK_NEXT:
       case RGUI_SETTINGS_BIND_QUICK_SWAP:
-#ifdef HAVE_MENU
       case RGUI_SETTINGS_BIND_MENU_TOGGLE:
-#endif
          /* hotkeys use first controller, no matter the player */
          set_custom_bind(0, setting, action);
          break;
@@ -746,9 +742,9 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          set_custom_bind(port, setting, action);
          break;
       }
-      case RGUI_BROWSER_DIR_PATH:
+      case RGUI_GAMES_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.rgui_content_directory = '\0';
+            *g_settings.games_directory = '\0';
          break;
 #ifdef HAVE_SCREENSHOTS
       case RGUI_SCREENSHOT_DIR_PATH:
@@ -758,39 +754,32 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #endif
       case RGUI_SAVEFILE_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_extern.savefile_dir = '\0';
+            strlcpy(g_settings.savefile_directory, default_paths.sram_dir, sizeof(g_settings.savefile_directory));
          break;
 #ifdef HAVE_OVERLAY
       case RGUI_OVERLAY_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_extern.overlay_dir = '\0';
+            *g_settings.overlay_directory = '\0';
          break;
 #endif
       case RGUI_SAVESTATE_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_extern.savestate_dir = '\0';
-         break;
-      case RGUI_LIBRETRO_DIR_PATH:
-         if (action == RGUI_ACTION_START)
-         {
-            *rgui->libretro_dir = '\0';
-            menu_init_core_info(rgui);
-         }
+            strlcpy(g_settings.savestate_directory, default_paths.savestate_dir, sizeof(g_settings.savestate_directory));
          break;
       case RGUI_LIBRETRO_INFO_DIR_PATH:
          if (action == RGUI_ACTION_START)
          {
-            *g_settings.libretro_info_path = '\0';
+            *g_settings.libretro_info_directory = '\0';
             menu_init_core_info(rgui);
          }
          break;
       case RGUI_CONFIG_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.rgui_config_directory = '\0';
+            *g_settings.config_directory = '\0';
          break;
       case RGUI_SYSTEM_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.system_directory = '\0';
+            strlcpy(g_settings.system_directory, default_paths.system_dir, sizeof(g_settings.system_directory));
          break;
       case RGUI_SETTINGS_VIDEO_ROTATION:
          if (action == RGUI_ACTION_START)
@@ -1226,11 +1215,11 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA:
          snprintf(type_str, type_str_size, "%.3f", g_settings.audio.rate_control_delta);
          break;
-      case RGUI_SETTINGS_DEBUG_TEXT:
+      case RGUI_SETTINGS_SHOW_FRAMERATE:
          snprintf(type_str, type_str_size, (g_settings.fps_show) ? "ON" : "OFF");
          break;
-      case RGUI_BROWSER_DIR_PATH:
-         strlcpy(type_str, *g_settings.rgui_content_directory ? g_settings.rgui_content_directory : "<default>", type_str_size);
+      case RGUI_GAMES_DIR_PATH:
+         strlcpy(type_str, *g_settings.games_directory ? g_settings.games_directory : "<default>", type_str_size);
          break;
 #ifdef HAVE_SCREENSHOTS
       case RGUI_SCREENSHOT_DIR_PATH:
@@ -1238,27 +1227,24 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          break;
 #endif
       case RGUI_SAVEFILE_DIR_PATH:
-         strlcpy(type_str, *g_extern.savefile_dir ? g_extern.savefile_dir : "<ROM dir>", type_str_size);
+         strlcpy(type_str, *g_settings.savefile_directory ? g_settings.savefile_directory : "<default>", type_str_size);
          break;
 #ifdef HAVE_OVERLAY
       case RGUI_OVERLAY_DIR_PATH:
-         strlcpy(type_str, *g_extern.overlay_dir ? g_extern.overlay_dir : "<default>", type_str_size);
+         strlcpy(type_str, *g_settings.overlay_directory ? g_settings.overlay_directory : "<default>", type_str_size);
          break;
 #endif
       case RGUI_SAVESTATE_DIR_PATH:
-         strlcpy(type_str, *g_extern.savestate_dir ? g_extern.savestate_dir : "<ROM dir>", type_str_size);
-         break;
-      case RGUI_LIBRETRO_DIR_PATH:
-         strlcpy(type_str, *rgui->libretro_dir ? rgui->libretro_dir : "<None>", type_str_size);
+         strlcpy(type_str, *g_settings.savestate_directory ? g_settings.savestate_directory : "<default>", type_str_size);
          break;
       case RGUI_LIBRETRO_INFO_DIR_PATH:
-         strlcpy(type_str, *g_settings.libretro_info_path ? g_settings.libretro_info_path : "<Core dir>", type_str_size);
+         strlcpy(type_str, *g_settings.libretro_info_directory ? g_settings.libretro_info_directory : "<Core dir>", type_str_size);
          break;
       case RGUI_CONFIG_DIR_PATH:
-         strlcpy(type_str, *g_settings.rgui_config_directory ? g_settings.rgui_config_directory : "<default>", type_str_size);
+         strlcpy(type_str, *g_settings.config_directory ? g_settings.config_directory : "<default>", type_str_size);
          break;
       case RGUI_SYSTEM_DIR_PATH:
-         strlcpy(type_str, *g_settings.system_directory ? g_settings.system_directory : "<ROM dir>", type_str_size);
+         strlcpy(type_str, *g_settings.system_directory ? g_settings.system_directory : "<default>", type_str_size);
          break;
       case RGUI_SETTINGS_DISK_INDEX:
          {
@@ -1303,7 +1289,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
 #endif
 #ifdef HAVE_OVERLAY
       case RGUI_SETTINGS_OVERLAY_PRESET:
-         strlcpy(type_str, path_basename(g_settings.input.overlay), type_str_size);
+         strlcpy(type_str, path_basename(g_settings.input.overlay_path), type_str_size);
          break;
       case RGUI_SETTINGS_OVERLAY_OPACITY:
          snprintf(type_str, type_str_size, "%.2f", g_settings.input.overlay_opacity);
@@ -1389,9 +1375,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_BIND_DISK_EJECT_TOGGLE:
       case RGUI_SETTINGS_BIND_DISK_NEXT:
       case RGUI_SETTINGS_BIND_QUICK_SWAP:
-#ifdef HAVE_MENU
       case RGUI_SETTINGS_BIND_MENU_TOGGLE:
-#endif
          /* always use first controller for hotkey bindings */
          input_get_bind_string(type_str, &g_settings.input.binds[0][type - RGUI_SETTINGS_BIND_BEGIN], 0, type_str_size);      
          break;

@@ -110,7 +110,6 @@ void load_menu_game_prepare(void *video_data)
             g_settings.libretro, rgui->info.library_name ? rgui->info.library_name : "");
    }
 
-#ifdef HAVE_MENU
    // redraw RGUI frame
    rgui->old_input_state = rgui->trigger_state = 0;
    rgui->do_held = false;
@@ -118,7 +117,6 @@ void load_menu_game_prepare(void *video_data)
 
    if (menugui_driver)
       menu_iterate_func(rgui, video_data, RGUI_ACTION_NOOP);
-#endif
 
    // Draw frame for loading message
    if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
@@ -175,13 +173,8 @@ static void menu_init_history(void)
    if (*g_extern.config_path)
    {
       char history_path[PATH_MAX];
-      if (*g_settings.game_history_path)
-         strlcpy(history_path, g_settings.game_history_path, sizeof(history_path));
-      else
-      {
-         fill_pathname_resolve_relative(history_path, g_extern.config_path,
+      fill_pathname_resolve_relative(history_path, g_extern.config_path,
                "retroarch-game-history.txt", sizeof(history_path));
-      }
 
       RARCH_LOG("[RGUI]: Opening history: %s.\n", history_path);
       rgui->history = rom_history_init(history_path, g_settings.game_history_size);
@@ -190,18 +183,8 @@ static void menu_init_history(void)
 
 static void menu_update_libretro_info(void)
 {
-   *rgui->libretro_dir = '\0';
-
-   strlcpy(rgui->libretro_dir, default_paths.core_dir, sizeof(rgui->libretro_dir));
    retro_get_system_info(&rgui->info);
-
-   memset(&rgui->core_info_current, 0, sizeof(rgui->core_info_current));
-   core_info_list_free(rgui->core_info);
-   rgui->core_info = NULL;
-   if (*rgui->libretro_dir)
-      rgui->core_info = core_info_list_new(rgui->libretro_dir);
-
-   menu_update_system_info(rgui, NULL);
+   menu_init_core_info(rgui);
 }
 
 void load_menu_game_prepare_dummy(void)
@@ -224,8 +207,8 @@ bool load_menu_game(void)
 
    args.verbose       = g_extern.verbose;
    args.config_path   = *g_extern.config_path ? g_extern.config_path : NULL;
-   args.sram_path     = *g_extern.savefile_dir ? g_extern.savefile_dir : NULL;
-   args.state_path    = *g_extern.savestate_dir ? g_extern.savestate_dir : NULL;
+   args.sram_path     = *g_settings.savefile_directory ? g_settings.savefile_directory : NULL;
+   args.state_path    = *g_settings.savestate_directory ? g_settings.savestate_directory : NULL;
    args.rom_path      = *g_extern.fullpath ? g_extern.fullpath : NULL;
    args.libretro_path = *g_settings.libretro ? g_settings.libretro : NULL;
    args.no_rom        = rgui->load_no_rom;
@@ -336,7 +319,6 @@ void menu_ticker_line(char *buf, size_t len, unsigned index, const char *str, bo
    }
 }
 
-#ifdef HAVE_MENU
 uint64_t menu_input(void)
 {
    unsigned p, i, players;
@@ -501,7 +483,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
 #endif
    }
    else if (type == RGUI_SETTINGS_DISK_APPEND)
-      label = g_settings.rgui_content_directory;
+      label = g_settings.games_directory;
 
    const char *dir = NULL;
    unsigned menu_type = 0;
@@ -543,7 +525,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
                && action == RGUI_ACTION_OK)
          {
             rgui->defer_core = type == RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE;
-            file_list_push(rgui->menu_stack, g_settings.rgui_content_directory, RGUI_FILE_DIRECTORY, rgui->selection_ptr);
+            file_list_push(rgui->menu_stack, g_settings.games_directory, RGUI_FILE_DIRECTORY, rgui->selection_ptr);
             menu_clear_navigation(rgui);
             rgui->need_refresh = true;
          }
@@ -752,11 +734,11 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
 #ifdef HAVE_OVERLAY
             else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
             {
-               fill_pathname_join(g_settings.input.overlay, dir, path, sizeof(g_settings.input.overlay));
+               fill_pathname_join(g_settings.input.overlay_path, dir, path, sizeof(g_settings.input.overlay_path));
 
                if (driver.overlay)
                   input_overlay_free(driver.overlay);
-               driver.overlay = input_overlay_new(g_settings.input.overlay);
+               driver.overlay = input_overlay_new(g_settings.input.overlay_path);
                if (!driver.overlay)
                   RARCH_ERR("Unable to load overlay.\n");
 
@@ -780,9 +762,9 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                menu_flush_stack_type(rgui, RGUI_SETTINGS);
                ret = -1;
             }
-            else if (menu_type == RGUI_BROWSER_DIR_PATH)
+            else if (menu_type == RGUI_GAMES_DIR_PATH)
             {
-               strlcpy(g_settings.rgui_content_directory, dir, sizeof(g_settings.rgui_content_directory));
+               strlcpy(g_settings.games_directory, dir, sizeof(g_settings.games_directory));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
 #ifdef HAVE_SCREENSHOTS
@@ -794,36 +776,35 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
 #endif
             else if (menu_type == RGUI_SAVEFILE_DIR_PATH)
             {
-               strlcpy(g_extern.savefile_dir, dir, sizeof(g_extern.savefile_dir));
+               strlcpy(g_settings.savefile_directory, dir, sizeof(g_settings.savefile_directory));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
 #ifdef HAVE_OVERLAY
             else if (menu_type == RGUI_OVERLAY_DIR_PATH)
             {
-               strlcpy(g_extern.overlay_dir, dir, sizeof(g_extern.overlay_dir));
+               strlcpy(g_settings.overlay_directory, dir, sizeof(g_settings.overlay_directory));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
 #endif
             else if (menu_type == RGUI_SAVESTATE_DIR_PATH)
             {
-               strlcpy(g_extern.savestate_dir, dir, sizeof(g_extern.savestate_dir));
-               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
-            }
-            else if (menu_type == RGUI_LIBRETRO_DIR_PATH)
-            {
-               strlcpy(rgui->libretro_dir, dir, sizeof(rgui->libretro_dir));
-               menu_init_core_info(rgui);
+               strlcpy(g_settings.savestate_directory, dir, sizeof(g_settings.savestate_directory));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
             else if (menu_type == RGUI_LIBRETRO_INFO_DIR_PATH)
             {
-               strlcpy(g_settings.libretro_info_path, dir, sizeof(g_settings.libretro_info_path));
+               strlcpy(g_settings.libretro_info_directory, dir, sizeof(g_settings.libretro_info_directory));
                menu_init_core_info(rgui);
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
             else if (menu_type == RGUI_SYSTEM_DIR_PATH)
             {
                strlcpy(g_settings.system_directory, dir, sizeof(g_settings.system_directory));
+               menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
+            }
+            else if (menu_type == RGUI_CONFIG_DIR_PATH)
+            {
+               strlcpy(g_settings.config_directory, dir, sizeof(g_settings.config_directory));
                menu_flush_stack_type(rgui, RGUI_SETTINGS_PATH_OPTIONS);
             }
             else
@@ -846,7 +827,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                   }
                   else /* Present a selection. */
                   {
-                     file_list_push(rgui->menu_stack, rgui->libretro_dir, RGUI_SETTINGS_DEFERRED_CORE, rgui->selection_ptr);
+                     file_list_push(rgui->menu_stack, default_paths.core_dir, RGUI_SETTINGS_DEFERRED_CORE, rgui->selection_ptr);
                      menu_clear_navigation(rgui);
                      rgui->need_refresh = true;
                   }
@@ -995,7 +976,6 @@ bool menu_iterate(void *video_data)
 
    return true;
 }
-#endif
 
 void menu_poll_bind_state(struct rgui_bind_state *state)
 {
@@ -1197,7 +1177,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
             file_list_push(rgui->selection_buf, "Interlaced Resolution Only", RGUI_SETTINGS_VIDEO_INTERLACED_ONLY, 0);
          file_list_push(rgui->selection_buf, "Screen Position X", RGUI_SETTINGS_VIDEO_SCREEN_POS_X, 0);
          file_list_push(rgui->selection_buf, "Screen Position Y", RGUI_SETTINGS_VIDEO_SCREEN_POS_Y, 0);
-         file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_DEBUG_TEXT, 0);
+         file_list_push(rgui->selection_buf, "Show Framerate [G]", RGUI_SETTINGS_SHOW_FRAMERATE, 0);
 #ifdef HAVE_SCALERS_BUILTIN
          file_list_push(rgui->selection_buf, "Soft Scaling", RGUI_SETTINGS_VIDEO_SOFT_SCALER, 0);
 #endif
@@ -1336,9 +1316,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_PATH_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Games Path [G]", RGUI_BROWSER_DIR_PATH, 0);
-         file_list_push(rgui->selection_buf, "Core Path [G]", RGUI_LIBRETRO_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Games Path [G]", RGUI_GAMES_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Core Info Path [G]", RGUI_LIBRETRO_INFO_DIR_PATH, 0);
+         file_list_push(rgui->selection_buf, "Specif Conf Path [G]", RGUI_CONFIG_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Savestate Path [G]", RGUI_SAVESTATE_DIR_PATH, 0);
          file_list_push(rgui->selection_buf, "Savefile Path [G]", RGUI_SAVEFILE_DIR_PATH, 0);
 #ifdef HAVE_OVERLAY
@@ -1615,9 +1595,10 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
 void menu_init_core_info(void *data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
+
    core_info_list_free(rgui->core_info);
    rgui->core_info = NULL;
-   if (*rgui->libretro_dir)
-      rgui->core_info = core_info_list_new(rgui->libretro_dir);
+   if (*default_paths.core_dir)
+      rgui->core_info = core_info_list_new(default_paths.core_dir);
    menu_update_system_info(rgui, NULL);
 }

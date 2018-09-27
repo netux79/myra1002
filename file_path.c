@@ -614,13 +614,3 @@ void fill_pathname_join(char *out_path, const char *dir, const char *path, size_
 
    rarch_assert(strlcat(out_path, path, size) < size);
 }
-
-void fill_pathname_expand_special(char *out_path, const char *in_path, size_t size)
-{
-   rarch_assert(strlcpy(out_path, in_path, size) < size);
-}
-
-void fill_pathname_abbreviate_special(char *out_path, const char *in_path, size_t size)
-{
-   rarch_assert(strlcpy(out_path, in_path, size) < size);
-}

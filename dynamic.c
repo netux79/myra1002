@@ -282,12 +282,10 @@ bool rarch_environment_cb(unsigned cmd, void *data)
 
          const struct retro_variable *vars = (const struct retro_variable*)data;
 
-         const char *options_path = g_settings.core_options_path;
-         char buf[PATH_MAX];
-         if (!*options_path && *g_extern.config_path)
+         char options_path[PATH_MAX];
+         if (*g_extern.config_path)
          {
-            fill_pathname_resolve_relative(buf, g_extern.config_path, "retroarch-core-options.cfg", sizeof(buf));
-            options_path = buf;
+            fill_pathname_resolve_relative(options_path, g_extern.config_path, "retroarch-core-options.cfg", sizeof(options_path));
          }
          g_extern.system.core_options = core_option_new(options_path, vars);
 
@@ -336,8 +334,8 @@ bool rarch_environment_cb(unsigned cmd, void *data)
          break;
 
       case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
-         *(const char**)data = *g_extern.savefile_dir ? g_extern.savefile_dir : NULL;
-         RARCH_LOG("Environ SAVE_DIRECTORY: \"%s\".\n", g_extern.savefile_dir);
+         *(const char**)data = *g_settings.savefile_directory ? g_settings.savefile_directory : NULL;
+         RARCH_LOG("Environ SAVE_DIRECTORY: \"%s\".\n", g_settings.savefile_directory);
          break;
 
       case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:

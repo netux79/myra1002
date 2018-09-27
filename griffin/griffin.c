@@ -179,14 +179,12 @@ SCREENSHOTS
 /*============================================================
 MENU
 ============================================================ */
-#ifdef HAVE_MENU
 #include "../frontend/menu/menu_common.c"
 #include "../frontend/menu/menu_navigation.c"
 #include "../frontend/menu/menu_display.c"
 #include "../frontend/menu/menu_settings.c"
 #include "../frontend/menu/history.c"
 #include "../frontend/menu/file_list.c"
-#endif
 
 #ifdef __cplusplus
 extern "C" {

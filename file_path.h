@@ -132,9 +132,6 @@ void fill_pathname_resolve_relative(char *out_path, const char *in_refpath, cons
 // Joins a directory and path together. Makes sure not to get two consecutive slashes between dir and path.
 void fill_pathname_join(char *out_path, const char *dir, const char *path, size_t size);
 
-void fill_pathname_expand_special(char *out_path, const char *in_path, size_t size);
-void fill_pathname_abbreviate_special(char *out_path, const char *in_path, size_t size);
-
 #ifdef __cplusplus
 }
 #endif

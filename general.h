@@ -111,7 +111,6 @@ struct settings
    struct
    {
       char driver[32];
-      char joypad_driver[32];
       struct retro_keybind binds[MAX_PLAYERS][RARCH_BIND_LIST_END];
       struct retro_keybind menu_binds[RARCH_BIND_LIST_END];
 
@@ -128,37 +127,35 @@ struct settings
       unsigned turbo_period;
       unsigned turbo_duty_cycle;
 
-      char overlay[PATH_MAX];
+      char overlay_path[PATH_MAX];
       float overlay_opacity;
       float overlay_scale;
    } input;
 
-   char core_options_path[PATH_MAX];
-   char game_history_path[PATH_MAX];
    unsigned game_history_size;
 
    char libretro[PATH_MAX];
-   char libretro_info_path[PATH_MAX];
-
+   char libretro_info_directory[PATH_MAX];
    char screenshot_directory[PATH_MAX];
    char system_directory[PATH_MAX];
-
-   bool rewind_enable;
-   size_t rewind_buffer_size;
-   unsigned rewind_granularity;
+   char games_directory[PATH_MAX];
+   char config_directory[PATH_MAX];
+   char savefile_directory[PATH_MAX];
+   char savestate_directory[PATH_MAX];
+#ifdef HAVE_OVERLAY
+   char overlay_directory[PATH_MAX];
+#endif
 
    float slowmotion_ratio;
    float fastforward_ratio;
+   size_t rewind_buffer_size;
+   unsigned rewind_granularity;
 
+   bool rewind_enable;
    bool block_sram_overwrite;
    bool savestate_auto_index;
    bool savestate_auto_save;
    bool savestate_auto_load;
-
-#if defined(HAVE_MENU)
-   char rgui_content_directory[PATH_MAX];
-   char rgui_config_directory[PATH_MAX];
-#endif
    bool fps_show;
 };
 
@@ -203,8 +200,6 @@ struct global
    char gb_rom_path[PATH_MAX];
    char bsx_rom_path[PATH_MAX];
    char sufami_rom_path[2][PATH_MAX];
-   bool has_set_save_path;
-   bool has_set_state_path;
    bool has_set_libretro_device[MAX_PLAYERS];
    enum config_type_enums config_type;
 
@@ -219,14 +214,6 @@ struct global
    char savefile_name_asrm[PATH_MAX];
    char savefile_name_bsrm[PATH_MAX];
    char savestate_name[PATH_MAX];
-
-   // Used on reentrancy to use a savestate dir.
-   char savefile_dir[PATH_MAX];
-   char savestate_dir[PATH_MAX];
-
-#ifdef HAVE_OVERLAY
-   char overlay_dir[PATH_MAX];
-#endif
 
    int state_slot;
 

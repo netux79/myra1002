@@ -80,14 +80,6 @@ static unsigned aspect_ratio_idx = ASPECT_RATIO_ORIGINAL;
 // Save configuration file on exit
 static bool config_save_on_exit = true;
 
-#ifdef HAVE_OVERLAY
-// Default overlay directory
-static const char *default_overlay_dir = NULL;
-#endif
-
-static const char *default_config_path = NULL;
-static const char *default_libretro_info_path = NULL;
-
 // Crop overscanned frames.
 static const bool crop_overscan = false;
 
@@ -263,9 +255,7 @@ static const bool menu_all_players_enable = false;
 #define RETRO_LBL_DISK_EJECT_TOGGLE "Disk Eject Toggle"
 #define RETRO_LBL_DISK_NEXT "Disk Swap Next"
 #define RETRO_LBL_QUICK_SWAP "Controller Quick Swap"
-#ifdef HAVE_MENU
 #define RETRO_LBL_MENU_TOGGLE "Menu toggle"
-#endif
 
 // Player 1
 static const struct retro_keybind retro_keybinds_1[] = {
@@ -317,9 +307,7 @@ static const struct retro_keybind retro_keybinds_1[] = {
    { true, RARCH_DISK_EJECT_TOGGLE,        RETRO_LBL_DISK_EJECT_TOGGLE,    NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_DISK_NEXT,                RETRO_LBL_DISK_NEXT,            NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
    { true, RARCH_QUICK_SWAP,               RETRO_LBL_QUICK_SWAP,           NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
-#ifdef HAVE_MENU
    { true, RARCH_MENU_TOGGLE,              RETRO_LBL_MENU_TOGGLE,          NO_BTN, NO_BTN, AXIS_NONE, AXIS_NONE },
-#endif
 };
 
 static const struct retro_keybind retro_keybinds_menu[] = {
@@ -369,9 +357,7 @@ static const struct retro_keybind retro_keybinds_menu[] = {
    { true, RARCH_DISK_EJECT_TOGGLE,        RETRO_LBL_DISK_EJECT_TOGGLE,    NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_DISK_NEXT,                RETRO_LBL_DISK_NEXT,            NO_BTN,                  0, AXIS_NONE },
    { true, RARCH_QUICK_SWAP,               RETRO_LBL_QUICK_SWAP,           NO_BTN,                  0, AXIS_NONE },
-#ifdef HAVE_MENU
    { true, RARCH_MENU_TOGGLE,              RETRO_LBL_MENU_TOGGLE,          CONSOLE_MENU_HOME,       0, AXIS_NONE },
-#endif
 };
 
 // Player 2-5

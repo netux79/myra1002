@@ -129,8 +129,8 @@ void config_set_defaults(void)
    g_settings.input.axis_threshold = axis_threshold;
    g_settings.input.turbo_period = turbo_period;
    g_settings.input.turbo_duty_cycle = turbo_duty_cycle;
-   g_settings.input.overlay_opacity = 0.7f;
-   g_settings.input.overlay_scale = 1.0f;
+   g_settings.input.overlay_opacity = 1.0f;
+   g_settings.input.overlay_scale = 2.0f;
    g_settings.input.autoconf_buttons = input_autoconf_buttons;
    g_settings.input.menu_all_players_enable = menu_all_players_enable;
    g_settings.input.quick_swap_players = quick_swap_players;
@@ -143,54 +143,33 @@ void config_set_defaults(void)
          g_settings.input.libretro_device[i] = RETRO_DEVICE_JOYPAD;
    }
 
+   g_extern.lifecycle_state |= (1ULL << MODE_MENU_PREINIT);
+
    g_extern.console_screen.custom_vp.width = 0;
    g_extern.console_screen.custom_vp.height = 0;
    g_extern.console_screen.custom_vp.x = 0;
    g_extern.console_screen.custom_vp.y = 0;
 
-   // Make sure settings from other configs carry over into defaults for another config.
-   if (!g_extern.has_set_save_path)
-      *g_extern.savefile_dir = '\0';
-   if (!g_extern.has_set_state_path)
-      *g_extern.savestate_dir = '\0';
-   *g_settings.libretro_info_path = '\0';
-   *g_settings.core_options_path = '\0';
-   *g_settings.game_history_path = '\0';
+   *g_settings.input.overlay_path = '\0';
+   *g_settings.libretro_info_directory = '\0';
    *g_settings.screenshot_directory = '\0';
-   *g_settings.system_directory = '\0';
-   *g_settings.input.overlay = '\0';
-#ifdef HAVE_MENU
-   *g_settings.rgui_content_directory = '\0';
-   *g_settings.rgui_config_directory = '\0';
-#endif
-   g_extern.lifecycle_state |= (1ULL << MODE_MENU_PREINIT);
+   *g_settings.games_directory = '\0';
+   *g_settings.overlay_directory = '\0';
+   *g_settings.config_directory = '\0';
    strlcpy(g_settings.system_directory, default_paths.system_dir, sizeof(g_settings.system_directory));
+   strlcpy(g_settings.savefile_directory, default_paths.sram_dir, sizeof(g_settings.savefile_directory));
+   strlcpy(g_settings.savestate_directory, default_paths.savestate_dir, sizeof(g_settings.savestate_directory));
    g_extern.config_type = CONFIG_PER_CORE;
-   strlcpy(g_extern.savefile_dir, default_paths.sram_dir, sizeof(g_extern.savefile_dir));
    g_extern.console_screen.gamma_correction = DEFAULT_GAMMA;
    g_extern.console_screen.soft_filter_enable = true;
    g_extern.console_screen.resolution_idx = GX_RESOLUTIONS_AUTO;
    g_extern.console_screen.interlaced_resolution_only = false;
    g_extern.console_screen.pos_x = 0;
    g_extern.console_screen.pos_y = 0;
-   strlcpy(g_extern.savestate_dir, default_paths.savestate_dir, sizeof(g_extern.savestate_dir));
    g_extern.state_slot = 0;
    g_extern.audio_data.mute = 0;
    g_extern.verbose = true;
    
-#ifdef HAVE_OVERLAY
-   if (default_overlay_dir)
-   {
-      fill_pathname_expand_special(g_extern.overlay_dir, default_overlay_dir, sizeof(g_extern.overlay_dir));
-   }
-#endif
-
-   if (default_libretro_info_path)
-      fill_pathname_expand_special(g_settings.libretro_info_path, default_libretro_info_path, sizeof(g_settings.libretro_info_path));
-
-   if (default_config_path)
-      fill_pathname_expand_special(g_extern.config_path, default_config_path, sizeof(g_extern.config_path));
-
    g_extern.config_save_on_exit = config_save_on_exit;
 
    rarch_init_msg_queue();
@@ -198,11 +177,9 @@ void config_set_defaults(void)
 
 static void calculate_specific_config_path(const char *in_basename)
 {
-#ifdef HAVE_MENU
-   if (*g_settings.rgui_config_directory)
-      strlcpy(g_extern.specific_config_path, g_settings.rgui_config_directory, sizeof(g_extern.specific_config_path));
+   if (*g_settings.config_directory)
+      strlcpy(g_extern.specific_config_path, g_settings.config_directory, sizeof(g_extern.specific_config_path));
    else
-#endif
    {
       // Use original config file's directory as a fallback.
       fill_pathname_basedir(g_extern.specific_config_path, g_extern.config_path, sizeof(g_extern.specific_config_path));
@@ -347,7 +324,6 @@ static void config_read_keybinds_conf(config_file_t *conf);
 
 bool global_config_load_file(const char *path)
 {
-   char tmp_str[PATH_MAX];
    config_file_t *conf = NULL;
 
    if (*path)
@@ -362,87 +338,37 @@ bool global_config_load_file(const char *path)
    if (!conf)
       return false;
 
-   /*if (g_extern.verbose)
-   {
-      RARCH_LOG_OUTPUT("=== Global Config ===\n");
-      config_file_dump_all(conf, LOG_FILE);
-      RARCH_LOG_OUTPUT("=== Global Config end ===\n");
-   }*/
-
-   CONFIG_GET_STRING(video.driver, "video_driver");
-   CONFIG_GET_STRING(audio.driver, "audio_driver");
-   CONFIG_GET_STRING(audio.resampler, "audio_resampler");
    CONFIG_GET_STRING(input.driver, "input_driver");
-   CONFIG_GET_STRING(input.joypad_driver, "input_joypad_driver");
-
    CONFIG_GET_BOOL_EXTERN(config_save_on_exit, "config_save_on_exit");
    CONFIG_GET_BOOL(input.menu_all_players_enable, "menu_all_players_enable");
    CONFIG_GET_BOOL(fps_show, "fps_show");
    CONFIG_GET_INT(game_history_size, "game_history_size");
-   CONFIG_GET_PATH(libretro_info_path, "libretro_info_path");
-   CONFIG_GET_PATH(core_options_path, "core_options_path");
+   CONFIG_GET_PATH(libretro_info_directory, "libretro_info_directory");
+   if (!strcmp(g_settings.libretro_info_directory, "default"))
+      *g_settings.libretro_info_directory = '\0';
    CONFIG_GET_PATH(screenshot_directory, "screenshot_directory");
-   if (*g_settings.screenshot_directory)
-   {
-      if (!strcmp(g_settings.screenshot_directory, "default"))
-         *g_settings.screenshot_directory = '\0';
-      else if (!path_is_directory(g_settings.screenshot_directory))
-      {
-         RARCH_WARN("screenshot_directory is not an existing directory, ignoring ...\n");
-         *g_settings.screenshot_directory = '\0';
-      }
-   }
-#ifdef HAVE_MENU
-   CONFIG_GET_PATH(rgui_content_directory, "rgui_browser_directory");
-   if (!strcmp(g_settings.rgui_content_directory, "default"))
-      *g_settings.rgui_content_directory = '\0';
-   CONFIG_GET_PATH(rgui_config_directory, "rgui_config_directory");
-   if (!strcmp(g_settings.rgui_config_directory, "default"))
-      *g_settings.rgui_config_directory = '\0';
-#endif
+   if (!strcmp(g_settings.screenshot_directory, "default"))
+      *g_settings.screenshot_directory = '\0';
+   CONFIG_GET_PATH(games_directory, "games_directory");
+   if (!strcmp(g_settings.games_directory, "default"))
+      *g_settings.games_directory = '\0';
 #ifdef HAVE_OVERLAY
-   CONFIG_GET_PATH_EXTERN(overlay_dir, "overlay_directory");
-   if (!strcmp(g_extern.overlay_dir, "default"))
-      *g_extern.overlay_dir = '\0';
+   CONFIG_GET_PATH(overlay_directory, "overlay_directory");
+   if (!strcmp(g_settings.overlay_directory, "default"))
+      *g_settings.overlay_directory = '\0';
 #endif
-   CONFIG_GET_PATH(game_history_path, "game_history_path");
-
-   if (!g_extern.has_set_save_path && config_get_path(conf, "savefile_directory", tmp_str, sizeof(tmp_str)))
-   {
-      if (!strcmp(tmp_str, "default"))
-         *g_extern.savefile_dir = '\0';
-      else if (path_is_directory(tmp_str))
-      {
-         strlcpy(g_extern.savefile_dir, tmp_str, sizeof(g_extern.savefile_dir));
-         strlcpy(g_extern.savefile_name_srm, tmp_str, sizeof(g_extern.savefile_name_srm));
-         fill_pathname_dir(g_extern.savefile_name_srm, g_extern.basename, ".srm", sizeof(g_extern.savefile_name_srm));
-      }
-      else
-         RARCH_WARN("savefile_directory is not a directory, ignoring ...\n");
-   }
-
-   if (!g_extern.has_set_state_path && config_get_path(conf, "savestate_directory", tmp_str, sizeof(tmp_str)))
-   {
-      if (!strcmp(tmp_str, "default"))
-         *g_extern.savestate_dir = '\0';
-      else if (path_is_directory(tmp_str))
-      {
-         strlcpy(g_extern.savestate_dir, tmp_str, sizeof(g_extern.savestate_dir));
-         strlcpy(g_extern.savestate_name, tmp_str, sizeof(g_extern.savestate_name));
-         fill_pathname_dir(g_extern.savestate_name, g_extern.basename, ".state", sizeof(g_extern.savestate_name));
-      }
-      else
-         RARCH_WARN("savestate_directory is not a directory, ignoring ...\n");
-   }
-
-   if (!config_get_path(conf, "system_directory", g_settings.system_directory, sizeof(g_settings.system_directory)))
-   {
-      RARCH_WARN("system_directory is not set in config. Assuming system directory is same folder as game: \"%s\".\n",
-            g_settings.system_directory);
-   }
-
+   CONFIG_GET_PATH(config_directory, "config_directory");
+   if (!strcmp(g_settings.config_directory, "default"))
+      *g_settings.config_directory = '\0';
+   CONFIG_GET_PATH(system_directory, "system_directory");
    if (!strcmp(g_settings.system_directory, "default"))
-      *g_settings.system_directory = '\0';
+      strlcpy(g_settings.system_directory, default_paths.system_dir, sizeof(g_settings.system_directory));
+   CONFIG_GET_PATH(savefile_directory, "savefile_directory");
+   if (!strcmp(g_settings.savefile_directory, "default"))
+      strlcpy(g_settings.savefile_directory, default_paths.sram_dir, sizeof(g_settings.savefile_directory));
+   CONFIG_GET_PATH(savestate_directory, "savestate_directory");
+   if (!strcmp(g_settings.savestate_directory, "default"))
+      strlcpy(g_settings.savestate_directory, default_paths.savestate_dir, sizeof(g_settings.savestate_directory));
 
    config_file_free(conf);
    return true;
@@ -461,13 +387,6 @@ bool config_load_file(const char *path)
    }
    else
       return false;
-
-   if (g_extern.verbose)
-   {
-      RARCH_LOG_OUTPUT("=== Config ===\n");
-      config_file_dump_all(conf, LOG_FILE);
-      RARCH_LOG_OUTPUT("=== Config end ===\n");
-   }
 
    CONFIG_GET_BOOL(video.vsync, "video_vsync");
    CONFIG_GET_BOOL(video.smooth, "video_smooth");
@@ -520,7 +439,7 @@ bool config_load_file(const char *path)
    g_extern.audio_data.volume_db   = g_settings.audio.volume;
    g_extern.audio_data.volume_gain = db_to_gain(g_settings.audio.volume);
 #ifdef HAVE_OVERLAY
-   CONFIG_GET_PATH(input.overlay, "input_overlay");
+   CONFIG_GET_PATH(input.overlay_path, "input_overlay_path");
    CONFIG_GET_FLOAT(input.overlay_opacity, "input_overlay_opacity");
    CONFIG_GET_FLOAT(input.overlay_scale, "input_overlay_scale");
 #endif
@@ -665,30 +584,21 @@ bool global_config_save_file(const char *path)
    RARCH_LOG("Saving global config at path: \"%s\"\n", path);
 
    config_set_path(conf, "libretro_path", g_settings.libretro);
-   config_set_path(conf, "libretro_info_path", g_settings.libretro_info_path);
+   config_set_string(conf, "input_driver", g_settings.input.driver);
    config_set_bool(conf, "config_save_on_exit", g_extern.config_save_on_exit);
    config_set_bool(conf, "fps_show", g_settings.fps_show);
    config_set_int(conf, "game_history_size", g_settings.game_history_size);
    config_set_bool(conf, "menu_all_players_enable", g_settings.input.menu_all_players_enable);
-
-   config_set_string(conf, "video_driver", g_settings.video.driver);
-   config_set_string(conf, "audio_driver", g_settings.audio.driver);
-   config_set_string(conf, "audio_resampler", g_settings.audio.resampler);
-   config_set_string(conf, "input_driver", g_settings.input.driver);
-   config_set_string(conf, "input_joypad_driver", g_settings.input.joypad_driver);
-   
+   config_set_path(conf, "libretro_info_directory", *g_settings.libretro_info_directory ? g_settings.libretro_info_directory : "default");
    config_set_path(conf, "screenshot_directory", *g_settings.screenshot_directory ? g_settings.screenshot_directory : "default");
-   config_set_path(conf, "system_directory", *g_settings.system_directory ? g_settings.system_directory : "default");
-   config_set_path(conf, "savefile_directory", *g_extern.savefile_dir ? g_extern.savefile_dir : "default");
-   config_set_path(conf, "savestate_directory", *g_extern.savestate_dir ? g_extern.savestate_dir : "default");
-#ifdef HAVE_MENU
-   config_set_path(conf, "rgui_browser_directory", *g_settings.rgui_content_directory ? g_settings.rgui_content_directory : "default");
-   config_set_path(conf, "rgui_config_directory", *g_settings.rgui_config_directory ? g_settings.rgui_config_directory : "default");
-#endif
-   config_set_path(conf, "game_history_path", g_settings.game_history_path);
+   config_set_path(conf, "games_directory", *g_settings.games_directory ? g_settings.games_directory : "default");
 #ifdef HAVE_OVERLAY
-   config_set_path(conf, "overlay_directory", *g_extern.overlay_dir ? g_extern.overlay_dir : "default");
+   config_set_path(conf, "overlay_directory", *g_settings.overlay_directory ? g_settings.overlay_directory : "default");
 #endif
+   config_set_path(conf, "config_directory", *g_settings.config_directory ? g_settings.config_directory : "default");
+   config_set_path(conf, "system_directory", g_settings.system_directory);
+   config_set_path(conf, "savefile_directory", g_settings.savefile_directory);
+   config_set_path(conf, "savestate_directory", g_settings.savestate_directory);
 
    bool ret = config_file_write(conf, path);
    config_file_free(conf);
@@ -726,7 +636,7 @@ bool config_save_file(const char *path)
    config_set_float(conf, "audio_volume", g_settings.audio.volume);
    config_set_bool(conf, "audio_sync", g_settings.audio.sync);
 #ifdef HAVE_OVERLAY
-   config_set_path(conf, "input_overlay", g_settings.input.overlay);
+   config_set_path(conf, "input_overlay_path", g_settings.input.overlay_path);
    config_set_float(conf, "input_overlay_opacity", g_settings.input.overlay_opacity);
    config_set_float(conf, "input_overlay_scale", g_settings.input.overlay_scale);
 #endif

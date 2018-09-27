@@ -363,9 +363,9 @@ void init_drivers(void)
       driver.overlay = NULL;
    }
 
-   if (*g_settings.input.overlay)
+   if (*g_settings.input.overlay_path)
    {
-      driver.overlay = input_overlay_new(g_settings.input.overlay);
+      driver.overlay = input_overlay_new(g_settings.input.overlay_path);
       if (!driver.overlay)
          RARCH_ERR("Unable to load overlay.\n");
    }
@@ -551,21 +551,11 @@ void init_video_input(void)
    video.rgb32 = (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
 #endif
 
-   const input_driver_t *input_tmp = driver.input;
-   void *inputdata_tmp = driver.input_data;
-   video_init_func(&driver.video_data, &video, &input_tmp, &inputdata_tmp);
-
+   video_init_func(&driver.video_data, &video);
    if (!driver.video_data)
    {
       RARCH_ERR("Cannot open video driver ... Exiting ...\n");
       rarch_fail(1, "init_video_input()");
-   }
-   else if (input_tmp && input_tmp!=driver.input)
-   {
-      RARCH_LOG("Graphics driver initialized an input driver. Use it.\n");
-      driver.input = input_tmp;
-      driver.input_data = inputdata_tmp;
-      /* TODO: For non console, we must ensure the previous one is freed */
    }
 
    if (driver.video->poke_interface)
@@ -574,7 +564,7 @@ void init_video_input(void)
    if (driver.video_poke && driver.video_poke->set_refresh_rate)
          driver.video_poke->set_refresh_rate(driver.video_data, g_extern.console_screen.resolution_idx);
 
-   // Video driver didn't provide an input driver so configured one.
+   /* Do not initilize twice the input driver. */
    if (driver.input && !driver.input_data)
    {
       driver.input_data = input_init_func();
