@@ -144,15 +144,6 @@ struct platform_bind
    char desc[64];
 };
 
-typedef struct video_info
-{
-   bool vsync;
-   bool force_aspect;
-   bool smooth;
-   unsigned input_scale; // Maximum input size: RARCH_SCALE_BASE * input_scale
-   bool rgb32; // Use 32-bit RGBA rather than native XBGR1555.
-} video_info_t;
-
 typedef struct audio_driver
 {
    void *(*init)(const char *device, unsigned rate, unsigned latency);
@@ -254,19 +245,17 @@ typedef struct video_poke_interface
    void (*set_filtering)(void *data, unsigned index, bool smooth);
    void (*set_aspect_ratio)(void *data, unsigned aspectratio_index);
    void (*apply_state_changes)(void *data);
-   void (*set_texture_frame)(void *data, const void *frame, bool rgb32, unsigned width, unsigned height, float alpha); // Update texture.
+   void (*set_texture_frame)(void *data, const void *frame, bool rgb32, unsigned width, unsigned height, float alpha);
    void (*set_texture_enable)(void *data, bool enable, bool full_screen); // Enable/disable rendering.
    void (*update_screen_config)(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation);
-   void (*get_resolution_size)(unsigned res_index, unsigned *width, unsigned *height);
+   void (*get_resolution_info)(void *data, unsigned res_index, unsigned *width, unsigned *height, unsigned *type);
    void (*set_refresh_rate)(void *data, unsigned res_index);
    void (*match_resolution_auto)(unsigned fbWidth, unsigned fbLines);
 } video_poke_interface_t;
 
 typedef struct video_driver
 {
-   bool (*init)(void **data, const video_info_t *video);
-   // Should the video driver act as an input driver as well? :)
-   // The video init might preinitialize an input driver to override the settings in case the video driver relies on input driver for event handling, e.g.
+   bool (*init)(void **data, unsigned scale, bool rgb32);
    bool (*frame)(void *data, const void *frame, unsigned width, unsigned height, unsigned pitch, const char *msg); // msg is for showing a message on the screen along with the video frame.
    void (*set_nonblock_state)(void *data, bool toggle); // Should we care about syncing to vblank? Fast forwarding.
    void (*free)(void *data);

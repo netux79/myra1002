@@ -18,11 +18,8 @@
 #include "../general.h"
 #include "../performance.h"
 
-bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps)
+bool gfx_get_fps(char *buf_fps, size_t size_fps)
 {
-   (void)*buf;
-   (void)size;
-   
    uint32_t now = gettime();
    uint32_t delta = diff_usec(g_extern.start_frame_time, now);
    
@@ -47,8 +44,8 @@ void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned heigh
 
    if (aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
-      base_width = g_extern.console_screen.custom_vp.width;
-      base_height = g_extern.console_screen.custom_vp.height;
+      base_width = g_settings.video.custom_vp.width;
+      base_height = g_settings.video.custom_vp.height;
       if (rotated) SWAPU(base_width, base_height);
 
       padding_x = width - base_width;
@@ -185,3 +182,19 @@ void gfx_set_config_viewport(void)
       aspectratio_lut[ASPECT_RATIO_CONFIG].value = g_settings.video.manual_aspect_ratio;
 }
 
+void gfx_check_valid_resolution(void)
+{
+   /* Ensure we have a valid resolution index when using
+    * component cable or forcing interlaced resolutions */
+   if (g_extern.video.using_component || g_settings.video.interlaced_resolution_only)
+      if(g_settings.video.resolution_idx < g_extern.video.resolution_first_hires)
+         g_settings.video.resolution_idx = g_extern.video.resolution_first_hires;   
+}
+
+void gfx_match_resolution_auto(void)
+{
+   /* on resolution AUTO call fnt to refresh the matching resolution */
+   if (g_settings.video.resolution_idx == GX_RESOLUTIONS_AUTO && *g_extern.basename)
+      if (driver.video_poke && driver.video_poke->match_resolution_auto)
+            driver.video_poke->match_resolution_auto(g_extern.frame.width, g_extern.frame.height);
+}

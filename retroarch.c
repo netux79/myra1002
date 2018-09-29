@@ -33,7 +33,6 @@
 #include "screenshot.h"
 #include "compat/getopt_rarch.h"
 #include "input/input_common.h"
-#include "git_version.h"
 
 // To avoid continous switching if we hold the button down, we require that the button must go from pressed,
 // unpressed back to pressed to be able to toggle between then.
@@ -330,73 +329,6 @@ static int16_t input_state(unsigned port, unsigned device, unsigned index, unsig
    return res;
 }
 
-#ifndef GLOBAL_CONFIG_DIR
-#define GLOBAL_CONFIG_DIR "/etc"
-#endif
-#define RARCH_DEFAULT_CONF_PATH_STR "\n\t\tBy default looks for config in $XDG_CONFIG_HOME/retroarch/retroarch.cfg,\n\t\t$HOME/.config/retroarch/retroarch.cfg,\n\t\tand $HOME/.retroarch.cfg.\n\t\tIf a default config is not found, RetroArch will attempt to create one based on the skeleton config (" GLOBAL_CONFIG_DIR "/retroarch.cfg)."
-
-#include "config.features.h"
-
-#define _PSUPP(var, name, desc) printf("\t%s:\n\t\t%s: %s\n", name, desc, _##var##_supp ? "yes" : "no")
-static void print_features(void)
-{
-   puts("");
-   puts("Features:");
-   _PSUPP(zlib, "zlib", "PNG encode/decode and .zip extraction");
-}
-#undef _PSUPP
-
-static void print_compiler(FILE *file)
-{
-   fprintf(file, "Compiler: ");
-#if defined(__GNUC__)
-   fprintf(file, "GCC (%d.%d.%d) %u-bit\n",
-      __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__, (unsigned)(CHAR_BIT * sizeof(size_t)));
-#else
-   fprintf(file, "Unknown compiler %u-bit\n",
-      (unsigned)(CHAR_BIT * sizeof(size_t)));
-#endif
-   fprintf(file, "Built: %s\n", __DATE__);
-}
-
-static void print_help(void)
-{
-   puts("===================================================================");
-#ifdef HAVE_GIT_VERSION
-   printf("RetroArch: Frontend for libretro -- v" PACKAGE_VERSION " -- %s --\n", rarch_git_version);
-#else
-   puts("RetroArch: Frontend for libretro -- v" PACKAGE_VERSION " --");
-#endif
-   print_compiler(stdout);
-   puts("===================================================================");
-   puts("Usage: retroarch [rom file] [options...]");
-   puts("\t-h/--help: Show this help message.");
-   puts("\t--menu: Do not require ROM or libretro core to be loaded, starts directly in menu.");
-   puts("\t\tIf no arguments are passed to RetroArch, it is equivalent to using --menu as only argument.");
-   puts("\t--features: Prints available features compiled into RetroArch.");
-   puts("\t-s/--save: Path for save file (*.srm).");
-   puts("\t-S/--savestate: Path to use for save states. If not selected, *.state will be assumed.");
-   puts("\t-c/--config: Path for config file." RARCH_DEFAULT_CONF_PATH_STR);
-   puts("\t--appendconfig: Extra config files are loaded in, and take priority over config selected in -c (or default).");
-   puts("\t\tMultiple configs are delimited by ','.");
-   puts("\t-g/--gameboy: Path to Gameboy ROM. Load SuperGameBoy as the regular rom.");
-   puts("\t-b/--bsx: Path to BSX rom. Load BSX BIOS as the regular rom.");
-   puts("\t-B/--bsxslot: Path to BSX slotted rom. Load BSX BIOS as the regular rom.");
-   puts("\t--sufamiA: Path to A slot of Sufami Turbo. Load Sufami base cart as regular rom.");
-   puts("\t--sufamiB: Path to B slot of Sufami Turbo.");
-
-   printf("\t-N/--nodevice: Disconnects controller device connected to port (1 to %d).\n", MAX_PLAYERS);
-   printf("\t-A/--dualanalog: Connect a DualAnalog controller to port (1 to %d).\n", MAX_PLAYERS);
-   printf("\t-d/--device: Connect a generic device into port of the device (1 to %d).\n", MAX_PLAYERS);
-   puts("\t\tFormat is port:ID, where ID is an unsigned number corresponding to the particular device.\n");
-
-   puts("\t\t{no,}load-{no,}save describes if SRAM should be loaded, and if SRAM should be saved.");
-   puts("\t\tDo note that noload-save implies that save files will be deleted and overwritten.");
-
-   puts("\t-v/--verbose: Verbose logging.");
-   puts("\t-D/--detach: Detach RetroArch from the running console. Not relevant for all platforms.\n");
-}
-
 static void set_basename(const char *path)
 {
    strlcpy(g_extern.fullpath, path, sizeof(g_extern.fullpath));
@@ -445,33 +377,23 @@ static void parse_input(int argc, char *argv[])
    int val = 0;
 
    const struct option opts[] = {
-      { "menu", 0, &val, 'M' },
-      { "help", 0, NULL, 'h' },
       { "save", 1, NULL, 's' },
-      { "verbose", 0, NULL, 'v' },
       { "gameboy", 1, NULL, 'g' },
       { "config", 1, NULL, 'c' },
-      { "appendconfig", 1, &val, 'C' },
-      { "nodevice", 1, NULL, 'N' },
-      { "dualanalog", 1, NULL, 'A' },
-      { "device", 1, NULL, 'd' },
       { "savestate", 1, NULL, 'S' },
       { "bsx", 1, NULL, 'b' },
       { "bsxslot", 1, NULL, 'B' },
       { "sufamiA", 1, NULL, 'Y' },
       { "sufamiB", 1, NULL, 'Z' },
-      { "detach", 0, NULL, 'D' },
-      { "features", 0, &val, 'f' },
       { NULL, 0, NULL, 0 }
    };
 
-   const char *optstring = "hs:fvS:A:g:b:c:B:Y:Z:U:DN:d:" ;
+   const char *optstring = "s:g:c:S:b:B:Y:Z" ;
 
    for (;;)
    {
       val = 0;
       int c = getopt_long(argc, argv, optstring, opts, NULL);
-      int port;
 
       if (c == -1)
          break;
@@ -479,40 +401,6 @@ static void parse_input(int argc, char *argv[])
 
       switch (c)
       {
-         case 'h':
-            print_help();
-            exit(0);
-
-         case 'd':
-         {
-            struct string_list *list = string_split(optarg, ":");
-            port = (list && list->size == 2) ? strtol(list->elems[0].data, NULL, 0) : 0;
-            unsigned id = (list && list->size == 2) ? strtoul(list->elems[1].data, NULL, 0) : 0;
-            string_list_free(list);
-
-            if (port < 1 || port > MAX_PLAYERS)
-            {
-               RARCH_ERR("Connect device to a valid port.\n");
-               print_help();
-               rarch_fail(1, "parse_input()");
-            }
-            g_settings.input.libretro_device[port - 1] = id;
-            g_extern.has_set_libretro_device[port - 1] = true;
-            break;
-         }
-
-         case 'A':
-            port = strtol(optarg, NULL, 0);
-            if (port < 1 || port > MAX_PLAYERS)
-            {
-               RARCH_ERR("Connect dualanalog to a valid port.\n");
-               print_help();
-               rarch_fail(1, "parse_input()");
-            }
-            g_settings.input.libretro_device[port - 1] = RETRO_DEVICE_ANALOG;
-            g_extern.has_set_libretro_device[port - 1] = true;
-            break;
-
          case 's':
             strlcpy(g_extern.savefile_name_srm, optarg, sizeof(g_extern.savefile_name_srm));
             break;
@@ -546,27 +434,8 @@ static void parse_input(int argc, char *argv[])
             strlcpy(g_extern.savestate_name, optarg, sizeof(g_extern.savestate_name));
             break;
 
-         case 'v':
-            g_extern.verbose = true;
-            break;
-
-         case 'N':
-            port = strtol(optarg, NULL, 0);
-            if (port < 1 || port > MAX_PLAYERS)
-            {
-               RARCH_ERR("Disconnect device from a valid port.\n");
-               print_help();
-               rarch_fail(1, "parse_input()");
-            }
-            g_settings.input.libretro_device[port - 1] = RETRO_DEVICE_NONE;
-            g_extern.has_set_libretro_device[port - 1] = true;
-            break;
-
          case 'c':
             strlcpy(g_extern.config_path, optarg, sizeof(g_extern.config_path));
-            break;
-
-         case 'D':
             break;
 
          case 0:
@@ -576,18 +445,10 @@ static void parse_input(int argc, char *argv[])
                   g_extern.libretro_dummy = true;
                   break;
 
-               case 'f':
-                  print_features();
-                  exit(0);
-
                default:
                   break;
             }
             break;
-
-         case '?':
-            print_help();
-            rarch_fail(1, "parse_input()");
 
          default:
             RARCH_ERR("Error parsing arguments.\n");
@@ -764,18 +625,13 @@ void rarch_deinit_rewind(void)
    g_extern.state_manager = NULL;
 }
 
-static void init_libretro_cbs_plain(void)
+static void init_libretro_cbs(void)
 {
    pretro_set_video_refresh(video_frame);
    pretro_set_audio_sample(audio_sample);
    pretro_set_audio_sample_batch(audio_sample_batch);
    pretro_set_input_state(input_state);
    pretro_set_input_poll(rarch_input_poll);
-}
-
-static void init_libretro_cbs(void)
-{
-   init_libretro_cbs_plain();
 }
 
 static void set_savestate_auto_index(void)
@@ -819,8 +675,8 @@ static void set_savestate_auto_index(void)
 
    dir_list_free(dir_list);
 
-   g_extern.state_slot = max_index;
-   RARCH_LOG("Found last state slot: #%u\n", g_extern.state_slot);
+   g_settings.state_slot = max_index;
+   RARCH_LOG("Found last state slot: #%u\n", g_settings.state_slot);
 }
 
 static void fill_pathnames(void)
@@ -917,9 +773,9 @@ void rarch_load_state(void)
 {
    char load_path[PATH_MAX];
 
-   if (g_extern.state_slot > 0)
-      snprintf(load_path, sizeof(load_path), "%s%d", g_extern.savestate_name, g_extern.state_slot);
-   else if (g_extern.state_slot < 0)
+   if (g_settings.state_slot > 0)
+      snprintf(load_path, sizeof(load_path), "%s%d", g_extern.savestate_name, g_settings.state_slot);
+   else if (g_settings.state_slot < 0)
       snprintf(load_path, sizeof(load_path), "%s.auto", g_extern.savestate_name);
    else
       snprintf(load_path, sizeof(load_path), "%s", g_extern.savestate_name);
@@ -931,10 +787,10 @@ void rarch_load_state(void)
    {
       if (load_state(load_path))
       {
-         if (g_extern.state_slot < 0)
+         if (g_settings.state_slot < 0)
             snprintf(msg, sizeof(msg), "Loaded state from slot #-1 (auto).");
          else
-            snprintf(msg, sizeof(msg), "Loaded state from slot #%d.", g_extern.state_slot);
+            snprintf(msg, sizeof(msg), "Loaded state from slot #%d.", g_settings.state_slot);
       }
       else
          snprintf(msg, sizeof(msg), "Failed to load state from \"%s\".", load_path);
@@ -950,13 +806,13 @@ void rarch_load_state(void)
 void rarch_save_state(void)
 {
    if (g_settings.savestate_auto_index)
-      g_extern.state_slot++;
+      g_settings.state_slot++;
 
    char save_path[PATH_MAX];
 
-   if (g_extern.state_slot > 0)
-      snprintf(save_path, sizeof(save_path), "%s%d", g_extern.savestate_name, g_extern.state_slot);
-   else if (g_extern.state_slot < 0)
+   if (g_settings.state_slot > 0)
+      snprintf(save_path, sizeof(save_path), "%s%d", g_extern.savestate_name, g_settings.state_slot);
+   else if (g_settings.state_slot < 0)
       snprintf(save_path, sizeof(save_path), "%s.auto", g_extern.savestate_name);
    else
       snprintf(save_path, sizeof(save_path), "%s", g_extern.savestate_name);
@@ -968,10 +824,10 @@ void rarch_save_state(void)
    {
       if (save_state(save_path))
       {
-         if (g_extern.state_slot < 0)
+         if (g_settings.state_slot < 0)
             snprintf(msg, sizeof(msg), "Saved state to slot #-1 (auto).");
          else
-            snprintf(msg, sizeof(msg), "Saved state to slot #%u.", g_extern.state_slot);
+            snprintf(msg, sizeof(msg), "Saved state to slot #%u.", g_settings.state_slot);
       }
       else
          snprintf(msg, sizeof(msg), "Failed to save state to \"%s\".", save_path);
@@ -1017,13 +873,13 @@ void rarch_reset_drivers(void)
 
 void rarch_state_slot_increase(void)
 {
-   g_extern.state_slot++;
+   g_settings.state_slot++;
 
    if (g_extern.msg_queue)
       msg_queue_clear(g_extern.msg_queue);
    char msg[256];
 
-   snprintf(msg, sizeof(msg), "State slot: %u", g_extern.state_slot);
+   snprintf(msg, sizeof(msg), "State slot: %u", g_settings.state_slot);
 
    if (g_extern.msg_queue)
       msg_queue_push(g_extern.msg_queue, msg, 1, 180);
@@ -1033,15 +889,15 @@ void rarch_state_slot_increase(void)
 
 void rarch_state_slot_decrease(void)
 {
-   if (g_extern.state_slot > 0)
-      g_extern.state_slot--;
+   if (g_settings.state_slot > 0)
+      g_settings.state_slot--;
 
    if (g_extern.msg_queue)
       msg_queue_clear(g_extern.msg_queue);
 
    char msg[256];
 
-   snprintf(msg, sizeof(msg), "State slot: %u", g_extern.state_slot);
+   snprintf(msg, sizeof(msg), "State slot: %u", g_settings.state_slot);
 
    if (g_extern.msg_queue)
       msg_queue_push(g_extern.msg_queue, msg, 1, 180);
@@ -1207,11 +1063,8 @@ static void check_oneshot(void)
 
 void rarch_game_reset(void)
 {
-   RARCH_LOG("Resetting game.\n");
-   msg_queue_clear(g_extern.msg_queue);
-   msg_queue_push(g_extern.msg_queue, "Reset.", 1, 120);
    pretro_reset();
-   init_controllers(); // bSNES since v073r01 resets controllers to JOYPAD after a reset, so just enforce it here.
+   init_controllers();
 }
 
 static void check_reset(void)
@@ -1565,19 +1418,9 @@ void rarch_init_system_info(void)
    if (!info->library_version)
       info->library_version = "v0";
 
-   snprintf(g_extern.title_buf, sizeof(g_extern.title_buf), "%s %s",
-         info->library_name, info->library_version);
-
    strlcpy(g_extern.system.valid_extensions, info->valid_extensions ? info->valid_extensions : DEFAULT_EXT,
          sizeof(g_extern.system.valid_extensions));
    g_extern.system.block_extract = info->block_extract;
-}
-
-static void init_system_av_info(void)
-{
-   pretro_get_system_av_info(&g_extern.system.av_info);
-   g_extern.frame_limit.last_frame_time = rarch_get_time_usec();
-   g_extern.frame_limit.minimum_frame_time = (retro_time_t)roundf(1000000.0f / (g_extern.system.av_info.timing.fps * g_settings.fastforward_ratio));
 }
 
 static void verify_api_version(void)
@@ -1612,18 +1455,6 @@ int rarch_main_init(int argc, char *argv[])
       return sjlj_ret;
    }
    parse_input(argc, argv);
-
-   if (g_extern.verbose)
-   {
-      RARCH_LOG_OUTPUT("=== Build =======================================\n");
-      RARCH_LOG_OUTPUT("Version: %s\n", PACKAGE_VERSION);
-      print_compiler(LOG_FILE);
-#ifdef HAVE_GIT_VERSION
-      RARCH_LOG_OUTPUT("Git: %s\n", rarch_git_version);
-#endif
-      RARCH_LOG_OUTPUT("=================================================\n");
-   }
-
    validate_cpu_features();
    config_load();
    init_libretro_sym(g_extern.libretro_dummy);
@@ -1656,7 +1487,7 @@ int rarch_main_init(int argc, char *argv[])
    }
 
    init_libretro_cbs();
-   init_system_av_info();
+   pretro_get_system_av_info(&g_extern.system.av_info);
    find_drivers();   
    init_drivers();
    rarch_init_rewind();
@@ -1667,7 +1498,7 @@ int rarch_main_init(int argc, char *argv[])
    if (!g_extern.use_sram)
       RARCH_LOG("SRAM will not be saved.\n");
 
-   g_extern.main_is_init  = true;
+   g_extern.main_is_init = true;
    return 0;
 
 error:
@@ -1726,23 +1557,6 @@ static inline void update_frame_time(void)
    g_extern.system.frame_time.callback(delta);
 }
 
-static inline void limit_frame_time(void)
-{
-   if (g_settings.fastforward_ratio < 0.0f)
-      return;
-
-   retro_time_t current = rarch_get_time_usec();
-   retro_time_t target = g_extern.frame_limit.last_frame_time + g_extern.frame_limit.minimum_frame_time;
-   retro_time_t to_sleep_ms = (target - current) / 1000;
-   if (to_sleep_ms > 0)
-   {
-      rarch_sleep((unsigned int)to_sleep_ms);
-      g_extern.frame_limit.last_frame_time += g_extern.frame_limit.minimum_frame_time; // Combat jitter a bit.
-   }
-   else
-      g_extern.frame_limit.last_frame_time = rarch_get_time_usec();
-}
-
 bool rarch_main_iterate(void)
 {
    unsigned i;
@@ -1758,12 +1572,6 @@ bool rarch_main_iterate(void)
    if (check_enter_rgui())
       return false; // Enter menu, don't exit.
 
-   if (g_extern.exec)
-   {
-      g_extern.exec = false;
-      return false;
-   }
-
    // Checks for stuff like save states, etc.
    do_state_checks();
 
@@ -1773,7 +1581,6 @@ bool rarch_main_iterate(void)
 
    update_frame_time();
    pretro_run();
-   limit_frame_time();
 
    for (i = 0; i < MAX_PLAYERS; i++)
       input_pop_analog_dpad(g_settings.input.binds[i]);
@@ -1850,9 +1657,6 @@ int rarch_main_init_wrap(const struct rarch_main_wrap *args)
       argv[argc++] = strdup("-c");
       argv[argc++] = strdup(args->config_path);
    }
-
-   if (args->verbose)
-      argv[argc++] = strdup("-v");
 
    for (i = 0; i < argc; i++)
       RARCH_LOG("arg #%d: %s\n", i, argv[i]);

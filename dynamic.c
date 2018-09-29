@@ -304,25 +304,6 @@ bool rarch_environment_cb(unsigned cmd, void *data)
          break;
       }
 
-      case RETRO_ENVIRONMENT_SET_ROTATION:
-      {
-         unsigned rotation = *(const unsigned*)data;
-         RARCH_LOG("Environ SET_ROTATION: %u\n", rotation);
-         if (!g_settings.video.allow_rotate)
-            break;
-
-         g_extern.system.rotation = rotation;
-
-         if (driver.video && driver.video->set_rotation)
-         {
-            if (driver.video_data)
-               video_set_rotation_func(rotation);
-         }
-         else
-            return false;
-         break;
-      }
-
       case RETRO_ENVIRONMENT_SHUTDOWN:
          RARCH_LOG("Environ SHUTDOWN.\n");
          g_extern.system.core_shutdown = true;

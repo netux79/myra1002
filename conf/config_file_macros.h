@@ -57,11 +57,5 @@
 #define CONFIG_GET_STRING(var, key) CONFIG_GET_STRING_BASE(conf, g_settings, var, key)
 #define CONFIG_GET_PATH(var, key) CONFIG_GET_PATH_BASE(conf, g_settings, var, key)
 
-#define CONFIG_GET_BOOL_EXTERN(var, key) CONFIG_GET_BOOL_BASE(conf, g_extern, var, key)
-#define CONFIG_GET_INT_EXTERN(var, key) CONFIG_GET_INT_BASE(conf, g_extern, var, key)
-#define CONFIG_GET_FLOAT_EXTERN(var, key) CONFIG_GET_FLOAT_BASE(conf, g_extern, var, key)
-#define CONFIG_GET_STRING_EXTERN(var, key) CONFIG_GET_STRING_BASE(conf, g_extern, var, key)
-#define CONFIG_GET_PATH_EXTERN(var, key) CONFIG_GET_PATH_BASE(conf, g_extern, var, key)
-
 #endif
 

@@ -58,8 +58,8 @@ VIDEO DRIVER
 #include "../wii/vi_encoder.c"
 #include "../wii/mem2_manager.c"
 #endif
-#include "../gfx/gfx_common.c"
 #include "../gx/gx_video.c"
+#include "../gfx/gfx_common.c"
 
 /*============================================================
 INPUT

@@ -54,7 +54,7 @@ static void rarch_get_environment_console(char *path)
 
 int main_entry_iterate(int argc, char *argv[], void* args)
 {
-   int i;
+   bool gamerun;
 
    if (g_extern.system.core_shutdown)
    {
@@ -85,7 +85,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
       // setup the screen for the current core
       if (driver.video_poke && driver.video_poke->update_screen_config)
          driver.video_poke->update_screen_config(driver.video_data,
-                                                 g_extern.console_screen.resolution_idx,
+                                                 g_settings.video.resolution_idx,
                                                  g_settings.video.aspect_ratio_idx,
                                                  g_settings.video.scale_integer,
                                                  g_settings.video.rotation);
@@ -94,13 +94,9 @@ int main_entry_iterate(int argc, char *argv[], void* args)
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_GAME_RUN))
    {
-      bool success;
-      if (g_extern.is_paused && !g_extern.is_oneshot)
-         success = rarch_main_idle_iterate();
-      else
-         success = rarch_main_iterate();
-
-      if (!success) g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
+      gamerun = (g_extern.is_paused && !g_extern.is_oneshot) ? rarch_main_idle_iterate() : rarch_main_iterate();
+      
+      if (!gamerun) g_extern.lifecycle_state &= ~(1ULL << MODE_GAME_RUN);
    }
    else if (g_extern.lifecycle_state & (1ULL << MODE_MENU_PREINIT))
    {
@@ -111,7 +107,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
          driver.video_poke->update_screen_config(driver.video_data, GX_RESOLUTIONS_RGUI, ASPECT_RATIO_4_3,
                                                  false, ORIENTATION_NORMAL);
       // Stop all rumbling when entering RGUI.
-      for (i = 0; i < MAX_PLAYERS; i++)
+      for (int i = 0; i < MAX_PLAYERS; i++)
       {
          driver_set_rumble_state(i, RETRO_RUMBLE_STRONG, 0);
          driver_set_rumble_state(i, RETRO_RUMBLE_WEAK, 0);
@@ -120,7 +116,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
       if (driver.audio_data)
          audio_stop_func();
 
-      rgui->need_refresh= true;
+      rgui->need_refresh = true;
 
       g_extern.lifecycle_state &= ~(1ULL << MODE_MENU_PREINIT);
       g_extern.lifecycle_state |= (1ULL << MODE_MENU);
@@ -151,7 +147,7 @@ void main_exit(void* args)
 
    menu_free(driver.video_data);
 
-   if (g_extern.config_save_on_exit)
+   if (g_settings.config_save_on_exit)
    {
       /* Flush out the specific config. */
       if (*g_extern.specific_config_path)

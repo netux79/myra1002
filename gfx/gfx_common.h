@@ -28,14 +28,7 @@ extern "C" {
 #include "../config.h"
 #endif
 
-// bufs gets a string suitable for Window title, buf_fps for raw FPS only.
-// buf_fps is optional.
-bool gfx_get_fps(char *buf, size_t size, char *buf_fps, size_t size_fps);
-
 #define SWAPU(a,b) {unsigned t=a;a=b;b=t;}
-
-void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height,
-      unsigned aspect_ratio_idx, bool keep_aspect, unsigned orientation);
 
 typedef struct
 {
@@ -115,9 +108,14 @@ struct aspect_ratio_elem
 
 extern struct aspect_ratio_elem aspectratio_lut[ASPECT_RATIO_END];
 
+bool gfx_get_fps(char *buf_fps, size_t size_fps);
+void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height,
+                       unsigned aspect_ratio_idx, bool keep_aspect, unsigned orientation);
 void gfx_set_square_pixel_viewport(unsigned width, unsigned height);
 void gfx_set_core_viewport(void);
 void gfx_set_config_viewport(void);
+void gfx_match_resolution_auto(void);
+void gfx_check_valid_resolution(void);
 
 #ifdef __cplusplus
 }

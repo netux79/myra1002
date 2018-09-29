@@ -35,7 +35,6 @@
 #define SYSMEM1_SIZE 0x01800000
 
 static unsigned gx_resolutions[][2] = {
-    { 0, 0 },     /* AUTO - values are updated while running */
     { 512, 192 }, /* Mastersystem */
     { 640, 200 }, /* Quake, Doom */
     { 640, 210 }, /* Atari 2600 */
@@ -69,18 +68,21 @@ static unsigned gx_resolutions[][2] = {
     { 512, 480 }, /* NES */
     { 576, 480 }, /* Gameboy, GBA */
     { 640, 480 }, /* Cave Story, FBA, MAME */
+
+    {   0,   0 }, /* AUTO - values are updated while running */
 };
 
 #define GX_RESOLUTIONS_FIRST  0
 #define GX_RESOLUTIONS_LAST   sizeof(gx_resolutions) / 2 / sizeof(unsigned) - 1
-#define GX_RESOLUTIONS_AUTO   GX_RESOLUTIONS_FIRST
+#define GX_RESOLUTIONS_AUTO   GX_RESOLUTIONS_LAST
 #define GX_RESOLUTIONS_RGUI   UINT_MAX
 
 #define DEFAULT_NON_INTERLACE_RES_W 640
 #define DEFAULT_NON_INTERLACE_RES_H 240
 #define DEFAULT_INTERLACE_RES_W 640
 #define DEFAULT_INTERLACE_RES_H 480
-static unsigned first_interlaced = GX_RESOLUTIONS_LAST; /* By default it is the last resolution avail. */
+
+#define GX_RESOLUTIONS_LAST_HIRES GX_RESOLUTIONS_LAST - 1
 
 static void *g_fb[2];
 static unsigned g_curfb = 0;
@@ -140,36 +142,24 @@ static void gx_set_refresh_rate(void *data, unsigned res_index)
    unsigned modetype, fbLines;
    gx_video_t *gx = (gx_video_t*)data;
    
-   fbLines = gx_resolutions[res_index][1] ? gx_resolutions[res_index][1] : 480;
-
-   if (fbLines <= gx->tvinfo.max_height / 2)
-      modetype = VI_NON_INTERLACE;
-   else if (gx->tvinfo.progressive)
-      modetype = VI_PROGRESSIVE;
-   else
-      modetype = VI_INTERLACE;
+   fbLines = gx_resolutions[res_index][1];
+   modetype = fbLines <= (gx->tvinfo.max_height / 2) ? VI_NON_INTERLACE : gx->tvinfo.progressive ? VI_PROGRESSIVE : VI_INTERLACE;
 
    if (gx->tvinfo.tvmode == VI_PAL)
-   {
-      if (modetype == VI_NON_INTERLACE)
-         driver_set_monitor_refresh_rate(50.0801f);
-      else
-         driver_set_monitor_refresh_rate(50.0f);
-   }
+      driver_set_monitor_refresh_rate(modetype == VI_NON_INTERLACE ? 50.0801f : 50.0f);
    else
-   {
-      if (modetype == VI_NON_INTERLACE)
-         driver_set_monitor_refresh_rate(59.8261f);
-      else
-         driver_set_monitor_refresh_rate(59.94f);
-   }
+      driver_set_monitor_refresh_rate(modetype == VI_NON_INTERLACE ? 59.8261f : 59.94f);
 }
 
-static void gx_get_tvinfo(void *data)
+static void gx_set_tvinfo(void *data)
 {
    gx_video_t *gx = (gx_video_t*)data;
+   
+   /* Let know the system we have detected component cable or not */
+   g_extern.video.using_component = VIDEO_HaveComponentCable();
+      
 #ifdef HW_RVL
-   gx->tvinfo.progressive = CONF_GetProgressiveScan() > 0 && VIDEO_HaveComponentCable();
+   gx->tvinfo.progressive = CONF_GetProgressiveScan() > 0 && g_extern.video.using_component;
    
    switch (CONF_GetVideo())
    {
@@ -187,7 +177,7 @@ static void gx_get_tvinfo(void *data)
          break;
    }
 #else
-   gx->tvinfo.progressive = VIDEO_HaveComponentCable();
+   gx->tvinfo.progressive = g_extern.video.using_component;
    gx->tvinfo.tvmode = VIDEO_GetCurrentTvMode();
 #endif
 
@@ -210,6 +200,11 @@ static void gx_get_tvinfo(void *data)
          gx->tvinfo.max_height = VI_MAX_HEIGHT_NTSC;
          break;
    }
+   
+   /* Find first hi-res resolution */
+   for (int i = GX_RESOLUTIONS_FIRST; i < GX_RESOLUTIONS_LAST; i++)
+      if (gx_resolutions[i][1] > DEFAULT_NON_INTERLACE_RES_H)
+         { g_extern.video.resolution_first_hires = i; break; }
 }
 
 static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
@@ -244,7 +239,7 @@ static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
    curW = fbWidth;
    curL = fbLines;
 
-   modetype = (fbLines <= gx->tvinfo.max_height / 2) ? VI_NON_INTERLACE : gx->tvinfo.progressive ? VI_PROGRESSIVE : VI_INTERLACE;
+   modetype = fbLines <= (gx->tvinfo.max_height / 2) ? VI_NON_INTERLACE : gx->tvinfo.progressive ? VI_PROGRESSIVE : VI_INTERLACE;
 
    if (fbLines > gx->tvinfo.max_height) fbLines = gx->tvinfo.max_height;
    if (fbWidth > gx->tvinfo.max_width) fbWidth = gx->tvinfo.max_width;
@@ -259,8 +254,8 @@ static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
    gx_mode.viWidth = 640;
 #endif
    gx_mode.viHeight = gx_mode.xfbHeight * (modetype == VI_NON_INTERLACE ? 2 : 1);
-   gx_mode.viXOrigin = (gx->tvinfo.max_width - gx_mode.viWidth) / 2 + g_extern.console_screen.pos_x;
-   gx_mode.viYOrigin = (gx->tvinfo.max_height - gx_mode.viHeight) / (2 * (modetype == VI_NON_INTERLACE ? 2 : 1)) + g_extern.console_screen.pos_y;
+   gx_mode.viXOrigin = (gx->tvinfo.max_width - gx_mode.viWidth) / 2 + g_settings.video.pos_x;
+   gx_mode.viYOrigin = (gx->tvinfo.max_height - gx_mode.viHeight) / (2 * (modetype == VI_NON_INTERLACE ? 2 : 1)) + g_settings.video.pos_y;
    gx_mode.xfbMode = modetype == VI_INTERLACE ? VI_XFBMODE_DF : VI_XFBMODE_SF;
    gx_mode.field_rendering = gx_mode.aa = GX_FALSE;
    
@@ -323,10 +318,13 @@ static bool gx_set_video_mode(void *data, unsigned res_index, bool waitVsync)
    return true;
 }
 
-static void gx_get_resolution_size(unsigned res_index, unsigned *width, unsigned *height)
+static void gx_get_resolution_info(void *data, unsigned res_index, unsigned *width, unsigned *height, unsigned *type)
 {
+    gx_video_t *gx = (gx_video_t*)data;
+    
     *width  = gx_resolutions[res_index][0];
     *height = gx_resolutions[res_index][1];
+    *type = *height <= (gx->tvinfo.max_height / 2) ? VI_NON_INTERLACE : gx->tvinfo.progressive ? VI_PROGRESSIVE : VI_INTERLACE;
 }
 
 static void gx_set_aspect_ratio(void *data, unsigned aspect_ratio_idx)
@@ -378,14 +376,14 @@ static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspec
    gx->should_resize = true;
 }
 
-static void gx_alloc_textures(void *data, const video_info_t *video)
+static void gx_alloc_textures(void *data, unsigned scale, bool rgb32)
 {
    gx_video_t *gx = (gx_video_t*)data;
 
-   if (gx->scale != video->input_scale || gx->rgb32 != video->rgb32)
+   if (gx->scale != scale || gx->rgb32 != rgb32)
    {
       if (game_tex.data) free(game_tex.data);
-      game_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * video->input_scale * video->input_scale * (video->rgb32 ? 4 : 2));
+      game_tex.data = memalign(32, RARCH_SCALE_BASE * RARCH_SCALE_BASE * scale * scale * (rgb32 ? 4 : 2));
 
       if (!game_tex.data)
       {
@@ -393,9 +391,9 @@ static void gx_alloc_textures(void *data, const video_info_t *video)
          exit(1);
       }
 
-      gx->rgb32 = video->rgb32;
+      gx->rgb32 = rgb32;
       gx->bpp = gx->rgb32 ? 4 : 2;
-      gx->scale = video->input_scale;
+      gx->scale = scale;
    }
 }
 
@@ -427,14 +425,16 @@ static void gx_match_resolution_auto(unsigned fbWidth, unsigned fbLines)
    bool matched = false; 
    int i;
    
-   if (fbLines > DEFAULT_NON_INTERLACE_RES_H || g_extern.console_screen.interlaced_resolution_only)
+   if (fbLines > DEFAULT_NON_INTERLACE_RES_H || 
+       g_settings.video.interlaced_resolution_only ||
+       g_extern.video.using_component)
    {
       /* Interlaced resolutions.   
-       * Default the resolution AUTO to the default interlaced. */
+       * Default the resolution AUTO to the default hi-res. */
       gx_resolutions[GX_RESOLUTIONS_AUTO][0] = DEFAULT_INTERLACE_RES_W;
       gx_resolutions[GX_RESOLUTIONS_AUTO][1] = DEFAULT_INTERLACE_RES_H;
 
-      for (i = first_interlaced; i <= GX_RESOLUTIONS_LAST; i++)
+      for (i = g_extern.video.resolution_first_hires; i < GX_RESOLUTIONS_LAST; i++)
          if (!(gx_resolutions[i][0] % fbWidth)) /* does fbWidth fit exactly into res? */
          {
             gx_resolutions[GX_RESOLUTIONS_AUTO][0] = gx_resolutions[i][0];
@@ -455,7 +455,7 @@ static void gx_match_resolution_auto(unsigned fbWidth, unsigned fbLines)
       gx_resolutions[GX_RESOLUTIONS_AUTO][0] = DEFAULT_NON_INTERLACE_RES_W;
       gx_resolutions[GX_RESOLUTIONS_AUTO][1] = DEFAULT_NON_INTERLACE_RES_H;
 
-      for (i = GX_RESOLUTIONS_FIRST + 1; i < first_interlaced; i++)
+      for (i = GX_RESOLUTIONS_FIRST; i < g_extern.video.resolution_first_hires; i++)
          if (!(gx_resolutions[i][0] % fbWidth) && gx_resolutions[i][1] == fbLines)
          {
             /* Resolution matched. */
@@ -467,7 +467,7 @@ static void gx_match_resolution_auto(unsigned fbWidth, unsigned fbLines)
    }
 
    /* Only show message if AUTO res is being used and not matching res is found */
-   if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO && !matched)
+   if (g_settings.video.resolution_idx == GX_RESOLUTIONS_AUTO && !matched)
    {
       char msg[64];
       snprintf(msg, sizeof(msg), "Resolution %ux%u not available, using %ux%u", fbWidth, fbLines, 
@@ -497,11 +497,7 @@ static void gx_init_resolution_auto(void)
    /* Do not proceed if invalid base size. */
    if (s->base_width == 0 || s->base_height == 0)
       return;
-   
-   /* Find first interlaced resolution */
-   for (int i = GX_RESOLUTIONS_FIRST+1; i <= GX_RESOLUTIONS_LAST; i++)
-      if (gx_resolutions[i][1] > DEFAULT_NON_INTERLACE_RES_H) { first_interlaced = i; break; }
-   
+
    /* Initially the resolution auto will be matched 
     * against the reported core base resolution*/
    gx_match_resolution_auto(s->base_width, s->base_height);
@@ -562,13 +558,13 @@ static void gx_apply_state_changes(void *data)
    gx_video_t *gx = (gx_video_t*)data;
 
 #ifdef HW_RVL
-   VIDEO_SetTrapFilter(g_extern.console_screen.soft_filter_enable);
+   VIDEO_SetTrapFilter(g_settings.video.soft_filter_enable);
 #endif
-   GX_SetDispCopyGamma(g_extern.console_screen.gamma_correction);
+   GX_SetDispCopyGamma(g_settings.video.gamma_correction);
    gx->force_aspect = g_settings.video.force_aspect;
 }
 
-static bool gx_init(void **data, const video_info_t *video)
+static bool gx_init(void **data, unsigned scale, bool rgb32)
 {
    gx_video_t *gx = (gx_video_t*)*data;
    
@@ -588,7 +584,7 @@ static bool gx_init(void **data, const video_info_t *video)
       g_fb[0] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
       g_fb[1] = MEM_K0_TO_K1(memalign(32, 640 * 576 * VI_DISPLAY_PIX_SZ));
       VIDEO_SetNextFramebuffer(g_fb[g_curfb]);
-      gx_get_tvinfo(gx);
+      gx_set_tvinfo(gx);
       gx_set_video_mode(gx, GX_RESOLUTIONS_RGUI, WAIT_VBLANK);
       gx_init_vtx();
       gx_build_disp_list();
@@ -598,7 +594,7 @@ static bool gx_init(void **data, const video_info_t *video)
    }
    
    gx_init_resolution_auto();
-   gx_alloc_textures(gx, video);
+   gx_alloc_textures(gx, scale, rgb32);
    gx_apply_state_changes(gx);
    gx->should_resize = true;
    
@@ -754,18 +750,18 @@ static void gx_resize_viewport(void *data)
    }
    else if (gx->aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
-      if (!g_extern.console_screen.custom_vp.width || !g_extern.console_screen.custom_vp.height)
+      if (!g_settings.video.custom_vp.width || !g_settings.video.custom_vp.height)
       {
-         g_extern.console_screen.custom_vp.x = 0;
-         g_extern.console_screen.custom_vp.y = 0;
-         g_extern.console_screen.custom_vp.width = gx->vp.full_width;
-         g_extern.console_screen.custom_vp.height = gx->vp.full_height;
+         g_settings.video.custom_vp.x = 0;
+         g_settings.video.custom_vp.y = 0;
+         g_settings.video.custom_vp.width = gx->vp.full_width;
+         g_settings.video.custom_vp.height = gx->vp.full_height;
       }
 
-      gx->vp.x      = g_extern.console_screen.custom_vp.x;
-      gx->vp.y      = g_extern.console_screen.custom_vp.y;
-      gx->vp.width  = g_extern.console_screen.custom_vp.width;
-      gx->vp.height = g_extern.console_screen.custom_vp.height;
+      gx->vp.x      = g_settings.video.custom_vp.x;
+      gx->vp.y      = g_settings.video.custom_vp.y;
+      gx->vp.width  = g_settings.video.custom_vp.width;
+      gx->vp.height = g_settings.video.custom_vp.height;
       if (rotated) SWAPU(gx->vp.width, gx->vp.height);
    }
    else if (!gx->double_strike) /* Apply aspect ratio just to non-240p resolutions */
@@ -1037,7 +1033,7 @@ static inline void gx_onscreen_display(gx_video_t *gx, const char *msg)
          else
          {
             static char fps_txt[16];
-            gfx_get_fps(NULL, 0, fps_txt, sizeof(fps_txt));
+            gfx_get_fps(fps_txt, sizeof(fps_txt));
             tmp = fps_txt;
          }
          
@@ -1194,7 +1190,7 @@ static const video_poke_interface_t gx_poke_interface = {
    gx_set_texture_frame,
    gx_set_texture_enable,
    gx_update_screen_config,
-   gx_get_resolution_size,
+   gx_get_resolution_info,
    gx_set_refresh_rate,
    gx_match_resolution_auto
 };

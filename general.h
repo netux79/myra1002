@@ -69,27 +69,41 @@ enum config_type_enums
    CONFIG_PER_GAME,
 };
 
+typedef struct rarch_viewport
+{
+   int x;
+   int y;
+   unsigned width;
+   unsigned height;
+   unsigned full_width;
+   unsigned full_height;
+} rarch_viewport_t;
 
 // All config related settings go here.
 struct settings
 {
    struct
    {
-      char driver[32];
+      float manual_aspect_ratio;
+      float refresh_rate;
+      unsigned aspect_ratio_idx;
+      unsigned rotation;
+      unsigned resolution_idx;
+      unsigned gamma_correction;
+#ifdef HAVE_SCALERS_BUILTIN
+      unsigned filter_idx;
+#endif
+      int pos_x;
+      int pos_y;
       bool vsync;
       bool smooth;
       bool force_aspect;
       bool crop_overscan;
-      float manual_aspect_ratio;
       bool scale_integer;
-      unsigned aspect_ratio_idx;
-      unsigned rotation;
-
-#ifdef HAVE_SCALERS_BUILTIN
-      unsigned filter_idx;
-#endif
-      float refresh_rate;
-      bool allow_rotate;
+      bool soft_filter_enable;
+      bool interlaced_resolution_only;      
+      rarch_viewport_t custom_vp;
+      char driver[32];
    } video;
 
    struct
@@ -147,7 +161,7 @@ struct settings
 #endif
 
    float slowmotion_ratio;
-   float fastforward_ratio;
+   int state_slot;
    size_t rewind_buffer_size;
    unsigned rewind_granularity;
 
@@ -156,7 +170,9 @@ struct settings
    bool savestate_auto_index;
    bool savestate_auto_save;
    bool savestate_auto_load;
+   
    bool fps_show;
+   bool config_save_on_exit;
 };
 
 enum rarch_game_type
@@ -167,16 +183,6 @@ enum rarch_game_type
    RARCH_CART_BSX_SLOTTED,
    RARCH_CART_SUFAMI
 };
-
-typedef struct rarch_viewport
-{
-   int x;
-   int y;
-   unsigned width;
-   unsigned height;
-   unsigned full_width;
-   unsigned full_height;
-} rarch_viewport_t;
 
 typedef struct
 {
@@ -189,7 +195,6 @@ typedef struct
 // All run-time- / command line flag-related globals go here.
 struct global
 {
-   bool verbose;
    bool audio_active;
    bool video_active;
 
@@ -215,41 +220,36 @@ struct global
    char savefile_name_bsrm[PATH_MAX];
    char savestate_name[PATH_MAX];
 
-   int state_slot;
-
    struct
    {
-      retro_time_t minimum_frame_time;
-      retro_time_t last_frame_time;
-   } frame_limit;
-
-   struct
-   {
-      struct retro_system_info info;
-      struct retro_system_av_info av_info;
-
-      unsigned rotation;
-      bool core_shutdown;
       enum retro_pixel_format pix_fmt;
 
+      bool core_shutdown;
       bool block_extract;
       bool force_nonblock;
       bool no_game;
 
+      unsigned num_ports;
+      
       const char *input_desc_btn[MAX_PLAYERS][RARCH_FIRST_CUSTOM_BIND];
       char valid_extensions[PATH_MAX];
-
-      struct retro_disk_control_callback disk_control;
-
-      struct retro_frame_time_callback frame_time;
-      retro_usec_t frame_time_last;
-
-      core_option_manager_t *core_options;
-
+      
+      struct retro_system_info info;
+      struct retro_system_av_info av_info;
       struct retro_controller_info *ports;
-      unsigned num_ports;
+      struct retro_disk_control_callback disk_control;
+      struct retro_frame_time_callback frame_time;
+      
+      retro_usec_t frame_time_last;
+      core_option_manager_t *core_options;
    } system;
 
+   struct
+   {
+      bool using_component;
+      unsigned resolution_first_hires;      
+   } video;
+   
    struct
    {
       void *resampler_data;
@@ -296,8 +296,6 @@ struct global
 
    msg_queue_t *msg_queue;
 
-   bool exec;
-
    // Rewind support.
    state_manager_t *state_manager;
    size_t state_size;
@@ -322,20 +320,6 @@ struct global
    
    unsigned frame_count;
    uint32_t start_frame_time;
-   char title_buf[64];
-
-   // Settings and/or global state that is specific to a console-style implementation.
-   struct
-   {
-      unsigned resolution_idx;
-      int pos_x;
-      int pos_y;
-      rarch_viewport_t custom_vp;
-      unsigned gamma_correction;
-      bool soft_filter_enable;
-      bool interlaced_resolution_only;
-   } console_screen;
-
    uint64_t lifecycle_state;
 
 #ifdef HAVE_FILE_LOGGER
@@ -344,7 +328,6 @@ struct global
 #endif
 
    bool main_is_init;
-   bool config_save_on_exit;
    char error_string[1024];
    jmp_buf error_sjlj_context;
    bool libretro_no_rom;
@@ -358,7 +341,6 @@ struct rarch_main_wrap
    const char *state_path;
    const char *config_path;
    const char *libretro_path;
-   bool verbose;
    bool no_rom;
 };
 

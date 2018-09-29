@@ -532,7 +532,7 @@ void init_video_input(void)
    gfx_set_config_viewport();
 
    // Update CUSTOM viewport.
-   rarch_viewport_t *custom_vp = &g_extern.console_screen.custom_vp;
+   rarch_viewport_t *custom_vp = &g_settings.video.custom_vp;
    if (g_settings.video.aspect_ratio_idx == ASPECT_RATIO_CUSTOM)
    {
       float default_aspect = aspectratio_lut[ASPECT_RATIO_CORE].value;
@@ -540,29 +540,26 @@ void init_video_input(void)
          (float)custom_vp->width / custom_vp->height : default_aspect;
    }
 
-   video_info_t video = {0};
-   video.vsync = g_settings.video.vsync && !g_extern.system.force_nonblock;
-   video.force_aspect = g_settings.video.force_aspect;
-   video.smooth = g_settings.video.smooth;
-   video.input_scale = scale;
 #ifdef HAVE_SCALERS_BUILTIN   
-   video.rgb32 = g_extern.filter.filter ? g_extern.filter.out_rgb32 : (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
+   bool rgb32 = g_extern.filter.filter ? g_extern.filter.out_rgb32 : (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
 #else
-   video.rgb32 = (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
+   bool rgb32 = (g_extern.system.pix_fmt == RETRO_PIXEL_FORMAT_XRGB8888);
 #endif
 
-   video_init_func(&driver.video_data, &video);
+   video_init_func(&driver.video_data, scale, rgb32);
    if (!driver.video_data)
    {
       RARCH_ERR("Cannot open video driver ... Exiting ...\n");
       rarch_fail(1, "init_video_input()");
    }
 
+   gfx_check_valid_resolution();
+
    if (driver.video->poke_interface)
       driver.video->poke_interface(driver.video_data, &driver.video_poke);
 
    if (driver.video_poke && driver.video_poke->set_refresh_rate)
-         driver.video_poke->set_refresh_rate(driver.video_data, g_extern.console_screen.resolution_idx);
+         driver.video_poke->set_refresh_rate(driver.video_data, g_settings.video.resolution_idx);
 
    /* Do not initilize twice the input driver. */
    if (driver.input && !driver.input_data)

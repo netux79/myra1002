@@ -205,7 +205,6 @@ bool load_menu_game(void)
 
    struct rarch_main_wrap args = {0};
 
-   args.verbose       = g_extern.verbose;
    args.config_path   = *g_extern.config_path ? g_extern.config_path : NULL;
    args.sram_path     = *g_settings.savefile_directory ? g_settings.savefile_directory : NULL;
    args.state_path    = *g_settings.savestate_directory ? g_settings.savestate_directory : NULL;
@@ -1173,7 +1172,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
       case RGUI_SETTINGS_VIDEO_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Game Resolution", RGUI_SETTINGS_VIDEO_RESOLUTION, 0);
-         if (g_extern.console_screen.resolution_idx == GX_RESOLUTIONS_AUTO)
+         if (!g_extern.video.using_component)
             file_list_push(rgui->selection_buf, "Interlaced Resolution Only", RGUI_SETTINGS_VIDEO_INTERLACED_ONLY, 0);
          file_list_push(rgui->selection_buf, "Screen Position X", RGUI_SETTINGS_VIDEO_SCREEN_POS_X, 0);
          file_list_push(rgui->selection_buf, "Screen Position Y", RGUI_SETTINGS_VIDEO_SCREEN_POS_Y, 0);

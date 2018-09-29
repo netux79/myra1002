@@ -22,15 +22,15 @@ It also features a simple built-in UI called RGUI.
 
 .TP
 \fBLoad a ROM, using a specific libretro core and config file.\fR
-retroarch --config ~/.config/retroarch/retroarch.cfg --libretro /path/to/libretro/core.so /path/to/rom.rom --verbose
+retroarch --config ~/.config/retroarch/retroarch.cfg --libretro /path/to/libretro/core.so /path/to/rom.rom
 
 .TP
 \fBNo command line options will start RetroArch in RGUI mode.\fR
 retroarch
 
 .TP
-\fBStart RetroArch in RGUI, with verbose logging.\fR
-retroarch --menu --verbose
+\fBStart RetroArch in RGUI.\fR
+retroarch --menu
 
 .SH "RGUI"
 RGUI is the built-in GUI system for RetroArch. It is aimed at being controlled with a gamepad only.
@@ -152,10 +152,6 @@ MODE designates how to handle SRAM.
 The format of the second parameter is {no,}load-{no,}save.
 These two boolean values tell if SRAM loading and SRAM saving should take place.
 Note that noload-save implies that the SRAM will be overwritten with new data.
-
-.TP
-\fB--verbose, -v\fR
-Activates verbose logging.
 
 .TP
 \fB-D, --detach\fR

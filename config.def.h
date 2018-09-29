@@ -93,10 +93,6 @@ static const bool crop_overscan = false;
 // and leave this at its default.
 static const float refresh_rate = 60/1.001;
 
-// Allow games to set rotation. If false, rotation requests are honored, but ignored.
-// Used for setups where one manually rotates the monitor.
-static const bool allow_rotate = true;
-
 ////////////////
 // Audio
 ////////////////
@@ -154,9 +150,6 @@ static const bool savestate_auto_load = true;
 
 // Slowmotion ratio.
 static const float slowmotion_ratio = 3.0;
-
-// Maximum fast forward ratio (Negative => no limit).
-static const float fastforward_ratio = -1.0;
 
 // Number of entries that will be kept in ROM history file.
 static const unsigned game_history_size = 100;

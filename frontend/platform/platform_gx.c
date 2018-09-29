@@ -175,10 +175,6 @@ extern char gx_rom_path[PATH_MAX];
 
 static void get_environment_settings(int argc, char *argv[], void *args)
 {
-#ifndef IS_SALAMANDER
-   g_extern.verbose = true;
-#endif
-
 #ifdef HW_DOL
    chdir("carda:/retroarch");
 #endif
