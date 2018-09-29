@@ -171,21 +171,6 @@ extern "C" {
 // Video ram lets a frontend peek into a game systems video RAM (VRAM).
 #define RETRO_MEMORY_VIDEO_RAM   3
 
-// Special memory types.
-#define RETRO_MEMORY_SNES_BSX_RAM             ((1 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_SNES_BSX_PRAM            ((2 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_SNES_SUFAMI_TURBO_A_RAM  ((3 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_SNES_SUFAMI_TURBO_B_RAM  ((4 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_SNES_GAME_BOY_RAM        ((5 << 8) | RETRO_MEMORY_SAVE_RAM)
-#define RETRO_MEMORY_SNES_GAME_BOY_RTC        ((6 << 8) | RETRO_MEMORY_RTC)
-
-// Special game types passed into retro_load_game_special().
-// Only used when multiple ROMs are required.
-#define RETRO_GAME_TYPE_BSX             0x101
-#define RETRO_GAME_TYPE_BSX_SLOTTED     0x102
-#define RETRO_GAME_TYPE_SUFAMI_TURBO    0x103
-#define RETRO_GAME_TYPE_SUPER_GAME_BOY  0x104
-
 enum retro_mod
 {
    RETROKMOD_NONE       = 0x0000,

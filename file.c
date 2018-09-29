@@ -29,22 +29,9 @@ static const char *ramtype2str(int type)
    switch (type)
    {
       case RETRO_MEMORY_SAVE_RAM:
-      case RETRO_MEMORY_SNES_GAME_BOY_RAM:
-      case RETRO_MEMORY_SNES_BSX_RAM:
          return ".srm";
-
       case RETRO_MEMORY_RTC:
-      case RETRO_MEMORY_SNES_GAME_BOY_RTC:
          return ".rtc";
-
-      case RETRO_MEMORY_SNES_BSX_PRAM:
-         return ".pram";
-
-      case RETRO_MEMORY_SNES_SUFAMI_TURBO_A_RAM:
-         return ".aram";
-      case RETRO_MEMORY_SNES_SUFAMI_TURBO_B_RAM:
-         return ".bram";
-
       default:
          return "";
    }
@@ -129,29 +116,8 @@ bool load_state(const char *path)
    if (g_settings.block_sram_overwrite)
    {
       RARCH_LOG("Blocking SRAM overwrite.\n");
-      switch (g_extern.game_type)
-      {
-         case RARCH_CART_NORMAL:
-            block_type[0] = RETRO_MEMORY_SAVE_RAM;
-            block_type[1] = RETRO_MEMORY_RTC;
-            break;
-
-         case RARCH_CART_BSX:
-         case RARCH_CART_BSX_SLOTTED:
-            block_type[0] = RETRO_MEMORY_SNES_BSX_RAM;
-            block_type[1] = RETRO_MEMORY_SNES_BSX_PRAM;
-            break;
-
-         case RARCH_CART_SUFAMI:
-            block_type[0] = RETRO_MEMORY_SNES_SUFAMI_TURBO_A_RAM;
-            block_type[1] = RETRO_MEMORY_SNES_SUFAMI_TURBO_B_RAM;
-            break;
-
-         case RARCH_CART_SGB:
-            block_type[0] = RETRO_MEMORY_SNES_GAME_BOY_RAM;
-            block_type[1] = RETRO_MEMORY_SNES_GAME_BOY_RTC;
-            break;
-      }
+      block_type[0] = RETRO_MEMORY_SAVE_RAM;
+      block_type[1] = RETRO_MEMORY_RTC;
    }
 
    for (i = 0; i < 2; i++)
@@ -302,38 +268,7 @@ static bool load_normal_rom(void)
    }
 }
 
-static bool load_sgb_rom(void)
-{
-   const char *path[2] = {
-      *g_extern.fullpath ? g_extern.fullpath : NULL,
-      g_extern.gb_rom_path
-   };
-
-   return load_roms(RETRO_GAME_TYPE_SUPER_GAME_BOY, path, 2);
-}
-
-static bool load_bsx_rom(bool slotted)
-{
-   const char *path[2] = {
-      *g_extern.fullpath ? g_extern.fullpath : NULL,
-      g_extern.bsx_rom_path
-   };
-
-   return load_roms(slotted ? RETRO_GAME_TYPE_BSX_SLOTTED : RETRO_GAME_TYPE_BSX, path, 2); 
-}
-
-static bool load_sufami_rom(void)
-{
-   const char *path[3] = {
-      *g_extern.fullpath ? g_extern.fullpath : NULL,
-      *g_extern.sufami_rom_path[0] ? g_extern.sufami_rom_path[0] : NULL,
-      *g_extern.sufami_rom_path[1] ? g_extern.sufami_rom_path[1] : NULL,
-   };
-
-   return load_roms(RETRO_GAME_TYPE_SUFAMI_TURBO, path, 3);
-}
-
-bool init_rom_file(enum rarch_game_type type)
+bool init_rom_file(void)
 {
 #ifdef HAVE_ZLIB
    if (*g_extern.fullpath && !g_extern.system.block_extract)
@@ -355,37 +290,8 @@ bool init_rom_file(enum rarch_game_type type)
    }
 #endif
 
-   switch (type)
-   {
-      case RARCH_CART_SGB:
-         if (!load_sgb_rom())
-            return false;
-         break;
-
-      case RARCH_CART_NORMAL:
-         if (!load_normal_rom())
-            return false;
-         break;
-
-      case RARCH_CART_BSX:
-         if (!load_bsx_rom(false))
-            return false;
-         break;
-
-      case RARCH_CART_BSX_SLOTTED:
-         if (!load_bsx_rom(true))
-            return false;
-         break;
-
-      case RARCH_CART_SUFAMI:
-         if (!load_sufami_rom())
-            return false;
-         break;
-         
-      default:
-         RARCH_ERR("Invalid ROM type.\n");
-         return false;
-   }
+   if (!load_normal_rom())
+      return false;
 
    return true;
 }

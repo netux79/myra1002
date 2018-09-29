@@ -175,15 +175,6 @@ struct settings
    bool config_save_on_exit;
 };
 
-enum rarch_game_type
-{
-   RARCH_CART_NORMAL = 0,
-   RARCH_CART_SGB,
-   RARCH_CART_BSX,
-   RARCH_CART_BSX_SLOTTED,
-   RARCH_CART_SUFAMI
-};
-
 typedef struct
 {
    const void *data;
@@ -200,11 +191,7 @@ struct global
 
    bool rom_file_temporary;
    char last_rom[PATH_MAX];
-   enum rarch_game_type game_type;
 
-   char gb_rom_path[PATH_MAX];
-   char bsx_rom_path[PATH_MAX];
-   char sufami_rom_path[2][PATH_MAX];
    bool has_set_libretro_device[MAX_PLAYERS];
    enum config_type_enums config_type;
 
@@ -214,10 +201,7 @@ struct global
    char basename[PATH_MAX];
    char fullpath[PATH_MAX];
    char savefile_name_srm[PATH_MAX];
-   char savefile_name_rtc[PATH_MAX]; // Make sure that fill_pathname has space.
-   char savefile_name_psrm[PATH_MAX];
-   char savefile_name_asrm[PATH_MAX];
-   char savefile_name_bsrm[PATH_MAX];
+   char savefile_name_rtc[PATH_MAX];
    char savestate_name[PATH_MAX];
 
    struct

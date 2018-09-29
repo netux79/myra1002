@@ -190,11 +190,8 @@ static bool audio_flush(const int16_t *data, size_t samples)
    unsigned output_frames      = 0;
 
    struct resampler_data src_data = {0};
-   RARCH_PERFORMANCE_INIT(audio_convert_s16);
-   RARCH_PERFORMANCE_START(audio_convert_s16);
    audio_convert_s16_to_float(g_extern.audio_data.data, data, samples,
          g_extern.audio_data.volume_gain);
-   RARCH_PERFORMANCE_STOP(audio_convert_s16);
 
    src_data.data_in      = g_extern.audio_data.data;
    src_data.input_frames = samples >> 1;
@@ -208,11 +205,8 @@ static bool audio_flush(const int16_t *data, size_t samples)
    if (g_extern.is_slowmotion)
       src_data.ratio *= g_settings.slowmotion_ratio;
 
-   RARCH_PERFORMANCE_INIT(resampler_proc);
-   RARCH_PERFORMANCE_START(resampler_proc);
    rarch_resampler_process(g_extern.audio_data.resampler,
          g_extern.audio_data.resampler_data, &src_data);
-   RARCH_PERFORMANCE_STOP(resampler_proc);
 
    output_data   = g_extern.audio_data.outsamples;
    output_frames = src_data.output_frames;
@@ -227,11 +221,8 @@ static bool audio_flush(const int16_t *data, size_t samples)
    }
    else
    {
-      RARCH_PERFORMANCE_INIT(audio_convert_float);
-      RARCH_PERFORMANCE_START(audio_convert_float);
       audio_convert_float_to_s16(g_extern.audio_data.conv_outsamples,
             output_data, output_frames * 2);
-      RARCH_PERFORMANCE_STOP(audio_convert_float);
 
       if (audio_write_func(g_extern.audio_data.conv_outsamples, output_frames * sizeof(int16_t) * 2) < 0)
       {
@@ -378,17 +369,12 @@ static void parse_input(int argc, char *argv[])
 
    const struct option opts[] = {
       { "save", 1, NULL, 's' },
-      { "gameboy", 1, NULL, 'g' },
       { "config", 1, NULL, 'c' },
       { "savestate", 1, NULL, 'S' },
-      { "bsx", 1, NULL, 'b' },
-      { "bsxslot", 1, NULL, 'B' },
-      { "sufamiA", 1, NULL, 'Y' },
-      { "sufamiB", 1, NULL, 'Z' },
       { NULL, 0, NULL, 0 }
    };
 
-   const char *optstring = "s:g:c:S:b:B:Y:Z" ;
+   const char *optstring = "s:c:S";
 
    for (;;)
    {
@@ -403,31 +389,6 @@ static void parse_input(int argc, char *argv[])
       {
          case 's':
             strlcpy(g_extern.savefile_name_srm, optarg, sizeof(g_extern.savefile_name_srm));
-            break;
-
-         case 'g':
-            strlcpy(g_extern.gb_rom_path, optarg, sizeof(g_extern.gb_rom_path));
-            g_extern.game_type = RARCH_CART_SGB;
-            break;
-
-         case 'b':
-            strlcpy(g_extern.bsx_rom_path, optarg, sizeof(g_extern.bsx_rom_path));
-            g_extern.game_type = RARCH_CART_BSX;
-            break;
-
-         case 'B':
-            strlcpy(g_extern.bsx_rom_path, optarg, sizeof(g_extern.bsx_rom_path));
-            g_extern.game_type = RARCH_CART_BSX_SLOTTED;
-            break;
-
-         case 'Y':
-            strlcpy(g_extern.sufami_rom_path[0], optarg, sizeof(g_extern.sufami_rom_path[0]));
-            g_extern.game_type = RARCH_CART_SUFAMI;
-            break;
-
-         case 'Z':
-            strlcpy(g_extern.sufami_rom_path[1], optarg, sizeof(g_extern.sufami_rom_path[1]));
-            g_extern.game_type = RARCH_CART_SUFAMI;
             break;
 
          case 'S':
@@ -507,74 +468,17 @@ static void init_controllers(void)
 
 static inline void load_save_files(void)
 {
-   switch (g_extern.game_type)
-   {
-      case RARCH_CART_NORMAL:
-         load_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SAVE_RAM);
-         load_ram_file(g_extern.savefile_name_rtc, RETRO_MEMORY_RTC);
-         break;
-
-      case RARCH_CART_SGB:
-         load_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SNES_GAME_BOY_RAM);
-         load_ram_file(g_extern.savefile_name_rtc, RETRO_MEMORY_SNES_GAME_BOY_RTC);
-         break;
-
-      case RARCH_CART_BSX:
-      case RARCH_CART_BSX_SLOTTED:
-         load_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SNES_BSX_RAM);
-         load_ram_file(g_extern.savefile_name_psrm, RETRO_MEMORY_SNES_BSX_PRAM);
-         break;
-
-      case RARCH_CART_SUFAMI:
-         load_ram_file(g_extern.savefile_name_asrm, RETRO_MEMORY_SNES_SUFAMI_TURBO_A_RAM);
-         load_ram_file(g_extern.savefile_name_bsrm, RETRO_MEMORY_SNES_SUFAMI_TURBO_B_RAM);
-         break;
-
-      default:
-         break;
-   }
+   load_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SAVE_RAM);
+   load_ram_file(g_extern.savefile_name_rtc, RETRO_MEMORY_RTC);
 }
 
 static inline void save_files(void)
 {
-   switch (g_extern.game_type)
-   {
-      case RARCH_CART_NORMAL:
-         RARCH_LOG("Saving regular SRAM.\n");
-         RARCH_LOG("SRM: %s\n", g_extern.savefile_name_srm);
-         RARCH_LOG("RTC: %s\n", g_extern.savefile_name_rtc);
-         save_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SAVE_RAM);
-         save_ram_file(g_extern.savefile_name_rtc, RETRO_MEMORY_RTC);
-         break;
-
-      case RARCH_CART_SGB:
-         RARCH_LOG("Saving Gameboy SRAM.\n");
-         RARCH_LOG("SRM: %s\n", g_extern.savefile_name_srm);
-         RARCH_LOG("RTC: %s\n", g_extern.savefile_name_rtc);
-         save_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SNES_GAME_BOY_RAM);
-         save_ram_file(g_extern.savefile_name_rtc, RETRO_MEMORY_SNES_GAME_BOY_RTC);
-         break;
-
-      case RARCH_CART_BSX:
-      case RARCH_CART_BSX_SLOTTED:
-         RARCH_LOG("Saving BSX (P)RAM.\n");
-         RARCH_LOG("SRM:  %s\n", g_extern.savefile_name_srm);
-         RARCH_LOG("PSRM: %s\n", g_extern.savefile_name_psrm);
-         save_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SNES_BSX_RAM);
-         save_ram_file(g_extern.savefile_name_psrm, RETRO_MEMORY_SNES_BSX_PRAM);
-         break;
-
-      case RARCH_CART_SUFAMI:
-         RARCH_LOG("Saving Sufami turbo A/B RAM.\n");
-         RARCH_LOG("ASRM: %s\n", g_extern.savefile_name_asrm);
-         RARCH_LOG("BSRM: %s\n", g_extern.savefile_name_bsrm);
-         save_ram_file(g_extern.savefile_name_asrm, RETRO_MEMORY_SNES_SUFAMI_TURBO_A_RAM);
-         save_ram_file(g_extern.savefile_name_bsrm, RETRO_MEMORY_SNES_SUFAMI_TURBO_B_RAM);
-         break;
-
-      default:
-         break;
-   }
+   RARCH_LOG("Saving regular SRAM.\n");
+   RARCH_LOG("SRM: %s\n", g_extern.savefile_name_srm);
+   RARCH_LOG("RTC: %s\n", g_extern.savefile_name_rtc);
+   save_ram_file(g_extern.savefile_name_srm, RETRO_MEMORY_SAVE_RAM);
+   save_ram_file(g_extern.savefile_name_rtc, RETRO_MEMORY_RTC);
 }
 
 void rarch_init_msg_queue(void)
@@ -681,55 +585,9 @@ static void set_savestate_auto_index(void)
 
 static void fill_pathnames(void)
 {
-   switch (g_extern.game_type)
-   {
-      case RARCH_CART_BSX:
-      case RARCH_CART_BSX_SLOTTED:
-         // BSX PSRM
-         fill_pathname(g_extern.savefile_name_srm,
-               g_extern.bsx_rom_path, ".srm", sizeof(g_extern.savefile_name_srm));
-
-         fill_pathname(g_extern.savefile_name_psrm,
-               g_extern.savefile_name_srm, ".psrm", sizeof(g_extern.savefile_name_psrm));
-
-         fill_pathname(g_extern.savestate_name,
-               g_extern.bsx_rom_path, ".state", sizeof(g_extern.savestate_name));
-         break;
-
-      case RARCH_CART_SUFAMI:
-         if (*g_extern.sufami_rom_path[0] && *g_extern.sufami_rom_path[1])
-            RARCH_WARN("Sufami Turbo SRAM paths will be inferred from their respective paths to avoid conflicts.\n");
-
-         // SUFAMI ARAM
-         fill_pathname(g_extern.savefile_name_asrm,
-               g_extern.sufami_rom_path[0], ".srm", sizeof(g_extern.savefile_name_asrm));
-
-         // SUFAMI BRAM
-         fill_pathname(g_extern.savefile_name_bsrm,
-               g_extern.sufami_rom_path[1], ".srm", sizeof(g_extern.savefile_name_bsrm));
-
-         fill_pathname(g_extern.savestate_name,
-               *g_extern.sufami_rom_path[0] ?
-                  g_extern.sufami_rom_path[0] : g_extern.sufami_rom_path[1],
-                  ".state", sizeof(g_extern.savestate_name));
-         break;
-
-      case RARCH_CART_SGB:
-         fill_pathname(g_extern.savefile_name_srm,
-               g_extern.gb_rom_path, ".srm", sizeof(g_extern.savefile_name_srm));
-
-         fill_pathname(g_extern.savestate_name,
-               g_extern.gb_rom_path, ".state", sizeof(g_extern.savestate_name));
-
-         fill_pathname(g_extern.savefile_name_rtc,
-               g_extern.savefile_name_srm, ".rtc", sizeof(g_extern.savefile_name_rtc));
-         break;
-
-      default:
-         // Infer .rtc save path from save ram path.
-         fill_pathname(g_extern.savefile_name_rtc,
-               g_extern.savefile_name_srm, ".rtc", sizeof(g_extern.savefile_name_rtc));
-   }
+   // Infer .rtc save path from save ram path.
+   fill_pathname(g_extern.savefile_name_rtc,
+   g_extern.savefile_name_srm, ".rtc", sizeof(g_extern.savefile_name_rtc));
 }
 
 static void load_auto_state(void)
@@ -986,12 +844,7 @@ static void check_rewind(void)
       {
          void *state;
          state_manager_push_where(g_extern.state_manager, &state);
-
-         RARCH_PERFORMANCE_INIT(rewind_serialize);
-         RARCH_PERFORMANCE_START(rewind_serialize);
          pretro_serialize(state, g_extern.state_size);
-         RARCH_PERFORMANCE_STOP(rewind_serialize);
-
          state_manager_push_do(g_extern.state_manager);
       }
    }
@@ -1368,7 +1221,6 @@ static void init_state(void)
 {
    g_extern.video_active = true;
    g_extern.audio_active = true;
-   g_extern.game_type = RARCH_CART_NORMAL;
 }
 
 static void init_state_first(void)
@@ -1466,14 +1318,14 @@ int rarch_main_init(int argc, char *argv[])
 
    if (g_extern.libretro_no_rom && !g_extern.libretro_dummy)
    {
-      if (!init_rom_file(g_extern.game_type))
+      if (!init_rom_file())
          goto error;
    }
    else if (!g_extern.libretro_dummy)
    {
       fill_pathnames();
 
-      if (!init_rom_file(g_extern.game_type))
+      if (!init_rom_file())
          goto error;
 
       set_savestate_auto_index();
