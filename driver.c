@@ -435,10 +435,6 @@ void init_audio(void)
       g_extern.audio_active = false;
    }
 
-   g_extern.audio_data.use_float = false;
-   if (g_extern.audio_active && driver.audio->use_float && audio_use_float_func())
-      g_extern.audio_data.use_float = true;
-
    if (!g_settings.audio.sync && g_extern.audio_active)
    {
       audio_set_nonblock_state_func(true);

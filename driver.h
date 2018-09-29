@@ -152,7 +152,6 @@ typedef struct audio_driver
    bool (*start)(void *data);
    void (*set_nonblock_state)(void *data, bool toggle);
    void (*free)(void *data);
-   bool (*use_float)(void *data); // Defines if driver will take standard floating point samples, or int16_t samples.
    const char *ident;
 
    size_t (*write_avail)(void *data); // Optional

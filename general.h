@@ -248,7 +248,6 @@ struct global
 
       double src_ratio;
 
-      bool use_float;
       bool mute;
 
       float *outsamples;

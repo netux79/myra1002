@@ -211,24 +211,13 @@ static bool audio_flush(const int16_t *data, size_t samples)
    output_data   = g_extern.audio_data.outsamples;
    output_frames = src_data.output_frames;
 
-   if (g_extern.audio_data.use_float)
-   {
-      if (audio_write_func(output_data, output_frames * sizeof(float) * 2) < 0)
-      {
-         RARCH_ERR("Audio backend failed to write. Will continue without sound.\n");
-         return false;
-      }
-   }
-   else
-   {
-      audio_convert_float_to_s16(g_extern.audio_data.conv_outsamples,
-            output_data, output_frames * 2);
+   audio_convert_float_to_s16(g_extern.audio_data.conv_outsamples,
+         output_data, output_frames * 2);
 
-      if (audio_write_func(g_extern.audio_data.conv_outsamples, output_frames * sizeof(int16_t) * 2) < 0)
-      {
-         RARCH_ERR("Audio backend failed to write. Will continue without sound.\n");
-         return false;
-      }
+   if (audio_write_func(g_extern.audio_data.conv_outsamples, output_frames * sizeof(int16_t) * 2) < 0)
+   {
+      RARCH_ERR("Audio backend failed to write. Will continue without sound.\n");
+      return false;
    }
 
    return true;
