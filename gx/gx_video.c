@@ -20,19 +20,12 @@
 #include "../gfx/fonts/bitmap.h"
 #include "../frontend/menu/menu_common.h"
 #include "../gfx/gfx_common.h"
-
-#ifdef HW_RVL
-#include "../wii/mem2_manager.h"
-#endif
-
 #include "gx_video.h"
 #include <gccore.h>
 #include <ogcsys.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define SYSMEM1_SIZE 0x01800000
 
 static unsigned gx_resolutions[][2] = {
     { 512, 192 }, /* Mastersystem */
@@ -402,7 +395,7 @@ static void gx_setup_textures(void *data, unsigned width, unsigned height)
    unsigned g_filter;
    gx_video_t *gx = (gx_video_t*)data;
 
-   g_filter = g_settings.video.smooth ? GX_LINEAR : GX_NEAR;
+   g_filter = g_settings.video.bilinear_filter ? GX_LINEAR : GX_NEAR;
 
    if (gx->rgui_texture_enable)
    {
@@ -558,7 +551,7 @@ static void gx_apply_state_changes(void *data)
    gx_video_t *gx = (gx_video_t*)data;
 
 #ifdef HW_RVL
-   VIDEO_SetTrapFilter(g_settings.video.soft_filter_enable);
+   VIDEO_SetTrapFilter(g_settings.video.vi_trap_filter);
 #endif
    GX_SetDispCopyGamma(g_settings.video.gamma_correction);
    gx->force_aspect = g_settings.video.force_aspect;
@@ -933,7 +926,7 @@ static bool gx_overlay_load(void *data, const struct texture_image *images, unsi
       return false;
 
    gx->overlays = num_images;
-   g_filter = g_settings.video.smooth ? GX_LINEAR : GX_NEAR;
+   g_filter = g_settings.video.bilinear_filter ? GX_LINEAR : GX_NEAR;
 
    for (i = 0; i < num_images; i++)
    {
@@ -1173,11 +1166,11 @@ static void gx_viewport_info(void *data, struct rarch_viewport *vp)
    *vp = gx->vp;
 }
 
-static void gx_set_filtering(void *data, unsigned index, bool smooth)
+static void gx_set_filtering(void *data, unsigned index, bool bilinear_filter)
 {
     gx_video_t *gx = (gx_video_t*)data;
     (void)index;
-    (void)smooth;
+    (void)bilinear_filter;
     
     /* It is applied on the resize method, so we just ensure it is called */
     gx->should_resize = true;

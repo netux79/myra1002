@@ -26,62 +26,46 @@
 #include "driver.h"
 #include "gfx/gfx_common.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef HW_RVL
 #include "gx/gx_input.h"
 #include "gx/gx_hid_input.h"
 #endif
 
-enum
-{
-   VIDEO_WII = 0,
-   VIDEO_NULL,
+////////////////
+// Drivers
+////////////////
 
-   AUDIO_WII,
-   AUDIO_NULL,
-
-   INPUT_WII,
-   INPUT_NULL,
-};
-
-#define VIDEO_DEFAULT_DRIVER VIDEO_WII
-#define AUDIO_DEFAULT_DRIVER AUDIO_WII
-#define INPUT_DEFAULT_DRIVER INPUT_WII
-
-#define DEFAULT_ASPECT_RATIO -1.0f
+#define DEFAULT_VIDEO_DRIVER "gx"
+#define DEFAULT_AUDIO_DRIVER "gx"
+#define DEFAULT_INPUT_DRIVER "native"
+#define DEFAULT_RESAMPLER_DRIVER "sinc"
 
 ////////////////
 // Video
 ////////////////
 
-#define DEFAULT_GAMMA 0
+#define DEFAULT_VIDEO_GAMMA 0
 
 // Video VSYNC (recommended)
-static const bool vsync = true;
+#define DEFAULT_VIDEO_VSYNC true
 
 // Smooths picture
-static const bool video_smooth = false;
+#define DEFAULT_VIDEO_BILINEAR_FILTER false
 
 // Rendering area will stay 4:3
-static const bool force_aspect = false;
+#define DEFAULT_VIDEO_FORCE_ASPECT false
 
 // Only scale in integer steps.
 // The base size depends on system-reported geometry and aspect ratio.
 // If video_force_aspect is not set, X/Y will be integer scaled independently.
-static const bool scale_integer = false;
+#define DEFAULT_VIDEO_SCALE_INTEGER false
 
 // Controls aspect ratio handling.
-static const float aspect_ratio = DEFAULT_ASPECT_RATIO; // Automatic
-static unsigned aspect_ratio_idx = ASPECT_RATIO_ORIGINAL;
-
-// Save configuration file on exit
-static bool config_save_on_exit = true;
+#define DEFAULT_VIDEO_ASPECT_RATIO -1.0f
+#define DEFAULT_VIDEO_ASPECT_RATIO_IDX ASPECT_RATIO_ORIGINAL
 
 // Crop overscanned frames.
-static const bool crop_overscan = false;
+#define DEFAULT_VIDEO_CROP_OVERSCAN false
 
 // The accurate refresh rate of your monitor (Hz).
 // This is used to calculate audio input rate with the formula:
@@ -91,68 +75,93 @@ static const bool crop_overscan = false;
 // This value should stay close to 60Hz to avoid large pitch changes.
 // If your monitor does not run at 60Hz, or something close to it, disable VSync,
 // and leave this at its default.
-static const float refresh_rate = 60/1.001;
+#define DEFAULT_VIDEO_REFRESH_RATE 60/1.001
+
+#define DEFAULT_VIDEO_ROTATION ORIENTATION_NORMAL
+#define DEFAULT_VIDEO_VI_TRAP_FILTER true
+#define DEFAULT_VIDEO_RESOLUTION_IDX GX_RESOLUTIONS_AUTO
+#define DEFAULT_VIDEO_RESOLUTION_HIRES GX_RESOLUTIONS_LAST_HIRES
+#define DEFAULT_VIDEO_INTERLACED_RESOLUTION_ONLY false
+#define DEFAULT_VIDEO_POS_X 0
+#define DEFAULT_VIDEO_POS_Y 0
+#define DEFAULT_VIDEO_MAX_POS_RANGE 16
+#define DEFAULT_VIDEO_CUSTOM_VP_WIDTH 640
+#define DEFAULT_VIDEO_CUSTOM_VP_HEIGHT 480
+#define DEFAULT_VIDEO_CUSTOM_VP_X 0
+#define DEFAULT_VIDEO_CUSTOM_VP_Y 0
+#define DEFAULT_VIDEO_SHOW_FRAMERATE false
+#define DEFAULT_VIDEO_FILTER_IDX 0
 
 ////////////////
 // Audio
 ////////////////
 
 // Will enable audio or not.
-static const bool audio_enable = true;
+#define DEFAULT_AUDIO_ENABLE true
 
 // Output samplerate
-static const unsigned out_rate = 32000;
+#define DEFAULT_AUDIO_OUT_RATE 32000
 
 // Desired audio latency in milliseconds. Might not be honored if driver can't provide given latency.
-static const int out_latency = 64;
+#define DEFAULT_AUDIO_OUT_LATENCY 64
 
 // Will sync audio. (recommended)
-static const bool audio_sync = true;
-
-// Default resampler
-static const char *audio_resampler = "sinc";
+#define DEFAULT_AUDIO_AUDIO_SYNC true
 
 // Experimental rate control
-static const bool rate_control = true;
+#define DEFAULT_AUDIO_RATE_CONTROL true
 
 // Rate control delta. Defines how much rate_control is allowed to adjust input rate.
-static const float rate_control_delta = 0.005;
+#define DEFAULT_AUDIO_RATE_CONTROL_DELTA 0.005
 
 // Default audio volume in dB. (0.0 dB == unity gain).
-static const float audio_volume = 0.0;
+#define DEFAULT_AUDIO_VOLUME 0.0
+
+#define DEFAULT_AUDIO_MUTE false
 
 //////////////
-// Misc
+// Rewind
 //////////////
 
 // Enables use of rewind. This will incur some memory footprint depending on the save state buffer.
-static const bool rewind_enable = false;
+#define DEFAULT_REWIND_ENABLE false
 
 // The buffer size for the rewind buffer. This needs to be about 15-20MB per minute. Very game dependant.
-static const unsigned rewind_buffer_size = 20 << 20; // 20MiB
+#define DEFAULT_REWIND_BUFFER_SIZE 20 << 20 // 20MiB
 
 // How many frames to rewind at a time.
-static const unsigned rewind_granularity = 1;
+#define DEFAULT_REWIND_GRANULARITY 1
+
+//////////////
+// Saves
+//////////////
 
 // On save state load, block SRAM from being overwritten.
 // This could potentially lead to buggy games.
-static const bool block_sram_overwrite = false;
-
-// When saving savestates, state index is automatically incremented before saving.
-// When the ROM is loaded, state index will be set to the highest existing value.
-static const bool savestate_auto_index = false;
+#define DEFAULT_BLOCK_SRAM_OVERWRITE false
 
 // Automatically saves a savestate at the end of RetroArch's lifetime.
 // The path is $SRAM_PATH.auto.
 // RetroArch will automatically load any savestate with this path on startup if savestate_auto_load is set.
-static const bool savestate_auto_save = false;
-static const bool savestate_auto_load = true;
+#define DEFAULT_SAVESTATE_AUTO_SAVE false
+#define DEFAULT_SAVESTATE_AUTO_LOAD true
+#define DEFAULT_SAVESTATE_SLOT 0
 
-// Slowmotion ratio.
-static const float slowmotion_ratio = 3.0;
+////////////////////
+// Misc
+////////////////////
 
 // Number of entries that will be kept in ROM history file.
-static const unsigned game_history_size = 100;
+#define DEFAULT_GAME_HISTORY_SIZE 100
+
+// Save configuration file on exit
+#define DEFAULT_CONFIG_SAVE_ON_EXIT true
+
+// Slowmotion ratio.
+#define DEFAULT_SLOWMOTION_RATIO 1.0f
+
+// Default directory value (empty)
+#define DEFAULT_DIRECTORY_LOCATION '\0'
 
 ////////////////////
 // Keybinds, Joypad
@@ -160,21 +169,25 @@ static const unsigned game_history_size = 100;
 
 // Axis threshold (between 0.0 and 1.0)
 // How far an axis must be tilted to result in a button press
-static const float axis_threshold = 0.5;
+#define DEFAULT_AXIS_THRESHOLD 0.5
 
 // Describes speed of which turbo-enabled buttons toggle.
-static const unsigned turbo_period = 6;
-static const unsigned turbo_duty_cycle = 3;
+#define DEFAULT_TURBO_PERIOD 6
+#define DEFAULT_TURBO_DUTY_CYCLE 3
 
 // Enable input auto-config gamepad buttons, plug-and-play style.
-static const bool input_autoconf_buttons = true;
+#define DEFAULT_INPUT_AUTOCONF_BUTTONS true
 
 // Number of players to rotate using the quick swap controller feature.
 // 1 means disabled.
-static const unsigned quick_swap_players = 1;
+#define DEFAULT_QUICK_SWAP_PLAYERS 1
 
 /* Enable all players can control the menu */
-static const bool menu_all_players_enable = false;
+#define DEFAULT_MENU_ALL_PLAYERS_ENABLE false
+
+#define DEFAULT_INPUT_OVERLAY_PATH '\0'
+#define DEFAULT_INPUT_OVERLAY_OPACITY 1.0f
+#define DEFAULT_INPUT_OVERLAY_SCALE 2.0f
 
 #ifndef IS_SALAMANDER
 

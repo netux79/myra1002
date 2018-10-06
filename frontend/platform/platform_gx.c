@@ -248,6 +248,7 @@ static void system_exitspawn(void)
       should_load_game = true;
 
    system_exec(g_settings.libretro, should_load_game);
+
    // direct loading failed (out of memory), try to jump to salamander then load the correct core
    char boot_dol[PATH_MAX];
    fill_pathname_join(boot_dol, default_paths.core_dir, "boot.dol", sizeof(boot_dol));

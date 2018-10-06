@@ -20,10 +20,6 @@
 
 #include "../general.h"
 #include "../driver.h"
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 #include "../file.h"
 
 static const rarch_joypad_driver_t *joypad_drivers[] = {

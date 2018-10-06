@@ -99,8 +99,9 @@ static void dol_copy_argv_path(const char *dolpath, const char *argpath)
    DCFlushRange(ARGS_ADDR, sizeof(struct __argv) + argv->length);
 }
 
-// WARNING: after we move any data into EXECUTE_ADDR, we can no longer use any
-// heap memory and are restricted to the stack only
+/* WARNING: after we move any data into EXECUTE_ADDR, we can no longer use any
+ * heap memory and are restricted to the stack only
+ * copy heap info into stack so it survives us moving the .dol into MEM2 */
 void system_exec_wii(const char *path, bool should_load_game)
 {
    char game_path[PATH_MAX];
@@ -140,10 +141,13 @@ void system_exec_wii(const char *path, bool should_load_game)
    fread(dol, 1, size, fp);
    fclose(fp);
 
+  /* Comment out to avoid hanging randomly
+   * while loading a core
    fatUnmount("carda:");
    fatUnmount("cardb:");
    fatUnmount("sd:");
-   fatUnmount("usb:");
+   fatUnmount("usb:");*/
+
    __io_wiisd.shutdown();
    __io_usbstorage.shutdown();
 

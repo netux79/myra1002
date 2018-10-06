@@ -19,10 +19,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 // Hashes sha256 and outputs a human readable string for comparing with the cheat XML values.
 void sha256_hash(char *out, const uint8_t *in, size_t size);
 

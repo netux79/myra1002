@@ -25,10 +25,6 @@
 #include "audio/resampler.h"
 #include "gfx/gfx_common.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 static const audio_driver_t *audio_drivers[] = {
    &audio_gx,
    NULL,
@@ -217,13 +213,13 @@ static void adjust_system_rates(void)
          RARCH_LOG("Game FPS > Monitor FPS. Cannot rely on VSync.\n");
       }
 
-      g_settings.audio.in_rate = info->sample_rate;
+      g_extern.audio_data.in_rate = info->sample_rate;
    }
    else
-      g_settings.audio.in_rate = info->sample_rate *
+      g_extern.audio_data.in_rate = info->sample_rate *
          (g_settings.video.refresh_rate / info->fps);
 
-   RARCH_LOG("Set audio input rate to: %.2f Hz.\n", g_settings.audio.in_rate);
+   RARCH_LOG("Set audio input rate to: %.2f Hz.\n", g_extern.audio_data.in_rate);
 
    if (driver.video_data)
    {
@@ -241,7 +237,7 @@ void driver_set_monitor_refresh_rate(float hz)
 
    g_extern.audio_data.orig_src_ratio =
       g_extern.audio_data.src_ratio =
-      (double)g_settings.audio.out_rate / g_settings.audio.in_rate;
+      (double)g_settings.audio.out_rate / g_extern.audio_data.in_rate;
 }
 
 void driver_set_nonblock_state(bool nonblock)
@@ -443,7 +439,7 @@ void init_audio(void)
 
    g_extern.audio_data.orig_src_ratio =
       g_extern.audio_data.src_ratio =
-      (double)g_settings.audio.out_rate / g_settings.audio.in_rate;
+      (double)g_settings.audio.out_rate / g_extern.audio_data.in_rate;
 
    if (!rarch_resampler_realloc(&g_extern.audio_data.resampler_data, &g_extern.audio_data.resampler,
          g_settings.audio.resampler, g_extern.audio_data.orig_src_ratio))
@@ -456,7 +452,7 @@ void init_audio(void)
 
    g_extern.audio_data.data_ptr = 0;
 
-   rarch_assert(g_settings.audio.out_rate < g_settings.audio.in_rate * AUDIO_MAX_RATIO);
+   rarch_assert(g_settings.audio.out_rate < g_extern.audio_data.in_rate * AUDIO_MAX_RATIO);
    rarch_assert(g_extern.audio_data.outsamples = (float*)malloc(outsamples_max * sizeof(float)));
 
    g_extern.audio_data.rate_control = false;
@@ -471,7 +467,7 @@ void init_audio(void)
          RARCH_WARN("Audio rate control was desired, but driver does not support needed features.\n");
    }
 
-   if (g_extern.audio_active && !g_extern.audio_data.mute)
+   if (g_extern.audio_active && !g_settings.audio.mute)
       audio_start_func();
 }
 

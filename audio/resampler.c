@@ -15,11 +15,6 @@
 
 #include "resampler.h"
 #include <string.h>
-
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 #include "../general.h"
 
 static const rarch_resampler_t *backends[] = {

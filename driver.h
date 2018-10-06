@@ -24,11 +24,6 @@
 #include <stdint.h>
 #include "gfx/image/image.h"
 #include "input/overlay.h"
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef HAVE_SCALERS_BUILTIN
 #include "gfx/filters/softfilter.h"
 #endif
@@ -241,7 +236,7 @@ typedef struct video_overlay_interface
 // Optionally implemented interface to poke more deeply into video driver.
 typedef struct video_poke_interface
 {
-   void (*set_filtering)(void *data, unsigned index, bool smooth);
+   void (*set_filtering)(void *data, unsigned index, bool bilinear_filter);
    void (*set_aspect_ratio)(void *data, unsigned aspectratio_index);
    void (*apply_state_changes)(void *data);
    void (*set_texture_frame)(void *data, const void *frame, bool rgb32, unsigned width, unsigned height, float alpha);

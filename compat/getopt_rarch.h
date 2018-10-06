@@ -16,10 +16,6 @@
 #ifndef __RARCH_GETOPT_H
 #define __RARCH_GETOPT_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 // Custom implementation of the GNU getopt_long for portability.
 // Not designed to be fully compatible,
 // but compatible with the features RetroArch uses.

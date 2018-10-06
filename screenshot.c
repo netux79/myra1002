@@ -23,10 +23,6 @@
 #include "general.h"
 #include "file.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef HAVE_ZLIB_DEFLATE
 #include "gfx/rpng/rpng.h"
 #else

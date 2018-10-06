@@ -34,10 +34,6 @@
 #include "gfx/filter.h"
 #endif
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifndef PACKAGE_VERSION
 #define PACKAGE_VERSION "MyRA1002"
 #endif
@@ -96,11 +92,11 @@ struct settings
       int pos_x;
       int pos_y;
       bool vsync;
-      bool smooth;
+      bool bilinear_filter;
       bool force_aspect;
       bool crop_overscan;
       bool scale_integer;
-      bool soft_filter_enable;
+      bool vi_trap_filter;
       bool interlaced_resolution_only;      
       rarch_viewport_t custom_vp;
       char driver[32];
@@ -108,18 +104,16 @@ struct settings
 
    struct
    {
-      char driver[32];
-      bool enable;
-      unsigned out_rate;
-      unsigned block_frames;
-      float in_rate;
-      unsigned latency;
-      bool sync;
-
-      bool rate_control;
       float rate_control_delta;
       float volume; // dB scale
+      unsigned out_rate;
+      unsigned latency;
+      bool enable;
+      bool mute;
+      bool sync;
+      bool rate_control;
       char resampler[32];
+      char driver[32];
    } audio;
 
    struct
@@ -167,7 +161,6 @@ struct settings
 
    bool rewind_enable;
    bool block_sram_overwrite;
-   bool savestate_auto_index;
    bool savestate_auto_save;
    bool savestate_auto_load;
    
@@ -248,8 +241,7 @@ struct global
 
       double src_ratio;
 
-      bool mute;
-
+      float in_rate;
       float *outsamples;
       int16_t *conv_outsamples;
 

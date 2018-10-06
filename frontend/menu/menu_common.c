@@ -70,26 +70,6 @@ void menu_rom_history_push(const char *path,
       rom_history_push(rgui->history, path, core_path, core_name);
 }
 
-void menu_rom_history_push_current(void)
-{
-   // g_extern.fullpath can be relative here.
-   // Ensure we're pushing absolute path.
-
-   char tmp[PATH_MAX];
-
-   // We loaded a zip, and fullpath points to the extracted file.
-   // Look at basename instead.
-   if (g_extern.rom_file_temporary)
-      snprintf(tmp, sizeof(tmp), "%s.zip", g_extern.basename);
-   else
-      strlcpy(tmp, g_extern.fullpath, sizeof(tmp));
-
-   if (g_extern.system.no_game || *tmp)
-      menu_rom_history_push(*tmp ? tmp : NULL,
-            g_settings.libretro,
-            g_extern.system.info.library_name);
-}
-
 void load_menu_game_prepare(void *video_data)
 {
    if (*g_extern.fullpath || rgui->load_no_rom)
@@ -141,6 +121,7 @@ bool load_menu_game_new_core(const char* gamepath, const char* corepath)
    }
    else
    {
+      corepath = path_basename(corepath);
       /* if SET_LIBRETRO_PATH fails (core doesn't found) copy the path 
        * anyway to avoid launching current core with incorrect game. */
       if (!rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)corepath))
@@ -185,17 +166,6 @@ static void menu_update_libretro_info(void)
 {
    retro_get_system_info(&rgui->info);
    menu_init_core_info(rgui);
-}
-
-void load_menu_game_prepare_dummy(void)
-{
-   // Starts dummy core.
-   *g_extern.fullpath = '\0';
-   rgui->load_no_rom = false;
-
-   g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
-   g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
-   g_extern.system.core_shutdown = false;
 }
 
 bool load_menu_game(void)
@@ -576,7 +546,6 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             || menu_type == RGUI_SETTINGS_PATH_OPTIONS
             || menu_type == RGUI_SETTINGS_OVERLAY_OPTIONS
             || menu_type == RGUI_SETTINGS_OPTIONS
-            || menu_type == RGUI_SETTINGS_DRIVERS
             || menu_type == RGUI_SETTINGS_CORE_INFO
             || menu_type == RGUI_SETTINGS_CORE_OPTIONS
             || menu_type == RGUI_SETTINGS_AUDIO_OPTIONS
@@ -1330,7 +1299,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;
       case RGUI_SETTINGS_INPUT_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Input Type (Restart) [G]", RGUI_SETTINGS_DRIVER_INPUT, 0);
+         file_list_push(rgui->selection_buf, "Input Type (Restart) [G]", RGUI_SETTINGS_INPUT_TYPE, 0);
          file_list_push(rgui->selection_buf, "All P. Control Menu [G]", RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE, 0);
          file_list_push(rgui->selection_buf, "Autoconfig Buttons", RGUI_SETTINGS_DEVICE_AUTOCONF_BUTTONS, 0);
          file_list_push(rgui->selection_buf, "Quick Swap", RGUI_SETTINGS_QUICK_SWAP_PLAYERS, 0);
@@ -1356,17 +1325,10 @@ void menu_populate_entries(void *data, unsigned menu_type)
          break;                  
       case RGUI_SETTINGS_AUDIO_OPTIONS:
          file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Mute Audio", RGUI_SETTINGS_AUDIO_MUTE, 0);
+         file_list_push(rgui->selection_buf, "Mute Audio [G]", RGUI_SETTINGS_AUDIO_MUTE, 0);
          file_list_push(rgui->selection_buf, "Audio Sync", RGUI_SETTINGS_AUDIO_SYNC, 0);
          file_list_push(rgui->selection_buf, "Rate Control Delta", RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA, 0);
          file_list_push(rgui->selection_buf, "Volume Level", RGUI_SETTINGS_AUDIO_VOLUME, 0);
-         break;
-      case RGUI_SETTINGS_DRIVERS:
-         file_list_clear(rgui->selection_buf);
-         file_list_push(rgui->selection_buf, "Video Driver [G]", RGUI_SETTINGS_DRIVER_VIDEO, 0);
-         file_list_push(rgui->selection_buf, "Audio Driver [G]", RGUI_SETTINGS_DRIVER_AUDIO, 0);
-         file_list_push(rgui->selection_buf, "Audio Resampler [G]", RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER, 0);
-         file_list_push(rgui->selection_buf, "Input Driver [G]", RGUI_SETTINGS_DRIVER_INPUT, 0);
          break;
       case RGUI_SETTINGS:
          file_list_clear(rgui->selection_buf);
@@ -1403,7 +1365,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #endif
          file_list_push(rgui->selection_buf, "Core Information", RGUI_SETTINGS_CORE_INFO, 0);
          file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
-         file_list_push(rgui->selection_buf, "Restart RetroArch", RGUI_SETTINGS_RESTART_EMULATOR, 0);
+         file_list_push(rgui->selection_buf, "Restart RetroArch", RGUI_SETTINGS_RESTART_RARCH, 0);
          file_list_push(rgui->selection_buf, "Quit RetroArch", RGUI_SETTINGS_QUIT_RARCH, 0);
          break;
    }

@@ -181,7 +181,7 @@ void rarch_render_cached_frame(void)
 
 static bool audio_flush(const int16_t *data, size_t samples)
 {
-   if (g_extern.is_paused || g_extern.audio_data.mute)
+   if (g_extern.is_paused || g_settings.audio.mute)
       return true;
    if (!g_extern.audio_active)
       return false;
@@ -527,51 +527,6 @@ static void init_libretro_cbs(void)
    pretro_set_input_poll(rarch_input_poll);
 }
 
-static void set_savestate_auto_index(void)
-{
-   if (!g_settings.savestate_auto_index)
-      return;
-
-   // Find the file in the same directory as g_extern.savestate_name with the largest numeral suffix.
-   // E.g. /foo/path/game.state, will try to find /foo/path/game.state%d, where %d is the largest number available.
-
-   char state_dir[PATH_MAX];
-   char state_base[PATH_MAX];
-
-   fill_pathname_basedir(state_dir, g_extern.savestate_name, sizeof(state_dir));
-   fill_pathname_base(state_base, g_extern.savestate_name, sizeof(state_base));
-
-   unsigned max_index = 0;
-
-   struct string_list *dir_list = dir_list_new(state_dir, NULL, false);
-   if (!dir_list)
-      return;
-
-   size_t i;
-   for (i = 0; i < dir_list->size; i++)
-   {
-      const char *dir_elem = dir_list->elems[i].data;
-
-      char elem_base[PATH_MAX];
-      fill_pathname_base(elem_base, dir_elem, sizeof(elem_base));
-
-      if (strstr(elem_base, state_base) != elem_base)
-         continue;
-
-      const char *end = dir_elem + strlen(dir_elem);
-      while ((end > dir_elem) && isdigit(end[-1])) end--;
-
-      unsigned index = strtoul(end, NULL, 0);
-      if (index > max_index)
-         max_index = index;
-   }
-
-   dir_list_free(dir_list);
-
-   g_settings.state_slot = max_index;
-   RARCH_LOG("Found last state slot: #%u\n", g_settings.state_slot);
-}
-
 static void fill_pathnames(void)
 {
    // Infer .rtc save path from save ram path.
@@ -652,9 +607,6 @@ void rarch_load_state(void)
 
 void rarch_save_state(void)
 {
-   if (g_settings.savestate_auto_index)
-      g_settings.state_slot++;
-
    char save_path[PATH_MAX];
 
    if (g_settings.state_slot > 0)
@@ -877,7 +829,7 @@ static void check_pause(void)
          RARCH_LOG("Unpaused.\n");
          if (driver.audio_data)
          {
-            if (!g_extern.audio_data.mute && !audio_start_func())
+            if (!g_settings.audio.mute && !audio_start_func())
             {
                RARCH_ERR("Failed to resume audio driver. Will continue without audio.\n");
                g_extern.audio_active = false;
@@ -1112,15 +1064,15 @@ static void check_mute(void)
    bool pressed = input_key_pressed_func(RARCH_MUTE);
    if (pressed && !old_pressed)
    {
-      g_extern.audio_data.mute = !g_extern.audio_data.mute;
+      g_settings.audio.mute = !g_settings.audio.mute;
 
-      const char *msg = g_extern.audio_data.mute ? "Audio muted." : "Audio unmuted.";
+      const char *msg = g_settings.audio.mute ? "Audio muted." : "Audio unmuted.";
       msg_queue_clear(g_extern.msg_queue);
       msg_queue_push(g_extern.msg_queue, msg, 1, 180);
 
       if (driver.audio_data)
       {
-         if (g_extern.audio_data.mute)
+         if (g_settings.audio.mute)
             audio_stop_func();
          else if (!audio_start_func())
          {
@@ -1316,8 +1268,6 @@ int rarch_main_init(int argc, char *argv[])
 
       if (!init_rom_file())
          goto error;
-
-      set_savestate_auto_index();
 
       if (!g_extern.sram_load_disable)
          load_save_files();

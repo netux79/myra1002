@@ -48,22 +48,12 @@ static void rarch_get_environment_console(char *path)
    global_init_drivers();
 }
 
-#define attempt_load_game false
-#define attempt_load_game_push_history false
-#define load_dummy_on_core_shutdown false
-
 int main_entry_iterate(int argc, char *argv[], void* args)
 {
    bool gamerun;
 
    if (g_extern.system.core_shutdown)
-   {
-      // Load dummy core instead of exiting RetroArch completely.
-      if (load_dummy_on_core_shutdown)
-         load_menu_game_prepare_dummy();
-      else
-         return 1;
-   }
+      return 1; /* Exit Retroarch */
    else if (g_extern.lifecycle_state & (1ULL << MODE_LOAD_GAME))
    {
       load_menu_game_prepare(driver.video_data);
@@ -128,7 +118,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
          g_extern.lifecycle_state &= ~(1ULL << MODE_MENU);
          driver_set_nonblock_state(driver.nonblock_state);
 
-         if (driver.audio_data && !g_extern.audio_data.mute && !audio_start_func())
+         if (driver.audio_data && !g_settings.audio.mute && !audio_start_func())
          {
             RARCH_ERR("Failed to resume audio driver. Will continue without audio.\n");
             g_extern.audio_active = false;
@@ -141,7 +131,7 @@ int main_entry_iterate(int argc, char *argv[], void* args)
    return 0;
 }
 
-void main_exit(void* args)
+void main_exit(void)
 {
    g_extern.system.core_shutdown = false;
 
@@ -191,13 +181,6 @@ int main(int argc, char *argv[])
       rarch_get_environment_console(argv[0]);
    }
 
-   if (attempt_load_game)
-   {
-      int init_ret;
-      if ((init_ret = rarch_main_init(argc, argv))) 
-         return init_ret;
-   }
-
    menu_init(driver.video_data);
 
    if (frontend_ctx && frontend_ctx->process_args)
@@ -207,17 +190,9 @@ int main(int argc, char *argv[])
    if (*g_extern.fullpath)
       g_extern.lifecycle_state |= (1ULL << MODE_LOAD_GAME);
 
-   if (attempt_load_game_push_history)
-   {
-      // If we started a ROM directly from command line,
-      // push it to ROM history.
-      if (!g_extern.libretro_dummy)
-         menu_rom_history_push_current();
-   }
-
    while (!main_entry_iterate(argc, argv, args));
 
-   main_exit(args);
+   main_exit();
 
    return 0;
 }

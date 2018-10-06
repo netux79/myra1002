@@ -19,10 +19,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 #define audio_convert_s16_to_float audio_convert_s16_to_float_C
 #define audio_convert_float_to_s16 audio_convert_float_to_s16_C
 

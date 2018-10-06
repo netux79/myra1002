@@ -18,11 +18,6 @@
 #define MENU_COMMON_H__
 
 #include "../../general.h"
-
-#ifdef HAVE_CONFIG_H
-#include "../../config.h"
-#endif
-
 #include "../../performance.h"
 #include "../info/core_info.h"
 #include "menu_display.h"
@@ -80,7 +75,6 @@ typedef enum
    RGUI_SETTINGS_PATH_OPTIONS,
    RGUI_SETTINGS_OVERLAY_OPTIONS,
    RGUI_SETTINGS_OPTIONS,
-   RGUI_SETTINGS_DRIVERS,
    RGUI_SETTINGS_REWIND_ENABLE,
    RGUI_SETTINGS_REWIND_GRANULARITY,
    RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT,
@@ -92,10 +86,7 @@ typedef enum
    RGUI_SETTINGS_DISK_OPTIONS,
    RGUI_SETTINGS_DISK_INDEX,
    RGUI_SETTINGS_DISK_APPEND,
-   RGUI_SETTINGS_DRIVER_VIDEO,
-   RGUI_SETTINGS_DRIVER_AUDIO,
-   RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER,
-   RGUI_SETTINGS_DRIVER_INPUT,
+   RGUI_SETTINGS_INPUT_TYPE,
    RGUI_SETTINGS_SCREENSHOT,
    RGUI_SETTINGS_SAVESTATE_AUTO_SAVE,
    RGUI_SETTINGS_SAVESTATE_AUTO_LOAD,
@@ -114,7 +105,7 @@ typedef enum
    RGUI_SETTINGS_AUDIO_SYNC,
    
    RGUI_SETTINGS_SHOW_FRAMERATE,
-   RGUI_SETTINGS_RESTART_EMULATOR,
+   RGUI_SETTINGS_RESTART_RARCH,
    RGUI_SETTINGS_RESUME_GAME,
    RGUI_SETTINGS_QUIT_RARCH,
    RGUI_SETTINGS_RESTART_GAME,
@@ -298,12 +289,10 @@ void menu_ticker_line(char *buf, size_t len, unsigned tick, const char *str, boo
 void menu_init_core_info(void *data);
 
 void load_menu_game_prepare(void *video_data);
-void load_menu_game_prepare_dummy(void);
 bool load_menu_game(void);
 void load_menu_game_history(unsigned game_index);
 void menu_rom_history_push(const char *path, const char *core_path,
       const char *core_name);
-void menu_rom_history_push_current(void);
 
 int menu_settings_toggle_setting(void *data, void *video_data, unsigned setting, unsigned action, unsigned menu_type);
 int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned action);

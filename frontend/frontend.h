@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 int main_entry_iterate(int argc, char *argv[], void* args);
-void main_exit(void* args);
+void main_exit(void);
 
 #ifdef __cplusplus
 }

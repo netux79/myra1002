@@ -23,10 +23,6 @@
 #include <ctype.h>
 #include "console/rarch_console.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <stdbool.h>
 #include "libretro_private.h"
 #include "dynamic_dummy.h"

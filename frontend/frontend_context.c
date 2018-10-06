@@ -16,10 +16,6 @@
 #include "frontend_context.h"
 #include <string.h>
 
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 static const frontend_ctx_driver_t *frontend_ctx_drivers[] = {
    &frontend_ctx_gx,
    NULL // zero length array is not valid

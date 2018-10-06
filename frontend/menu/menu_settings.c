@@ -24,10 +24,6 @@
 #include "../../input/input_common.h"
 #include "../../config.def.h"
 
-#ifdef HAVE_CONFIG_H
-#include "../../config.h"
-#endif
-
 #define MAX_GAMMA_SETTING 2
 
 unsigned menu_type_is(unsigned type)
@@ -47,7 +43,6 @@ unsigned menu_type_is(unsigned type)
       type == RGUI_SETTINGS_PATH_OPTIONS ||
       type == RGUI_SETTINGS_OVERLAY_OPTIONS ||
       type == RGUI_SETTINGS_OPTIONS ||
-      type == RGUI_SETTINGS_DRIVERS ||
       type == RGUI_SETTINGS_BIND_PLAYER_KEYS ||
       type == RGUI_SETTINGS_BIND_HOTKEYS ||
       type == RGUI_SETTINGS_INPUT_OPTIONS;
@@ -172,7 +167,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_START)
          {
-            g_settings.rewind_enable = false;
+            g_settings.rewind_enable = DEFAULT_REWIND_ENABLE;
             rarch_deinit_rewind();
          }
          break;
@@ -185,35 +180,35 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                g_settings.rewind_granularity--;
          }
          else if (action == RGUI_ACTION_START)
-            g_settings.rewind_granularity = 1;
+            g_settings.rewind_granularity = DEFAULT_REWIND_GRANULARITY;
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_ON_EXIT:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
                || action == RGUI_ACTION_LEFT)
             g_settings.config_save_on_exit = !g_settings.config_save_on_exit;
          else if (action == RGUI_ACTION_START)
-            g_settings.config_save_on_exit = true;
+            g_settings.config_save_on_exit = DEFAULT_CONFIG_SAVE_ON_EXIT;
          break;
       case RGUI_SETTINGS_SAVESTATE_AUTO_SAVE:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
                || action == RGUI_ACTION_LEFT)
             g_settings.savestate_auto_save = !g_settings.savestate_auto_save;
          else if (action == RGUI_ACTION_START)
-            g_settings.savestate_auto_save = false;
+            g_settings.savestate_auto_save = DEFAULT_SAVESTATE_AUTO_SAVE;
          break;
       case RGUI_SETTINGS_SAVESTATE_AUTO_LOAD:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
                || action == RGUI_ACTION_LEFT)
             g_settings.savestate_auto_load = !g_settings.savestate_auto_load;
          else if (action == RGUI_ACTION_START)
-            g_settings.savestate_auto_load = true;
+            g_settings.savestate_auto_load = DEFAULT_SAVESTATE_AUTO_LOAD;
          break;
       case RGUI_SETTINGS_BLOCK_SRAM_OVERWRITE:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
                || action == RGUI_ACTION_LEFT)
             g_settings.block_sram_overwrite = !g_settings.block_sram_overwrite;
          else if (action == RGUI_ACTION_START)
-            g_settings.block_sram_overwrite = false;
+            g_settings.block_sram_overwrite = DEFAULT_BLOCK_SRAM_OVERWRITE;
          break;
       case RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC:
          if (action == RGUI_ACTION_OK) 
@@ -253,16 +248,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (setting == RGUI_SETTINGS_SAVESTATE_SAVE)
                rarch_save_state();
             else
-            {
-               // Disallow savestate load when we absoluetely cannot change game state.
-
                rarch_load_state();
-            }
             g_extern.lifecycle_state |= (1ULL << MODE_GAME);
             return -1;
          }
          else if (action == RGUI_ACTION_START)
-            g_settings.state_slot = 0;
+            g_settings.state_slot = DEFAULT_SAVESTATE_SLOT;
          else if (action == RGUI_ACTION_LEFT)
          {
             // Slot -1 is (auto) slot.
@@ -288,21 +279,21 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
       case RGUI_SETTINGS_AUDIO_MUTE:
          if (action == RGUI_ACTION_START)
-            g_extern.audio_data.mute = false;
+            g_settings.audio.mute = DEFAULT_AUDIO_MUTE;
          else
-            g_extern.audio_data.mute = !g_extern.audio_data.mute;
+            g_settings.audio.mute = !g_settings.audio.mute;
          break;
       case RGUI_SETTINGS_AUDIO_SYNC:
          if (action == RGUI_ACTION_START)
-            g_settings.audio.sync = false;
+            g_settings.audio.sync = DEFAULT_AUDIO_AUDIO_SYNC;
          else
             g_settings.audio.sync = !g_settings.audio.sync;
          break;
       case RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA:
          if (action == RGUI_ACTION_START)
          {
-            g_settings.audio.rate_control_delta = rate_control_delta;
-            g_settings.audio.rate_control = rate_control;
+            g_settings.audio.rate_control_delta = DEFAULT_AUDIO_RATE_CONTROL_DELTA;
+            g_settings.audio.rate_control = DEFAULT_AUDIO_RATE_CONTROL;
          }
          else if (action == RGUI_ACTION_LEFT)
          {
@@ -329,8 +320,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          float db_delta = 0.0f;
          if (action == RGUI_ACTION_START)
          {
-            g_extern.audio_data.volume_db = 0.0f;
-            g_extern.audio_data.volume_gain = 1.0f;
+            g_extern.audio_data.volume_db = DEFAULT_AUDIO_VOLUME;
+            g_extern.audio_data.volume_gain = db_to_gain(DEFAULT_AUDIO_VOLUME);
          }
          else if (action == RGUI_ACTION_LEFT)
             db_delta -= 1.0f;
@@ -348,7 +339,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       }
       case RGUI_SETTINGS_SHOW_FRAMERATE:
          if (action == RGUI_ACTION_START)
-            g_settings.fps_show = false;
+            g_settings.fps_show = DEFAULT_VIDEO_SHOW_FRAMERATE;
          else if (action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
             g_settings.fps_show = !g_settings.fps_show;
          break;
@@ -375,12 +366,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
             break;
          }
-      case RGUI_SETTINGS_RESTART_EMULATOR:
+      case RGUI_SETTINGS_RESTART_RARCH:
          if (action == RGUI_ACTION_OK)
          {
 #ifdef HW_RVL
             fill_pathname_join(g_extern.fullpath, default_paths.core_dir, SALAMANDER_FILE,
                   sizeof(g_extern.fullpath));
+            char path[PATH_MAX];
+            strlcpy(path, path_basename(g_settings.libretro), sizeof(path));
+            rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)path);
 #endif
             g_extern.lifecycle_state &= ~(1ULL << MODE_GAME);
             g_extern.lifecycle_state |= (1ULL << MODE_EXITSPAWN);
@@ -415,7 +409,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                if (driver.overlay)
                   input_overlay_free(driver.overlay);
                driver.overlay = NULL;
-               *g_settings.input.overlay_path = '\0';
+               *g_settings.input.overlay_path = DEFAULT_INPUT_OVERLAY_PATH;
                break;
 
             default:
@@ -444,7 +438,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                   break;
 
                case RGUI_ACTION_START:
-                  g_settings.input.overlay_opacity = 0.7f;
+                  g_settings.input.overlay_opacity = DEFAULT_INPUT_OVERLAY_OPACITY;
                   break;
 
                default:
@@ -479,7 +473,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                   break;
 
                case RGUI_ACTION_START:
-                  g_settings.input.overlay_scale = 1.0f;
+                  g_settings.input.overlay_scale = DEFAULT_INPUT_OVERLAY_SCALE;
                   break;
 
                default:
@@ -506,7 +500,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                   g_settings.video.filter_idx++;
                break;
             case RGUI_ACTION_START: /* this falls thru OK action */
-               g_settings.video.filter_idx = 0;
+               g_settings.video.filter_idx = DEFAULT_VIDEO_FILTER_IDX;
             case RGUI_ACTION_OK:
             {
                rarch_reset_drivers();
@@ -577,7 +571,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          switch (action)
          {
             case RGUI_ACTION_START:
-               g_settings.input.analog_dpad_mode[port] = 0;
+               g_settings.input.analog_dpad_mode[port] = ANALOG_DPAD_NONE;
                break;
 
             case RGUI_ACTION_OK:
@@ -595,76 +589,76 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
       }
       case RGUI_SETTINGS_BIND_DEVICE_TYPE:
+      {
+         unsigned current_device, current_index, i;
+         unsigned types = 0;
+         unsigned devices[128];
+
+         devices[types++] = RETRO_DEVICE_NONE;
+         devices[types++] = RETRO_DEVICE_JOYPAD;
+         devices[types++] = RETRO_DEVICE_ANALOG;
+
+         const struct retro_controller_info *desc = rgui->c_player < g_extern.system.num_ports ? &g_extern.system.ports[rgui->c_player] : NULL;
+         if (desc)
          {
-            unsigned current_device, current_index, i;
-            unsigned types = 0;
-            unsigned devices[128];
-
-            devices[types++] = RETRO_DEVICE_NONE;
-            devices[types++] = RETRO_DEVICE_JOYPAD;
-            devices[types++] = RETRO_DEVICE_ANALOG;
-
-            const struct retro_controller_info *desc = rgui->c_player < g_extern.system.num_ports ? &g_extern.system.ports[rgui->c_player] : NULL;
-            if (desc)
+            for (i = 0; i < desc->num_types; i++)
             {
-               for (i = 0; i < desc->num_types; i++)
-               {
-                  unsigned id = desc->types[i].id;
-                  if (types < ARRAY_SIZE(devices) && id != RETRO_DEVICE_NONE && id != RETRO_DEVICE_JOYPAD && id != RETRO_DEVICE_ANALOG)
-                     devices[types++] = id;
-               }
+               unsigned id = desc->types[i].id;
+               if (types < ARRAY_SIZE(devices) && id != RETRO_DEVICE_NONE && id != RETRO_DEVICE_JOYPAD && id != RETRO_DEVICE_ANALOG)
+                  devices[types++] = id;
             }
-
-            current_device = g_settings.input.libretro_device[rgui->c_player];
-            current_index = 0;
-            for (i = 0; i < types; i++)
-            {
-               if (current_device == devices[i])
-               {
-                  current_index = i;
-                  break;
-               }
-            }
-
-            bool updated = true;
-            switch (action)
-            {
-               case RGUI_ACTION_START:
-                  current_device = RETRO_DEVICE_JOYPAD;
-                  break;
-
-               case RGUI_ACTION_LEFT:
-                  current_device = devices[(current_index + types - 1) % types];
-                  break;
-
-               case RGUI_ACTION_RIGHT:
-               case RGUI_ACTION_OK:
-                  current_device = devices[(current_index + 1) % types];
-                  break;
-
-               default:
-                  updated = false;
-            }
-
-            if (updated)
-            {
-               g_settings.input.libretro_device[rgui->c_player] = current_device;
-               pretro_set_controller_port_device(rgui->c_player, current_device);
-            }
-
-            break;
          }
+
+         current_device = g_settings.input.libretro_device[rgui->c_player];
+         current_index = 0;
+         for (i = 0; i < types; i++)
+         {
+            if (current_device == devices[i])
+            {
+               current_index = i;
+               break;
+            }
+         }
+
+         bool updated = true;
+         switch (action)
+         {
+            case RGUI_ACTION_START:
+               current_device = RETRO_DEVICE_JOYPAD;
+               break;
+
+            case RGUI_ACTION_LEFT:
+               current_device = devices[(current_index + types - 1) % types];
+               break;
+
+            case RGUI_ACTION_RIGHT:
+            case RGUI_ACTION_OK:
+               current_device = devices[(current_index + 1) % types];
+               break;
+
+            default:
+               updated = false;
+         }
+
+         if (updated)
+         {
+            g_settings.input.libretro_device[rgui->c_player] = current_device;
+            pretro_set_controller_port_device(rgui->c_player, current_device);
+         }
+
+         break;
+      }
       case RGUI_SETTINGS_DEVICE_AUTOCONF_BUTTONS:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
             g_settings.input.autoconf_buttons = !g_settings.input.autoconf_buttons;
          else
-            g_settings.input.autoconf_buttons = input_autoconf_buttons;
+            g_settings.input.autoconf_buttons = DEFAULT_INPUT_AUTOCONF_BUTTONS;
          break;
       case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
             g_settings.input.menu_all_players_enable = !g_settings.input.menu_all_players_enable;
          else
-            g_settings.input.menu_all_players_enable = menu_all_players_enable;
+            g_settings.input.menu_all_players_enable = DEFAULT_MENU_ALL_PLAYERS_ENABLE;
          break;
       case RGUI_SETTINGS_QUICK_SWAP_PLAYERS:
          if (action == RGUI_ACTION_RIGHT)
@@ -741,12 +735,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       }
       case RGUI_GAMES_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.games_directory = '\0';
+            *g_settings.games_directory = DEFAULT_DIRECTORY_LOCATION;
          break;
 #ifdef HAVE_SCREENSHOTS
       case RGUI_SCREENSHOT_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.screenshot_directory = '\0';
+            *g_settings.screenshot_directory = DEFAULT_DIRECTORY_LOCATION;
          break;
 #endif
       case RGUI_SAVEFILE_DIR_PATH:
@@ -756,7 +750,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #ifdef HAVE_OVERLAY
       case RGUI_OVERLAY_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.overlay_directory = '\0';
+            *g_settings.overlay_directory = DEFAULT_DIRECTORY_LOCATION;
          break;
 #endif
       case RGUI_SAVESTATE_DIR_PATH:
@@ -766,13 +760,13 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_LIBRETRO_INFO_DIR_PATH:
          if (action == RGUI_ACTION_START)
          {
-            *g_settings.libretro_info_directory = '\0';
+            *g_settings.libretro_info_directory = DEFAULT_DIRECTORY_LOCATION;
             menu_init_core_info(rgui);
          }
          break;
       case RGUI_CONFIG_DIR_PATH:
          if (action == RGUI_ACTION_START)
-            *g_settings.config_directory = '\0';
+            *g_settings.config_directory = DEFAULT_DIRECTORY_LOCATION;
          break;
       case RGUI_SYSTEM_DIR_PATH:
          if (action == RGUI_ACTION_START)
@@ -780,7 +774,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          break;
       case RGUI_SETTINGS_VIDEO_ROTATION:
          if (action == RGUI_ACTION_START)
-            g_settings.video.rotation = ORIENTATION_NORMAL;
+            g_settings.video.rotation = DEFAULT_VIDEO_ROTATION;
          else if (action == RGUI_ACTION_LEFT)
          {
             if (g_settings.video.rotation > 0) g_settings.video.rotation--;
@@ -793,42 +787,22 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
       case RGUI_SETTINGS_VIDEO_BILINEAR:
          if (action == RGUI_ACTION_START)
-            g_settings.video.smooth = video_smooth;
+            g_settings.video.bilinear_filter = DEFAULT_VIDEO_BILINEAR_FILTER;
          else
-            g_settings.video.smooth = !g_settings.video.smooth;
+            g_settings.video.bilinear_filter = !g_settings.video.bilinear_filter;
 
          if (driver.video_poke && driver.video_poke->set_filtering)
-            driver.video_poke->set_filtering(video_data, 1, g_settings.video.smooth);
+            driver.video_poke->set_filtering(video_data, 1, g_settings.video.bilinear_filter);
          break;
-
-      case RGUI_SETTINGS_DRIVER_VIDEO:
-         if (action == RGUI_ACTION_LEFT)
-            find_prev_video_driver();
-         else if (action == RGUI_ACTION_RIGHT)
-            find_next_video_driver();
-         break;
-      case RGUI_SETTINGS_DRIVER_AUDIO:
-         if (action == RGUI_ACTION_LEFT)
-            find_prev_audio_driver();
-         else if (action == RGUI_ACTION_RIGHT)
-            find_next_audio_driver();
-         break;
-      case RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER:
-         if (action == RGUI_ACTION_LEFT)
-            find_prev_resampler_driver();
-         else if (action == RGUI_ACTION_RIGHT)
-            find_next_resampler_driver();
-         break;
-      case RGUI_SETTINGS_DRIVER_INPUT:
+      case RGUI_SETTINGS_INPUT_TYPE:
          if (action == RGUI_ACTION_LEFT)
             find_prev_input_driver();
          else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
             find_next_input_driver();
          break;
-
       case RGUI_SETTINGS_VIDEO_GAMMA:
          if (action == RGUI_ACTION_START)
-            g_settings.video.gamma_correction = 0;
+            g_settings.video.gamma_correction = DEFAULT_VIDEO_GAMMA;
          else if (action == RGUI_ACTION_LEFT)
          {
             if (g_settings.video.gamma_correction > 0)
@@ -843,19 +817,17 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (driver.video_poke && driver.video_poke->apply_state_changes)
             driver.video_poke->apply_state_changes(video_data);   
          break;
-
       case RGUI_SETTINGS_VIDEO_INTEGER_SCALE:
          if (action == RGUI_ACTION_START)
-            g_settings.video.scale_integer = scale_integer;
+            g_settings.video.scale_integer = DEFAULT_VIDEO_SCALE_INTEGER;
          else if (action == RGUI_ACTION_LEFT ||
                action == RGUI_ACTION_RIGHT ||
                action == RGUI_ACTION_OK)
             g_settings.video.scale_integer = !g_settings.video.scale_integer;
          break;
-
       case RGUI_SETTINGS_VIDEO_FORCE_ASPECT:
          if (action == RGUI_ACTION_START)
-            g_settings.video.force_aspect = force_aspect;
+            g_settings.video.force_aspect = DEFAULT_VIDEO_FORCE_ASPECT;
          else if (action == RGUI_ACTION_LEFT ||
                action == RGUI_ACTION_RIGHT ||
                action == RGUI_ACTION_OK)
@@ -864,13 +836,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          if (driver.video_poke && driver.video_poke->apply_state_changes)
             driver.video_poke->apply_state_changes(video_data);          
          break;
-
       case RGUI_SETTINGS_VIDEO_ASPECT_RATIO:
       {
          unsigned old_aspect_ratio_idx = g_settings.video.aspect_ratio_idx;
          
          if (action == RGUI_ACTION_START)
-            g_settings.video.aspect_ratio_idx = aspect_ratio_idx;
+            g_settings.video.aspect_ratio_idx = DEFAULT_VIDEO_ASPECT_RATIO_IDX;
          else if (action == RGUI_ACTION_LEFT)
          {
             if (g_settings.video.aspect_ratio_idx > 0)
@@ -886,27 +857,34 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             rgui->need_refresh = true;
          break;
       }
-
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_X:
          if (action == RGUI_ACTION_START)
-            g_settings.video.custom_vp.x = 0;
+         {
+            unsigned w, h, t;
+            if (driver.video_poke && driver.video_poke->get_resolution_info)
+               driver.video_poke->get_resolution_info(video_data, g_settings.video.resolution_idx, &w, &h, &t);
+            g_settings.video.custom_vp.x = (w - g_settings.video.custom_vp.width) / 2;
+         }
          else if (action == RGUI_ACTION_LEFT)
                g_settings.video.custom_vp.x--;
          else if (action == RGUI_ACTION_RIGHT)
                g_settings.video.custom_vp.x++;
 
          break;
-
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_Y:
          if (action == RGUI_ACTION_START)
-            g_settings.video.custom_vp.y = 0;
+         {
+            unsigned w, h, t;
+            if (driver.video_poke && driver.video_poke->get_resolution_info)
+               driver.video_poke->get_resolution_info(video_data, g_settings.video.resolution_idx, &w, &h, &t);
+            g_settings.video.custom_vp.y = (h - g_settings.video.custom_vp.height) / 2;
+         }
          else if (action == RGUI_ACTION_LEFT)
                g_settings.video.custom_vp.y--;
          else if (action == RGUI_ACTION_RIGHT)
                g_settings.video.custom_vp.y++;
 
          break;
-
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_WIDTH:
          if (action == RGUI_ACTION_START)
          {
@@ -921,7 +899,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                g_settings.video.custom_vp.width++;
 
          break;
-
       case RGUI_SETTINGS_CUSTOM_VIEWPORT_HEIGHT:
          if (action == RGUI_ACTION_START)
          {
@@ -936,7 +913,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                g_settings.video.custom_vp.height++;
 
          break;
-
       case RGUI_SETTINGS_VIDEO_RESOLUTION:
       {
          unsigned old_index = g_settings.video.resolution_idx;
@@ -947,20 +923,16 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                                  g_extern.video.resolution_first_hires : GX_RESOLUTIONS_FIRST;
 
             if(g_settings.video.resolution_idx > first_res)
-            { 
                g_settings.video.resolution_idx--;
-            }
          }
          else if (action == RGUI_ACTION_RIGHT)
          {
             if (g_settings.video.resolution_idx < GX_RESOLUTIONS_LAST)
-            {
                g_settings.video.resolution_idx++;
-            }
          }
          else if (action == RGUI_ACTION_START)
          {
-            g_settings.video.resolution_idx = GX_RESOLUTIONS_AUTO;
+            g_settings.video.resolution_idx = DEFAULT_VIDEO_RESOLUTION_IDX;
          }
          else if (action == RGUI_ACTION_OK)
          {
@@ -987,14 +959,19 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       }
 #ifdef HW_RVL
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
-         g_settings.video.soft_filter_enable=!g_settings.video.soft_filter_enable;
+         if (action == RGUI_ACTION_START)
+            g_settings.video.vi_trap_filter = DEFAULT_VIDEO_VI_TRAP_FILTER;
+         else
+            g_settings.video.vi_trap_filter =! g_settings.video.vi_trap_filter;
 
          if (driver.video_poke && driver.video_poke->apply_state_changes)
             driver.video_poke->apply_state_changes(video_data);
          break;
-         
       case RGUI_SETTINGS_VIDEO_INTERLACED_ONLY:
-         g_settings.video.interlaced_resolution_only=!g_settings.video.interlaced_resolution_only;
+         if (action == RGUI_ACTION_START)
+            g_settings.video.interlaced_resolution_only = DEFAULT_VIDEO_INTERLACED_RESOLUTION_ONLY;
+         else
+            g_settings.video.interlaced_resolution_only =! g_settings.video.interlaced_resolution_only;
          
          gfx_check_valid_resolution();
          gfx_match_resolution_auto();
@@ -1003,12 +980,12 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_VIDEO_SCREEN_POS_X:
       case RGUI_SETTINGS_VIDEO_SCREEN_POS_Y:
       {
-         int *pos = setting == RGUI_SETTINGS_VIDEO_SCREEN_POS_X ? &g_settings.video.pos_x : &g_settings.video.pos_y;
+         int *pos = (setting == RGUI_SETTINGS_VIDEO_SCREEN_POS_X) ? &g_settings.video.pos_x : &g_settings.video.pos_y;
 
          switch (action)
          {
             case RGUI_ACTION_START:
-               *pos = 0;
+               *pos = (setting == RGUI_SETTINGS_VIDEO_SCREEN_POS_X) ? DEFAULT_VIDEO_POS_X : DEFAULT_VIDEO_POS_Y;
                break;
 
             case RGUI_ACTION_LEFT:
@@ -1023,18 +1000,17 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                break;
          }
          
-         if (*pos > 16) *pos = 16;
-         else if (*pos < -16) *pos = -16;
+         if (*pos > DEFAULT_VIDEO_MAX_POS_RANGE) *pos = DEFAULT_VIDEO_MAX_POS_RANGE;
+         else if (*pos < -DEFAULT_VIDEO_MAX_POS_RANGE) *pos = -DEFAULT_VIDEO_MAX_POS_RANGE;
 
          break;
       }         
 #endif
-
       case RGUI_SETTINGS_VIDEO_VSYNC:
          switch (action)
          {
             case RGUI_ACTION_START:
-               g_settings.video.vsync = true;
+               g_settings.video.vsync = DEFAULT_VIDEO_VSYNC;
                break;
 
             case RGUI_ACTION_LEFT:
@@ -1047,12 +1023,11 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                break;
          }
          break;
-
       case RGUI_SETTINGS_VIDEO_CROP_OVERSCAN:
          switch (action)
          {
             case RGUI_ACTION_START:
-               g_settings.video.crop_overscan = crop_overscan;
+               g_settings.video.crop_overscan = DEFAULT_VIDEO_CROP_OVERSCAN;
                break;
 
             case RGUI_ACTION_LEFT:
@@ -1081,7 +1056,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
                type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
-         snprintf(type_str, type_str_size, g_settings.video.soft_filter_enable ? "ON" : "OFF");
+         snprintf(type_str, type_str_size, g_settings.video.vi_trap_filter ? "ON" : "OFF");
          break;
       case RGUI_SETTINGS_VIDEO_INTERLACED_ONLY:
          snprintf(type_str, type_str_size, g_settings.video.interlaced_resolution_only ? "ON" : "OFF");
@@ -1093,7 +1068,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
          snprintf(type_str, type_str_size, "%d", g_settings.video.pos_y);
          break;         
       case RGUI_SETTINGS_VIDEO_BILINEAR:
-         strlcpy(type_str, g_settings.video.smooth ? "ON" : "OFF", type_str_size);
+         strlcpy(type_str, g_settings.video.bilinear_filter ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_GAMMA:
          snprintf(type_str, type_str_size, "%d", g_settings.video.gamma_correction);
@@ -1104,16 +1079,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_VIDEO_CROP_OVERSCAN:
          strlcpy(type_str, g_settings.video.crop_overscan ? "ON" : "OFF", type_str_size);
          break;
-      case RGUI_SETTINGS_DRIVER_VIDEO:
-         strlcpy(type_str, g_settings.video.driver, type_str_size);
-         break;
-      case RGUI_SETTINGS_DRIVER_AUDIO:
-         strlcpy(type_str, g_settings.audio.driver, type_str_size);
-         break;
-      case RGUI_SETTINGS_DRIVER_AUDIO_RESAMPLER:
-         strlcpy(type_str, g_settings.audio.resampler, type_str_size);
-         break;
-      case RGUI_SETTINGS_DRIVER_INPUT:
+      case RGUI_SETTINGS_INPUT_TYPE:
          strlcpy(type_str, g_settings.input.driver, type_str_size);
          /* Convert to uppercase */
          for(int i = 0; type_str[i] != '\0'; i++ ) type_str[i] = toupper(type_str[i]);
@@ -1201,7 +1167,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
             snprintf(type_str, type_str_size, "%d", g_settings.state_slot);
          break;
       case RGUI_SETTINGS_AUDIO_MUTE:
-         strlcpy(type_str, g_extern.audio_data.mute ? "ON" : "OFF", type_str_size);
+         strlcpy(type_str, g_settings.audio.mute ? "ON" : "OFF", type_str_size);
          break;
       case RGUI_SETTINGS_AUDIO_SYNC:
          strlcpy(type_str, g_settings.audio.sync ? "ON" : "OFF", type_str_size);
@@ -1267,7 +1233,6 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_PATH_OPTIONS:
       case RGUI_SETTINGS_OVERLAY_OPTIONS:
       case RGUI_SETTINGS_OPTIONS:
-      case RGUI_SETTINGS_DRIVERS:
       case RGUI_SETTINGS_BIND_DEFAULT_ALL:
       case RGUI_SETTINGS_BIND_HOTKEYS:
       case RGUI_SETTINGS_BIND_PLAYER_KEYS:

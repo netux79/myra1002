@@ -20,10 +20,6 @@
 #include <stdbool.h>
 #include "../driver.h"
 
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 typedef struct frontend_ctx_driver
 {
    void (*environment_get)(int argc, char *argv[], void *args);

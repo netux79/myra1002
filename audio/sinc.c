@@ -223,7 +223,7 @@ static void aligned_free__(void *ptr)
    free(p[-1]);
 }
 
-static inline void process_sinc_C(rarch_sinc_resampler_t *resamp, float *out_buffer)
+static inline void process_sinc_func(rarch_sinc_resampler_t *resamp, float *out_buffer)
 {
    unsigned i;
    float sum_l = 0.0f;
@@ -255,9 +255,6 @@ static inline void process_sinc_C(rarch_sinc_resampler_t *resamp, float *out_buf
    out_buffer[0] = sum_l;
    out_buffer[1] = sum_r;
 }
-
-// Plain ol' C99
-#define process_sinc_func process_sinc_C
 
 static void resampler_sinc_process(void *re_, struct resampler_data *data)
 {

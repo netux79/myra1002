@@ -19,10 +19,6 @@
 
 #include <stdarg.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #if defined(HAVE_FILE_LOGGER) && !defined(IS_SALAMANDER)
 #define LOG_FILE (g_extern.log_file)
 

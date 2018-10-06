@@ -20,10 +20,6 @@
 #include <stdbool.h>
 #include "../../driver.h"
 
-#ifdef HAVE_CONFIG_H
-#include "../../config.h"
-#endif
-
 typedef struct menu_driver
 {
    void  (*set_texture)(void*, void*, bool);

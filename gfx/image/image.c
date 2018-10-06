@@ -13,10 +13,6 @@
  *  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "../../config.h"
-#endif
-
 #include "image.h"
 #include "../../file.h"
 

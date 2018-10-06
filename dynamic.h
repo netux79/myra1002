@@ -19,10 +19,6 @@
 #include <stdbool.h>
 #include "libretro.h"
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

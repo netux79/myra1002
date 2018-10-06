@@ -24,10 +24,6 @@ extern "C" {
 #include "../general.h"
 #include <stdbool.h>
 
-#ifdef HAVE_CONFIG_H
-#include "../config.h"
-#endif
-
 #define SWAPU(a,b) {unsigned t=a;a=b;b=t;}
 
 typedef struct

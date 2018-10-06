@@ -253,8 +253,6 @@ static void rgui_render(void *data, void *video_data)
    else if (menu_type == RGUI_SETTINGS_OPTIONS ||
          menu_type == RGUI_HELP_SCREEN)
       strlcpy(title, "SETTINGS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_DRIVERS)
-      strlcpy(title, "DRIVER OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CONFIG_OPTIONS)
       strlcpy(title, "CONFIG OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_SAVE_OPTIONS)
