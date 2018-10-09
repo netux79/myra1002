@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <app version="1">
-  <name>MyRA1002</name>
-  <coder>Maister, Squarepusher, ToadKing</coder>
+  <name>MyRA1002 2.0</name>
+  <coder>netux79</coder>
   <version>Modified Retroarch 1.0.0.2</version>
-  <release_date>2012-2016</release_date>
-  <short_description>Wii Libretro client</short_description> 
-  <long_description>A port of RetroArch to the GameCube/Wii.</long_description> 
+  <release_date>2012-2018</release_date>
+  <short_description>Wii Libretro Client</short_description> 
+  <long_description>A port of RetroArch for the GameCube/Wii.</long_description> 
   <no_ios_reload/>
 </app>
