@@ -40,6 +40,10 @@
    if (!(cond)) { RARCH_ERR("Assertion failed at %s:%d.\n", __FILE__, __LINE__); exit(2); } \
 } while(0)
 
+/* Define Mem 1 GX size */
+#define SYSMEM1_SIZE 0x01800000
+#define MB_SIZE 0x00100000
+
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define RARCH_SCALE_BASE 256
 

@@ -365,75 +365,6 @@ static int menu_custom_bind_iterate(void *data, void *video_data, unsigned actio
    return 0;
 }
 
-static int menu_start_screen_iterate(void *data, void *video_data, unsigned action)
-{
-   unsigned i;
-   char msg[1024];
-   rgui_handle_t *rgui = (rgui_handle_t*)data;
-
-   if (video_data && menugui_driver && menugui_driver->render)
-      menugui_driver->render(rgui, video_data);
-
-   char desc[6][64];
-   static const unsigned binds[] = {
-      RETRO_DEVICE_ID_JOYPAD_UP,
-      RETRO_DEVICE_ID_JOYPAD_DOWN,
-      RETRO_DEVICE_ID_JOYPAD_A,
-      RETRO_DEVICE_ID_JOYPAD_B,
-      RARCH_MENU_TOGGLE,
-      RARCH_QUIT_KEY,
-   };
-
-   for (i = 0; i < ARRAY_SIZE(binds); i++)
-   {
-      if (driver.input && driver.input->set_keybinds)
-      {
-         struct platform_bind key_label;
-         strlcpy(key_label.desc, "Unknown", sizeof(key_label.desc));
-         key_label.joykey = g_settings.input.binds[0][binds[i]].joykey;
-         driver.input->set_keybinds(&key_label, 0, 0, 0, 1ULL << KEYBINDS_ACTION_GET_BIND_LABEL);
-         strlcpy(desc[i], key_label.desc, sizeof(desc[i]));
-      }
-      else
-      {
-         const struct retro_keybind *bind = &g_settings.input.binds[0][binds[i]];
-         input_get_bind_string(desc[i], bind, 0, sizeof(desc[i]));
-      }
-   }
-
-   snprintf(msg, sizeof(msg),
-         "-- Welcome to RetroArch / RGUI --\n"
-         " \n" // strtok_r doesn't split empty strings.
-
-         "Basic RGUI controls:\n"
-         "    Scroll (Up): %-20s\n"
-         "  Scroll (Down): %-20s\n"
-         "      Accept/OK: %-20s\n"
-         "           Back: %-20s\n"
-         "Enter/Exit RGUI: %-20s\n"
-         " Exit RetroArch: %-20s\n"
-         " \n"
-
-         "To run game:\n"
-         "Load a libretro core (Core).\n"
-         "Load a game file (Load Game).     \n"
-         " \n"
-
-         "See Path Options to set directories\n"
-         "for faster access to files.\n"
-         " \n"
-
-         "Press Accept/OK to continue.",
-         desc[0], desc[1], desc[2], desc[3], desc[4], desc[5]);
-
-   if (video_data && menugui_driver && menugui_driver->render_messagebox)
-      menugui_driver->render_messagebox(rgui, video_data, msg);
-
-   if (action == RGUI_ACTION_OK)
-      file_list_pop(rgui->menu_stack, &rgui->selection_ptr);
-   return 0;
-}
-
 static int menu_settings_iterate(void *data, void *video_data, unsigned action)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
@@ -546,7 +477,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             || menu_type == RGUI_SETTINGS_PATH_OPTIONS
             || menu_type == RGUI_SETTINGS_OVERLAY_OPTIONS
             || menu_type == RGUI_SETTINGS_OPTIONS
-            || menu_type == RGUI_SETTINGS_CORE_INFO
+            || menu_type == RGUI_SETTINGS_SYSTEM_INFO
             || menu_type == RGUI_SETTINGS_CORE_OPTIONS
             || menu_type == RGUI_SETTINGS_AUDIO_OPTIONS
             || menu_type == RGUI_SETTINGS_DISK_OPTIONS
@@ -593,9 +524,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
    if (video_data && menugui_driver && menugui_driver->set_texture)
       menugui_driver->set_texture(rgui, video_data, false);
 
-   if (menu_type == RGUI_HELP_SCREEN)
-      return menu_start_screen_iterate(rgui, video_data, action);
-   else if (menu_type_is(menu_type) == RGUI_SETTINGS)
+   if (menu_type_is(menu_type) == RGUI_SETTINGS)
       return menu_settings_iterate(rgui, video_data, action);
    else if (menu_type == RGUI_SETTINGS_CUSTOM_BIND)
       return menu_custom_bind_iterate(rgui, video_data, action);
@@ -1183,37 +1112,58 @@ void menu_populate_entries(void *data, unsigned menu_type)
          else
             file_list_push(rgui->selection_buf, "Load a game first.", RGUI_SETTINGS_CORE_OPTION_NONE, 0);
          break;
-      case RGUI_SETTINGS_CORE_INFO:
+      case RGUI_SETTINGS_SYSTEM_INFO:
          file_list_clear(rgui->selection_buf);
+         
+         file_list_push(rgui->selection_buf, "Description:", RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+         snprintf(tmp, sizeof(tmp), "	%s %s is a frontend based on", PACKAGE_NAME, PACKAGE_VERSION);
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+         file_list_push(rgui->selection_buf, "	Retroarch 1.0.0.2 heavily modified for Wii.", RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "Build date: %s", __DATE__);
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "Compiler: GCC (%d.%d.%d) %u-bit", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__, (unsigned)(CHAR_BIT * sizeof(size_t)));         
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "MEM1 (Used/Total): %2dMB / %2dMB (%8d bytes/%8d bytes)", (SYSMEM1_SIZE - SYS_GetArena1Size())/MB_SIZE, SYSMEM1_SIZE/MB_SIZE,
+                  SYSMEM1_SIZE - SYS_GetArena1Size(), SYSMEM1_SIZE);
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "MEM2 (Used/Total): %2dMB / %2dMB (%8d bytes/%8d bytes)", gx_mem2_used()/MB_SIZE, gx_mem2_total()/MB_SIZE,
+                  gx_mem2_used(), gx_mem2_total());
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "Current core: %s", rgui->core_info_current.data ? rgui->core_info_current.display_name : rgui->info.library_name);
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "Library filename: %s", path_basename(rgui->core_info_current.path));
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
+         snprintf(tmp, sizeof(tmp), "Running game: %s", *g_extern.basename ? path_basename(g_extern.basename) : "None");
+         file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
+
          if (rgui->core_info_current.data)
          {
-            snprintf(tmp, sizeof(tmp), "Core name: %s",
-                  rgui->core_info_current.display_name ? rgui->core_info_current.display_name : "");
-            file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
-
-            snprintf(tmp, sizeof(tmp), "Running game: %s",
-                  *g_extern.basename ? path_basename(g_extern.basename) : "None");
-            file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
-
             if (rgui->core_info_current.authors_list)
             {
                strlcpy(tmp, "Authors: ", sizeof(tmp));
                string_list_join_concat(tmp, sizeof(tmp), rgui->core_info_current.authors_list, ", ");
-               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
             }
 
             if (rgui->core_info_current.permissions_list)
             {
                strlcpy(tmp, "Permissions: ", sizeof(tmp));
                string_list_join_concat(tmp, sizeof(tmp), rgui->core_info_current.permissions_list, ", ");
-               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
             }
 
             if (rgui->core_info_current.supported_extensions_list)
             {
                strlcpy(tmp, "Supported extensions: ", sizeof(tmp));
                string_list_join_concat(tmp, sizeof(tmp), rgui->core_info_current.supported_extensions_list, ", ");
-               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
             }
 
             if (rgui->core_info_current.firmware_count > 0)
@@ -1221,37 +1171,34 @@ void menu_populate_entries(void *data, unsigned menu_type)
                core_info_list_update_missing_firmware(rgui->core_info, rgui->core_info_current.path,
                      g_settings.system_directory);
 
-               file_list_push(rgui->selection_buf, "Firmware: ", RGUI_SETTINGS_CORE_INFO_NONE, 0);
+               file_list_push(rgui->selection_buf, "Firmware:", RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
                for (i = 0; i < rgui->core_info_current.firmware_count; i++)
                {
                   if (rgui->core_info_current.firmware[i].desc)
                   {
                      snprintf(tmp, sizeof(tmp), "	name: %s",
                            rgui->core_info_current.firmware[i].desc ? rgui->core_info_current.firmware[i].desc : "");
-                     file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+                     file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
 
                      snprintf(tmp, sizeof(tmp), "	status: %s, %s",
                            rgui->core_info_current.firmware[i].missing ? "missing" : "present",
                            rgui->core_info_current.firmware[i].optional ? "optional" : "required");
-                     file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+                     file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
                   }
                }
             }
 
             if (rgui->core_info_current.notes)
             {
-               snprintf(tmp, sizeof(tmp), "Core notes: ");
-               file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+               file_list_push(rgui->selection_buf, "Core notes:", RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
 
                for (i = 0; i < rgui->core_info_current.note_list->size; i++)
                {
                   snprintf(tmp, sizeof(tmp), " %s", rgui->core_info_current.note_list->elems[i].data);
-                  file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_CORE_INFO_NONE, 0);
+                  file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
                }
             }
          }
-         else
-            file_list_push(rgui->selection_buf, "No information available.", RGUI_SETTINGS_CORE_OPTION_NONE, 0);
          break;
       case RGUI_SETTINGS_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -1269,7 +1216,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
             if (g_extern.system.disk_control.get_num_images)
                file_list_push(rgui->selection_buf, "Disks", RGUI_SETTINGS_DISK_OPTIONS, 0);
          }
-         file_list_push(rgui->selection_buf, "Help", RGUI_HELP_SCREEN, 0);
          break;
       case RGUI_SETTINGS_DISK_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -1363,7 +1309,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
 #if defined(HAVE_LIBRETRO_MANAGEMENT)
          file_list_push(rgui->selection_buf, "Select Core", RGUI_SETTINGS_CORE, 0);
 #endif
-         file_list_push(rgui->selection_buf, "Core Information", RGUI_SETTINGS_CORE_INFO, 0);
+         file_list_push(rgui->selection_buf, "System Information", RGUI_SETTINGS_SYSTEM_INFO, 0);
          file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Restart RetroArch", RGUI_SETTINGS_RESTART_RARCH, 0);
          file_list_push(rgui->selection_buf, "Quit RetroArch", RGUI_SETTINGS_QUIT_RARCH, 0);

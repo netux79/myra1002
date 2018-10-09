@@ -36,7 +36,7 @@ unsigned menu_type_is(unsigned type)
       type == RGUI_SETTINGS_CONFIG_OPTIONS ||
       type == RGUI_SETTINGS_SAVE_OPTIONS ||
       type == RGUI_SETTINGS_CORE_OPTIONS ||
-      type == RGUI_SETTINGS_CORE_INFO ||
+      type == RGUI_SETTINGS_SYSTEM_INFO ||
       type == RGUI_SETTINGS_VIDEO_OPTIONS ||
       type == RGUI_SETTINGS_AUDIO_OPTIONS ||
       type == RGUI_SETTINGS_DISK_OPTIONS ||
@@ -150,10 +150,6 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 
    switch (setting)
    {
-      case RGUI_HELP_SCREEN:
-         if (action == RGUI_ACTION_OK)
-            file_list_push(rgui->menu_stack, "", RGUI_HELP_SCREEN, 0);
-         break;
       case RGUI_SETTINGS_REWIND_ENABLE:
          if (action == RGUI_ACTION_OK ||
                action == RGUI_ACTION_LEFT ||
@@ -1221,7 +1217,7 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
       case RGUI_SETTINGS_OPEN_FILEBROWSER_DEFERRED_CORE:
       case RGUI_SETTINGS_OPEN_HISTORY:
       case RGUI_SETTINGS_CORE_OPTIONS:
-      case RGUI_SETTINGS_CORE_INFO:
+      case RGUI_SETTINGS_SYSTEM_INFO:
       case RGUI_SETTINGS_VIDEO_OPTIONS:
       case RGUI_SETTINGS_AUDIO_OPTIONS:
       case RGUI_SETTINGS_DISK_OPTIONS:

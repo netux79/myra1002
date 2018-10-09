@@ -42,6 +42,7 @@ static unsigned gx_resolutions[][2] = {
     { 480, 240 }, /* 240x248 MAME Moon Patrol */
     { 512, 240 }, /* NES, FBA, MAME, 256x256 FBA Kung Fu Master, MAME Horizon */
     { 576, 240 }, /* Gameboy, GBA */
+    { 602, 240 }, /* NES + Blargg NTSC filter */
     { 640, 240 }, /* Cave Story, FBA, MAME */
     
     { 512, 384 }, /* Mastersystem, GBA interlaced */
@@ -60,6 +61,7 @@ static unsigned gx_resolutions[][2] = {
     { 384, 480 }, /* FBA jjquacks */
     { 512, 480 }, /* NES */
     { 576, 480 }, /* Gameboy, GBA */
+    { 602, 480 }, /* NES + Blargg NTSC filter */
     { 640, 480 }, /* Cave Story, FBA, MAME */
 
     {   0,   0 }, /* AUTO - values are updated while running */

@@ -250,8 +250,7 @@ static void rgui_render(void *data, void *video_data)
       strlcpy(title, "OVERLAY OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
       strlcpy(title, "PATH OPTIONS", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_OPTIONS ||
-         menu_type == RGUI_HELP_SCREEN)
+   else if (menu_type == RGUI_SETTINGS_OPTIONS)
       strlcpy(title, "SETTINGS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CONFIG_OPTIONS)
       strlcpy(title, "CONFIG OPTIONS", sizeof(title));
@@ -263,10 +262,10 @@ static void rgui_render(void *data, void *video_data)
       strlcpy(title, "DISK OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CORE_OPTIONS)
       strlcpy(title, "CORE SETUP", sizeof(title));
-   else if (menu_type == RGUI_SETTINGS_CORE_INFO)
-      strlcpy(title, "CORE INFO", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_SYSTEM_INFO)
+      strlcpy(title, "SYSTEM INFO", sizeof(title));
    else if (menu_type == RGUI_SETTINGS)
-      snprintf(title, sizeof(title), "%s | %s ", PACKAGE_VERSION, *g_extern.basename ? path_basename(g_extern.basename) : "No Game Loaded");
+      snprintf(title, sizeof(title), "%s | %s ", PACKAGE_NAME, *g_extern.basename ? path_basename(g_extern.basename) : "No Game Loaded");
    else if (menu_type == RGUI_SETTINGS_OPEN_HISTORY)
       strlcpy(title, "LOAD RECENT", sizeof(title));
 #ifdef HAVE_OVERLAY
@@ -405,7 +404,7 @@ static void rgui_render(void *data, void *video_data)
       strlcpy(entry_title_buf, path, sizeof(entry_title_buf));
       strlcpy(type_str_buf, type_str, sizeof(type_str_buf));
 
-      if (type == RGUI_FILE_PLAIN || type == RGUI_FILE_DIRECTORY || type == RGUI_SETTINGS_CORE_INFO_NONE)
+      if (type == RGUI_FILE_PLAIN || type == RGUI_FILE_DIRECTORY || type == RGUI_SETTINGS_SYSTEM_INFO_NONE)
          menu_ticker_line(entry_title_buf, RGUI_TERM_WIDTH - (w + 1 + 2), g_extern.frame_count / 15, path, selected);
       else
          menu_ticker_line(type_str_buf, w, g_extern.frame_count / 15, type_str, selected);

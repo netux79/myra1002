@@ -34,9 +34,8 @@
 #include "gfx/filter.h"
 #endif
 
-#ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION "MyRA1002"
-#endif
+#define PACKAGE_NAME "MyRA1002"
+#define PACKAGE_VERSION "2.0"
 
 // Wii - for usleep (among others)
 #include <unistd.h>
