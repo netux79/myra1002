@@ -1096,6 +1096,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
          file_list_push(rgui->selection_buf, "Force Aspect", RGUI_SETTINGS_VIDEO_FORCE_ASPECT, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
+         file_list_push(rgui->selection_buf, "Menu Rotation [G]", RGUI_SETTINGS_VIDEO_MENU_ROTATION, 0);
          break;
       case RGUI_SETTINGS_CORE_OPTIONS:
          file_list_clear(rgui->selection_buf);

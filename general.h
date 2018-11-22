@@ -83,6 +83,7 @@ struct settings
       float refresh_rate;
       unsigned aspect_ratio_idx;
       unsigned rotation;
+      unsigned menu_rotation;
       unsigned resolution_idx;
       unsigned gamma_correction;
 #ifdef HAVE_SCALERS_BUILTIN

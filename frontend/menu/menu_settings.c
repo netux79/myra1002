@@ -780,7 +780,22 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.video.rotation < LAST_ORIENTATION) g_settings.video.rotation++;
          }
          break;
-
+      case RGUI_SETTINGS_VIDEO_MENU_ROTATION:
+         if (action == RGUI_ACTION_START)
+            g_settings.video.menu_rotation = DEFAULT_VIDEO_ROTATION;
+         else if (action == RGUI_ACTION_LEFT)
+         {
+            if (g_settings.video.menu_rotation > 0) g_settings.video.menu_rotation--;
+         }
+         else if (action == RGUI_ACTION_RIGHT)
+         {
+            if (g_settings.video.menu_rotation < LAST_ORIENTATION) g_settings.video.menu_rotation++;
+         }
+         // Change video resolution to the preferred mode
+         if (driver.video_poke && driver.video_poke->update_screen_config)
+            driver.video_poke->update_screen_config(driver.video_data, GX_RESOLUTIONS_RGUI, ASPECT_RATIO_4_3,
+                                                 false, g_settings.video.menu_rotation);
+         break;
       case RGUI_SETTINGS_VIDEO_BILINEAR:
          if (action == RGUI_ACTION_START)
             g_settings.video.bilinear_filter = DEFAULT_VIDEO_BILINEAR_FILTER;
@@ -1048,8 +1063,10 @@ void menu_set_settings_label(char *type_str, size_t type_str_size, unsigned *w, 
    switch (type)
    {
       case RGUI_SETTINGS_VIDEO_ROTATION:
-         strlcpy(type_str, rotation_lut[g_settings.video.rotation],
-               type_str_size);
+         strlcpy(type_str, rotation_lut[g_settings.video.rotation], type_str_size);
+         break;
+      case RGUI_SETTINGS_VIDEO_MENU_ROTATION:
+         strlcpy(type_str, rotation_lut[g_settings.video.menu_rotation], type_str_size);
          break;
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
          snprintf(type_str, type_str_size, g_settings.video.vi_trap_filter ? "ON" : "OFF");
