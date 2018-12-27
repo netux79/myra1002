@@ -18,6 +18,10 @@ for f in *_wii.a ; do
       echo "Tyrquake found, applying big stack..."
       big_stack="BIG_STACK=1"
    fi
+   if [ $name = "fbalpha2012" ] ; then
+      echo "FBA2012 found, applying big stack..."
+      big_stack="BIG_STACK=1"
+   fi
    cp -f "$f" ../libretro_wii.a
    make -C ../ -f Makefile.griffin platform=wii $whole_archive $big_stack -j3 || exit 1
    mv -f ../retroarch_wii.dol ../wii/pkg/${name}_libretro_wii.dol
