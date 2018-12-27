@@ -44,7 +44,6 @@ void config_set_defaults(void)
    g_settings.video.refresh_rate = DEFAULT_VIDEO_REFRESH_RATE;
    g_settings.video.gamma_correction = DEFAULT_VIDEO_GAMMA;
    g_settings.video.rotation = DEFAULT_VIDEO_ROTATION;
-   g_settings.video.menu_rotation = DEFAULT_VIDEO_ROTATION;
    g_settings.video.vi_trap_filter = DEFAULT_VIDEO_VI_TRAP_FILTER;
    g_settings.video.resolution_idx = DEFAULT_VIDEO_RESOLUTION_IDX;
    g_settings.video.interlaced_resolution_only = DEFAULT_VIDEO_INTERLACED_RESOLUTION_ONLY;
@@ -56,6 +55,10 @@ void config_set_defaults(void)
    g_settings.video.custom_vp.y = DEFAULT_VIDEO_CUSTOM_VP_Y;
    g_settings.video.filter_idx = DEFAULT_VIDEO_FILTER_IDX;
    g_extern.video.resolution_first_hires = DEFAULT_VIDEO_RESOLUTION_HIRES;
+   
+   g_settings.menu.rotation = DEFAULT_MENU_ROTATION;
+   g_settings.menu.theme = DEFAULT_MENU_THEME;
+   g_settings.menu.bilinear_filter = DEFAULT_MENU_BILINEAR_FILTER;
 
    g_settings.audio.enable = DEFAULT_AUDIO_ENABLE;
    g_settings.audio.out_rate = DEFAULT_AUDIO_OUT_RATE;
@@ -297,7 +300,9 @@ bool global_config_load_file(const char *path)
    CONFIG_GET_BOOL(fps_show, "fps_show");
    CONFIG_GET_BOOL(audio.mute, "audio_mute");
    CONFIG_GET_INT(game_history_size, "game_history_size");
-   CONFIG_GET_INT(video.menu_rotation, "video_menu_rotation");
+   CONFIG_GET_INT(menu.rotation, "menu_rotation");
+   CONFIG_GET_INT(menu.theme, "menu_theme");
+   CONFIG_GET_BOOL(menu.bilinear_filter, "menu_bilinear_filter");
    CONFIG_GET_PATH(libretro_info_directory, "libretro_info_directory");
    if (!strcmp(g_settings.libretro_info_directory, "default"))
       *g_settings.libretro_info_directory = DEFAULT_DIRECTORY_LOCATION;
@@ -540,7 +545,9 @@ bool global_config_save_file(const char *path)
    config_set_bool(conf, "fps_show", g_settings.fps_show);
    config_set_bool(conf, "audio_mute", g_settings.audio.mute);
    config_set_int(conf, "game_history_size", g_settings.game_history_size);
-   config_set_int(conf, "video_menu_rotation", g_settings.video.menu_rotation);
+   config_set_int(conf, "menu_rotation", g_settings.menu.rotation);
+   config_set_int(conf, "menu_theme", g_settings.menu.theme);
+   config_set_bool(conf, "menu_bilinear_filter", g_settings.menu.bilinear_filter);
    config_set_bool(conf, "menu_all_players_enable", g_settings.input.menu_all_players_enable);
    config_set_path(conf, "libretro_info_directory", *g_settings.libretro_info_directory ? g_settings.libretro_info_directory : "default");
    config_set_path(conf, "screenshot_directory", *g_settings.screenshot_directory ? g_settings.screenshot_directory : "default");

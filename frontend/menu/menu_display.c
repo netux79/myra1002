@@ -41,50 +41,39 @@ static uint16_t menu_framebuf[400 * 240];
 #define RGUI_TERM_WIDTH (((rgui->width - RGUI_TERM_START_X - 15) / (FONT_WIDTH_STRIDE)))
 #define RGUI_TERM_HEIGHT (((rgui->height - RGUI_TERM_START_Y - 15) / (FONT_HEIGHT_STRIDE)) - 1)
 
-static void rgui_copy_glyph(uint8_t *glyph, const uint8_t *buf)
+static uint16_t back_filler(void)
 {
-   int y, x;
-   for (y = 0; y < FONT_HEIGHT; y++)
-   {
-      for (x = 0; x < FONT_WIDTH; x++)
-      {
-         uint32_t col =
-            ((uint32_t)buf[3 * (-y * 256 + x) + 0] << 0) |
-            ((uint32_t)buf[3 * (-y * 256 + x) + 1] << 8) |
-            ((uint32_t)buf[3 * (-y * 256 + x) + 2] << 16);
-
-         uint8_t rem = 1 << ((x + y * FONT_WIDTH) & 7);
-         unsigned offset = (x + y * FONT_WIDTH) >> 3;
-
-         if (col != 0xff)
-            glyph[offset] |= rem;
-      }
-   }
+   return theme_lut[g_settings.menu.theme].background;
 }
 
-static uint16_t gray_filler(unsigned x, unsigned y)
+static uint16_t fore_filler(void)
 {
-   return 0x7210; /* Maroon */
+   return theme_lut[g_settings.menu.theme].foreground;
 }
 
-static uint16_t green_filler(unsigned x, unsigned y)
+static uint16_t font_col_nor(void)
 {
-   return 0x7040; /* Light green */
+   return theme_lut[g_settings.menu.theme].font_nor;
+}
+
+static uint16_t font_col_sel(void)
+{
+   return theme_lut[g_settings.menu.theme].font_sel;
 }
 
 static void fill_rect(uint16_t *buf, unsigned pitch,
       unsigned x, unsigned y,
       unsigned width, unsigned height,
-      uint16_t (*col)(unsigned x, unsigned y))
+      uint16_t (*col)(void))
 {
    unsigned j, i;
    for (j = y; j < y + height; j++)
       for (i = x; i < x + width; i++)
-         buf[j * (pitch >> 1) + i] = col(i, j);
+         buf[j * (pitch >> 1) + i] = col();
 }
 
 static void blit_line(rgui_handle_t *rgui,
-      int x, int y, const char *message, bool green)
+      int x, int y, const char *message, uint16_t (*col)(void))
 {
    int j, i;
    while (*message)
@@ -95,10 +84,8 @@ static void blit_line(rgui_handle_t *rgui,
          {
             uint8_t rem = 1 << ((i + j * FONT_WIDTH) & 7);
             int offset = (i + j * FONT_WIDTH) >> 3;
-            bool col = (rgui->font[FONT_OFFSET((unsigned char)*message) + offset] & rem);
-
-            if (col)
-               rgui->frame_buf[(y + j) * (rgui->frame_buf_pitch >> 1) + (x + i)] = green ? 0x70C0 : 0x7FFF;
+            if(rgui->font[FONT_OFFSET((unsigned char)*message) + offset] & rem)
+               rgui->frame_buf[(y + j) * (rgui->frame_buf_pitch >> 1) + (x + i)] = col();
          }
       }
 
@@ -107,44 +94,10 @@ static void blit_line(rgui_handle_t *rgui,
    }
 }
 
-static void init_font(rgui_handle_t *rgui, const uint8_t *font_bmp_buf)
-{
-   unsigned i;
-   uint8_t *font = (uint8_t *) calloc(1, FONT_OFFSET(256));
-   rgui->alloc_font = true;
-   for (i = 0; i < 256; i++)
-   {
-      unsigned y = i / 16;
-      unsigned x = i % 16;
-      rgui_copy_glyph(&font[FONT_OFFSET(i)],
-            font_bmp_buf + 54 + 3 * (256 * (255 - 16 * y) + 16 * x));
-   }
-
-   rgui->font = font;
-}
-
-static bool rguidisp_init_font(void *data)
-{
-   rgui_handle_t *rgui = (rgui_handle_t*)data;
-
-   const uint8_t *font_bmp_buf = NULL;
-   const uint8_t *font_bin_buf = bitmap_bin;
-   bool ret = true;
-
-   if (font_bmp_buf)
-      init_font(rgui, font_bmp_buf);
-   else if (font_bin_buf)
-      rgui->font = font_bin_buf;
-   else
-      ret = false;
-
-   return ret;
-}
-
 static void rgui_render_background(rgui_handle_t *rgui)
 {
    fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         0, 0, rgui->width, rgui->height, gray_filler);
+         0, 0, rgui->width, rgui->height, back_filler);
 }
 
 static void rgui_render_messagebox(void *data, void *video_data, const char *message)
@@ -189,14 +142,14 @@ static void rgui_render_messagebox(void *data, void *video_data, const char *mes
    int y = (rgui->height - height) / 2;
 
    fill_rect(rgui->frame_buf, rgui->frame_buf_pitch,
-         x, y, width, height, green_filler);
+         x, y, width, height, fore_filler);
 
    for (i = 0; i < list->size; i++)
    {
       const char *msg = list->elems[i].data;
       int offset_x = FONT_WIDTH_STRIDE * (glyphs_width - strlen(msg)) / 2;
       int offset_y = FONT_HEIGHT_STRIDE * i;
-      blit_line(rgui, x + 8 + offset_x, y + 8 + offset_y, msg, false);
+      blit_line(rgui, x + 8 + offset_x, y + 8 + offset_y, msg, font_col_nor);
    }
 
    string_list_free(list);
@@ -254,6 +207,8 @@ static void rgui_render(void *data, void *video_data)
       strlcpy(title, "SETTINGS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_CONFIG_OPTIONS)
       strlcpy(title, "CONFIG OPTIONS", sizeof(title));
+   else if (menu_type == RGUI_SETTINGS_MENU_OPTIONS)
+      strlcpy(title, "MENU OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_SAVE_OPTIONS)
       strlcpy(title, "SAVE OPTIONS", sizeof(title));
    else if (menu_type == RGUI_SETTINGS_AUDIO_OPTIONS)
@@ -309,11 +264,11 @@ static void rgui_render(void *data, void *video_data)
 
    char buf[256];
    menu_ticker_line(buf, RGUI_TERM_WIDTH - 3, g_extern.frame_count / 15, title, true);
-   blit_line(rgui, RGUI_TERM_START_X + 15, 15, buf, true);
+   blit_line(rgui, RGUI_TERM_START_X + 15, 15, buf, font_col_sel);
 
    const char *core_name = rgui->core_info_current.data ? rgui->core_info_current.display_name : rgui->info.library_name;
    strlcpy(buf, core_name, sizeof(buf));
-   blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, buf, true);
+   blit_line(rgui, RGUI_TERM_START_X + 15, (RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE) + RGUI_TERM_START_Y + 2, buf, font_col_sel);
 
    /* get the time */
    time_t _time;
@@ -321,9 +276,9 @@ static void rgui_render(void *data, void *video_data)
    char time_display[9];
    /* Time (hours-minutes-seconds) */
    strftime(time_display, sizeof(time_display), "%H:%M:%S", localtime(&_time));
-   blit_line(rgui, RGUI_TERM_WIDTH * FONT_WIDTH_STRIDE + RGUI_TERM_START_X - (FONT_WIDTH_STRIDE*8),
+   blit_line(rgui, RGUI_TERM_WIDTH * FONT_WIDTH_STRIDE + RGUI_TERM_START_X - (FONT_WIDTH_STRIDE*9),
                    RGUI_TERM_HEIGHT * FONT_HEIGHT_STRIDE + RGUI_TERM_START_Y + 2, 
-                   time_display, true);
+                   time_display, font_col_sel);
 
    unsigned x, y;
    size_t i;
@@ -339,11 +294,7 @@ static void rgui_render(void *data, void *video_data)
       char message[256];
       char type_str[256];
 
-      unsigned w = 19;
-      if (menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS || menu_type == RGUI_SETTINGS_BIND_HOTKEYS || menu_type == RGUI_SETTINGS_CUSTOM_BIND)
-         w = 21;
-      else if (menu_type == RGUI_SETTINGS_PATH_OPTIONS)
-         w = 24;
+      unsigned w = RGUI_TERM_WIDTH / 2.8;
 
       // Pretty-print libretro cores from menu.
       if (menu_type == RGUI_SETTINGS_CORE || menu_type == RGUI_SETTINGS_DEFERRED_CORE)
@@ -416,7 +367,7 @@ static void rgui_render(void *data, void *video_data)
             w,
             type_str_buf);
 
-      blit_line(rgui, x, y, message, selected);
+      blit_line(rgui, x, y, message, selected ? font_col_sel : font_col_nor);
    }
 
    const char *message_queue;
@@ -432,30 +383,22 @@ static void rgui_render(void *data, void *video_data)
    rgui_render_messagebox(rgui, video_data, message_queue);
 }
 
+static void rgui_set_size(void *data)
+{
+   rgui_handle_t *rgui = (rgui_handle_t*)data;
+
+   rgui->width = g_settings.menu.rotation % 2 ? 240: 320;
+   rgui->height = g_settings.menu.rotation % 2 ? 320: 240;
+   rgui->frame_buf_pitch = rgui->width * sizeof(uint16_t);
+}
+
 static void *rgui_init(void *video_data)
 {
-   uint16_t *framebuf = menu_framebuf;
-   size_t framebuf_pitch;
-
    rgui_handle_t *rgui = (rgui_handle_t*)calloc(1, sizeof(*rgui));
 
-   rgui->frame_buf = framebuf;
-   rgui->width = 320;
-   rgui->height = 240;
-   framebuf_pitch = rgui->width * sizeof(uint16_t);
-
-   rgui->frame_buf_pitch = framebuf_pitch;
-
-   bool ret = rguidisp_init_font(rgui);
-
-   if (!ret)
-   {
-      RARCH_ERR("No font bitmap or binary, abort");
-      /* TODO - should be refactored - perhaps don't do rarch_fail but instead
-       * exit program */
-      g_extern.lifecycle_state &= ~((1ULL << MODE_MENU) | (1ULL << MODE_GAME));
-      return NULL;
-   }
+   rgui->frame_buf = menu_framebuf;
+   rgui_set_size(rgui);
+   rgui->font = bitmap_bin;
 
    return rgui;
 }
@@ -463,8 +406,7 @@ static void *rgui_init(void *video_data)
 static void rgui_free(void *data)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
-   if (rgui->alloc_font)
-      free((uint8_t*)rgui->font);
+   free(rgui);
 }
 
 static int rgui_input_postprocess(void *data, uint64_t old_state)
@@ -490,10 +432,7 @@ static int rgui_input_postprocess(void *data, uint64_t old_state)
 void rgui_set_texture(void *data, void *video_data, bool enable)
 {
    rgui_handle_t *rgui = (rgui_handle_t*)data;
-
-   if (driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_frame(video_data, menu_framebuf,
-            enable, rgui->width, rgui->height, 1.0f);
+   driver.video_poke->set_texture_frame(video_data, menu_framebuf, enable, rgui->width, rgui->height, 1.0f);
 }
 
 const menu_driver_t menu_driver_rgui = {
@@ -502,6 +441,7 @@ const menu_driver_t menu_driver_rgui = {
    rgui_render,
    rgui_init,
    rgui_free,
+   rgui_set_size,
    rgui_input_postprocess,
    "rgui",
 };

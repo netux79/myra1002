@@ -300,6 +300,31 @@ bool rarch_environment_cb(unsigned cmd, void *data)
          break;
       }
 
+      case RETRO_ENVIRONMENT_SET_ROTATION:
+      {
+         unsigned rotation = *(const unsigned*)data;
+         RARCH_LOG("Environ SET_ROTATION: %u\n", rotation);
+         
+         /* This will be only honored if AUTO rotation is set 
+          * For the Wii, we will use a CRT and for vertical 
+          * orientations we are rotating the actual TV but
+          * we want the screen rotate for flipped games 
+          * (ORIENTATION_FLIPPED and ORIENTATION_FLIPPED_ROTATED */
+          
+         switch (rotation)
+         {
+            case ORIENTATION_NORMAL:
+            case ORIENTATION_VERTICAL:
+               g_extern.video.original_orientation = ORIENTATION_NORMAL;
+               break;
+            case ORIENTATION_FLIPPED:
+            case ORIENTATION_FLIPPED_ROTATED:
+               g_extern.video.original_orientation = ORIENTATION_FLIPPED;
+               break;
+         }
+         break;
+      }
+
       case RETRO_ENVIRONMENT_SHUTDOWN:
          RARCH_LOG("Environ SHUTDOWN.\n");
          g_extern.system.core_shutdown = true;

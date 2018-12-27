@@ -26,18 +26,6 @@ extern "C" {
 
 #define SWAPU(a,b) {unsigned t=a;a=b;b=t;}
 
-typedef struct
-{
-   float x;
-   float y;
-   float scale;
-   unsigned color;
-} font_params_t;
-
-#define MIN_SCALING_FACTOR (1.0f)
-
-#define MAX_SCALING_FACTOR (2.0f)
-
 enum aspect_ratio
 {
    ASPECT_RATIO_4_3 = 0,
@@ -75,34 +63,36 @@ enum rotation
    ORIENTATION_VERTICAL,
    ORIENTATION_FLIPPED,
    ORIENTATION_FLIPPED_ROTATED,
+   ORIENTATION_AUTO,
    ORIENTATION_END
 };
 
 #define LAST_ORIENTATION (ORIENTATION_END - 1)
+#define LAST_MENU_ORIENTATION (ORIENTATION_END - 2)
 
-extern char rotation_lut[4][32];
-
-/* ABGR color format defines */
-
-#define WHITE		0xffffffffu
-#define RED         0xff0000ffu
-#define GREEN		0xff00ff00u
-#define BLUE		0xffff0000u
-#define YELLOW		0xff00ffffu
-#define PURPLE		0xffff00ffu
-#define CYAN		0xffffff00u
-#define ORANGE		0xff0063ffu
-#define SILVER		0xff8c848cu
-#define LIGHTBLUE	0xFFFFE0E0U
-#define LIGHTORANGE	0xFFE0EEFFu
+extern char rotation_lut[ORIENTATION_END][16];
 
 struct aspect_ratio_elem
 {
-   char name[64];
+   char name[32];
    float value;
 };
 
 extern struct aspect_ratio_elem aspectratio_lut[ASPECT_RATIO_END];
+
+struct menu_theme_elem
+{
+   char name[32];
+   uint16_t background;
+   uint16_t foreground;
+   uint16_t font_nor;
+   uint16_t font_sel;
+};
+
+extern struct menu_theme_elem theme_lut[];
+
+#define FIRST_THEME  0
+#define LAST_THEME   sizeof(theme_lut) / sizeof(struct menu_theme_elem) - 1
 
 bool gfx_get_fps(char *buf_fps, size_t size_fps);
 void gfx_scale_integer(struct rarch_viewport *vp, unsigned width, unsigned height,

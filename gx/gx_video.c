@@ -33,15 +33,21 @@ static unsigned gx_resolutions[][2] = {
     { 640, 210 }, /* Atari 2600 */
     { 340, 224 }, /* PCE CD (Ys I & II) */
     { 384, 224 }, /* CPS1, CPS2, MAME */
+    { 480, 224 }, /* ninjemak MAME */
     { 512, 224 }, /* SNES (and hi-res), PCE, Megadrive (Castlevania), FBA, MAME (Battletoads) */
     { 560, 224 }, /* MAME (Contra) */
-    { 576, 224 }, /* FBA (Aliens), MAME (Super Contra) */
-    { 608, 224 }, /* Neo Geo (KOF), MAME TMNT */
+    { 576, 224 }, /* FBA (Aliens), MAME (Super Contra), MAME (digdug) */
+    { 608, 224 }, /* Neo Geo (KOF), MAME TMNT, vendeta mia FBA */
     { 640, 224 }, /* Neo Geo (S.Shodown), Megadrive (Aladdin), FBA, MAME */
+    { 368, 232 }, /* MAME (stlforce) */
+    { 336, 240 }, /* MAME (xybots) */
+    { 352, 240 }, /* FBA karatblz FBA, srumbler FBA */
     { 384, 240 }, /* FBA jjquacks, 384x256 FBA Kid Nikki, MAME Ninja Spirit */
-    { 480, 240 }, /* 240x248 MAME Moon Patrol */
+    { 480, 240 }, /* 240x248 MAME Moon Patrol, MAME brubber (240x240) */
     { 512, 240 }, /* NES, FBA, MAME, 256x256 FBA Kung Fu Master, MAME Horizon */
+    { 568, 240 }, /* Joust 2 MAME */
     { 576, 240 }, /* Gameboy, GBA */
+    { 584, 240 }, /* MAME (blaster) */
     { 602, 240 }, /* NES + Blargg NTSC filter */
     { 640, 240 }, /* Cave Story, FBA, MAME */
     
@@ -52,15 +58,22 @@ static unsigned gx_resolutions[][2] = {
     { 384, 448 }, /* CPS1, CPS2, 384x256 FBA Kid Nikki, MAME Ninja Spirit */
     { 400, 448 }, /* 400x254 MAME MK games */
     { 410, 448 }, /* 410x256 Smash TV */
+    { 448, 448 }, /* Punch-Out & Super Punch-Out (256x448) */
     { 480, 448 }, /* 240x248 MAME Moon Patrol */
-    { 512, 448 }, /* SNES, MAME Popeye, Punch-Out (256x448), 256x256 FBA Kung Fu Master, MAME Horizon */
+    { 512, 448 }, /* SNES, MAME Popeye, 256x256 FBA Kung Fu Master, MAME Horizon */
     { 560, 448 }, /* MAME (Contra) */
     { 576, 448 }, /* FBA (Aliens), MAME (Super Contra) */
-    { 608, 448 }, /* Neo Geo (KOF), MAME TMNT */
+    { 608, 448 }, /* Neo Geo (KOF), MAME TMNT, vendeta mia FBA */
     { 640, 448 }, /* Neo Geo (S.Shodown), Megadrive (Aladdin), FBA, MAME */
+    { 368, 464 }, /* MAME (stlforce) */
+    { 336, 480 }, /* MAME (xybots) */
+    { 352, 480 }, /* FBA karatblz FBA, srumbler FBA */
     { 384, 480 }, /* FBA jjquacks */
+    { 480, 480 }, /* MAME Spy Hunter, MAME brubber (240x240) */
     { 512, 480 }, /* NES */
+    { 568, 480 }, /* Joust 2 MAME */
     { 576, 480 }, /* Gameboy, GBA */
+    { 584, 480 }, /* MAME (blaster) */
     { 602, 480 }, /* NES + Blargg NTSC filter */
     { 640, 480 }, /* Cave Story, FBA, MAME */
 
@@ -351,6 +364,8 @@ static void gx_set_rotation(void *data, unsigned orientation)
 {
    gx_video_t *gx = (gx_video_t*)data;
    gx->orientation = orientation;
+   /* Apply it on next frame */
+   gx->should_resize = true;
 }
 
 static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspect_idx, bool scale_integer, unsigned orientation)
@@ -359,7 +374,7 @@ static void gx_update_screen_config(void *data, unsigned res_idx, unsigned aspec
    
    gx_set_video_mode(data, res_idx, WAIT_VBLANK);
    gx_set_aspect_ratio(data, aspect_idx);
-   gx_set_rotation(data, orientation);
+   gx->orientation = orientation;
    gx->scale_integer = scale_integer;
 
    /* reset FPS counting when switching 
@@ -397,10 +412,9 @@ static void gx_setup_textures(void *data, unsigned width, unsigned height)
    unsigned g_filter;
    gx_video_t *gx = (gx_video_t*)data;
 
-   g_filter = g_settings.video.bilinear_filter ? GX_LINEAR : GX_NEAR;
-
    if (gx->rgui_texture_enable)
    {
+      g_filter = g_settings.menu.bilinear_filter ? GX_LINEAR : GX_NEAR;
       GX_InitTexObj(&menu_tex.obj, menu_tex.data, rgui->width, rgui->height, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
       GX_InitTexObjFilterMode(&menu_tex.obj, g_filter, g_filter);
       GX_LoadTexObj(&menu_tex.obj, GX_TEXMAP0);
@@ -409,6 +423,7 @@ static void gx_setup_textures(void *data, unsigned width, unsigned height)
    {
       width &= ~3;
       height &= ~3;
+      g_filter = g_settings.video.bilinear_filter ? GX_LINEAR : GX_NEAR;
       GX_InitTexObj(&game_tex.obj, game_tex.data, width, height, (gx->rgb32) ? GX_TF_RGBA8 : GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
       GX_InitTexObjFilterMode(&game_tex.obj, g_filter, g_filter);
       GX_LoadTexObj(&game_tex.obj, GX_TEXMAP0);
@@ -591,6 +606,7 @@ static bool gx_init(void **data, unsigned scale, bool rgb32)
    gx_init_resolution_auto();
    gx_alloc_textures(gx, scale, rgb32);
    gx_apply_state_changes(gx);
+   gx->orientation = g_settings.menu.rotation;
    gx->should_resize = true;
    
    /* Set initial frame size 
@@ -759,7 +775,7 @@ static void gx_resize_viewport(void *data)
       gx->vp.height = g_settings.video.custom_vp.height;
       if (rotated) SWAPU(gx->vp.width, gx->vp.height);
    }
-   else if (!gx->double_strike) /* Apply aspect ratio just to non-240p resolutions */
+   else if (!(gx->double_strike || gx->rgui_texture_enable)) /* Apply aspect ratio just to non-240p resolutions */
    {
       float delta;
       float desired_aspect = gx->aspect_ratio > 0.0f ? gx->aspect_ratio : 1.3333f; /* 4:3 */
@@ -768,7 +784,7 @@ static void gx_resize_viewport(void *data)
 #else
       float device_aspect = 4.0 / 3.0;
 #endif
-      if (rotated) desired_aspect = 1.0 / desired_aspect;
+      if (rotated && gx->force_aspect) desired_aspect = 1.0 / desired_aspect;
 
       if (fabs(device_aspect - desired_aspect) < 0.0001)
       {
@@ -1168,18 +1184,16 @@ static void gx_viewport_info(void *data, struct rarch_viewport *vp)
    *vp = gx->vp;
 }
 
-static void gx_set_filtering(void *data, unsigned index, bool bilinear_filter)
+static void gx_force_viewport_refresh(void *data)
 {
     gx_video_t *gx = (gx_video_t*)data;
-    (void)index;
-    (void)bilinear_filter;
     
     /* It is applied on the resize method, so we just ensure it is called */
     gx->should_resize = true;
 }
 
 static const video_poke_interface_t gx_poke_interface = {
-   gx_set_filtering,
+   gx_force_viewport_refresh,
    gx_set_aspect_ratio,
    gx_apply_state_changes,
    gx_set_texture_frame,

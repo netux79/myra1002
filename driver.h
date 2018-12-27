@@ -236,7 +236,7 @@ typedef struct video_overlay_interface
 // Optionally implemented interface to poke more deeply into video driver.
 typedef struct video_poke_interface
 {
-   void (*set_filtering)(void *data, unsigned index, bool bilinear_filter);
+   void (*force_viewport_refresh)(void *data);
    void (*set_aspect_ratio)(void *data, unsigned aspectratio_index);
    void (*apply_state_changes)(void *data);
    void (*set_texture_frame)(void *data, const void *frame, bool rgb32, unsigned width, unsigned height, float alpha);

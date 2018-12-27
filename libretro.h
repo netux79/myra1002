@@ -193,6 +193,12 @@ enum retro_mod
 #define RETRO_ENVIRONMENT_PRIVATE 0x20000
 
 // Environment commands.
+#define RETRO_ENVIRONMENT_SET_ROTATION  1  // const unsigned * --
+                                           // Sets screen rotation of graphics.
+                                           // Is only implemented if rotation can be accelerated by hardware.
+                                           // Valid values are 0, 1, 2, 3, which rotates screen by 0, 90, 180, 270 degrees
+                                           // counter-clockwise respectively.
+                                           //
 #define RETRO_ENVIRONMENT_GET_OVERSCAN  2  // bool * --
                                            // Boolean value whether or not the implementation should use overscan, or crop away overscan.
                                            //

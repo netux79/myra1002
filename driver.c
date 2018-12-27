@@ -547,11 +547,8 @@ void init_video_input(void)
 
    gfx_check_valid_resolution();
 
-   if (driver.video->poke_interface)
-      driver.video->poke_interface(driver.video_data, &driver.video_poke);
-
-   if (driver.video_poke && driver.video_poke->set_refresh_rate)
-         driver.video_poke->set_refresh_rate(driver.video_data, g_settings.video.resolution_idx);
+   driver.video->poke_interface(driver.video_data, &driver.video_poke);
+   driver.video_poke->set_refresh_rate(driver.video_data, g_settings.video.resolution_idx);
 
    /* Do not initilize twice the input driver. */
    if (driver.input && !driver.input_data)

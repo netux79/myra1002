@@ -99,14 +99,9 @@ void load_menu_game_prepare(void *video_data)
       menu_iterate_func(rgui, video_data, RGUI_ACTION_NOOP);
 
    // Draw frame for loading message
-   if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, false);
-
-   if (driver.video)
-      rarch_render_cached_frame();
-
-   if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, false, false);
+   driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, false);
+   rarch_render_cached_frame();
+   driver.video_poke->set_texture_enable(video_data, false, false);
 }
 
 bool load_menu_game_new_core(const char* gamepath, const char* corepath)
@@ -237,16 +232,14 @@ void menu_init(void *video_data)
 
 void menu_free(void *video_data)
 {
-   if (menugui_driver && menugui_driver->free)
-      menugui_driver->free(rgui);
-
    file_list_free(rgui->menu_stack);
    file_list_free(rgui->selection_buf);
 
    rom_history_free(rgui->history);
    core_info_list_free(rgui->core_info);
 
-   free(rgui);
+   if (menugui_driver && menugui_driver->free)
+      menugui_driver->free(rgui);
 }
 
 void menu_ticker_line(char *buf, size_t len, unsigned index, const char *str, bool selected)
@@ -486,6 +479,7 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             || menu_type == RGUI_SETTINGS_VIDEO_OPTIONS
             || menu_type == RGUI_SETTINGS_BIND_PLAYER_KEYS
             || menu_type == RGUI_SETTINGS_BIND_HOTKEYS
+            || menu_type == RGUI_SETTINGS_MENU_OPTIONS
             )
          menu_populate_entries(rgui, menu_type);
       else
@@ -850,9 +844,7 @@ bool menu_iterate(void *video_data)
       if (menu_iterate_func(rgui, video_data, action))
          return false;
 
-   if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, false);
-
+   driver.video_poke->set_texture_enable(video_data, rgui->frame_buf_show, false);
    rarch_render_cached_frame();
 
    // Throttle in case VSync is broken (avoid 1000+ FPS RGUI).
@@ -864,8 +856,7 @@ bool menu_iterate(void *video_data)
       rarch_sleep((unsigned int)sleep_msec);
    rgui->last_time = rarch_get_time_usec();
 
-   if (video_data && driver.video_poke && driver.video_poke->set_texture_enable)
-      driver.video_poke->set_texture_enable(video_data, false, false);
+   driver.video_poke->set_texture_enable(video_data, false, false);
 
    if (menugui_driver && menugui_driver->input_postprocess)
       if (menugui_driver->input_postprocess(rgui, rgui->old_input_state))
@@ -1059,6 +1050,12 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Active Config Type", RGUI_SETTINGS_CONFIG_TYPE, 0);
          file_list_push(rgui->selection_buf, "Per-Game Config", RGUI_SETTINGS_CONFIG_SAVE_GAME_SPECIFIC, 0);
          break;
+      case RGUI_SETTINGS_MENU_OPTIONS:
+         file_list_clear(rgui->selection_buf);
+         file_list_push(rgui->selection_buf, "Theme (Colors) [G]", RGUI_SETTINGS_MENU_THEME, 0);
+         file_list_push(rgui->selection_buf, "UI Rotation [G]", RGUI_SETTINGS_MENU_ROTATION, 0);
+         file_list_push(rgui->selection_buf, "UI Bilinear Filtering", RGUI_SETTINGS_MENU_BILINEAR, 0);
+         break;
       case RGUI_SETTINGS_SAVE_OPTIONS:
          file_list_clear(rgui->selection_buf);
          file_list_push(rgui->selection_buf, "Rewind", RGUI_SETTINGS_REWIND_ENABLE, 0);
@@ -1096,7 +1093,6 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Integer Scale", RGUI_SETTINGS_VIDEO_INTEGER_SCALE, 0);
          file_list_push(rgui->selection_buf, "Force Aspect", RGUI_SETTINGS_VIDEO_FORCE_ASPECT, 0);
          file_list_push(rgui->selection_buf, "Rotation", RGUI_SETTINGS_VIDEO_ROTATION, 0);
-         file_list_push(rgui->selection_buf, "Menu Rotation [G]", RGUI_SETTINGS_VIDEO_MENU_ROTATION, 0);
          break;
       case RGUI_SETTINGS_CORE_OPTIONS:
          file_list_clear(rgui->selection_buf);
@@ -1206,6 +1202,7 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Video", RGUI_SETTINGS_VIDEO_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Input", RGUI_SETTINGS_INPUT_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Audio", RGUI_SETTINGS_AUDIO_OPTIONS, 0);
+         file_list_push(rgui->selection_buf, "Menu", RGUI_SETTINGS_MENU_OPTIONS, 0);
 #ifdef HAVE_OVERLAY
          file_list_push(rgui->selection_buf, "Overlay", RGUI_SETTINGS_OVERLAY_OPTIONS, 0);
 #endif

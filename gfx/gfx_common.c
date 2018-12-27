@@ -112,12 +112,23 @@ struct aspect_ratio_elem aspectratio_lut[ASPECT_RATIO_END] = {
    { "Original",      0.0f }   
 };
 
-char rotation_lut[4][32] =
+char rotation_lut[ORIENTATION_END][16] =
 {
-   "Normal",
-   "90 deg",
-   "180 deg",
-   "270 deg"
+   "NORMAL",
+   "90 DEG",
+   "180 DEG",
+   "270 DEG",
+   "AUTO"
+};
+
+struct menu_theme_elem theme_lut[] = {
+   /* NAME      BACKG   FOREG   FONT    HIGHL */
+   { "MAROON",  0x7300, 0x7040, 0x7fff, 0x70c0 },
+   { "BLUE",    0x7007, 0x7707, 0x7fff, 0x7ff0 },
+   { "BLACK",   0x7000, 0x7740, 0x7fff, 0x7f70 },
+   { "RETRO",   0x7020, 0x7070, 0x7fff, 0x70f0 },
+   { "GRAY",    0x788a, 0x7a47, 0x7fff, 0x7337 },
+   { "WHITE",   0x7fff, 0x70aa, 0x7000, 0x70aa }
 };
 
 void gfx_set_square_pixel_viewport(unsigned width, unsigned height)
@@ -195,6 +206,5 @@ void gfx_match_resolution_auto(void)
 {
    /* on resolution AUTO call fnt to refresh the matching resolution */
    if (g_settings.video.resolution_idx == GX_RESOLUTIONS_AUTO && *g_extern.basename)
-      if (driver.video_poke && driver.video_poke->match_resolution_auto)
-            driver.video_poke->match_resolution_auto(g_extern.frame.width, g_extern.frame.height);
+      driver.video_poke->match_resolution_auto(g_extern.frame.width, g_extern.frame.height);
 }

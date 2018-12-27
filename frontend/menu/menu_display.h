@@ -27,6 +27,7 @@ typedef struct menu_driver
    void  (*render)(void*, void*);
    void* (*init)(void*);
    void  (*free)(void*);
+   void  (*set_size)(void*);
    int   (*input_postprocess)(void *, uint64_t);
 
    // Human readable string.

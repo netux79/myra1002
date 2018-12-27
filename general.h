@@ -83,7 +83,6 @@ struct settings
       float refresh_rate;
       unsigned aspect_ratio_idx;
       unsigned rotation;
-      unsigned menu_rotation;
       unsigned resolution_idx;
       unsigned gamma_correction;
 #ifdef HAVE_SCALERS_BUILTIN
@@ -139,6 +138,13 @@ struct settings
       float overlay_opacity;
       float overlay_scale;
    } input;
+   
+   struct
+   {
+      unsigned rotation;
+      unsigned theme;
+      bool bilinear_filter;
+   } menu;
 
    unsigned game_history_size;
 
@@ -224,7 +230,8 @@ struct global
    struct
    {
       bool using_component;
-      unsigned resolution_first_hires;      
+      unsigned resolution_first_hires;
+      unsigned original_orientation; /* the one reported by the core for the game */
    } video;
    
    struct
