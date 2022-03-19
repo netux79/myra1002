@@ -4,13 +4,20 @@
 #include <unistd.h>
 #include "gx_usbpad.h"
 
-#define MAX_DEVICES	8
-#define MAX_HID_DATA_SIZE 64 /* Need to be multiple of 32 as it needs to be aligned to 32. */
+#define MAX_DEVICES 8
 #define MAX_PADS 4
 #define MAX_NAME_LEN 32
+#define MIN_HID_SIZE 32
+#define MAX_HID_SIZE 64
+
+#define NUM_USB_CLASSES 2
+#define STD_IN_ENDPOINT 0x81
+#define DEVICE_NAME 0x02
+#define LANGUAGE_EN 0x0409
+#define ENABLE_CONTROLLER 0x01
 
 #define BUTTON_SET 17
-#define AXIS_SET 6
+#define AXIS_SET 4
 
 typedef struct _butsetup {
 	uint8_t	offset;
@@ -24,31 +31,37 @@ typedef struct _axisetup {
 } axisetup;
 
 typedef struct _padsetup {
-   uint16_t    vid;
-   uint16_t    pid;
-   char        name[MAX_NAME_LEN];
-   uint8_t     multipad;
-   uint8_t     num_analogs;
-   butsetup    buttons[BUTTON_SET];
-   axisetup    analogs[AXIS_SET];
-   void        (*set_operational)(void *data);
-   void        (*rumble_pad)(uint8_t pad_idx, uint8_t action);
+	uint16_t    vid;
+	uint16_t    pid;
+	char        name[MAX_NAME_LEN];
+	uint8_t     multipad;
+	uint8_t     num_analogs;
+	butsetup    buttons[BUTTON_SET];
+	axisetup    analogs[AXIS_SET];
+	void        (*set_operational)(void *data);
+	void        (*rumble_pad)(uint8_t pad_idx, uint8_t action);
 } padsetup;
 
 struct usbpad {
-	int32_t			device_id;
-	int32_t			fd;
-	bool			reading;
-	const padsetup	*config;
-	uint8_t			*hid_buffer;
-	uint64_t		b_state;
-	int8_t			a_state[AXIS_SET];
-	uint16_t		mpSize;
-	uint8_t			epAddress;
+	uint64_t			b_state;
+	const padsetup		*config;
+	int32_t				device_id;
+	int32_t				fd;
+	uint16_t			mpInSize;
+	uint16_t			mpOutSize;
+	int16_t				a_state[AXIS_SET];
+	bool				reading;
+	uint8_t				*hid_buffer;
+	uint8_t				epInAddr;
+	uint8_t				epOutAddr;
 };
 
-/* Include at this point so the structures are availabel to it */
+/* Include at this point so the structures are available to it */
 #include "gx_padsetup.h"
+
+/* Supported USB classes */
+const uint8_t _USB_CLASS_XINPUT	= 0xFF;
+const uint8_t _USB_CLASS_HID 	= 0x03;
 
 static bool _inited = false;
 static bool _pad_detected = false;
@@ -104,8 +117,10 @@ static int32_t _change_cb(int32_t result, void *usrdata) {
 		_rem_cb = false;
 	}
 
-	/* Re-apply the callback notification for future connections changes*/
-	result = USB_DeviceChangeNotifyAsync(USB_CLASS_HID, _change_cb, NULL);
+	uint8_t *hid_class = (uint8_t *)usrdata;
+
+	/* Re-apply the callback for future connections changes with the correct class */
+	USB_DeviceChangeNotifyAsync(*hid_class, _change_cb, (void *)hid_class);
 
 	return result;
 }
@@ -127,7 +142,9 @@ static int32_t _read_cb(int32_t result, void *usrdata) {
 			}
 
 			for (i = 0; i < pad->config->num_analogs; i++) {
-				pad->a_state[i] = (int8_t)pad->hid_buffer[pad->config->analogs[i].offset];
+				uint8_t b = pad->config->analogs[i].offset;
+				/* Assume here the analog uses 2 bytes as data. Switch order to use with MSB */
+				pad->a_state[i] = (int16_t) (pad->hid_buffer[b] | pad->hid_buffer[b + 1] << 8);
 			}
 		}
 	}
@@ -180,7 +197,7 @@ static void _ps3_rumble(uint8_t pad_idx, uint8_t action) {
    ps3Data[3] = action == 1 ? 0xFF : 0x00;
    ps3Data[5] = action == 1 ? 0xFF : 0x00;
    
-   USB_WriteIntrMsg(pad->fd, 0x02, sizeof(ps3Data), ps3Data);
+   USB_WriteIntrMsg(pad->fd, pad->epOutAddr, sizeof(ps3Data), ps3Data);
 }
 
 static void _gcwiiu_set_operational(void *data) {
@@ -189,7 +206,7 @@ static void _gcwiiu_set_operational(void *data) {
 	uint8_t ATTRIBUTE_ALIGN(32) buffer[1] = {0x13}; /* Special command to enable reading */
 	/* Sometimes it fails so we should keep trying until success */
 	do {
-		r = USB_WriteIntrMsg(pad->fd, 0x02, sizeof(buffer), buffer);
+		r = USB_WriteIntrMsg(pad->fd, pad->epOutAddr, sizeof(buffer), buffer);
 	} while (r < 0);
 }
 
@@ -206,7 +223,28 @@ static void _gcwiiu_rumble(uint8_t pad_idx, uint8_t action) {
    gcData[3] = (action >> 2) & 1;
    gcData[4] = (action >> 3) & 1;*/
 
-   USB_WriteIntrMsg(pad->fd, 0x02, sizeof(gcData), gcData); 
+   USB_WriteIntrMsg(pad->fd, pad->epOutAddr, sizeof(gcData), gcData); 
+}
+
+static void _xinput_set_operational(void *data) {
+   struct usbpad *pad = (struct usbpad*)data;
+	int32_t r;
+	uint8_t ATTRIBUTE_ALIGN(32) buffer[3] = {0x01, 0x03, 0x06};
+
+	/* Turn on led */
+	do {
+		r = USB_WriteIntrMsg(pad->fd, pad->epOutAddr, sizeof(buffer), buffer);
+	} while (r < 0);
+}
+
+static void _xinput_rumble(uint8_t pad_idx, uint8_t action) {
+   uint8_t ATTRIBUTE_ALIGN(32) xData[] = {0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+   struct usbpad *pad = _pad_list[pad_idx];
+
+   xData[3] = action == 1 ? 0x64 : 0x00;
+   xData[4] = action == 1 ? 0x64 : 0x00;
+   
+   USB_WriteIntrMsg(pad->fd, pad->epOutAddr, sizeof(xData), xData);
 }
 
 static bool _new_hid_device(int32_t id) {
@@ -217,7 +255,7 @@ static bool _new_hid_device(int32_t id) {
     return true;
 }
 
-static int8_t _add_pad(int32_t device_id, int32_t fd, int16_t cfg_idx, uint8_t epAddress, uint16_t mpSize) {
+static int8_t _add_pad(int32_t deviceId, int32_t fd, int16_t cfgIdx, uint8_t epInAddr, uint16_t mpInSize, uint8_t epOutAddr, uint16_t mpOutSize) {
 	uint8_t i;
 
 	/* look for an empty slot to assign it */
@@ -230,17 +268,23 @@ static int8_t _add_pad(int32_t device_id, int32_t fd, int16_t cfg_idx, uint8_t e
 			if (_pad_list[i]) {
 				memset(_pad_list[i], 0, sizeof(struct usbpad));
 
-				_pad_list[i]->device_id = device_id;
+				_pad_list[i]->device_id = deviceId;
 				_pad_list[i]->fd = fd;
-				_pad_list[i]->epAddress = epAddress;
-				_pad_list[i]->mpSize = mpSize;
-				_pad_list[i]->config = &valid_pad_config[cfg_idx];
-				_pad_list[i]->hid_buffer = (uint8_t*)memalign(32, (mpSize > 32) ? MAX_HID_DATA_SIZE : 32);
+				_pad_list[i]->epInAddr = epInAddr;
+				_pad_list[i]->mpInSize = mpInSize;
+				_pad_list[i]->epOutAddr = epOutAddr;
+				_pad_list[i]->mpOutSize = mpOutSize;
+				_pad_list[i]->config = &valid_pad_config[cfgIdx];
+				/* hid_buffer size needs to be multiple of 32 as it needs to be aligned to 32 bytes */
+				_pad_list[i]->hid_buffer = (uint8_t *)memalign(32, (mpInSize > MIN_HID_SIZE) ? MAX_HID_SIZE : MIN_HID_SIZE);
 
-				/* extra initialization for special controllers like PS3 */
-            if (_pad_list[i]->config->set_operational)
-               _pad_list[i]->config->set_operational(_pad_list[i]);
+				/* Make the device operational */
+				USB_SetConfiguration(_pad_list[i]->fd, ENABLE_CONTROLLER);
 
+				/* extra stuff for special controllers */
+				if (_pad_list[i]->config->set_operational)
+					_pad_list[i]->config->set_operational(_pad_list[i]);
+			   
 				USB_DeviceRemovalNotifyAsync(_pad_list[i]->fd, &_removal_cb, &_pad_list[i]);
 
 				return i; /* return the slot which we added it */
@@ -248,71 +292,106 @@ static int8_t _add_pad(int32_t device_id, int32_t fd, int16_t cfg_idx, uint8_t e
 		}
 	}
 
-    return -1; /* if this point is reached, no pad was added */
+	return -1; /* if this point is reached, no pad was added */
 }
 
-static int8_t _scan_devices() {
-    uint8_t i, dev_count = 0;
-    bool done_dev;
-    usb_device_entry dev_e[MAX_DEVICES];
-    int16_t cfg_idx;
-	int32_t fd = 0;
-    uint32_t iConf, iInterface, iEp;
-    usb_devdesc udd;
+static int8_t _get_valid_endpoints(int32_t fd, uint8_t *epInAddr, uint16_t *mpInSize, uint8_t *epOutAddr, uint16_t *mpOutSize) {
+	uint32_t iConf, iInterface, iEp;
+	usb_devdesc udd;
 	usb_configurationdesc *ucd;
 	usb_interfacedesc *uid;
 	usb_endpointdesc *ued;
+	int8_t retVal = -1;
 
-	if (USB_GetDeviceList(dev_e, MAX_DEVICES, USB_CLASS_HID, &dev_count) < 0) {
-		return -1;
+	if (USB_GetDescriptors(fd, &udd) < 0) {
+		return retVal; /* Error getting descriptors */
 	}
+	
+	/* Look for valid Interrupt Input Endpoint; And optionally an Output
+	 * Endpoint used for special commands in certain gamepads */
+	for (iConf = 0; iConf < udd.bNumConfigurations; iConf++) {
 
-	for (i = 0; i < dev_count; ++i)	{
+		ucd = &udd.configurations[iConf];
+		for (iInterface = 0; iInterface < ucd->bNumInterfaces; iInterface++) {
 
-		if (!_new_hid_device(dev_e[i].device_id)) continue;
-		if (!_valid_pad_config(dev_e[i].vid, dev_e[i].pid, &cfg_idx)) continue;
-		if (USB_OpenDevice(dev_e[i].device_id, dev_e[i].vid, dev_e[i].pid, &fd) < 0) continue;
+			/* Reset values on each Interface iteration */
+			*epInAddr = *mpInSize = *epOutAddr = *mpOutSize = 0x00;
 
-		if (USB_GetDescriptors(fd, &udd) < 0) {
-			USB_CloseDevice(&fd);
-			continue;
-		}
+			uid = &ucd->interfaces[iInterface];
+			for (iEp = 0; iEp < uid->bNumEndpoints; iEp++) {
 
-		done_dev = false;
-		for (iConf = 0; iConf < udd.bNumConfigurations && !done_dev; iConf++) {
+				ued = &uid->endpoints[iEp];
+				/* Only interested in Interrupt endpoints */
+				if ((ued->bmAttributes & 0x03) == USB_ENDPOINT_INTERRUPT) {
 
-			ucd = &udd.configurations[iConf];
-			for (iInterface = 0; iInterface < ucd->bNumInterfaces && !done_dev; iInterface++) {
+					/* Only want IN 0x81 (and maybe 0x82) endpoint later... */
+					if ((ued->bEndpointAddress & 0x80) == USB_ENDPOINT_IN && ued->bEndpointAddress == STD_IN_ENDPOINT) {
+						*epInAddr = ued->bEndpointAddress;
+						*mpInSize = ued->wMaxPacketSize;
 
-				uid = &ucd->interfaces[iInterface];
-				for (iEp = 0; iEp < uid->bNumEndpoints && !done_dev; iEp++) {
-
-					ued = &uid->endpoints[iEp];
-					if (ued->bmAttributes != USB_ENDPOINT_INTERRUPT ||
-						!(ued->bEndpointAddress & USB_ENDPOINT_IN) ||
-						ued->wMaxPacketSize > MAX_HID_DATA_SIZE) {
-						continue;
+					/* Any OUT endpoint  is OK */
+					} else if ((ued->bEndpointAddress & 0x80) == USB_ENDPOINT_OUT) {
+						*epOutAddr = ued->bEndpointAddress;
+						*mpOutSize = ued->wMaxPacketSize;
 					}
-
-					if (_add_pad(dev_e[i].device_id, fd, cfg_idx, ued->bEndpointAddress, ued->wMaxPacketSize) < 0) {
-					/* Close device if it was not added */
-						USB_CloseDevice(&fd);
-					}
-
-					/* added or not, we are done processing the device so get out! */
-					done_dev = true;
 				}
 			}
+			
+			/* Done if after searching the interface we found a valid endpoint */
+			if (*epInAddr != 0x00) {
+				retVal = 0;
+				goto SEARCH_DONE;
+			}
 		}
-
-		USB_FreeDescriptors(&udd);
 	}
 
-    return 0;
+SEARCH_DONE:
+	USB_FreeDescriptors(&udd);
+	return retVal;
+}
+
+static int8_t _scan_devices() {
+	uint8_t i, c, padAdded, devCount = 0;
+	usb_device_entry dev_e[MAX_DEVICES];
+	int16_t cfgIdx;
+	int32_t fd = 0;
+	uint8_t epInAddr;
+	uint16_t mpInSize;
+	uint8_t epOutAddr;
+	uint16_t mpOutSize;
+
+	/* Do the process 2 times: One for HID devices and a 2nd for XBOX360 class */
+	for (c = 0; c < NUM_USB_CLASSES; c++) {
+
+		if (USB_GetDeviceList(dev_e, MAX_DEVICES, c ? _USB_CLASS_XINPUT : _USB_CLASS_HID, &devCount) < 0) {
+			return -1;
+		}
+
+		/* wait 250 milliseconds before start scanning */
+		//if (devCount) 
+		usleep(1000 * 250);
+
+		for (i = 0; i < devCount; ++i) {
+
+			if (!_new_hid_device(dev_e[i].device_id)) continue;
+			if (!_valid_pad_config(dev_e[i].vid, dev_e[i].pid, &cfgIdx)) continue;
+			if (USB_OpenDevice(dev_e[i].device_id, dev_e[i].vid, dev_e[i].pid, &fd) < 0) continue;
+
+			/* Add the gamepad if valid endpoint(s) are found */
+			if (_get_valid_endpoints(fd, &epInAddr, &mpInSize, &epOutAddr, &mpOutSize) == 0) {
+				padAdded = _add_pad(dev_e[i].device_id, fd, cfgIdx, epInAddr, mpInSize, epOutAddr, mpOutSize);
+			}
+
+			/* Close device if not succesfully added */
+			if (padAdded < 0) USB_CloseDevice(&fd);
+		}
+	}
+
+	return 0;
 }
 
 static inline int32_t _read_pad(struct usbpad *pad) {
-	return USB_ReadIntrMsgAsync(pad->fd, pad->epAddress, pad->mpSize, pad->hid_buffer, (usbcallback)_read_cb, pad);
+	return USB_ReadIntrMsgAsync(pad->fd, pad->epInAddr, pad->mpInSize, pad->hid_buffer, (usbcallback)_read_cb, pad);
 }
 
 static void * _pad_polling(void *arg) {
@@ -335,8 +414,8 @@ static void * _pad_polling(void *arg) {
 			}
 		}
 
-		/* wait 10 ms to process the available pads again */
-		usleep(8000);/*10000*/
+		/* wait 8 ms to process the available pads again */
+		usleep(8000);
 	}
 
 	return NULL;
@@ -366,11 +445,13 @@ bool usbpad_init(uint8_t slots, bool skip_usb) {
 			_pad_thread_running = true;
 		}
 
-		USB_DeviceChangeNotifyAsync(USB_CLASS_HID, _change_cb, NULL);
-		_pad_detected = true;  /* try open any existing usbpad device */
+		/* Set callbacks to detect when a device is plugged/unplugged for each supported class */
+		USB_DeviceChangeNotifyAsync(_USB_CLASS_HID, _change_cb, (void *)&_USB_CLASS_HID);
+		USB_DeviceChangeNotifyAsync(_USB_CLASS_XINPUT, _change_cb, (void *)&_USB_CLASS_XINPUT);
+		_pad_detected = true; /* try open any existing usbpad device */
 		_inited = true;
-    }
-    return _inited;
+	}
+	return _inited;
 }
 
 uint64_t usbpad_buttons(uint8_t pad_idx) {
@@ -406,20 +487,19 @@ const char *usbpad_padname(uint8_t pad_idx) {
 }
 
 static inline int16_t _normalize_a(int16_t a_value, uint8_t axis_type) {
-	int16_t h;
 
 	switch (axis_type) {
 		case A_STANDARD:
-			a_value = (a_value - 128) << 8; break;
+			/* Only the first byte contains the data */
+			a_value = ((a_value & 0x00FF) - 128) << 8; break;
 		case A_INVERTED:
-			a_value = (127 - a_value) << 8;	break;
-		case A_HAT_PSXH:
-			h = HAT_GET(a_value);
-			a_value = HAT_LEFT(h) ? HAT_MIN: HAT_RIGHT(h) ? HAT_MAX: 0; break;
-		case A_HAT_PSXV:
-			h = HAT_GET(a_value);
-			a_value = HAT_UP(h) ? HAT_MIN: HAT_DOWN(h) ? HAT_MAX: 0; break;
-		default	:
+			/* Only the first byte contains the data */
+			a_value = (127 - (a_value & 0x00FF)) << 8; break;
+		case A_X360_STD:
+			/* No changes needed */; break;
+		case A_X360_INV:
+			a_value = ~a_value; break;
+		default :
 			a_value = 0;
 	}
 

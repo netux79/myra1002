@@ -338,17 +338,6 @@ static void gx_hid_input_poll(void *data)
          gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_X] = usbpad_js_rx(port);
          gx->analog_state[port][RETRO_DEVICE_INDEX_ANALOG_RIGHT][RETRO_DEVICE_ID_ANALOG_Y] = usbpad_js_ry(port);
 
-         if (usbpad_nanalogs(port) > 4)
-         {
-            /*  when having a 3rd analog we assume it is the hat control */
-            int16_t js3x = usbpad_analog(port, 4);
-            int16_t js3y = usbpad_analog(port, 5);
-            if (js3x > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_RIGHT);
-            if (js3x < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_LEFT);
-            if (js3y > JS_THRESHOLD)  *state |= (1ULL << GX_HID_USBPAD_DOWN);
-            if (js3y < -JS_THRESHOLD) *state |= (1ULL << GX_HID_USBPAD_UP);
-         }
-
          hotplug = (lt_active[port]) ? false : true;
          lt_active[port] = true;
       }
