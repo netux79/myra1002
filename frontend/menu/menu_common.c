@@ -287,17 +287,17 @@ uint64_t menu_input(void)
    uint64_t input_state = 0;
 
    static const struct retro_keybind *binds[MAX_PLAYERS] = { 
-    g_settings.input.menu_binds,
-    g_settings.input.menu_binds,
-    g_settings.input.menu_binds,
-    g_settings.input.menu_binds,
-}; /* Make all controllers use the same menu binds */
+      g_settings.input.menu_binds,
+      g_settings.input.menu_binds,
+      g_settings.input.menu_binds,
+      g_settings.input.menu_binds,
+   }; /* Make all controllers use the same menu binds */
    
    /* read all ports or port 1 only */
    players = g_settings.input.menu_all_players_enable ? MAX_PLAYERS : 1;
 
    for (p = 0; p < players; p++)
-      for (i = 0; i < RETRO_DEVICE_ID_JOYPAD_R; i++)
+      for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_R; i++)
          input_state |= input_input_state_func(binds, p, RETRO_DEVICE_JOYPAD, 0, i) ? (1ULL << i) : 0;
 
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
