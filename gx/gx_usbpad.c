@@ -73,7 +73,7 @@ static bool _pad_thread_running = false;
 static bool _pad_thread_quit = false;
 
 static void _free_pad(struct usbpad **pad) {
-    if ((*pad)->hid_buffer) {
+	if ((*pad)->hid_buffer) {
 		free((*pad)->hid_buffer);
 	}
 	free((*pad));
@@ -81,11 +81,11 @@ static void _free_pad(struct usbpad **pad) {
 }
 
 static int32_t _rem_pad(struct usbpad *pad) {
-    int32_t res;
-    if (pad && pad->fd > 0)	{
-        res = USB_CloseDevice(&pad->fd);
-    }
-    return res;
+	int32_t res;
+	if (pad && pad->fd > 0)	{
+		res = USB_CloseDevice(&pad->fd);
+	}
+	return res;
 }
 
 void usbpad_shutdown(bool skip_usb) {
@@ -153,9 +153,9 @@ static int32_t _read_cb(int32_t result, void *usrdata) {
 }
 
 static int32_t _removal_cb(int32_t result, void *usrdata) {
-    struct usbpad **pad = (struct usbpad**)usrdata;
+	struct usbpad **pad = (struct usbpad**)usrdata;
 
-    if ((*pad)) _free_pad(pad);
+	if ((*pad)) _free_pad(pad);
 
 	_rem_cb = true; /* inform we already pass thru the removal callback */
 	return 0;
@@ -248,11 +248,11 @@ static void _xinput_rumble(uint8_t pad_idx, uint8_t action) {
 }
 
 static bool _new_hid_device(int32_t id) {
-    uint8_t i;
+	uint8_t i;
 	for (i = 0; i < _usbslots; ++i) {
-        if (_pad_list[i] && _pad_list[i]->device_id == id) return false;
-    }
-    return true;
+		if (_pad_list[i] && _pad_list[i]->device_id == id) return false;
+	}
+	return true;
 }
 
 static int8_t _add_pad(int32_t deviceId, int32_t fd, int16_t cfgIdx, uint8_t epInAddr, uint16_t mpInSize, uint8_t epOutAddr, uint16_t mpOutSize) {
@@ -278,13 +278,16 @@ static int8_t _add_pad(int32_t deviceId, int32_t fd, int16_t cfgIdx, uint8_t epI
 				/* hid_buffer size needs to be multiple of 32 as it needs to be aligned to 32 bytes */
 				_pad_list[i]->hid_buffer = (uint8_t *)memalign(32, (mpInSize > MIN_HID_SIZE) ? MAX_HID_SIZE : MIN_HID_SIZE);
 
+				/* Get controller name from the device, we don't use it but some controllers expect the query to work */
+				USB_GetAsciiString(_pad_list[i]->fd, DEVICE_NAME, LANGUAGE_EN, sizeof(_pad_list[i]->hid_buffer), _pad_list[i]->hid_buffer);
+
 				/* Make the device operational */
 				USB_SetConfiguration(_pad_list[i]->fd, ENABLE_CONTROLLER);
 
 				/* extra stuff for special controllers */
 				if (_pad_list[i]->config->set_operational)
 					_pad_list[i]->config->set_operational(_pad_list[i]);
-			   
+
 				USB_DeviceRemovalNotifyAsync(_pad_list[i]->fd, &_removal_cb, &_pad_list[i]);
 
 				return i; /* return the slot which we added it */
@@ -368,7 +371,6 @@ static int8_t _scan_devices() {
 		}
 
 		/* wait 250 milliseconds before start scanning */
-		//if (devCount) 
 		usleep(1000 * 250);
 
 		for (i = 0; i < devCount; ++i) {
@@ -541,10 +543,3 @@ bool usbpad_avail(uint8_t pad_idx) {
 	return false;
 }
 
-uint8_t usbpad_nanalogs(uint8_t pad_idx) {
-	if (pad_idx < _usbslots && _pad_list[pad_idx]) {
-		return _pad_list[pad_idx]->config->num_analogs;
-	}
-
-	return 0;
-}
