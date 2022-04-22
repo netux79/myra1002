@@ -22,15 +22,6 @@
 #include <errno.h>
 #include "../compat/strl.h"
 #include "../file.h"
-#include <sys/param.h> // PATH_MAX
-
-#ifndef PATH_MAX
-#ifdef PATH_MAX
-#define PATH_MAX PATH_MAX
-#else
-#define PATH_MAX 512
-#endif
-#endif
 
 #define MAX_INCLUDE_DEPTH 16
 
@@ -188,7 +179,7 @@ static void add_sub_conf(config_file_t *conf, char *line)
       return;
 
    add_include_list(conf, path);
-   char real_path[PATH_MAX];
+   char real_path[MAX_LEN];
 
    if (*path == '~')
    {

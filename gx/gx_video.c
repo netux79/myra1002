@@ -715,7 +715,7 @@ static void update_texture_asm(const uint32_t *src, const uint32_t *dst,
    src += tmp_pitch; \
 }
 
-static void convert_texture16(const uint32_t *_src, uint32_t *_dst,
+static void convert_texture16(const void *_src, void *_dst,
       unsigned width, unsigned height, unsigned pitch)
 {
    width &= ~3;
@@ -723,7 +723,7 @@ static void convert_texture16(const uint32_t *_src, uint32_t *_dst,
    update_texture_asm(_src, _dst, width, height, pitch);
 }
 
-static void convert_texture32(const uint32_t *_src, uint32_t *_dst,
+static void convert_texture32(const void *_src, void *_dst,
       unsigned width, unsigned height, unsigned pitch)
 {
    width &= ~3;
@@ -1168,7 +1168,7 @@ static void gx_set_texture_frame(void *data, const void *frame,
    (void)alpha;
 
    gx_video_t *gx = (gx_video_t*)data;
-   gx->menu_data = (uint32_t*)frame;
+   gx->menu_data = (unsigned*)frame;
 }
 
 static void gx_set_texture_enable(void *data, bool enable, bool full_screen)

@@ -49,15 +49,15 @@ extern void system_exec_wii(const char *path, bool should_load_game);
 #include <fat.h>
 
 #ifdef IS_SALAMANDER
-char config_path[512];
-char libretro_path[512];
+char config_path[MAX_LEN];
+char libretro_path[MAX_LEN];
 
 static void find_and_set_first_file(void)
 {
    //Last fallback - we'll need to start the first executable file 
    // we can find in the RetroArch cores directory
 
-   char first_file[512] = {0};
+   char first_file[MAX_LEN] = {0};
    find_first_libretro_core(first_file, sizeof(first_file),
    default_paths.core_dir, "dol");
 
@@ -69,15 +69,15 @@ static void find_and_set_first_file(void)
 
 static void salamander_init(void)
 {
-   char tmp_str[512] = {0};
+   char tmp_str[MAX_LEN] = {0};
    bool config_file_exists;
 
    if (path_file_exists(config_path))
       config_file_exists = true;
 
    //try to find CORE executable
-   char core_executable[1024];
-   fill_pathname_join(core_executable, default_paths.core_dir, "CORE.dol", sizeof(core_executable));
+   char core_executable[MAX_LEN];
+   fill_pathname_join(core_executable, default_paths.core_dir, "core.dol", sizeof(core_executable));
 
    if(path_file_exists(core_executable))
    {
@@ -170,7 +170,7 @@ static int gx_get_device_from_path(const char *path)
 #endif
 
 #ifdef IS_SALAMANDER
-extern char gx_rom_path[PATH_MAX];
+extern char gx_rom_path[MAX_LEN];
 #endif
 
 static void get_environment_settings(int argc, char *argv[], void *args)
@@ -178,7 +178,7 @@ static void get_environment_settings(int argc, char *argv[], void *args)
 #ifdef HW_DOL
    chdir("carda:/retroarch");
 #endif
-   getcwd(default_paths.core_dir, MAXPATHLEN);
+   getcwd(default_paths.core_dir, MAX_LEN);
    char *last_slash = strrchr(default_paths.core_dir, '/');
    if (last_slash)
       *last_slash = 0;
@@ -250,7 +250,7 @@ static void system_exitspawn(void)
    system_exec(g_settings.libretro, should_load_game);
 
    // direct loading failed (out of memory), try to jump to salamander then load the correct core
-   char boot_dol[PATH_MAX];
+   char boot_dol[MAX_LEN];
    fill_pathname_join(boot_dol, default_paths.core_dir, "boot.dol", sizeof(boot_dol));
    system_exec(boot_dol, should_load_game);
 #endif
@@ -265,7 +265,7 @@ static int system_process_args(int argc, char *argv[], void *args)
    // so we make sure g_settings.libretro is set here
    if (!g_settings.libretro[0] && argc >= 1 && strrchr(argv[0], '/'))
    {
-      char path[PATH_MAX];
+      char path[MAX_LEN];
       strlcpy(path, strrchr(argv[0], '/') + 1, sizeof(path));
       rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, path);
    }

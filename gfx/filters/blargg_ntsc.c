@@ -24,7 +24,10 @@
 #include "snes_ntsc/snes_ntsc.c"
 #endif
 
+#ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 #define MAX_LOWRES_WIDTH 340
 
 struct filter_data

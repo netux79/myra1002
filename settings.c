@@ -202,7 +202,7 @@ static config_file_t *open_default_config_file(void)
 {
    config_file_t *conf = NULL;
 
-   char conf_path[PATH_MAX];
+   char conf_path[MAX_LEN];
    const char *xdg  = getenv("XDG_CONFIG_HOME");
    const char *home = getenv("HOME");
 
@@ -235,7 +235,7 @@ static config_file_t *open_default_config_file(void)
       else if (home)
          fill_pathname_join(conf_path, home, ".config/retroarch/retroarch.cfg", sizeof(conf_path));
 
-      char basedir[PATH_MAX];
+      char basedir[MAX_LEN];
       fill_pathname_basedir(basedir, conf_path, sizeof(basedir));
 
 
@@ -244,7 +244,7 @@ static config_file_t *open_default_config_file(void)
 #ifndef GLOBAL_CONFIG_DIR
 #define GLOBAL_CONFIG_DIR "/etc"
 #endif
-         char skeleton_conf[PATH_MAX];
+         char skeleton_conf[MAX_LEN];
          fill_pathname_join(skeleton_conf, GLOBAL_CONFIG_DIR, "retroarch.cfg", sizeof(skeleton_conf));
          conf = config_file_new(skeleton_conf);
          if (conf)

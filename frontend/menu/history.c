@@ -151,7 +151,7 @@ static bool rom_history_read_file(rom_history_t *hist, const char *path)
    if (!file)
       return true;
    
-   char buf[3][PATH_MAX];
+   char buf[3][MAX_LEN];
    struct rom_history_entry *entry = NULL;
    char *last = NULL;
    unsigned i;

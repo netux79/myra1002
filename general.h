@@ -134,7 +134,7 @@ struct settings
       unsigned turbo_period;
       unsigned turbo_duty_cycle;
 
-      char overlay_path[PATH_MAX];
+      char overlay_path[MAX_LEN];
       float overlay_opacity;
       float overlay_scale;
    } input;
@@ -148,16 +148,16 @@ struct settings
 
    unsigned game_history_size;
 
-   char libretro[PATH_MAX];
-   char libretro_info_directory[PATH_MAX];
-   char screenshot_directory[PATH_MAX];
-   char system_directory[PATH_MAX];
-   char games_directory[PATH_MAX];
-   char config_directory[PATH_MAX];
-   char savefile_directory[PATH_MAX];
-   char savestate_directory[PATH_MAX];
+   char libretro[MAX_LEN];
+   char libretro_info_directory[MAX_LEN];
+   char screenshot_directory[MAX_LEN];
+   char system_directory[MAX_LEN];
+   char games_directory[MAX_LEN];
+   char config_directory[MAX_LEN];
+   char savefile_directory[MAX_LEN];
+   char savestate_directory[MAX_LEN];
 #ifdef HAVE_OVERLAY
-   char overlay_directory[PATH_MAX];
+   char overlay_directory[MAX_LEN];
 #endif
 
    float slowmotion_ratio;
@@ -189,19 +189,19 @@ struct global
    bool video_active;
 
    bool rom_file_temporary;
-   char last_rom[PATH_MAX];
+   char last_rom[MAX_LEN];
 
    bool has_set_libretro_device[MAX_PLAYERS];
    enum config_type_enums config_type;
 
    // Config associated with global and specific config.
-   char config_path[PATH_MAX];
-   char specific_config_path[PATH_MAX];   
-   char basename[PATH_MAX];
-   char fullpath[PATH_MAX];
-   char savefile_name_srm[PATH_MAX];
-   char savefile_name_rtc[PATH_MAX];
-   char savestate_name[PATH_MAX];
+   char config_path[MAX_LEN];
+   char specific_config_path[MAX_LEN];   
+   char basename[MAX_LEN];
+   char fullpath[MAX_LEN];
+   char savefile_name_srm[MAX_LEN];
+   char savefile_name_rtc[MAX_LEN];
+   char savestate_name[MAX_LEN];
 
    struct
    {
@@ -215,7 +215,7 @@ struct global
       unsigned num_ports;
       
       const char *input_desc_btn[MAX_PLAYERS][RARCH_FIRST_CUSTOM_BIND];
-      char valid_extensions[PATH_MAX];
+      char valid_extensions[MAX_LEN];
       
       struct retro_system_info info;
       struct retro_system_av_info av_info;
@@ -310,7 +310,7 @@ struct global
 #endif
 
    bool main_is_init;
-   char error_string[1024];
+   char error_string[MAX_LEN];
    jmp_buf error_sjlj_context;
    bool libretro_no_rom;
    bool libretro_dummy;

@@ -20,13 +20,7 @@
 #include <unistd.h>
 #include "retroarch_logger.h"
 
-// Some platforms do not set this value.
-// Just assume a value. It's usually 4KiB.
-// Platforms with a known value (like Win32)
-// set this value explicitly in platform specific headers.
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
+#define MAX_LEN 512
 
 #ifndef max
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -41,8 +35,8 @@
 } while(0)
 
 /* Define Mem 1 GX size */
-#define SYSMEM1_SIZE 0x01800000
-#define MB_SIZE 0x00100000
+#define SYSMEM1_SIZE 0x01800000L
+#define MB_SIZE 0x00100000L
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define RARCH_SCALE_BASE 256
@@ -85,50 +79,5 @@ static inline uint8_t is_little_endian(void)
    u.x = 1;
    return u.y[0];
 }
-
-static inline uint32_t swap_if_big32(uint32_t val)
-{
-   if (is_little_endian()) // Little-endian
-      return val;
-   else
-      return (val >> 24) | ((val >> 8) & 0xFF00) | ((val << 8) & 0xFF0000) | (val << 24);
-}
-
-static inline uint32_t swap_if_little32(uint32_t val)
-{
-   if (is_little_endian())
-      return (val >> 24) | ((val >> 8) & 0xFF00) | ((val << 8) & 0xFF0000) | (val << 24);
-   else
-      return val;
-}
-
-static inline uint16_t swap_if_big16(uint16_t val)
-{
-   if (is_little_endian())
-      return val;
-   else
-      return (val >> 8) | (val << 8);
-}
-
-static inline uint16_t swap_if_little16(uint16_t val)
-{
-   if (is_little_endian())
-      return (val >> 8) | (val << 8);
-   else
-      return val;
-}
-
-// Helper macros and struct to keep track of many booleans.
-// To check for multiple bits, use &&, not &.
-// For OR, | can be used.
-typedef struct
-{
-   uint32_t data[8];
-} rarch_bits_t;
-
-#define BIT_SET(a, bit)   ((a).data[(bit) >> 5] |= 1 << ((bit) & 31))
-#define BIT_CLEAR(a, bit) ((a).data[(bit) >> 5] &= ~(1 << ((bit) & 31)))
-#define BIT_GET(a, bit)   ((a).data[(bit) >> 5] & (1 << ((bit) & 31)))
-#define BIT_CLEAR_ALL(a)  memset(&(a), 0, sizeof(a));
 
 #endif

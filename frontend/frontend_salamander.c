@@ -53,7 +53,7 @@ static void find_first_libretro_core(char *first_file,
 
       if (libretro_elem)
       {
-         char fname[PATH_MAX];
+         char fname[MAX_LEN];
          fill_pathname_base(fname, libretro_elem, sizeof(fname));
 
          if (strncmp(fname, SALAMANDER_FILE, sizeof(fname)) == 0)

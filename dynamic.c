@@ -278,7 +278,7 @@ bool rarch_environment_cb(unsigned cmd, void *data)
 
          const struct retro_variable *vars = (const struct retro_variable*)data;
 
-         char options_path[PATH_MAX];
+         char options_path[MAX_LEN];
          if (*g_extern.config_path)
          {
             fill_pathname_resolve_relative(options_path, g_extern.config_path, "retroarch-core-options.cfg", sizeof(options_path));

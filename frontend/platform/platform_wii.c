@@ -38,12 +38,12 @@ extern uint8_t _binary_wii_app_booter_app_booter_bin_end[];
 #include "../../file.h"
 
 #ifdef IS_SALAMANDER
-char gx_rom_path[PATH_MAX];
+char gx_rom_path[MAX_LEN];
 #endif
 
 static void dol_copy_argv_path(const char *dolpath, const char *argpath)
 {
-   char tmp[PATH_MAX];
+   char tmp[MAX_LEN];
    size_t len, t_len;
    struct __argv *argv = (struct __argv *) ARGS_ADDR;
    memset(ARGS_ADDR, 0, sizeof(struct __argv));
@@ -104,7 +104,7 @@ static void dol_copy_argv_path(const char *dolpath, const char *argpath)
  * copy heap info into stack so it survives us moving the .dol into MEM2 */
 void system_exec_wii(const char *path, bool should_load_game)
 {
-   char game_path[PATH_MAX];
+   char game_path[MAX_LEN];
 
    RARCH_LOG("Attempt to load executable: [%s] %d.\n", path, sizeof(game_path));
 

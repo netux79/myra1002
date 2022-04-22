@@ -253,7 +253,7 @@ bool string_list_find_elem_prefix(const struct string_list *list, const char *pr
    if (!list)
       return false;
 
-   char prefixed[PATH_MAX];
+   char prefixed[MAX_LEN];
    snprintf(prefixed, sizeof(prefixed), "%s%s", prefix, elem);
 
    for (i = 0; i < list->size; i++)
@@ -351,7 +351,7 @@ struct string_list *dir_list_new(const char *dir, const char *ext, bool include_
       const char *name     = entry->d_name;
       const char *file_ext = path_get_extension(name);
 
-      char file_path[PATH_MAX];
+      char file_path[MAX_LEN];
       fill_pathname_join(file_path, dir, name, sizeof(file_path));
 
       bool is_dir = dirent_is_directory(file_path, entry);
@@ -425,7 +425,7 @@ bool path_file_exists(const char *path)
 
 void fill_pathname(char *out_path, const char *in_path, const char *replace, size_t size)
 {
-   char tmp_path[PATH_MAX];
+   char tmp_path[MAX_LEN];
 
    rarch_assert(strlcpy(tmp_path, in_path, sizeof(tmp_path)) < sizeof(tmp_path));
    char *tok = (char*)strrchr(path_basename(tmp_path), '.');

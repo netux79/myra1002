@@ -45,9 +45,9 @@ static void dump_to_file_desperate(const void *data, size_t size, int type)
    if (!base)
       goto error;
 
-   char path[PATH_MAX];
+   char path[MAX_LEN];
    snprintf(path, sizeof(path), "%s/RetroArch-recovery-", base);
-   char timebuf[PATH_MAX];
+   char timebuf[MAX_LEN];
 
    time_t time_;
    time(&time_);

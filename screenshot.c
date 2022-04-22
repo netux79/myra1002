@@ -147,8 +147,8 @@ end:
 bool screenshot_dump(const char *folder, const void *frame,
       unsigned width, unsigned height, int pitch, bool bgr24)
 {
-   char filename[PATH_MAX];
-   char shotname[PATH_MAX];
+   char filename[MAX_LEN];
+   char shotname[MAX_LEN];
 
 #define IMG_EXT "bmp"
 

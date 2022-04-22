@@ -28,7 +28,7 @@ struct core_option
 struct core_option_manager
 {
    config_file_t *conf;
-   char conf_path[PATH_MAX];
+   char conf_path[MAX_LEN];
 
    struct core_option *opts;
    size_t size;

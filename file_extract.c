@@ -205,8 +205,8 @@ bool zlib_parse_file(const char *file, zlib_file_cb file_cb, void *userdata)
       unsigned extralength   = read_le(directory + 30, 2);
       unsigned commentlength = read_le(directory + 32, 2);
 
-      char filename[PATH_MAX] = {0};
-      if (namelength >= PATH_MAX)
+      char filename[MAX_LEN] = {0};
+      if (namelength >= MAX_LEN)
          GOTO_END_ERROR();
 
       memcpy(filename, directory + 46, namelength);
@@ -248,7 +248,7 @@ static bool zip_extract_cb(const char *name, const uint8_t *cdata, unsigned cmod
    const char *ext = path_get_extension(name);
    if (ext && string_list_find_elem(data->ext, ext))
    {
-      char new_path[PATH_MAX];
+      char new_path[MAX_LEN];
       fill_pathname_resolve_relative(new_path, data->zip_path,
             path_basename(name), sizeof(new_path));
 

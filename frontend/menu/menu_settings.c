@@ -369,7 +369,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
 #ifdef HW_RVL
             fill_pathname_join(g_extern.fullpath, default_paths.core_dir, SALAMANDER_FILE,
                   sizeof(g_extern.fullpath));
-            char path[PATH_MAX];
+            char path[MAX_LEN];
             strlcpy(path, path_basename(g_settings.libretro), sizeof(path));
             rarch_environment_cb(RETRO_ENVIRONMENT_SET_LIBRETRO_PATH, (void*)path);
 #endif

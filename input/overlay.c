@@ -188,10 +188,10 @@ static bool input_overlay_load_desc(input_overlay_t *ol, config_file_t *conf, st
    snprintf(overlay_desc_image_key, sizeof(overlay_desc_image_key),
          "overlay%u_desc%u_overlay", ol_index, desc_index);
 
-   char image_path[PATH_MAX];
+   char image_path[MAX_LEN];
    if (config_get_path(conf, overlay_desc_image_key, image_path, sizeof(image_path)))
    {
-      char path[PATH_MAX];
+      char path[MAX_LEN];
       fill_pathname_resolve_relative(path, ol->overlay_path, image_path, sizeof(path));
 
       struct texture_image img = {0};
@@ -325,8 +325,8 @@ static bool input_overlay_load_overlay(input_overlay_t *ol, config_file_t *conf,
    size_t i;
    char overlay_path_key[64];
    char overlay_name_key[64];
-   char overlay_path[PATH_MAX];
-   char overlay_resolved_path[PATH_MAX];
+   char overlay_path[MAX_LEN];
+   char overlay_resolved_path[MAX_LEN];
 
    snprintf(overlay_path_key, sizeof(overlay_path_key), "overlay%u_overlay", index);
    if (config_get_path(conf, overlay_path_key, overlay_path, sizeof(overlay_path)))

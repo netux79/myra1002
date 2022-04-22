@@ -67,7 +67,7 @@ static bool take_screenshot_raw(void)
    int pitch        = g_extern.frame_cache.pitch;
 
    const char *screenshot_dir = g_settings.screenshot_directory;
-   char screenshot_path[PATH_MAX];
+   char screenshot_path[MAX_LEN];
    if (!*g_settings.screenshot_directory)
    {
       fill_pathname_basedir(screenshot_path, g_extern.basename, sizeof(screenshot_path));
@@ -539,7 +539,7 @@ static void load_auto_state(void)
    if (!g_settings.savestate_auto_load)
       return;
 
-   char savestate_name_auto[PATH_MAX];
+   char savestate_name_auto[MAX_LEN];
    fill_pathname_noext(savestate_name_auto, g_extern.savestate_name,
          ".auto", sizeof(savestate_name_auto));
 
@@ -548,7 +548,7 @@ static void load_auto_state(void)
       RARCH_LOG("Found auto savestate in: %s\n", savestate_name_auto);
       bool ret = load_state(savestate_name_auto);
 
-      char msg[PATH_MAX];
+      char msg[MAX_LEN];
       snprintf(msg, sizeof(msg), "Auto-loading savestate from \"%s\" %s.", savestate_name_auto, ret ? "succeeded" : "failed");
       msg_queue_push(g_extern.msg_queue, msg, 1, 180);
       RARCH_LOG("%s\n", msg);
@@ -560,7 +560,7 @@ static void save_auto_state(void)
    if (!g_settings.savestate_auto_save)
       return;
 
-   char savestate_name_auto[PATH_MAX];
+   char savestate_name_auto[MAX_LEN];
    fill_pathname_noext(savestate_name_auto, g_extern.savestate_name,
          ".auto", sizeof(savestate_name_auto));
 
@@ -573,7 +573,7 @@ static void save_auto_state(void)
 
 void rarch_load_state(void)
 {
-   char load_path[PATH_MAX];
+   char load_path[MAX_LEN];
 
    if (g_settings.state_slot > 0)
       snprintf(load_path, sizeof(load_path), "%s%d", g_extern.savestate_name, g_settings.state_slot);
@@ -583,7 +583,7 @@ void rarch_load_state(void)
       snprintf(load_path, sizeof(load_path), "%s", g_extern.savestate_name);
 
    size_t size = pretro_serialize_size();
-   char msg[512];
+   char msg[MAX_LEN];
 
    if (size)
    {
@@ -607,7 +607,7 @@ void rarch_load_state(void)
 
 void rarch_save_state(void)
 {
-   char save_path[PATH_MAX];
+   char save_path[MAX_LEN];
 
    if (g_settings.state_slot > 0)
       snprintf(save_path, sizeof(save_path), "%s%d", g_extern.savestate_name, g_settings.state_slot);
@@ -617,7 +617,7 @@ void rarch_save_state(void)
       snprintf(save_path, sizeof(save_path), "%s", g_extern.savestate_name);
 
    size_t size = pretro_serialize_size();
-   char msg[512];
+   char msg[MAX_LEN];
 
    if (size)
    {
@@ -906,7 +906,7 @@ void rarch_disk_control_append_image(const char *path)
 
    rarch_disk_control_set_index(new_index);
 
-   char msg[512];
+   char msg[MAX_LEN];
    snprintf(msg, sizeof(msg), "Appended disk: %s", path);
    RARCH_LOG("%s\n", msg);
    msg_queue_clear(g_extern.msg_queue);
@@ -1171,7 +1171,7 @@ static void init_state_first(void)
    init_state();
    
 #ifdef HAVE_FILE_LOGGER
-   g_extern.log_file = fopen(LOG_FILENAME, "a");
+   g_extern.log_file = fopen(LOG_FILENAME, "a+");
 #endif
 
    /* Default pixel format */

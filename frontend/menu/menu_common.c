@@ -76,8 +76,8 @@ void load_menu_game_prepare(void *video_data)
    {
       if (*g_extern.fullpath)
       {
-         char tmp[PATH_MAX];
-         char str[PATH_MAX];
+         char tmp[MAX_LEN];
+         char str[MAX_LEN];
 
          fill_pathname_base(tmp, g_extern.fullpath, sizeof(tmp));
          path_remove_extension(tmp);
@@ -148,7 +148,7 @@ static void menu_init_history(void)
 
    if (*g_extern.config_path)
    {
-      char history_path[PATH_MAX];
+      char history_path[MAX_LEN];
       fill_pathname_resolve_relative(history_path, g_extern.config_path,
                "retroarch-game-history.txt", sizeof(history_path));
 
@@ -189,8 +189,8 @@ bool load_menu_game(void)
    }
    else
    {
-      char name[PATH_MAX];
-      char msg[PATH_MAX];
+      char name[MAX_LEN];
+      char msg[MAX_LEN];
       fill_pathname_base(name, g_extern.fullpath, sizeof(name));
       snprintf(msg, sizeof(msg), "Failed to load %s.\n", name);
       msg_queue_push(g_extern.msg_queue, msg, 1, 90);
@@ -590,7 +590,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
                type == RGUI_SETTINGS_DISK_APPEND ||
                type == RGUI_FILE_DIRECTORY)
          {
-            char cat_path[PATH_MAX];
+            char cat_path[MAX_LEN];
             fill_pathname_join(cat_path, dir, path, sizeof(cat_path));
 
             file_list_push(rgui->menu_stack, cat_path, type, rgui->selection_ptr);
@@ -638,7 +638,7 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
 #endif
             else if (menu_type == RGUI_SETTINGS_DISK_APPEND)
             {
-               char image[PATH_MAX];
+               char image[MAX_LEN];
                fill_pathname_join(image, dir, path, sizeof(image));
                rarch_disk_control_append_image(image);
 
@@ -1123,11 +1123,11 @@ void menu_populate_entries(void *data, unsigned menu_type)
          snprintf(tmp, sizeof(tmp), "Compiler: GCC (%d.%d.%d) %u-bit", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__, (unsigned)(CHAR_BIT * sizeof(size_t)));         
          file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
 
-         snprintf(tmp, sizeof(tmp), "MEM1 (Used/Total): %2dMB / %2dMB (%8d bytes/%8d bytes)", (SYSMEM1_SIZE - SYS_GetArena1Size())/MB_SIZE, SYSMEM1_SIZE/MB_SIZE,
+         snprintf(tmp, sizeof(tmp), "MEM1 (Used/Total): %2luMB / %2luMB (%8lu bytes/%8lu bytes)", (SYSMEM1_SIZE - SYS_GetArena1Size())/MB_SIZE, SYSMEM1_SIZE/MB_SIZE,
                   SYSMEM1_SIZE - SYS_GetArena1Size(), SYSMEM1_SIZE);
          file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
 
-         snprintf(tmp, sizeof(tmp), "MEM2 (Used/Total): %2dMB / %2dMB (%8d bytes/%8d bytes)", gx_mem2_used()/MB_SIZE, gx_mem2_total()/MB_SIZE,
+         snprintf(tmp, sizeof(tmp), "MEM2 (Used/Total): %2luMB / %2luMB (%8lu bytes/%8lu bytes)", gx_mem2_used()/MB_SIZE, gx_mem2_total()/MB_SIZE,
                   gx_mem2_used(), gx_mem2_total());
          file_list_push(rgui->selection_buf, tmp, RGUI_SETTINGS_SYSTEM_INFO_NONE, 0);
 
@@ -1338,7 +1338,7 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
          for (i = 0; i < list_size; i++)
          {
             const char *path, *core_path, *core_name;
-            char fill_buf[PATH_MAX];
+            char fill_buf[MAX_LEN];
 
             path = NULL;
             core_path = NULL;
@@ -1349,7 +1349,7 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
 
             if (path)
             {
-               char path_short[PATH_MAX];
+               char path_short[MAX_LEN];
                fill_pathname(path_short, path_basename(path), "", sizeof(path_short));
 
                snprintf(fill_buf, sizeof(fill_buf), "%s (%s)",
@@ -1389,7 +1389,7 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
 #endif
 
             const char *exts;
-            char ext_buf[1024];
+            char ext_buf[MAX_LEN];
             if (menu_type == RGUI_SETTINGS_CORE)
                exts = EXT_EXECUTABLES;
             else if (menu_type == RGUI_SETTINGS_OVERLAY_PRESET)
@@ -1461,7 +1461,7 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
             if (type != RGUI_FILE_PLAIN)
                continue;
 
-            char core_path[PATH_MAX];
+            char core_path[MAX_LEN];
             fill_pathname_join(core_path, dir, path, sizeof(core_path));
 
             char display_name[256];
