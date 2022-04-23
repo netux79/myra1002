@@ -203,9 +203,11 @@ typedef enum
    RGUI_ACTION_NOOP
 } rgui_action_t;
 
+#define RGUI_SCROLL_SIZE 5
 #define RGUI_MAX_BUTTONS 32
 #define RGUI_MAX_AXES 32
 #define RGUI_MAX_HATS 4
+
 struct rgui_bind_state_port
 {
    bool buttons[RGUI_MAX_BUTTONS];

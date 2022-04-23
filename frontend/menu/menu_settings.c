@@ -277,13 +277,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_AUDIO_MUTE:
          if (action == RGUI_ACTION_START)
             g_settings.audio.mute = DEFAULT_AUDIO_MUTE;
-         else
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.audio.mute = !g_settings.audio.mute;
          break;
       case RGUI_SETTINGS_AUDIO_SYNC:
          if (action == RGUI_ACTION_START)
             g_settings.audio.sync = DEFAULT_AUDIO_AUDIO_SYNC;
-         else
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.audio.sync = !g_settings.audio.sync;
          break;
       case RGUI_SETTINGS_AUDIO_CONTROL_RATE_DELTA:
@@ -305,7 +307,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             else
                g_settings.audio.rate_control = true;
          }
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
          {
             if (g_settings.audio.rate_control_delta < 0.2)
                g_settings.audio.rate_control_delta += 0.001;
@@ -322,7 +324,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_LEFT)
             db_delta -= 1.0f;
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
             db_delta += 1.0f;
 
          if (db_delta != 0.0f)
@@ -337,7 +339,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_SHOW_FRAMERATE:
          if (action == RGUI_ACTION_START)
             g_settings.fps_show = DEFAULT_VIDEO_SHOW_FRAMERATE;
-         else if (action == RGUI_ACTION_LEFT || action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.fps_show = !g_settings.fps_show;
          break;
       case RGUI_SETTINGS_DISK_INDEX:
@@ -524,7 +527,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          unsigned o_player = rgui->c_player;
          if (action == RGUI_ACTION_LEFT)
             rgui->c_player = (rgui->c_player + MAX_PLAYERS - 1) % MAX_PLAYERS;
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
             rgui->c_player = (rgui->c_player + 1) % MAX_PLAYERS;
 
          if (o_player != rgui->c_player)
@@ -647,17 +650,17 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_DEVICE_AUTOCONF_BUTTONS:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
             g_settings.input.autoconf_buttons = !g_settings.input.autoconf_buttons;
-         else
+         else if (action == RGUI_ACTION_START)
             g_settings.input.autoconf_buttons = DEFAULT_INPUT_AUTOCONF_BUTTONS;
          break;
       case RGUI_SETTINGS_MENU_ALL_PLAYERS_ENABLE:
          if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_LEFT)
             g_settings.input.menu_all_players_enable = !g_settings.input.menu_all_players_enable;
-         else
+         else if (action == RGUI_ACTION_START)
             g_settings.input.menu_all_players_enable = DEFAULT_MENU_ALL_PLAYERS_ENABLE;
          break;
       case RGUI_SETTINGS_QUICK_SWAP_PLAYERS:
-         if (action == RGUI_ACTION_RIGHT)
+         if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
             g_settings.input.quick_swap_players += g_settings.input.quick_swap_players < MAX_PLAYERS ? 1 : 0;
          else if (action == RGUI_ACTION_LEFT)
             g_settings.input.quick_swap_players -= g_settings.input.quick_swap_players > 1 ? 1 : 0;
@@ -775,7 +778,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          {
             if (g_settings.video.rotation > 0) g_settings.video.rotation--;
          }
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
          {
             if (g_settings.video.rotation < LAST_ORIENTATION) g_settings.video.rotation++;
          }
@@ -787,7 +790,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          {
             if (g_settings.menu.theme > 0) g_settings.menu.theme--;
          }
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
          {
             if (g_settings.menu.theme < LAST_THEME) g_settings.menu.theme++;
          }
@@ -799,7 +802,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          {
             if (g_settings.menu.rotation > 0) g_settings.menu.rotation--;
          }
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
          {
             if (g_settings.menu.rotation < LAST_MENU_ORIENTATION) g_settings.menu.rotation++;
          }
@@ -810,13 +813,15 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_VIDEO_BILINEAR:
          if (action == RGUI_ACTION_START)
             g_settings.video.bilinear_filter = DEFAULT_VIDEO_BILINEAR_FILTER;
-         else
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.video.bilinear_filter = !g_settings.video.bilinear_filter;
          break;
       case RGUI_SETTINGS_MENU_BILINEAR:
          if (action == RGUI_ACTION_START)
             g_settings.menu.bilinear_filter = DEFAULT_MENU_BILINEAR_FILTER;
-         else
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.menu.bilinear_filter = !g_settings.menu.bilinear_filter;
          
          driver.video_poke->force_viewport_refresh(video_data);
@@ -835,7 +840,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.video.gamma_correction > 0)
                g_settings.video.gamma_correction--;
          }
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
          {
             if (g_settings.video.gamma_correction < MAX_GAMMA_SETTING)
                g_settings.video.gamma_correction++;
@@ -872,7 +877,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             if (g_settings.video.aspect_ratio_idx > 0)
                g_settings.video.aspect_ratio_idx--;
          }
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
          {
             if (g_settings.video.aspect_ratio_idx < LAST_ASPECT_RATIO)
                g_settings.video.aspect_ratio_idx++;
@@ -891,7 +896,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_LEFT)
                g_settings.video.custom_vp.x--;
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
                g_settings.video.custom_vp.x++;
 
          break;
@@ -904,7 +909,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_LEFT)
                g_settings.video.custom_vp.y--;
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
                g_settings.video.custom_vp.y++;
 
          break;
@@ -917,7 +922,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_LEFT)
                g_settings.video.custom_vp.width--;
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
                g_settings.video.custom_vp.width++;
 
          break;
@@ -930,7 +935,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
          }
          else if (action == RGUI_ACTION_LEFT)
                g_settings.video.custom_vp.height--;
-         else if (action == RGUI_ACTION_RIGHT)
+         else if (action == RGUI_ACTION_RIGHT || action == RGUI_ACTION_OK)
                g_settings.video.custom_vp.height++;
 
          break;
@@ -981,7 +986,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_VIDEO_VITRAP_FILTER:
          if (action == RGUI_ACTION_START)
             g_settings.video.vi_trap_filter = DEFAULT_VIDEO_VI_TRAP_FILTER;
-         else
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.video.vi_trap_filter =! g_settings.video.vi_trap_filter;
 
          driver.video_poke->apply_state_changes(video_data);
@@ -989,7 +995,8 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
       case RGUI_SETTINGS_VIDEO_INTERLACED_ONLY:
          if (action == RGUI_ACTION_START)
             g_settings.video.interlaced_resolution_only = DEFAULT_VIDEO_INTERLACED_RESOLUTION_ONLY;
-         else
+         else if (action == RGUI_ACTION_OK || action == RGUI_ACTION_RIGHT
+               || action == RGUI_ACTION_LEFT)
             g_settings.video.interlaced_resolution_only =! g_settings.video.interlaced_resolution_only;
          
          gfx_check_valid_resolution();
@@ -1012,6 +1019,7 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
                break;
 
             case RGUI_ACTION_RIGHT:
+            case RGUI_ACTION_OK:
                *pos += 1;
                break;
 

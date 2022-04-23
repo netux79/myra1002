@@ -401,6 +401,20 @@ static int menu_settings_iterate(void *data, void *video_data, unsigned action)
             menu_clear_navigation(rgui);
          break;
 
+      case RGUI_ACTION_SCROLL_UP:
+         if (rgui->selection_ptr >= RGUI_SCROLL_SIZE)
+            menu_set_navigation(rgui, rgui->selection_ptr - RGUI_SCROLL_SIZE);
+         else
+            menu_clear_navigation(rgui);
+         break;
+
+      case RGUI_ACTION_SCROLL_DOWN:
+         if ((rgui->selection_ptr + RGUI_SCROLL_SIZE) < rgui->selection_buf->size)
+            menu_set_navigation(rgui, rgui->selection_ptr + RGUI_SCROLL_SIZE);
+         else
+            menu_set_navigation(rgui, rgui->selection_buf->size - 1);
+         break;
+
       case RGUI_ACTION_CANCEL:
          if (rgui->menu_stack->size > 1)
          {
@@ -749,7 +763,6 @@ static int menu_iterate_func(void *data, void *video_data, unsigned action)
       default:
          break;
    }
-
 
    // refresh values in case the stack changed
    file_list_get_last(rgui->menu_stack, &dir, &menu_type);
@@ -1486,8 +1499,7 @@ static void menu_parse_and_resolve(void *data, unsigned menu_type)
    }
 
    rgui->scroll_indices_size = 0;
-   if (menu_type != RGUI_SETTINGS_OPEN_HISTORY)
-      menu_build_scroll_indices(rgui, rgui->selection_buf);
+   menu_build_scroll_indices(rgui, rgui->selection_buf);
 
    // Before a refresh, we could have deleted a file on disk, causing
    // selection_ptr to suddendly be out of range. Ensure it doesn't overflow.
