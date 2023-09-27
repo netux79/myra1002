@@ -39,12 +39,13 @@ extern const rarch_joypad_driver_t gx_joypad;
 #ifdef HW_RVL
 static void gx_power_cb(void)
 {
-   g_extern.lifecycle_state |= (1ULL << RARCH_QUIT_KEY);
+   g_extern.system.core_shutdown = 1;
 }
 #endif
 static void gx_reset_cb(void)
 {
-   g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+   // Set also the hotkey to enable with a single button when needing a combo
+   g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE) | (1ULL << RARCH_ENABLE_HOTKEY);
 }
 
 static bool gx_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])

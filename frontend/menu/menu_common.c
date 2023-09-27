@@ -303,9 +303,9 @@ uint64_t menu_input(void)
    input_state |= input_key_pressed_func(RARCH_MENU_TOGGLE) ? (1ULL << RARCH_MENU_TOGGLE) : 0;
    input_state |= input_key_pressed_func(RARCH_QUIT_KEY) ? (1ULL << RARCH_QUIT_KEY) : 0;
    
-   /* Clear lifecycle_state from QUIT and MENU TOGGLE commands to avoid further triggering */
+   /* Clear lifecycle_state from HOTKEY and MENU TOGGLE commands to avoid further triggering */
    g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
-   g_extern.lifecycle_state &= ~(1ULL << RARCH_QUIT_KEY);
+   g_extern.lifecycle_state &= ~(1ULL << RARCH_ENABLE_HOTKEY);
 
    rgui->trigger_state = input_state & ~rgui->old_input_state;
 

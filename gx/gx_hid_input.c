@@ -57,12 +57,12 @@ extern const rarch_joypad_driver_t gx_hid_joypad;
 #ifdef HW_RVL
 static void gx_hid_power_cb(void)
 {
-   g_extern.lifecycle_state |= (1ULL << RARCH_QUIT_KEY);   
+   g_extern.system.core_shutdown = 1;
 }
 #endif
 static void gx_hid_reset_cb(void)
 {
-   g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE);
+   g_extern.lifecycle_state |= (1ULL << RARCH_MENU_TOGGLE) | (1ULL << RARCH_ENABLE_HOTKEY);
 }
 
 static bool gx_hid_menu_input_state(uint64_t joykey, uint64_t state, int16_t a_state[][2])

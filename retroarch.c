@@ -1129,9 +1129,45 @@ void rarch_check_block_hotkey(void)
    driver.block_hotkey = driver.block_input || !input_key_pressed_func(RARCH_ENABLE_HOTKEY);
 }
 
-static void do_state_checks(void)
+static inline bool check_enter_rgui(void)
+{
+   static bool old_rgui_toggle = true;
+
+   // Always go into menu if dummy core is loaded.
+   bool rgui_toggle = input_key_pressed_func(RARCH_MENU_TOGGLE) || (g_extern.libretro_dummy && !old_rgui_toggle);
+   /* Clear lifecycle_state from MENU TOGGLE AND HOYKEY command to avoid further triggering */
+   g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
+   g_extern.lifecycle_state &= ~(1ULL << RARCH_ENABLE_HOTKEY);
+   rgui->old_input_state |= (1ULL << RARCH_MENU_TOGGLE);
+   
+   if (rgui_toggle && !old_rgui_toggle)
+   {
+      g_extern.lifecycle_state |= (1ULL << MODE_MENU_PREINIT);
+      old_rgui_toggle = true;
+      g_extern.system.frame_time_last = 0;
+      return true;
+   }
+   else
+   {
+      old_rgui_toggle = rgui_toggle;
+      return false;
+   }
+}
+
+static bool do_state_checks(void)
 {
    rarch_check_block_hotkey();
+
+   // SHUTDOWN instead of exit RetroArch
+   if (g_extern.system.core_shutdown)
+      return false;
+
+   // Exit to loader?
+   if (input_key_pressed_func(RARCH_QUIT_KEY))
+      return false;
+
+   if (check_enter_rgui())
+      return false;
 
 #if defined(HAVE_SCREENSHOTS)
    check_screenshot();
@@ -1146,7 +1182,7 @@ static void do_state_checks(void)
       rarch_render_cached_frame();
 
    if (g_extern.is_paused && !g_extern.is_oneshot)
-      return;
+      return true;
 
    check_fast_forward_button();
    check_stateslots();
@@ -1156,6 +1192,8 @@ static void do_state_checks(void)
    check_disk();
    check_quick_swap();
    check_reset();
+
+   return true;
 }
 
 static void init_state(void)
@@ -1302,30 +1340,6 @@ error:
    return 1;
 }
 
-static inline bool check_enter_rgui(void)
-{
-   static bool old_rgui_toggle = true;
-
-   // Always go into menu if dummy core is loaded.
-   bool rgui_toggle = input_key_pressed_func(RARCH_MENU_TOGGLE) || (g_extern.libretro_dummy && !old_rgui_toggle);
-   /* Clear lifecycle_state from MENU TOGGLE command to avoid further triggering */
-   g_extern.lifecycle_state &= ~(1ULL << RARCH_MENU_TOGGLE);
-   rgui->old_input_state |= (1ULL << RARCH_MENU_TOGGLE);
-   
-   if (rgui_toggle && !old_rgui_toggle)
-   {
-      g_extern.lifecycle_state |= (1ULL << MODE_MENU_PREINIT);
-      old_rgui_toggle = true;
-      g_extern.system.frame_time_last = 0;
-      return true;
-   }
-   else
-   {
-      old_rgui_toggle = rgui_toggle;
-      return false;
-   }
-}
-
 static inline void update_frame_time(void)
 {
    if (!g_extern.system.frame_time.callback)
@@ -1352,19 +1366,9 @@ bool rarch_main_iterate(void)
 {
    unsigned i;
 
-   // SHUTDOWN on consoles should exit RetroArch completely.
-   if (g_extern.system.core_shutdown)
-      return false;
-
-   // Time to drop?
-   if (input_key_pressed_func(RARCH_QUIT_KEY))
-      return false;
-
-   if (check_enter_rgui())
-      return false; // Enter menu, don't exit.
-
    // Checks for stuff like save states, etc.
-   do_state_checks();
+   if (!do_state_checks())
+      return false;
 
    // Update binds for analog dpad modes.
    for (i = 0; i < MAX_PLAYERS; i++)
@@ -1465,10 +1469,9 @@ int rarch_main_init_wrap(const struct rarch_main_wrap *args)
 
 bool rarch_main_idle_iterate(void)
 {
-   if (input_key_pressed_func(RARCH_QUIT_KEY))
+   if (!do_state_checks())
       return false;
 
-   do_state_checks();
    rarch_input_poll();
    rarch_sleep(10);
    return true;
