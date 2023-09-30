@@ -166,3 +166,11 @@ void system_exec_wii(const char *path, bool should_load_game)
    SYS_ResetSystem(SYS_SHUTDOWN,0,0);
    __lwp_thread_stopmultitasking((void (*)(void)) BOOTER_ADDR);
 }
+
+/* Power off the Wii console to default configuration */
+#ifndef IS_SALAMANDER
+static void system_shutdown(void)
+{
+   SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+}
+#endif

@@ -327,7 +327,7 @@ bool rarch_environment_cb(unsigned cmd, void *data)
 
       case RETRO_ENVIRONMENT_SHUTDOWN:
          RARCH_LOG("Environ SHUTDOWN.\n");
-         g_extern.system.core_shutdown = true;
+         g_extern.system_shutdown = true;
          break;
 
       case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:

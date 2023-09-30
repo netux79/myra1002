@@ -39,7 +39,7 @@ extern const rarch_joypad_driver_t gx_joypad;
 #ifdef HW_RVL
 static void gx_power_cb(void)
 {
-   g_extern.system.core_shutdown = 1;
+   g_extern.system_shutdown = true;
 }
 #endif
 static void gx_reset_cb(void)

@@ -1324,6 +1324,9 @@ void menu_populate_entries(void *data, unsigned menu_type)
          file_list_push(rgui->selection_buf, "Settings", RGUI_SETTINGS_OPTIONS, 0);
          file_list_push(rgui->selection_buf, "Restart RetroArch", RGUI_SETTINGS_RESTART_RARCH, 0);
          file_list_push(rgui->selection_buf, "Quit RetroArch", RGUI_SETTINGS_QUIT_RARCH, 0);
+#ifdef HW_RVL
+         file_list_push(rgui->selection_buf, "Power Off System", RGUI_SETTINGS_SHUTDOWN_SYSTEM, 0);
+#endif
          break;
    }
 }

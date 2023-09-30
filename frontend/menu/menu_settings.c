@@ -395,6 +395,13 @@ int menu_set_settings(void *data, void *video_data, unsigned setting, unsigned a
             return -1;
          }
          break;
+      case RGUI_SETTINGS_SHUTDOWN_SYSTEM:
+         if (action == RGUI_ACTION_OK)
+         {
+            g_extern.system_shutdown = true;
+            return -1;
+         }
+         break;
 #ifdef HAVE_OVERLAY
       case RGUI_SETTINGS_OVERLAY_PRESET:
          switch (action)

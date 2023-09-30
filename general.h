@@ -96,7 +96,7 @@ struct settings
       bool crop_overscan;
       bool scale_integer;
       bool vi_trap_filter;
-      bool interlaced_resolution_only;      
+      bool interlaced_resolution_only;
       rarch_viewport_t custom_vp;
       char driver[32];
    } video;
@@ -185,6 +185,7 @@ typedef struct
 // All run-time- / command line flag-related globals go here.
 struct global
 {
+   bool system_shutdown;
    bool audio_active;
    bool video_active;
 
@@ -207,7 +208,6 @@ struct global
    {
       enum retro_pixel_format pix_fmt;
 
-      bool core_shutdown;
       bool block_extract;
       bool force_nonblock;
       bool no_game;

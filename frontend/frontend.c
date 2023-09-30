@@ -52,8 +52,8 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 {
    bool gamerun;
 
-   if (g_extern.system.core_shutdown)
-      return 1; /* Exit Retroarch */
+   if (g_extern.system_shutdown)
+      return 1; /* Shut down Console */
    else if (g_extern.lifecycle_state & (1ULL << MODE_LOAD_GAME))
    {
       load_menu_game_prepare(driver.video_data);
@@ -132,8 +132,6 @@ int main_entry_iterate(int argc, char *argv[], void* args)
 
 void main_exit(void)
 {
-   g_extern.system.core_shutdown = false;
-
    menu_free(driver.video_data);
 
    if (g_settings.config_save_on_exit)
@@ -156,11 +154,20 @@ void main_exit(void)
    rarch_perf_log();
 #endif
 
-   if (g_extern.lifecycle_state & (1ULL << MODE_EXITSPAWN) && frontend_ctx
-         && frontend_ctx->exitspawn)
-      frontend_ctx->exitspawn();
+#ifdef HW_RVL
+   if (g_extern.system_shutdown)
+      /* Shutdown the console completely instead of exiting to Wii menu */
+      system_shutdown();
+   else
+#endif
+   {
+      g_extern.system_shutdown = false;
 
-   rarch_main_clear_state();
+      if (g_extern.lifecycle_state & (1ULL << MODE_EXITSPAWN) && frontend_ctx && frontend_ctx->exitspawn)
+         frontend_ctx->exitspawn();
+
+      rarch_main_clear_state();
+   }
 }
 
 int main(int argc, char *argv[])

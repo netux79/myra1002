@@ -1159,7 +1159,7 @@ static bool do_state_checks(void)
    rarch_check_block_hotkey();
 
    // SHUTDOWN instead of exit RetroArch
-   if (g_extern.system.core_shutdown)
+   if (g_extern.system_shutdown)
       return false;
 
    // Exit to loader?
